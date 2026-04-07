@@ -1,8 +1,8 @@
-// --- VARIABLES DE ESTADO ---
+// --- 1. VARIABLES DE ESTADO Y DATOS ---
 let drawnNumbers = [];
 let patronPersonalizado = [];
 let ganadoresDetectados = new Set();
-// Carga la base de datos de cartones (registrados o importados)
+// Carga la base de datos sincronizada desde localStorage
 let baseDatosCartones = JSON.parse(localStorage.getItem('bingo_cartones')) || [];
 
 // Elementos del DOM
@@ -13,34 +13,29 @@ const textoGanadores = document.getElementById('textoGanadores');
 const recentList = document.getElementById('recentList');
 const countDisplay = document.getElementById('contadorCartonesReal');
 
-// --- 1. INICIALIZACIÓN CON VALIDACIÓN ---
+// --- 2. INICIALIZACIÓN ---
 window.onload = () => {
-    // REGLA: Mínimo 2 cartones para jugar
-    if (baseDatosCartones.length < 2) {
+    // Validación de seguridad: Evita jugar sin cartones
+    if (baseDatosCartones.length < 1) {
         document.body.innerHTML = `
             <div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#1d3557; color:white; text-align:center; font-family:sans-serif; padding:20px;">
-                <h1 style="color:#ffb703; font-size:3rem; margin-bottom:10px;">⚠️ ¡FALTAN JUGADORES!</h1>
-                <p style="font-size:1.5rem; max-width:600px;">No puedes iniciar la ruleta sin cartones. Necesitas al menos <b>2 cartones</b> registrados.</p>
-                <p style="background:rgba(255,255,255,0.1); padding:10px 20px; border-radius:30px;">Cartones detectados: ${baseDatosCartones.length}</p>
+                <h1 style="color:#ffb703; font-size:3rem; margin-bottom:10px;">⚠️ ¡SIN CARTONES!</h1>
+                <p style="font-size:1.2rem; max-width:600px;">Debes generar o importar cartones antes de iniciar la ruleta.</p>
                 <br>
-                <a href="generar.html" style="padding:15px 40px; background:#e63946; color:white; text-decoration:none; border-radius:10px; font-weight:900; font-size:1.2rem; transition:0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">← CONFIGURAR CARTONES AQUÍ</a>
+                <button onclick="window.location.href='index.html'" style="padding:15px 40px; background:#e63946; color:white; border:none; border-radius:10px; font-weight:900; cursor:pointer;">IR AL GENERADOR</button>
             </div>
         `;
         return;
     }
 
-    // Si hay cartones, inicializamos el tablero
     generarTableroDerecho();
     crearCuadriculaDibujo();
     actualizarContadorCartones();
-    modal.style.display = "flex";
+    modal.style.display = "flex"; // Abrir selector de patrón al inicio
 };
 
-// Muestra el total de cartones activos en el radar
 function actualizarContadorCartones() {
-    if (countDisplay) {
-        countDisplay.innerText = `JUGANDO: ${baseDatosCartones.length}`;
-    }
+    if (countDisplay) countDisplay.innerText = `JUGANDO: ${baseDatosCartones.length}`;
 }
 
 function generarTableroDerecho() {
@@ -70,7 +65,7 @@ function crearCuadriculaDibujo() {
     }
 }
 
-// --- 2. LÓGICA DE PRESETS ---
+// --- 3. LÓGICA DE PATRONES (BINGO) ---
 function aplicarPreset(tipo) {
     limpiarSeleccion();
     const celdas = document.querySelectorAll('.select-cell');
@@ -90,10 +85,9 @@ function limpiarSeleccion() {
     });
 }
 
-// --- 3. CONFIGURACIÓN DEL JUEGO ---
 document.getElementById('btnConfirmarPatron').onclick = () => {
     const seleccionadas = document.querySelectorAll('.select-cell.selected');
-    if (seleccionadas.length <= 1) return alert("Dibuja un patrón primero.");
+    if (seleccionadas.length <= 1) return alert("Dibuja el patrón de victoria.");
 
     patronPersonalizado = Array.from(document.querySelectorAll('.select-cell')).map((cell, index) => {
         return cell.classList.contains('selected') ? index : null;
@@ -101,28 +95,23 @@ document.getElementById('btnConfirmarPatron').onclick = () => {
 
     modal.style.display = "none";
     drawBtn.disabled = false;
-    document.getElementById('labelPatron').innerText = "PATRÓN LISTO ✅";
+    document.getElementById('labelPatron').innerText = "MODO: PERSONALIZADO ✅";
 };
 
-// --- 4. SORTEO Y RECIENTES ---
+// --- 4. SORTEO DE NÚMEROS ---
 drawBtn.onclick = () => {
-    if (drawnNumbers.length >= 75) return;
+    if (drawnNumbers.length >= 75) return alert("¡Todas las bolas han salido!");
 
     let num;
     do { num = Math.floor(Math.random() * 75) + 1; } while (drawnNumbers.includes(num));
 
     drawnNumbers.push(num);
     
+    // UI Updates
     document.getElementById('currentNumber').innerText = num;
     document.getElementById('currentLetter').innerText = getLetra(num);
     document.getElementById(`slot-${num}`).classList.add('active');
     document.getElementById('count').innerText = drawnNumbers.length;
-
-    // Efecto visual en el contador de cartones al sortear
-    if(countDisplay) {
-        countDisplay.style.transform = "scale(1.2)";
-        setTimeout(() => countDisplay.style.transform = "scale(1)", 200);
-    }
 
     actualizarRecientes();
     escanearCartonesRadar();
@@ -138,7 +127,7 @@ function actualizarRecientes() {
     recentList.innerHTML = ultimos.map(n => `<div class="recent-ball">${n}</div>`).join("");
 }
 
-// --- 5. RADAR REAL (Escaneo de base de datos completa) ---
+// --- 5. EL "RADAR": ESCANEO AUTOMÁTICO DE GANADORES ---
 function escanearCartonesRadar() {
     let huboGanador = false;
     
@@ -157,15 +146,12 @@ function escanearCartonesRadar() {
 
 function actualizarTextoRadar() {
     const ids = Array.from(ganadoresDetectados);
-    if (ids.length === 0) {
-        textoGanadores.innerText = "Esperando grito de Bingo...";
-        return;
-    }
+    if (ids.length === 0) return;
     
     const html = ids.map(id => {
         const p = baseDatosCartones.find(c => c.id === id);
         const nombre = p ? p.apodo : "Jugador";
-        return `<span class="highlight-id" onclick="verRapido(${id})" style="display:inline-block; background:rgba(255,183,3,0.2); padding:2px 8px; border-radius:5px; cursor:pointer; border:1px solid #ffb703; margin:2px;">
+        return `<span class="highlight-id" onclick="verRapido(${id})" style="display:inline-block; background:#ffb703; color:#1d3557; padding:5px 12px; border-radius:20px; cursor:pointer; font-weight:bold; margin:3px; font-size:0.8rem; border:2px solid white;">
                     🏆 ${nombre} (#${id})
                 </span>`;
     }).join(" ");
@@ -173,6 +159,12 @@ function actualizarTextoRadar() {
     textoGanadores.innerHTML = html;
 }
 
+function validarBingo(matrix, indices, cantados) {
+    const flat = matrix.flat(); // Convierte tabla 5x5 a lista de 25
+    return indices.every(idx => flat[idx] === "FREE" || cantados.includes(flat[idx]));
+}
+
+// --- 6. VERIFICACIÓN MANUAL (SINCRONIZADA) ---
 function verRapido(id) {
     document.getElementById('idABuscar').value = id;
     verificarManual();
@@ -184,60 +176,69 @@ function verificarManual() {
     const idEntrada = parseInt(document.getElementById('idABuscar').value);
     const cartonInfo = baseDatosCartones.find(c => c.id === idEntrada);
     
-    if (!cartonInfo) return alert("Este ID no existe en tu lista de cartones.");
+    if (!cartonInfo) return alert("ID no encontrado en la base de datos.");
     
     const matriz = generarMatrizCarton(idEntrada);
     const win = validarBingo(matriz, patronPersonalizado, drawnNumbers);
     renderMiniatura(idEntrada, cartonInfo.apodo, matriz, win, document.getElementById('areaVerificacion'));
 }
 
-function validarBingo(matrix, indices, cantados) {
-    const flat = matrix.flat();
-    return indices.every(idx => flat[idx] === "FREE" || cantados.includes(flat[idx]));
-}
-
-// --- 6. GENERADOR Y RENDER ---
+// --- 7. LÓGICA MATEMÁTICA (EL MOTOR DE SINCRONIZACIÓN) ---
 function generarMatrizCarton(id) {
-    const seed = parseInt(id);
+    const seedBase = parseInt(id);
     const rangos = [[1,15],[16,30],[31,45],[46,60],[61,75]];
-    const columnas = rangos.map(r => {
+    
+    const columnas = rangos.map((r, indexCol) => {
         let n = []; for(let i=r[0]; i<=r[1]; i++) n.push(i);
-        return shuffle(n, seed).slice(0, 5);
+        // Sincronización: Cada columna usa una semilla única derivada del ID
+        return shuffleSincronizado([...n], seedBase + indexCol).slice(0, 5);
     });
+
     let m = [];
     for(let r=0; r<5; r++) {
         let fila = [];
-        for(let c=0; c<5; c++) fila.push((r===2 && c===2) ? "FREE" : columnas[c][r]);
+        for(let c=0; c<5; c++) {
+            fila.push((r===2 && c===2) ? "FREE" : columnas[c][r]);
+        }
         m.push(fila);
     }
     return m;
 }
 
-function shuffle(array, seed) {
+function shuffleSincronizado(array, seed) {
     let m = array.length, t, i;
     while (m) {
+        // Algoritmo determinista basado en el ID
         i = Math.floor(Math.abs(Math.sin(seed++)) * m--);
-        t = array[m]; array[m] = array[i]; array[i] = t;
+        t = array[m]; 
+        array[m] = array[i]; 
+        array[i] = t;
     }
     return array;
 }
 
+// --- 8. RENDERIZADO VISUAL ---
 function renderMiniatura(id, apodo, matrix, win, container) {
-    let html = `<div style="background:white; padding:15px; border-radius:15px; border:4px solid ${win?'#ffb703':'#334155'}; box-shadow:0 10px 20px rgba(0,0,0,0.2); animation: fadeIn 0.3s;">`;
-    html += `<div style="background:${win?'#ffb703':'#1d3557'}; color:${win?'#1d3557':'white'}; font-weight:900; text-align:center; padding:5px; margin:-15px -15px 10px -15px; border-radius:10px 10px 0 0; font-size:0.9rem;">${win?'🎉 BINGO: '+apodo.toUpperCase():'ID: '+id+' - '+apodo.toUpperCase()}</div>`;
-    html += `<table style="width:100%; border-collapse:collapse; text-align:center; background:#f8fafc;">`;
+    let html = `<div style="background:white; padding:15px; border-radius:15px; border:4px solid ${win?'#25d366':'#334155'}; box-shadow:0 10px 20px rgba(0,0,0,0.2);">`;
+    html += `<div style="background:${win?'#25d366':'#1d3557'}; color:white; font-weight:900; text-align:center; padding:8px; margin:-15px -15px 10px -15px; border-radius:10px 10px 0 0;">${win?'🎉 BINGO DETECTADO':'VERIFICANDO: #'+id}</div>`;
+    html += `<div style="text-align:center; margin-bottom:5px; font-weight:bold; color:#1d3557;">${apodo.toUpperCase()}</div>`;
+    html += `<table style="width:100%; border-collapse:collapse; text-align:center;">`;
     
-    html += `<tr>`;
-    ['B','I','N','G','O'].forEach(l => html += `<td style="background:#1d3557; color:white; font-size:0.8rem; font-weight:900; border:1px solid #fff;">${l}</td>`);
-    html += `</tr>`;
-
-    matrix.forEach(fila => {
+    matrix.forEach((fila, rowIndex) => {
         html += "<tr>";
-        fila.forEach(celda => {
+        fila.forEach((celda, colIndex) => {
+            const indexLineal = rowIndex * 5 + colIndex;
+            const esParteDelPatron = patronPersonalizado.includes(indexLineal);
             const hit = (celda === "FREE" || drawnNumbers.includes(celda));
-            const bg = hit ? '#ffb703' : 'transparent';
-            const color = hit ? '#1d3557' : '#64748b';
-            html += `<td style="border:1px solid #e2e8f0; padding:6px; font-size:0.9rem; font-weight:900; background:${bg}; color:${color};">${celda==='FREE'?'★':celda}</td>`;
+            
+            // Estilos de celda
+            let bg = hit ? '#ffb703' : 'transparent';
+            let border = esParteDelPatron ? '2px solid #e63946' : '1px solid #e2e8f0';
+            let color = hit ? '#1d3557' : '#94a3b8';
+            
+            html += `<td style="border:${border}; padding:6px; font-size:0.85rem; font-weight:900; background:${bg}; color:${color};">
+                        ${celda==='FREE'?'★':celda}
+                    </td>`;
         });
         html += "</tr>";
     });
@@ -246,5 +247,8 @@ function renderMiniatura(id, apodo, matrix, win, container) {
     container.innerHTML = html;
 }
 
-document.getElementById('resetBtn').onclick = () => { if(confirm("¿Reiniciar partida? Se borrarán los números cantados.")) location.reload(); };
+// Controles Adicionales
+document.getElementById('resetBtn').onclick = () => { 
+    if(confirm("¿Seguro? Se perderá el progreso de esta partida.")) location.reload(); 
+};
 document.getElementById('btnAbrirConfig').onclick = () => { modal.style.display = "flex"; };
