@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Admin - Responsive</title>
+    <link rel="stylesheet" href="ruleta.css">
+    <link rel="stylesheet" href="generar.css">
+</head>
+<body>
+
+<div class="admin-layout">
+    <div class="panel-control">
+        <h1 class="main-title">BINGO PRO ADMIN</h1>
+        
+        <div class="status-info">REGISTRADOS: <span id="countDisplay">0</span></div>
+
+        <div class="batch-box">
+            <div class="input-row">
+                <input type="number" id="inputCantidad" placeholder="Cant.">
+                <button id="btnGenerar">GENERAR LOTE</button>
+            </div>
+            <input type="text" id="buscador" class="search-box" placeholder="🔍 Buscar nombre o ID...">
+            
+            <div style="display: flex; gap: 5px; margin-top: 10px;">
+                <button onclick="exportarData()" style="flex:1; padding: 5px; font-size: 0.7rem;">💾 Guardar</button>
+                <button onclick="document.getElementById('fileInput').click()" style="flex:1; padding: 5px; font-size: 0.7rem;">📂 Abrir</button>
+                <button onclick="limpiarTodo()" style="flex:1; padding: 5px; font-size: 0.7rem; color: red;">🗑️ Borrar</button>
+              <button class="btn btn-nav" onclick="window.location.href='ver_todo.html'">Ver Todos</button>
+                <input type="file" id="fileInput" style="display:none" onchange="importarData(event)">
+            </div>
+        </div>
+
+        <div class="scroll-lista">
+            <div class="grid-items" id="contenedorLista"></div>
+        </div>
+
+        <a href="ruleta.html" style="text-decoration: none; background: var(--accent-red); color: white; padding: 15px; text-align: center; border-radius: 10px; font-weight: 900;">IR AL JUEGO →</a>
+    </div>
+
+    <div class="panel-visualizacion">
+        <div id="visorDetallado" style="display: none; width: 100%; flex-direction: column; align-items: center;">
+            <div id="nombreVisor" style="background: var(--accent-gold); color: var(--primary-blue); padding: 8px 20px; border-radius: 20px; font-weight: 900; margin-bottom: 15px;">JUGADOR</div>
+            <div class="big-carton-render">
+                <table class="big-table" id="tablaVisor"></table>
+                <div style="margin-top: 10px; color: #888; font-size: 0.8rem; text-align: center;" id="idVisor">ID #0</div>
+            </div>
+        </div>
+        <div id="placeholderVisor" style="color: #94a3b8; text-align: center;">
+            <h3>VISTA PREVIA</h3>
+            <p>Toca un cartón para ver sus números</p>
+        </div>
+    </div>
+</div>
+
+<div id="seleccion-maestra" style="
+    position: fixed; 
+    bottom: 20px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    width: 95%; 
+    max-width: 500px; 
+    background: #1d3557; 
+    border: 2px solid #25d366; 
+    border-radius: 12px; 
+    padding: 10px; 
+    z-index: 10000; 
+    box-shadow: 0 5px 25px rgba(0,0,0,0.5); 
+    display: none; 
+    align-items: center; 
+    gap: 10px;
+    box-sizing: border-box;
+">
+    <div style="color: white; font-size: 0.8rem; font-weight: bold; flex-shrink: 0;">
+        <span id="countSeleccion" style="background: #25d366; padding: 2px 8px; border-radius: 6px; color: #1d3557;">0</span>/4
+    </div>
+    
+    <div id="listaSeleccionados" style="
+        display: flex; 
+        gap: 5px; 
+        flex-grow: 1; 
+        overflow-x: auto; 
+        scrollbar-width: none; /* Oculta scroll en Firefox */
+        -ms-overflow-style: none; /* Oculta scroll en IE */
+    ">
+        </div>
+
+    <button onclick="generarLinkMultiple()" style="
+        background: #25d366; 
+        color: white; 
+        border: none; 
+        padding: 8px 12px; 
+        border-radius: 8px; 
+        font-weight: 900; 
+        cursor: pointer; 
+        white-space: nowrap;
+        flex-shrink: 0;
+        font-size: 0.75rem;
+    ">
+        🔗 LINK
+    </button>
+    
+    <button onclick="cancelarSeleccion()" style="
+        background: transparent; 
+        color: #ff4d4d; 
+        border: none; 
+        font-size: 1.5rem; 
+        cursor: pointer; 
+        flex-shrink: 0;
+        line-height: 1;
+    ">×</button>
+</div>
+<script src="generar.js"></script>
+</body>
+</html>

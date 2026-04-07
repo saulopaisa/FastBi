@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo 75 Pro - Panel de Control</title>
+    <link rel="stylesheet" href="ruleta.css">
+    <style>
+        /* Estilos adicionales para las mejoras del Radar */
+        .radar-header-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        #contadorCartonesReal {
+            background: var(--accent-gold);
+            color: var(--primary-blue);
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-weight: 900;
+            font-size: 0.7rem;
+            box-shadow: 0 0 10px rgba(255, 183, 3, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        /* Efecto hover general para botones que no lo tengan en el CSS externo */
+        button:hover, .btn-check:hover, .btn-confirmar:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            cursor: pointer;
+        }
+
+        .highlight-id:hover {
+            background: var(--accent-gold) !important;
+            color: var(--primary-blue) !important;
+            border-radius: 4px;
+        }
+
+        .no-arrows::-webkit-inner-spin-button, 
+        .no-arrows::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="layout-container">
+        <aside class="panel-izquierdo">
+            <h1 class="main-title">BINGO 75</h1>
+            
+            <div class="bolo-display">
+                <div id="currentLetter">-</div>
+                <div id="currentNumber">--</div>
+            </div>
+
+            <div class="recent-box">
+                <small>ÚLTIMOS 5:</small>
+                <div id="recentList" class="recent-list"></div>
+            </div>
+
+            <div class="controls">
+                <button id="drawBtn" disabled>SORTEAR PRÓXIMO</button>
+                <div class="stats">TOTAL CANTADOS: <b id="count">0</b>/75</div>
+                
+                <div id="radarGanadores" class="radar-box">
+                    <div class="radar-header-box">
+                        <small>ALERTAS DE BINGO:</small>
+                        <div id="contadorCartonesReal">JUGANDO: 0</div>
+                    </div>
+                    <div id="textoGanadores" class="texto-ganadores">
+                        Inicia el juego para monitorear...
+                    </div>
+                </div>
+
+                <button id="resetBtn" class="secondary" style="margin-top: 10px;">Reiniciar Todo</button>
+
+                <div class="admin-verifier-box">
+                    <p id="labelPatron" class="verifier-label">MODO: MANUAL</p>
+                    <div class="search-group">
+                        <input type="number" id="idABuscar" class="no-arrows" placeholder="ID #">
+                        <button id="btnVerificar" class="btn-check">REVISAR</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="areaVerificacion" class="mini-carton-container"></div>
+        </aside>
+
+        <main class="panel-derecho">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="margin: 0;">TABLERO DE SEGUIMIENTO GENERAL</h3>
+                <a href="generar.html" style="color: var(--accent-gold); font-weight: bold; text-decoration: none; font-size: 0.8rem; border: 1px solid var(--accent-gold); padding: 5px 10px; border-radius: 5px;">+ GESTIONAR CARTONES</a>
+            </div>
+            <div id="historyGrid" class="history-grid"></div>
+        </main>
+    </div>
+
+    <button id="btnAbrirConfig" class="btn-config-flotante">⚙️ Cambiar Patrón</button>
+
+    <div id="modalPatron" class="modal-overlay">
+        <div class="modal-content">
+            <h2>CONFIGURACIÓN DE RONDA</h2>
+            <p>Selecciona una jugada rápida o dibuja tu patrón:</p>
+            
+            <div class="presets-container">
+                <button onclick="aplicarPreset('lleno')">Cartón Lleno</button>
+                <button onclick="aplicarPreset('cuadro')">Cuadro Grande</button>
+                <button onclick="aplicarPreset('x')">Cruz en X</button>
+                <button onclick="aplicarPreset('s')">Forma en S</button>
+            </div>
+
+            <div class="selection-grid" id="gridSeleccion"></div>
+            
+            <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+                <button id="btnConfirmarPatron" class="btn-confirmar">CONFIRMAR Y EMPEZAR</button>
+                <button onclick="limpiarSeleccion()" class="secondary" style="border: 1px solid white !important; color: white; background: transparent;">Limpiar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="ruleta.js"></script>
+
+</body>
+</html>

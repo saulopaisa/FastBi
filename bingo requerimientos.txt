@@ -1,0 +1,24 @@
+Crear cartones diferentes Max 300 cartones - listo
+
+crear ruleta - listo
+
+mantener los cartones guardados - listo
+
+guardar cambios aun refrescando la pagina - listo
+
+crear estructura para ganar Modificable (cuadrito, carton lleno, etc)
+
+notificar cuando un carton gane listo
+
+llevar un registro de las jugadas de hasta 10 cantadas.
+
+guardar progreso en mi pc, pero enviar a la gente solo un carton en html 
+para que lo rellene algo mas robusto donde el jugador pueda tener
+hasta 4 cartones simultaneamente por partida.
+
+
+el tablero que ocupe el los 75 numeros al lado derecho listo
+
+ultimos 5 numeros en la ruleta por si alguien se quedo
+
+descargar cartones en pdf

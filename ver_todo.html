@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Archivo de Cartones - Bingo Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root { --primary: #1d3557; --accent: #e63946; --bg: #f1f5f9; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); }
+        
+        /* Barra de herramientas */
+        .toolbar { 
+            background: var(--primary); color: white; padding: 15px; 
+            display: flex; gap: 15px; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2); align-items: center;
+        }
+        
+        .buscador { flex: 1; padding: 10px; border-radius: 5px; border: none; }
+
+        /* Grid de selección visual */
+        .grid-seleccion { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+            gap: 15px; padding: 20px; 
+        }
+        
+        .card-sel { 
+            background: white; padding: 12px; border-radius: 8px; 
+            border: 2px solid #ccc; cursor: pointer; transition: 0.2s;
+        }
+        .card-sel.active { border-color: var(--accent); background: #ffebee; transform: scale(1.02); }
+        
+        .tablita-previa { width: 100%; border-collapse: collapse; font-size: 0.7rem; text-align: center; margin-top: 8px; }
+        .tablita-previa td { border: 1px solid #ddd; height: 22px; font-weight: bold; }
+        .tablita-previa th { background: #eee; }
+
+        /* Área oculta para generar el PDF */
+        #temp-pdf-area { 
+            background: white; 
+            width: 210mm; 
+            display: none; /* Se activa solo durante la generación */
+        }
+
+        .btn { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="toolbar">
+        <button class="btn btn-nav" onclick="window.location.href='ruleta.html'">🎡 RULETA</button>
+        <button class="btn btn-gen" onclick="window.location.href='generar.html'">🔄 NUEVOS</button>
+        <input type="text" id="buscador" class="buscador" placeholder="🔍 Buscar por nombre o ID..." oninput="filtrar()">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <span>Seleccionados: <b id="txt-count">0</b></span>
+            <button class="btn" onclick="prepararPDF(false)" style="background:var(--accent); color:white;">📥 PDF SELECCIÓN</button>
+            <button class="btn" onclick="prepararPDF(true)" style="background:#28a745; color:white;">🖨️ TODO</button>
+        </div>
+    </div>
+
+    <div id="grid-cartones" class="grid-seleccion"></div>
+
+    <div id="temp-pdf-area"></div>
+
+<script>
+    let todosLosCartones = [];
+    let seleccionados = new Set();
+
+    window.onload = () => {
+        const data = localStorage.getItem('bingo_cartones');
+        todosLosCartones = data ? JSON.parse(data) : [];
+        renderizarGrid(todosLosCartones);
+    };
+
+    function renderizarGrid(lista) {
+        const grid = document.getElementById('grid-cartones');
+        grid.innerHTML = lista.length === 0 ? "<h3>No hay cartones guardados.</h3>" : "";
+        
+        lista.forEach(c => {
+            const matriz = generarMatrizFija(c.id);
+            const card = document.createElement('div');
+            card.className = `card-sel ${seleccionados.has(c.id) ? 'active' : ''}`;
+            card.id = `card-${c.id}`;
+            
+            card.onclick = () => {
+                if(seleccionados.has(c.id)) {
+                    seleccionados.delete(c.id);
+                    card.classList.remove('active');
+                } else {
+                    seleccionados.add(c.id);
+                    card.classList.add('active');
+                }
+                document.getElementById('txt-count').innerText = seleccionados.size;
+            };
+
+            let html = `<b>${c.apodo.toUpperCase()}</b> <small>(#${c.id})</small>`;
+            html += `<table class="tablita-previa"><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>`;
+            matriz.forEach(f => {
+                html += "<tr>" + f.map(v => `<td>${v==="FREE"?"★":v}</td>`).join('') + "</tr>";
+            });
+            html += "</table>";
+            card.innerHTML = html;
+            grid.appendChild(card);
+        });
+    }
+
+    function filtrar() {
+        const busqueda = document.getElementById('buscador').value.toLowerCase();
+        const filtrados = todosLosCartones.filter(c => 
+            c.apodo.toLowerCase().includes(busqueda) || c.id.toString().includes(busqueda)
+        );
+        renderizarGrid(filtrados);
+    }
+
+    async function prepararPDF(todo) {
+        const lista = todo ? todosLosCartones : todosLosCartones.filter(c => seleccionados.has(c.id));
+        if(lista.length === 0) return alert("Por favor, selecciona al menos un cartón.");
+
+        const area = document.getElementById('temp-pdf-area');
+        area.style.display = "block"; 
+        area.innerHTML = "";
+
+        lista.forEach((c) => {
+            const matriz = generarMatrizFija(c.id);
+            const item = document.createElement('div');
+            
+            // ESTILO PARA EVITAR CORTES: break-inside: avoid
+            item.style.cssText = `
+                page-break-inside: avoid;
+                break-inside: avoid;
+                padding: 15mm;
+                background: white;
+                border-bottom: 1px dashed #ccc;
+            `;
+
+            let html = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-family: Arial; border-bottom: 2px solid black;">
+                    <b style="font-size:18px;">${c.apodo.toUpperCase()}</b>
+                    <b style="font-size:18px;">CARTÓN #${c.id}</b>
+                </div>
+                <table style="width:100%; border-collapse:collapse; text-align:center; font-family: Arial; border: 2px solid black;">
+                    <tr style="background: black; color: white;">
+                        <th style="border: 1px solid black; padding: 5px;">B</th>
+                        <th style="border: 1px solid black; padding: 5px;">I</th>
+                        <th style="border: 1px solid black; padding: 5px;">N</th>
+                        <th style="border: 1px solid black; padding: 5px;">G</th>
+                        <th style="border: 1px solid black; padding: 5px;">O</th>
+                    </tr>`;
+            
+            matriz.forEach(f => {
+                html += "<tr>" + f.map(v => `
+                    <td style="border:1px solid black; height:45px; font-size:25px; font-weight:bold;">
+                        ${v==="FREE"?"★":v}
+                    </td>`).join('') + "</tr>";
+            });
+            html += "</table>";
+            item.innerHTML = html;
+            area.appendChild(item);
+        });
+
+        const opciones = {
+            margin: [10, 5, 10, 5],
+            filename: `Bingo_Pro_${new Date().getTime()}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+            jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+        };
+
+        // Pequeña espera para asegurar renderizado
+        setTimeout(() => {
+            html2pdf().from(area).set(opciones).save().then(() => {
+                area.style.display = "none";
+                area.innerHTML = "";
+            });
+        }, 700);
+    }
+
+    function generarMatrizFija(id) {
+        let seed = parseInt(id);
+        const rangos = [[1,15],[16,30],[31,45],[46,60],[61,75]];
+        const columnas = rangos.map(r => {
+            let n = []; for(let i=r[0]; i<=r[1]; i++) n.push(i);
+            let m = n.length, t, i;
+            while (m) {
+                i = Math.floor(Math.abs(Math.sin(seed++)) * m--);
+                t = n[m]; n[m] = n[i]; n[i] = t;
+            }
+            return n.slice(0, 5).sort((a,b) => a-b);
+        });
+        let filas = [];
+        for(let f=0; f<5; f++){
+            let fila = [];
+            for(let c=0; c<5; c++) fila.push((f===2 && c===2) ? "FREE" : columnas[c][f]);
+            filas.push(fila);
+        }
+        return filas;
+    }
+</script>
+</body>
+</html>

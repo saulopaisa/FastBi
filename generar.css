@@ -1,0 +1,145 @@
+
+        :root {
+            --panel-width: 450px;
+        }
+
+        body { 
+            margin: 0; 
+            background: var(--navy-dark); 
+            font-family: sans-serif; 
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-layout {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* --- PANEL IZQUIERDO (CONTROL) --- */
+        .panel-control {
+            flex: 1;
+            background: var(--primary-blue);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            border-right: 4px solid var(--accent-red);
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .main-title { 
+            font-size: 1.4rem; 
+            margin: 0 0 10px 0; 
+            color: white; 
+            text-align: center;
+        }
+
+        .status-info {
+            background: var(--accent-gold);
+            color: var(--primary-blue);
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 900;
+            margin-bottom: 15px;
+            font-size: 0.8rem;
+        }
+
+        /* --- FORMULARIOS Y BUSQUEDA --- */
+        .batch-box {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .input-row { display: flex; gap: 8px; margin-bottom: 10px; }
+        .input-row input { flex: 1; padding: 10px; border-radius: 6px; border: none; }
+        .input-row button { flex: 2; cursor: pointer; border-radius: 6px; border: none; font-weight: 900; background: var(--accent-gold); }
+
+        .search-box {
+            width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--accent-gold);
+            background: rgba(255,255,255,0.1); color: white; box-sizing: border-box;
+        }
+
+        /* --- LISTA SCROLLABLE --- */
+        .scroll-lista {
+            flex: 1;
+            background: rgba(0,0,0,0.4);
+            border-radius: 12px;
+            padding: 15px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .grid-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .id-card {
+            background: white; padding: 10px; border-radius: 8px;
+            border-bottom: 4px solid var(--accent-gold); cursor: pointer;
+        }
+        .id-card.selected { border: 3px solid #25d366; background: #f0fff4; }
+
+        /* --- PANEL DERECHO (VISUALIZACIÓN) --- */
+        .panel-visualizacion {
+            flex: 1;
+            background: #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .big-carton-render {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            border: 5px solid var(--primary-blue);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .big-table { width: 100%; border-collapse: collapse; }
+        .big-table td { 
+            border: 1px solid #eee; text-align: center; padding: 12px 0; 
+            font-size: 1.2rem; font-weight: 900; color: var(--primary-blue);
+        }
+
+        /* --- BARRA WHATSAPP FLOTANTE --- */
+        #seleccion-maestra {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 600px; background: #1d3557; border: 2px solid #25d366;
+            border-radius: 15px; padding: 12px; z-index: 1000; box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+            display: none; align-items: center; justify-content: space-between; gap: 10px;
+        }
+
+        /* --- MEDIA QUERIES (EL CORAZÓN DEL RESPONSIVE) --- */
+        @media (max-width: 850px) {
+            .admin-layout { flex-direction: column; overflow-y: auto; height: auto; }
+            .panel-control { height: auto; min-height: 100vh; border-right: none; border-bottom: 4px solid var(--accent-red); }
+            .panel-visualizacion { height: auto; min-height: 80vh; padding: 40px 20px; }
+            
+            /* En móvil, que el panel de control ocupe todo el ancho */
+            .panel-control, .panel-visualizacion { flex: none; width: 100%; }
+
+            /* Ajustar barra flotante para que no tape el botón inferior */
+            #seleccion-maestra { bottom: 80px; }
+        }
+
+        @media (max-width: 480px) {
+            .grid-items { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+            .main-title { font-size: 1.1rem; }
+            .big-table td { font-size: 1rem; padding: 8px 0; }
+        }
+    

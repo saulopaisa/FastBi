@@ -1,0 +1,101 @@
+:root {
+    --bg-color: #121212;
+    --card-bg: #ffffff;
+    --header-blue: #1d3557;
+    --accent-red: #e63946;
+    --mark-color: #ffb703;
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: var(--bg-color);
+    margin: 0;
+    color: white;
+}
+
+.game-header {
+    background: var(--header-blue);
+    padding: 15px;
+    text-align: center;
+    border-bottom: 4px solid var(--accent-red);
+}
+
+.setup-panel input {
+    padding: 8px;
+    width: 100px;
+    border-radius: 5px;
+    border: none;
+    margin: 5px;
+}
+
+#btnGenerar {
+    padding: 8px 20px;
+    background: var(--accent-red);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* CONTENEDOR 2x2 */
+.grid-multicarton {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 columnas en PC */
+    gap: 20px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ESTILO DEL CARTÓN INDIVIDUAL */
+.bingo-card {
+    background: var(--card-bg);
+    color: #333;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+.card-id-label {
+    text-align: center;
+    font-weight: bold;
+    color: var(--header-blue);
+    margin-bottom: 5px;
+}
+
+.bingo-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.bingo-table th {
+    background: var(--header-blue);
+    color: white;
+    font-size: 1.2rem;
+    padding: 5px;
+}
+
+.bingo-table td {
+    border: 1px solid #ddd;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    height: 40px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.bingo-table td.marked {
+    background-color: var(--mark-color);
+    color: black;
+}
+
+.free-space { background: #eee !important; font-size: 0.7rem !important; }
+
+/* RESPONSIVE: 1 columna en celulares */
+@media (max-width: 800px) {
+    .grid-multicarton {
+        grid-template-columns: 1fr;
+    }
+}
