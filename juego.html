@@ -157,87 +157,110 @@
         </div>
 
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const dataEncoded = params.get('p');
-        const container = document.getElementById('cartones-container');
+      
+    const params = new URLSearchParams(window.location.search);
+    const dataEncoded = params.get('p');
+    const container = document.getElementById('cartones-container');
 
-        if (!dataEncoded) {
-            container.innerHTML = `<div class="error-box"><h3>⚠️ Enlace no válido</h3><p>Pide un nuevo link a tu administrador.</p></div>`;
-        } else {
-            try {
-                const jsonStr = atob(dataEncoded);
-                const listaCartones = JSON.parse(jsonStr);
+    if (!dataEncoded) {
+        container.innerHTML = `<div class="error-box"><h3>⚠️ Enlace no válido</h3><p>Pide un nuevo link a tu administrador.</p></div>`;
+    } else {
+        try {
+            // Decodificamos el pack de cartones
+            const listaCartones = JSON.parse(atob(dataEncoded));
 
-                listaCartones.forEach(obj => {
-                    const matriz = generarMatrizFija(obj.id);
-                    renderizarCarton(obj.id, obj.nombre, matriz);
-                });
-            } catch (e) {
-                container.innerHTML = `<div class="error-box"><h3>⚠️ Error de lectura</h3><p>El enlace es incorrecto.</p></div>`;
-            }
+            listaCartones.forEach(obj => {
+                // Sincronizamos la generación con el ID del admin
+                const matriz = generarMatrizSincronizada(obj.id);
+                renderizarCarton(obj.id, obj.nombre, matriz);
+            });
+        } catch (e) {
+            console.error(e);
+            container.innerHTML = `<div class="error-box"><h3>⚠️ Error de lectura</h3><p>El enlace es incorrecto.</p></div>`;
         }
+    }
 
-        function generarMatrizFija(id) {
-            let seed = parseInt(id);
-            const rangos = [[1,15],[16,30],[31,45],[46,60],[61,75]];
+    // ESTA FUNCIÓN ES EL ESPEJO DEL ADMINISTRADOR
+    function generarMatrizSincronizada(id) {
+        const seedBase = parseInt(id);
+        const rangos = [[1,15],[16,30],[31,45],[46,60],[61,75]];
+        
+        // 1. Generamos las columnas exactamente igual
+        const columnas = rangos.map((r, indexCol) => {
+            let n = []; 
+            for(let i=r[0]; i<=r[1]; i++) n.push(i);
             
-            const columnas = rangos.map(r => {
-                let n = []; 
-                for(let i=r[0]; i<=r[1]; i++) n.push(i);
-                
-                // Shuffle determinista
-                let m = n.length, t, i;
-                while (m) {
-                    i = Math.floor(Math.abs(Math.sin(seed++)) * m--);
-                    t = n[m]; n[m] = n[i]; n[i] = t;
-                }
-                return n.slice(0, 5).sort((a,b) => a-b);
-            });
+            // Mezcla determinista CON el índice de columna (Crucial)
+            return shuffleDeterminista([...n], seedBase + indexCol).slice(0, 5);
+        });
 
-            let filas = [];
-            for(let f=0; f<5; f++) {
-                let fila = [];
-                for(let c=0; c<5; c++) {
-                    fila.push((f === 2 && c === 2) ? "FREE" : columnas[c][f]);
-                }
-                filas.push(fila);
+        // 2. Construimos las filas para la tabla
+        let matrizFilas = [];
+        for(let f=0; f<5; f++) {
+            let fila = [];
+            for(let c=0; c<5; c++) {
+                // Central es FREE, lo demás viene de las columnas
+                fila.push((f === 2 && c === 2) ? "FREE" : columnas[c][f]);
             }
-            return filas;
+            matrizFilas.push(fila);
         }
+        return matrizFilas;
+    }
 
-        function renderizarCarton(id, nombre, matriz) {
-            const cardDiv = document.createElement('div');
-            cardDiv.className = 'carton-card';
+    // Algoritmo de barajado idéntico al admin
+    function shuffleDeterminista(array, seed) {
+        let m = array.length, t, i;
+        while (m) {
+            i = Math.floor(Math.abs(Math.sin(seed++)) * m--);
+            t = array[m]; 
+            array[m] = array[i]; 
+            array[i] = t;
+        }
+        return array;
+    }
 
-            let tableHTML = `
-                <div class="info-jugador">
-                    <span class="nombre">${nombre.toUpperCase()}</span>
-                    <span class="id-txt">№ ${id.toString().padStart(3, '0')}</span>
-                </div>
-                <table>
-                    <tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>
-            `;
+    function renderizarCarton(id, nombre, matriz) {
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'carton-card';
 
-            matriz.forEach(fila => {
-                tableHTML += `<tr>`;
-                fila.forEach(celda => {
-                    if (celda === "FREE") {
-                        tableHTML += `<td class="free marcada">★</td>`;
-                    } else {
-                        tableHTML += `<td onclick="marcarCasilla(this)">${celda}</td>`;
-                    }
-                });
-                tableHTML += `</tr>`;
+        let tableHTML = `
+            <div class="info-jugador">
+                <span class="nombre">${nombre.toUpperCase()}</span>
+                <span class="id-txt">№ ${id.toString().padStart(3, '0')}</span>
+            </div>
+            <table>
+                <tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>
+        `;
+
+        matriz.forEach((fila, fIndex) => {
+            tableHTML += `<tr>`;
+            fila.forEach((celda, cIndex) => {
+                if (celda === "FREE") {
+                    tableHTML += `<td class="free marcada">★</td>`;
+                } else {
+                    // Recuperamos marca del localStorage para que no se borre al refrescar
+                    const isMarked = localStorage.getItem(`mark_${id}_${celda}`) ? 'marcada' : '';
+                    tableHTML += `<td class="${isMarked}" onclick="marcarCasilla(this, '${id}', '${celda}')">${celda}</td>`;
+                }
             });
+            tableHTML += `</tr>`;
+        });
 
-            tableHTML += `</table>`;
-            cardDiv.innerHTML = tableHTML;
-            container.appendChild(cardDiv);
-        }
+        tableHTML += `</table>`;
+        cardDiv.innerHTML = tableHTML;
+        container.appendChild(cardDiv);
+    }
 
-        function marcarCasilla(elemento) {
-            elemento.classList.toggle('marcada');
+    function marcarCasilla(elemento, id, numero) {
+        elemento.classList.toggle('marcada');
+        if (elemento.classList.contains('marcada')) {
+            localStorage.setItem(`mark_${id}_${numero}`, "true");
+            if (navigator.vibrate) navigator.vibrate(40);
+        } else {
+            localStorage.removeItem(`mark_${id}_${numero}`);
         }
+    }
+
     </script>
 </body>
 </html>
