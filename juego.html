@@ -6,79 +6,80 @@
     <title>Bingo Pro - Juego en Vivo</title>
     <link rel="stylesheet" href="juego.css">
     <style>
-        /* --- 1. BARRA SUPERIOR ULTRA COMPACTA --- */
+        /* --- ESTILOS DE LA BARRA Y FONDO --- */
+        body { 
+            margin: 0; background-color: #0f172a !important; 
+            color: white; font-family: sans-serif; padding-top: 60px; 
+        }
+
         .historial-fijo {
             position: fixed; top: 0; left: 0; width: 100%;
             background: #1d3557; display: flex; align-items: center;
-            gap: 5px; padding: 5px 8px; z-index: 10000;
+            gap: 8px; padding: 5px 10px; z-index: 10000;
             border-bottom: 2px solid #ffb703; overflow-x: auto;
-            height: 45px; scrollbar-width: none;
+            height: 50px; scrollbar-width: none;
         }
         .historial-fijo::-webkit-scrollbar { display: none; }
 
         .bola-historial {
-            background: #e63946; color: white; min-width: 34px; height: 34px;
+            background: #e63946; color: white; min-width: 38px; height: 38px;
             border-radius: 50%; display: flex; flex-direction: column;
             align-items: center; justify-content: center; font-weight: 900;
-            border: 1px solid white; flex-shrink: 0; font-size: 0.75rem;
+            border: 1px solid white; flex-shrink: 0; font-size: 0.8rem;
         }
 
-        /* --- 2. GUÍA DE FORMA DE GANAR --- */
+        /* --- CONTENEDOR DE CARTONES (Ancho original) --- */
+        .cartones-grid { 
+            display: flex; flex-wrap: wrap; justify-content: center; 
+            gap: 20px; padding: 15px; width: 100%; box-sizing: border-box;
+        }
+
+        /* --- GUÍA DE PREMIO --- */
         .contenedor-patron {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 6px; padding: 8px;
-            margin: 5px auto; width: fit-content;
+            background: rgba(255, 255, 255, 0.05); border-radius: 8px; 
+            padding: 8px; margin: 5px auto; width: fit-content;
             text-align: center; border: 1px solid #334155;
         }
         .grid-patron {
-            display: grid; grid-template-columns: repeat(5, 10px);
-            gap: 2px; justify-content: center; margin-top: 4px;
+            display: grid; grid-template-columns: repeat(5, 12px);
+            gap: 3px; justify-content: center; margin-top: 4px;
         }
-        .celda-patron { width: 10px; height: 10px; border-radius: 1px; background: #1e293b; }
-        .celda-patron.activa { background: #ffb703; box-shadow: 0 0 4px #ffb703; }
+        .celda-patron { width: 12px; height: 12px; border-radius: 2px; background: #1e293b; }
+        .celda-patron.activa { background: #ffb703; box-shadow: 0 0 5px #ffb703; }
 
-        /* --- 3. AJUSTES DE PANTALLA --- */
-        body { 
-            margin: 0; background-color: #0f172a !important; 
-            color: white; font-family: sans-serif; padding-top: 55px; 
-        }
-
-        /* Eliminamos las restricciones de ancho para que el cartón sea como antes */
-        .cartones-grid { 
-            display: flex; flex-wrap: wrap; justify-content: center; 
-            gap: 20px; padding: 10px; width: 100%; 
+        /* --- ELEMENTOS INVISIBLES PARA JUEGO.JS --- */
+        #panelConfigAdmin, .setup-panel { 
+            display: none !important; 
         }
 
-        /* Mantenemos el panel de carga presente pero invisible para que juego.js no falle */
-        .setup-panel { position: absolute; visibility: hidden; pointer-events: none; }
-
-        .logo-bingo { color: #ffb703; text-align: center; font-size: 1.1rem; margin: 10px 0 0 0; }
-        .aviso-reto { text-align: center; color: #ef4444; font-size: 0.65rem; font-weight: bold; margin-bottom: 10px; }
+        .logo-bingo { color: #ffb703; text-align: center; font-size: 1.3rem; margin: 10px 0 0 0; }
+        .aviso-reto { text-align: center; color: #ef4444; font-size: 0.7rem; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="barraHistorial" class="historial-fijo">
-        <div id="msgEspera" style="color: #64748b; font-size: 0.6rem; width:100%; text-align:center;">Esperando inicio...</div>
+        <div id="msgEspera" style="color: #64748b; font-size: 0.7rem; width:100%; text-align:center;">Esperando números...</div>
     </div>
 
     <div class="setup-panel">
-        <input type="number" id="id1"> <input type="number" id="id2">
-        <input type="number" id="id3"> <input type="number" id="id4">
-        <button id="btnGenerar">CARGAR</button>
+        <input type="text" id="id1">
+        <input type="text" id="id2">
+        <input type="text" id="id3">
+        <input type="text" id="id4">
+        <button id="btnGenerar">GENERAR</button>
     </div>
 
     <div class="contenedor-patron">
-        <div style="color: #94a3b8; font-size: 0.6rem; font-weight: bold; text-transform: uppercase;">Para Ganar:</div>
+        <div style="color: #94a3b8; font-size: 0.6rem; font-weight: bold;">FORMA DE GANAR:</div>
         <div id="gridPatron" class="grid-patron"></div>
     </div>
 
     <div class="juego-container">
         <h1 class="logo-bingo">BINGO DIGITAL</h1>
-        <p class="aviso-reto">SIN AYUDA VISUAL - ¡ATENTO A TUS NÚMEROS!</p>
+        <p class="aviso-reto">SIN AYUDA VISUAL - ¡MARCA TUS NÚMEROS!</p>
 
-        <div id="contenedorCartones" class="cartones-grid">
-            </div>
+        <div id="contenedorCartones" class="cartones-grid"></div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -100,58 +101,71 @@
         const db = firebase.database();
         let historialLocal = [];
 
-        // ESCUCHAR FIREBASE (NÚMEROS Y REINICIO)
+        // ESCUCHAR FIREBASE
         db.ref('partidaActual').on('value', (snapshot) => {
             const data = snapshot.val();
-            
-            // Lógica de Reinicio de Partida
             if (data && data.status === "reiniciado") {
-                location.reload(); // Recarga la página para limpiar todo
+                localStorage.clear(); // Limpiamos marcas
+                location.reload();    // Reiniciamos todo
                 return;
             }
-
             if (data && data.numero) {
-                actualizarHistorialSuperior(data.letra, data.numero);
-                // NOTA: resaltEnCarton se ha eliminado por completo.
+                actualizarHistorial(data.letra, data.numero);
             }
         });
 
-        // ESCUCHAR FORMA DE GANAR (PATRÓN)
+        // ESCUCHAR PATRÓN
         db.ref('configuracion/patron').on('value', (snapshot) => {
             const patron = snapshot.val();
             const grid = document.getElementById('gridPatron');
             grid.innerHTML = '';
             const p = patron || Array(25).fill(false);
-            p.forEach((activo) => {
-                const celda = document.createElement('div');
-                celda.className = `celda-patron ${activo ? 'activa' : ''}`;
-                grid.appendChild(celda);
+            p.forEach(act => {
+                const c = document.createElement('div');
+                c.className = `celda-patron ${act ? 'activa' : ''}`;
+                grid.appendChild(c);
             });
         });
 
-        function actualizarHistorialSuperior(letra, numero) {
-            if (historialLocal.includes(numero)) return;
-            historialLocal.unshift(numero);
+        function actualizarHistorial(l, n) {
+            if (historialLocal.includes(n)) return;
+            historialLocal.unshift(n);
             const barra = document.getElementById('barraHistorial');
             if (historialLocal.length === 1) barra.innerHTML = '';
-            
             const bola = document.createElement('div');
             bola.className = 'bola-historial';
-            bola.innerHTML = `<small>${letra}</small><span>${numero}</span>`;
+            bola.innerHTML = `<small>${l}</small><span>${n}</span>`;
             barra.prepend(bola);
-            barra.scrollLeft = 0;
         }
 
-        // AUTO-DETECCIÓN DEL LINK (Para cargar el cartón automáticamente)
-        window.addEventListener('load', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const p = urlParams.get('p');
-            if (p) {
-                // Si el link trae el ID, lo cargamos silenciosamente
-                document.getElementById('id1').value = p; 
-                document.getElementById('btnGenerar').click();
+        // --- DECODIFICADOR DEL LINK ---
+        function cargarCartonesDesdeLink() {
+            const params = new URLSearchParams(window.location.search);
+            const p = params.get('p');
+            if (!p) return;
+
+            try {
+                // Intentamos decodificar el Base64 (ej: W3siaWQiOiIyIn1d -> [{"id":"2"}])
+                const decoded = JSON.parse(atob(p));
+                if (Array.isArray(decoded)) {
+                    decoded.forEach((item, index) => {
+                        if (index < 4) {
+                            document.getElementById(`id${index + 1}`).value = item.id;
+                        }
+                    });
+                } else if (decoded.id) {
+                    document.getElementById('id1').value = decoded.id;
+                }
+            } catch (e) {
+                // Si no es Base64, asumimos que es un ID directo
+                document.getElementById('id1').value = p;
             }
-        });
+            
+            // Forzamos el clic para que juego.js dibuje
+            document.getElementById('btnGenerar').click();
+        }
+
+        window.onload = cargarCartonesDesdeLink;
     </script>
 
     <script src="juego.js"></script>
