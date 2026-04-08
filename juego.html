@@ -6,77 +6,79 @@
     <title>Bingo Pro - Juego en Vivo</title>
     <link rel="stylesheet" href="juego.css">
     <style>
-        /* --- 1. BARRA SUPERIOR DISCRETA --- */
+        /* --- 1. BARRA SUPERIOR ULTRA COMPACTA --- */
         .historial-fijo {
             position: fixed; top: 0; left: 0; width: 100%;
             background: #1d3557; display: flex; align-items: center;
-            gap: 6px; padding: 5px 10px; z-index: 10000;
+            gap: 5px; padding: 5px 8px; z-index: 10000;
             border-bottom: 2px solid #ffb703; overflow-x: auto;
-            height: 50px; scrollbar-width: none;
+            height: 45px; scrollbar-width: none;
         }
         .historial-fijo::-webkit-scrollbar { display: none; }
 
         .bola-historial {
-            background: #e63946; color: white; min-width: 38px; height: 38px;
+            background: #e63946; color: white; min-width: 34px; height: 34px;
             border-radius: 50%; display: flex; flex-direction: column;
             align-items: center; justify-content: center; font-weight: 900;
-            border: 1px solid white; flex-shrink: 0; font-size: 0.8rem;
+            border: 1px solid white; flex-shrink: 0; font-size: 0.75rem;
         }
 
-        /* --- 2. MINI-MAPA DEL PATRÓN (FORMA DE GANAR) --- */
+        /* --- 2. GUÍA DE FORMA DE GANAR --- */
         .contenedor-patron {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px; padding: 10px;
-            margin: 10px auto; width: fit-content;
-            text-align: center; border: 1px solid #475569;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px; padding: 8px;
+            margin: 5px auto; width: fit-content;
+            text-align: center; border: 1px solid #334155;
         }
         .grid-patron {
-            display: grid; grid-template-columns: repeat(5, 12px);
-            gap: 3px; justify-content: center; margin-top: 5px;
+            display: grid; grid-template-columns: repeat(5, 10px);
+            gap: 2px; justify-content: center; margin-top: 4px;
         }
-        .celda-patron {
-            width: 12px; height: 12px; border-radius: 2px; background: #334155;
-        }
-        .celda-patron.activa { background: #ffb703; box-shadow: 0 0 5px #ffb703; }
+        .celda-patron { width: 10px; height: 10px; border-radius: 1px; background: #1e293b; }
+        .celda-patron.activa { background: #ffb703; box-shadow: 0 0 4px #ffb703; }
 
-        /* --- 3. ESTILOS GENERALES --- */
+        /* --- 3. AJUSTES DE PANTALLA --- */
         body { 
             margin: 0; background-color: #0f172a !important; 
-            color: white; font-family: sans-serif; padding-top: 60px; 
+            color: white; font-family: sans-serif; padding-top: 55px; 
         }
 
-        .cartones-grid { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 10px; }
-        .bingo-card { width: 95% !important; max-width: 380px !important; margin: 0 auto; }
-        
-        /* Panel invisible para mantener juego.js funcionando */
-        #panelConfigAdmin { display: none; }
+        /* Eliminamos las restricciones de ancho para que el cartón sea como antes */
+        .cartones-grid { 
+            display: flex; flex-wrap: wrap; justify-content: center; 
+            gap: 20px; padding: 10px; width: 100%; 
+        }
 
-        .logo-bingo { color: #ffb703; text-align: center; font-size: 1.2rem; margin: 5px 0; }
+        /* Mantenemos el panel de carga presente pero invisible para que juego.js no falle */
+        .setup-panel { position: absolute; visibility: hidden; pointer-events: none; }
+
+        .logo-bingo { color: #ffb703; text-align: center; font-size: 1.1rem; margin: 10px 0 0 0; }
+        .aviso-reto { text-align: center; color: #ef4444; font-size: 0.65rem; font-weight: bold; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <div id="barraHistorial" class="historial-fijo">
-        <div id="msgEspera" style="color: #64748b; font-size: 0.7rem; width:100%; text-align:center;">Esperando inicio del sorteo...</div>
+        <div id="msgEspera" style="color: #64748b; font-size: 0.6rem; width:100%; text-align:center;">Esperando inicio...</div>
+    </div>
+
+    <div class="setup-panel">
+        <input type="number" id="id1"> <input type="number" id="id2">
+        <input type="number" id="id3"> <input type="number" id="id4">
+        <button id="btnGenerar">CARGAR</button>
     </div>
 
     <div class="contenedor-patron">
-        <small style="color: #94a3b8; font-weight: bold; font-size: 0.65rem;">FORMA DE GANAR:</small>
-        <div id="gridPatron" class="grid-patron">
-            </div>
-    </div>
-
-    <div id="panelConfigAdmin">
-        <input type="number" id="id1"> <input type="number" id="id2">
-        <input type="number" id="id3"> <input type="number" id="id4">
-        <button id="btnGenerar"></button>
+        <div style="color: #94a3b8; font-size: 0.6rem; font-weight: bold; text-transform: uppercase;">Para Ganar:</div>
+        <div id="gridPatron" class="grid-patron"></div>
     </div>
 
     <div class="juego-container">
         <h1 class="logo-bingo">BINGO DIGITAL</h1>
-        <p style="text-align:center; color: #ef4444; font-size: 0.7rem; font-weight: bold;">⚠️ ATENCIÓN: No habrá ayuda visual. ¡Marca tus números!</p>
+        <p class="aviso-reto">SIN AYUDA VISUAL - ¡ATENTO A TUS NÚMEROS!</p>
 
-        <div id="contenedorCartones" class="cartones-grid"></div>
+        <div id="contenedorCartones" class="cartones-grid">
+            </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -98,26 +100,33 @@
         const db = firebase.database();
         let historialLocal = [];
 
-        // --- ESCUCHAR PARTIDA (NÚMEROS Y REINICIO) ---
+        // ESCUCHAR FIREBASE (NÚMEROS Y REINICIO)
         db.ref('partidaActual').on('value', (snapshot) => {
             const data = snapshot.val();
             
-            // Lógica de Reinicio
+            // Lógica de Reinicio de Partida
             if (data && data.status === "reiniciado") {
-                reiniciarPantallaJugador();
+                location.reload(); // Recarga la página para limpiar todo
                 return;
             }
 
             if (data && data.numero) {
                 actualizarHistorialSuperior(data.letra, data.numero);
-                // LA AYUDA VISUAL HA SIDO ELIMINADA (resaltarEnCarton ya no se llama)
+                // NOTA: resaltEnCarton se ha eliminado por completo.
             }
         });
 
-        // --- ESCUCHAR PATRÓN (FORMA DE GANAR) ---
+        // ESCUCHAR FORMA DE GANAR (PATRÓN)
         db.ref('configuracion/patron').on('value', (snapshot) => {
             const patron = snapshot.val();
-            dibujarPatronGuia(patron);
+            const grid = document.getElementById('gridPatron');
+            grid.innerHTML = '';
+            const p = patron || Array(25).fill(false);
+            p.forEach((activo) => {
+                const celda = document.createElement('div');
+                celda.className = `celda-patron ${activo ? 'activa' : ''}`;
+                grid.appendChild(celda);
+            });
         });
 
         function actualizarHistorialSuperior(letra, numero) {
@@ -133,38 +142,16 @@
             barra.scrollLeft = 0;
         }
 
-        function dibujarPatronGuia(patron) {
-            const grid = document.getElementById('gridPatron');
-            grid.innerHTML = '';
-            // Si no hay patrón, asumimos cartón lleno o vacío
-            const p = patron || Array(25).fill(false);
-            
-            p.forEach((activo, index) => {
-                const celda = document.createElement('div');
-                celda.className = `celda-patron ${activo ? 'activa' : ''}`;
-                grid.appendChild(celda);
-            });
-        }
-
-        function reiniciarPantallaJugador() {
-            historialLocal = [];
-            document.getElementById('barraHistorial').innerHTML = '<div style="color: #64748b; font-size: 0.7rem; width:100%; text-align:center;">Nueva partida iniciada. ¡Buena suerte!</div>';
-            
-            // Opcional: Limpiar marcas del cartón (Si quieres que el jugador empiece de cero total)
-            // localStorage.clear(); 
-            // location.reload();
-
-            alert("🔔 ¡EL ADMINISTRADOR HA REINICIADO LA PARTIDA! Los números anteriores ya no valen.");
-        }
-
-        window.onload = () => {
-            const params = new URLSearchParams(window.location.search);
-            const p = params.get('p');
+        // AUTO-DETECCIÓN DEL LINK (Para cargar el cartón automáticamente)
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const p = urlParams.get('p');
             if (p) {
+                // Si el link trae el ID, lo cargamos silenciosamente
                 document.getElementById('id1').value = p; 
                 document.getElementById('btnGenerar').click();
             }
-        };
+        });
     </script>
 
     <script src="juego.js"></script>
