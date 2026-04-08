@@ -1,6 +1,44 @@
 let baseDatos = JSON.parse(localStorage.getItem('bingo_cartones')) || [];
 let seleccionados = [];
 
+// --- 1. LÓGICA DE SINCRONIZACIÓN (EL CORAZÓN DEL BINGO) ---
+
+function generarMatriz(id) {
+    const seedBase = parseInt(id);
+    const rangos = [[1,15],[16,30],[31,45],[46,60],[61,75]];
+    
+    // indexCol es vital para que cada columna tenga su propia semilla predecible
+    const columnas = rangos.map((r, indexCol) => {
+        let n = []; 
+        for(let i=r[0]; i<=r[1]; i++) n.push(i);
+        // Sincronizamos: ID + índice de columna
+        return shuffle([...n], seedBase + indexCol).slice(0, 5);
+    });
+
+    let m = [];
+    for(let r=0; r<5; r++) {
+        let fila = [];
+        for(let c=0; c<5; c++) {
+            fila.push((r===2 && c===2) ? "FREE" : columnas[c][r]);
+        }
+        m.push(fila);
+    }
+    return m;
+}
+
+function shuffle(array, seed) {
+    let m = array.length, t, i;
+    while (m) {
+        i = Math.floor(Math.abs(Math.sin(seed++)) * m--);
+        t = array[m]; 
+        array[m] = array[i]; 
+        array[i] = t;
+    }
+    return array;
+}
+
+// --- 2. GESTIÓN DE INTERFAZ Y LISTA ---
+
 function renderizarLista(filtro = "") {
     const contenedor = document.getElementById('contenedorLista');
     const contador = document.getElementById('countDisplay');
@@ -46,13 +84,12 @@ function alternarSeleccion(id, nombre) {
     } else {
         if (seleccionados.length >= 4) {
             alert("Límite máximo: 4 cartones por link");
-            renderizarLista(document.getElementById('buscador').value);
             return;
         }
         seleccionados.push({ id, nombre });
     }
     actualizarPanelSeleccion();
-    renderizarLista(document.getElementById('buscador').value);
+    renderizarLista(document.getElementById('buscador').value || "");
 }
 
 function actualizarPanelSeleccion() {
@@ -60,10 +97,8 @@ function actualizarPanelSeleccion() {
     const lista = document.getElementById('listaSeleccionados');
     const count = document.getElementById('countSeleccion');
     
-    if (!panel) return;
-
     if (seleccionados.length > 0) {
-        panel.style.display = "block";
+        panel.style.display = "flex";
         count.innerText = seleccionados.length;
         lista.innerHTML = seleccionados.map(s => 
             `<span style="background:#25d366; color:white; padding:4px 10px; border-radius:20px; font-size:0.7rem; font-weight:bold; margin-right:5px;">#${s.id}</span>`
@@ -73,19 +108,14 @@ function actualizarPanelSeleccion() {
     }
 }
 
-function cancelarSeleccion() {
-    seleccionados = [];
-    actualizarPanelSeleccion();
-    renderizarLista(document.getElementById('buscador').value || "");
-}
+// --- 3. GENERACIÓN DE LINKS PARA GITHUB ---
 
 function generarLinkMultiple() {
     if (seleccionados.length === 0) return;
     
-    // Construcción de URL compatible con GitHub Pages
     const loc = window.location;
     const pathActual = loc.pathname;
-    // Reemplazamos el archivo actual por juego.html sin perder la carpeta /FastBi/
+    // Esto asegura que el link siempre busque juego.html en la misma carpeta de GitHub
     const nuevoPath = pathActual.substring(0, pathActual.lastIndexOf('/')) + '/juego.html';
     
     const pack = btoa(JSON.stringify(seleccionados));
@@ -97,11 +127,13 @@ function generarLinkMultiple() {
 function copiarLink(url) {
     navigator.clipboard.writeText(url).then(() => {
         alert("¡Link de Juego copiado! Envíalo por WhatsApp.");
-        cancelarSeleccion(); // Limpia la barra después de copiar
+        cancelarSeleccion();
     }).catch(() => {
         prompt("Copia el link manualmente:", url);
     });
 }
+
+// --- 4. FUNCIONES DE APOYO ---
 
 document.getElementById('btnGenerar').onclick = () => {
     const input = document.getElementById('inputCantidad');
@@ -115,11 +147,6 @@ document.getElementById('btnGenerar').onclick = () => {
     renderizarLista();
     input.value = "";
 };
-
-function actualizarApodo(index, valor) {
-    baseDatos[index].apodo = valor;
-    localStorage.setItem('bingo_cartones', JSON.stringify(baseDatos));
-}
 
 function verCarton(id, apodo) {
     document.getElementById('placeholderVisor').style.display = "none";
@@ -138,30 +165,23 @@ function verCarton(id, apodo) {
     tabla.innerHTML = html;
 }
 
-function generarMatriz(id) {
-    const seedBase = parseInt(id);
-    const rangos = [[1,15],[16,30],[31,45],[46,60],[61,75]];
-    const columnas = rangos.map(r => {
-        let n = []; for(let i=r[0]; i<=r[1]; i++) n.push(i);
-        // Usamos una copia para no alterar el array original en cada paso
-        return shuffle([...n], seedBase).slice(0, 5);
-    });
-    let m = [];
-    for(let r=0; r<5; r++) {
-        let fila = [];
-        for(let c=0; c<5; c++) fila.push((r===2 && c===2) ? "FREE" : columnas[c][r]);
-        m.push(fila);
-    }
-    return m;
+function actualizarApodo(index, valor) {
+    baseDatos[index].apodo = valor;
+    localStorage.setItem('bingo_cartones', JSON.stringify(baseDatos));
 }
 
-function shuffle(array, seed) {
-    let m = array.length, t, i;
-    while (m) {
-        i = Math.floor(Math.abs(Math.sin(seed++)) * m--);
-        t = array[m]; array[m] = array[i]; array[i] = t;
-    }
-    return array;
+function cancelarSeleccion() {
+    seleccionados = [];
+    actualizarPanelSeleccion();
+    renderizarLista(document.getElementById('buscador').value || "");
+}
+
+function exportarData() {
+    const blob = new Blob([JSON.stringify(baseDatos)], {type: "application/json"});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = "cartones_bingo.json";
+    a.click();
 }
 
 function importarData(event) {
@@ -175,25 +195,16 @@ function importarData(event) {
     reader.readAsText(event.target.files[0]);
 }
 
-function exportarData() {
-    const blob = new Blob([JSON.stringify(baseDatos)], {type: "application/json"});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = "cartones_bingo.json";
-    a.click();
-}
-
 function limpiarTodo() { 
     if(confirm("¿Borrar todos los cartones guardados?")) { 
         baseDatos = []; 
-        seleccionados = []; 
         localStorage.removeItem('bingo_cartones');
         renderizarLista(); 
         location.reload(); 
     } 
 }
 
-// Inicialización
+// Inicialización del buscador
 const buscador = document.getElementById('buscador');
 if(buscador) buscador.oninput = (e) => renderizarLista(e.target.value);
 
