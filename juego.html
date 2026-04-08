@@ -3,73 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Cartón de Bingo - Juego en Vivo</title>
+    <title>Bingo Pro - Juego en Vivo</title>
     <link rel="stylesheet" href="juego.css">
     <style>
-        /* Estilos para la barra de números arriba */
+        /* --- ESTILOS DE LA BARRA SUPERIOR (HORIZONTAL) --- */
         .historial-fijo {
             position: fixed; top: 0; left: 0; width: 100%;
             background: #1d3557; display: flex; align-items: center;
-            gap: 8px; padding: 10px; z-index: 9999;
+            gap: 10px; padding: 10px; z-index: 10000;
             border-bottom: 3px solid #ffb703; overflow-x: auto;
-            min-height: 60px;
+            min-height: 65px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
         .bola-historial {
             background: #e63946; color: white; min-width: 45px; height: 45px;
             border-radius: 50%; display: flex; flex-direction: column;
             align-items: center; justify-content: center; font-weight: 900;
-            border: 2px solid white; flex-shrink: 0;
+            border: 2px solid white; flex-shrink: 0; animation: popIn 0.3s ease;
+        }
+        .bola-historial small { font-size: 0.6rem; line-height: 1; }
+
+        /* --- AJUSTE DE COLOR DE FONDO (Para que no se vea blanco) --- */
+        body { 
+            margin: 0; 
+            background-color: #0f172a !important; /* Azul muy oscuro */
+            color: white; 
+            font-family: sans-serif;
+            padding-top: 100px; /* Espacio para la barra de arriba */
         }
 
-        /* Panel de entrada de IDs (Lo que tu juego.js necesita) */
+        /* --- PANEL DE CONFIGURACIÓN (Oculto o discreto) --- */
         .setup-panel {
-            background: #f1faee; padding: 15px; border-radius: 10px;
-            margin: 80px 10px 20px 10px; border: 2px dashed #1d3557;
-            text-align: center;
+            background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;
+            margin: 10px; border: 1px solid #475569; text-align: center;
         }
         .setup-panel input {
-            width: 60px; padding: 8px; margin: 5px;
-            border-radius: 5px; border: 1px solid #ccc; text-align: center;
+            width: 50px; padding: 5px; margin: 3px; border-radius: 4px; border: none; text-align: center;
         }
         #btnGenerar {
-            background: #1d3557; color: white; border: none;
-            padding: 10px 20px; border-radius: 5px; cursor: pointer;
+            background: #ffb703; color: #1d3557; border: none;
+            padding: 8px 15px; border-radius: 5px; cursor: pointer;
             font-weight: bold; margin-top: 10px;
         }
 
-        body { margin: 0; background-color: #1d3557; color: white; font-family: sans-serif; }
-        .cartones-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; }
+        .logo-bingo { color: #ffb703; text-align: center; margin-bottom: 5px; }
         
-        /* Estilos para que las celdas marcadas se vean bien */
-        .marked { background-color: #ffb703 !important; color: #1d3557 !important; font-weight: bold; }
+        @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
 
     <div id="barraHistorial" class="historial-fijo">
-        <div style="color: #a8dadc; font-size: 0.8rem; width:100%; text-align:center;">Esperando números...</div>
+        <div style="color: #64748b; font-size: 0.8rem; width:100%; text-align:center;">Esperando números de la ruleta...</div>
     </div>
 
     <div class="setup-panel">
-        <h3 style="color: #1d3557; margin-top:0;">Configura tus Cartones</h3>
+        <h3 style="margin:0 0 10px 0; font-size: 1rem;">MIS CARTONES</h3>
         <input type="number" id="id1" placeholder="ID 1">
         <input type="number" id="id2" placeholder="ID 2">
         <input type="number" id="id3" placeholder="ID 3">
         <input type="number" id="id4" placeholder="ID 4">
         <br>
-        <button id="btnGenerar">CARGAR CARTONES</button>
+        <button id="btnGenerar">GENERAR CARTONES</button>
     </div>
 
     <div class="juego-container">
-        <div id="contenedorCartones" class="cartones-grid">
-            </div>
+        <header class="juego-header">
+            <h1 class="logo-bingo">BINGO DIGITAL</h1>
+            <p style="text-align:center; color: #94a3b8;">Toca los números para marcarlos</p>
+        </header>
+
+        <div id="contenedorCartones" class="cartones-grid"></div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <script>
-        // Configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
             authDomain: "bingofast.firebaseapp.com",
@@ -86,7 +95,6 @@
 
         let historialLocal = [];
 
-        // ESCUCHA DE FIREBASE
         db.ref('partidaActual').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data && data.numero) {
@@ -107,18 +115,18 @@
         }
 
         function resaltarEnCarton(numero) {
-            // Busca todas las celdas de los cartones generados
+            // Buscamos en todas las celdas (td) generadas por juego.js
             const celdas = document.querySelectorAll('td');
             celdas.forEach(celda => {
                 if (parseInt(celda.innerText) === numero) {
-                    celda.style.boxShadow = "inset 0 0 10px #e63946";
-                    celda.style.border = "2px solid #e63946";
+                    celda.style.backgroundColor = "rgba(255, 183, 3, 0.3)";
+                    celda.style.border = "2px solid #ffb703";
+                    celda.style.boxShadow = "0 0 10px #ffb703";
                 }
             });
         }
     </script>
 
     <script src="juego.js"></script>
-
 </body>
 </html>
