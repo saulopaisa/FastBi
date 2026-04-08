@@ -3,89 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bingo Pro - Cartones Gigantes</title>
+    <title>Bingo Pro - Adaptable</title>
     <link rel="stylesheet" href="juego.css">
     <style>
-        /* --- 1. BARRA SUPERIOR (MÁXIMO 20% DE LA PANTALLA) --- */
+        /* --- 1. BARRA SUPERIOR (MÁXIMO 20% - SIN SCROLL) --- */
         .historial-fijo {
             position: fixed; top: 0; left: 0; width: 100%;
-            background: #111827; 
-            display: flex; 
-            flex-wrap: wrap; /* Para que bajen a la siguiente fila sin scroll */
-            gap: 3px; padding: 5px; z-index: 10000;
+            background: #111827; display: flex; flex-wrap: wrap;
+            gap: 4px; padding: 6px; z-index: 10000;
             border-bottom: 2px solid #ffb703;
-            max-height: 20vh; /* Límite estricto del 20% */
-            overflow: hidden; /* Sin scroll */
-            box-sizing: border-box;
-            justify-content: center;
+            max-height: 20vh; overflow: hidden;
+            box-sizing: border-box; justify-content: center;
         }
 
-        /* Bolas miniatura para que quepan todas en el 20% de altura */
         .bola-historial {
-            background: #e63946; color: white; 
-            width: 26px; height: 26px; 
+            background: #e63946; color: white; width: 28px; height: 28px;
             border-radius: 50%; display: flex; flex-direction: column;
             align-items: center; justify-content: center; font-weight: 800;
-            border: 1px solid rgba(255,255,255,0.4); flex-shrink: 0; 
-            font-size: 0.6rem; line-height: 1;
+            border: 1px solid rgba(255,255,255,0.4); font-size: 0.65rem;
         }
-        .bola-historial small { font-size: 0.35rem; margin-bottom: -1px; }
+        .bola-historial small { font-size: 0.4rem; line-height: 1; }
 
-        /* --- 2. CUERPO Y CONTENEDOR (CARTONES GIGANTES) --- */
+        /* --- 2. DISEÑO BASE Y CONTENEDOR --- */
         body { 
             margin: 0; background-color: #0f172a !important; 
-            color: white; font-family: sans-serif; 
-            padding-top: 22vh; /* Espacio para la barra superior */
+            color: white; font-family: sans-serif; padding-top: 22vh; 
         }
 
         .cartones-grid { 
-            display: flex; 
-            flex-direction: column; /* Uno debajo del otro para máximo tamaño */
-            align-items: center; 
-            gap: 40px; padding: 10px; width: 100%; box-sizing: border-box;
+            display: flex; flex-wrap: wrap; /* Permite horizontal y vertical */
+            justify-content: center; gap: 20px; padding: 15px;
+            width: 100%; box-sizing: border-box;
         }
 
-        /* CONFIGURACIÓN DEL CARTÓN GIGANTE */
-        .bingo-card { 
-            width: 98% !important; /* Casi todo el ancho de la pantalla */
-            max-width: 700px !important; /* Límite para que no se deforme en PC */
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border-radius: 15px;
-            overflow: hidden;
+        /* --- 3. RESPONSIVIDAD (PC vs TELÉFONO) --- */
+        
+        /* MODO TELÉFONO (Vertical y Ancho Completo) */
+        @media (max-width: 767px) {
+            .bingo-card { width: 98% !important; max-width: 450px; }
+            .bingo-table td { font-size: 2.2rem !important; height: 65px; }
+            .bingo-table th { font-size: 1.8rem; }
         }
 
-        /* Agrandamos la tabla interna */
-        .bingo-table { width: 100%; border-collapse: separate; border-spacing: 4px; }
-        .bingo-table th { font-size: 2rem; padding: 10px; }
-        .bingo-table td { 
-            font-size: 2.5rem !important; /* Números mucho más grandes */
-            height: 80px; 
-            font-weight: 900;
-            border-radius: 8px;
+        /* MODO PC / TABLET (Horizontal - Uno al lado del otro) */
+        @media (min-width: 768px) {
+            .bingo-card { 
+                width: 45% !important; /* Dos cartones por fila */
+                max-width: 600px; 
+            }
+            .bingo-table td { font-size: 2.8rem !important; height: 85px; }
+            .bingo-table th { font-size: 2.2rem; }
         }
 
-        /* --- 3. ELEMENTOS DE APOYO --- */
+        /* Estilos generales del cartón gigante */
+        .bingo-card {
+            background: white; color: #1e293b; border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6); overflow: hidden;
+        }
+        .card-id-label { background: #1e3a8a; color: white; padding: 8px; font-weight: bold; text-align: center; }
+        .bingo-table { width: 100%; border-collapse: collapse; }
+        .bingo-table td { border: 2px solid #e2e8f0; text-align: center; cursor: pointer; font-weight: 900; }
+        .bingo-table td.marked { background-color: #ffb703 !important; color: #000; }
+
+        /* Guía de premio */
         .contenedor-patron {
             background: rgba(255, 255, 255, 0.05); border-radius: 8px; 
-            padding: 8px; margin: 5px auto; width: fit-content;
-            text-align: center; border: 1px solid #334155;
+            padding: 8px; margin: 0 auto 10px; width: fit-content; text-align: center;
         }
-        .grid-patron {
-            display: grid; grid-template-columns: repeat(5, 14px);
-            gap: 3px; justify-content: center;
-        }
-        .celda-patron { width: 14px; height: 14px; border-radius: 2px; background: #1e293b; }
+        .grid-patron { display: grid; grid-template-columns: repeat(5, 12px); gap: 3px; }
+        .celda-patron { width: 12px; height: 12px; border-radius: 2px; background: #334155; }
         .celda-patron.activa { background: #ffb703; box-shadow: 0 0 5px #ffb703; }
 
-        .logo-bingo { color: #ffb703; text-align: center; font-size: 1.8rem; margin: 10px 0 5px 0; }
-        .aviso-reto { text-align: center; color: #ef4444; font-size: 0.9rem; font-weight: bold; margin-bottom: 15px; }
+        .logo-bingo { color: #ffb703; text-align: center; font-size: 1.6rem; margin: 5px 0; }
+        .aviso-reto { text-align: center; color: #ef4444; font-size: 0.8rem; font-weight: bold; }
         .setup-panel { display: none; }
     </style>
 </head>
 <body>
 
     <div id="barraHistorial" class="historial-fijo">
-        <div id="msgEspera" style="color: #64748b; font-size: 0.7rem;">Esperando números...</div>
+        <div id="msgEspera" style="color: #64748b; font-size: 0.7rem;">Cargando números...</div>
     </div>
 
     <div class="juego-container">
@@ -94,7 +91,7 @@
         </div>
 
         <h1 class="logo-bingo">BINGO DIGITAL</h1>
-        <p class="aviso-reto">⚠️ MARCA TUS NÚMEROS MANUALMENTE</p>
+        <p class="aviso-reto">⚠️ MARCA MANUAL - SIN AYUDA VISUAL</p>
 
         <div id="contenedorCartones" class="cartones-grid"></div>
     </div>
@@ -122,45 +119,41 @@
         const db = firebase.database();
         let historialLocal = [];
 
-        // Escuchar partida y reinicio
         db.ref('partidaActual').on('value', (snapshot) => {
             const data = snapshot.val();
-            if (data?.status === "reiniciado") {
-                localStorage.clear();
-                location.reload();
-                return;
-            }
+            if (data?.status === "reiniciado") { localStorage.clear(); location.reload(); return; }
             if (data?.numero) {
-                actualizarBarra(data.letra, data.numero);
+                if (!historialLocal.includes(data.numero)) {
+                    historialLocal.push(data.numero);
+                    const barra = document.getElementById('barraHistorial');
+                    if (historialLocal.length === 1) barra.innerHTML = '';
+                    const bola = document.createElement('div');
+                    bola.className = 'bola-historial';
+                    bola.innerHTML = `<small>${data.letra}</small><span>${data.numero}</span>`;
+                    barra.appendChild(bola);
+                }
             }
         });
 
-        function actualizarBarra(l, n) {
-            if (historialLocal.includes(n)) return;
-            historialLocal.push(n);
-            const barra = document.getElementById('barraHistorial');
-            if (historialLocal.length === 1) barra.innerHTML = '';
-            
-            const bola = document.createElement('div');
-            bola.className = 'bola-historial';
-            bola.innerHTML = `<small>${l}</small><span>${n}</span>`;
-            barra.appendChild(bola);
-        }
+        db.ref('configuracion/patron').on('value', (s) => {
+            const p = s.val() || Array(25).fill(false);
+            const g = document.getElementById('gridPatron');
+            g.innerHTML = '';
+            p.forEach(a => {
+                const d = document.createElement('div');
+                d.className = `celda-patron ${a ? 'activa' : ''}`;
+                g.appendChild(d);
+            });
+        });
 
-        // Cargar cartones desde el link
         window.onload = () => {
-            const params = new URLSearchParams(window.location.search);
-            const p = params.get('p');
+            const p = new URLSearchParams(window.location.search).get('p');
             if (p) {
                 try {
-                    const decoded = JSON.parse(atob(p));
-                    const ids = Array.isArray(decoded) ? decoded : [decoded];
-                    ids.forEach((item, i) => {
-                        if (i < 4) document.getElementById(`id${i+1}`).value = item.id || item;
-                    });
-                } catch(e) {
-                    document.getElementById('id1').value = p;
-                }
+                    const d = JSON.parse(atob(p));
+                    const ids = Array.isArray(d) ? d : [d];
+                    ids.forEach((item, i) => { if (i < 4) document.getElementById(`id${i+1}`).value = item.id || item; });
+                } catch(e) { document.getElementById('id1').value = p; }
                 document.getElementById('btnGenerar').click();
             }
         };
