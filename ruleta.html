@@ -6,7 +6,6 @@
     <title>Bingo 75 Pro - Panel de Control</title>
     <link rel="stylesheet" href="ruleta.css">
     <style>
-        /* Estilos adicionales para las mejoras del Radar */
         .radar-header-box {
             display: flex;
             justify-content: space-between;
@@ -25,7 +24,6 @@
             transition: all 0.3s ease;
         }
 
-        /* Efecto hover general para botones que no lo tengan en el CSS externo */
         button:hover, .btn-check:hover, .btn-confirmar:hover {
             filter: brightness(1.1);
             transform: translateY(-2px);
@@ -120,42 +118,56 @@
             </div>
         </div>
     </div>
-    
 
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
-    authDomain: "bingofast.firebaseapp.com",
-    databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
-    projectId: "bingofast",
-    storageBucket: "bingofast.firebasestorage.app",
-    messagingSenderId: "473863283329",
-    appId: "1:473863283329:web:2c4bf96de167d105fa6380",
-    measurementId: "G-Z7VH6JYV4D"
-  };
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
+            authDomain: "bingofast.firebaseapp.com",
+            databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
+            projectId: "bingofast",
+            storageBucket: "bingofast.firebasestorage.app",
+            messagingSenderId: "473863283329",
+            appId: "1:473863283329:web:2c4bf96de167d105fa6380",
+            measurementId: "G-Z7VH6JYV4D"
+        };
 
-  // Inicializar Firebase
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+        // Inicializar Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
 
-  // Función para enviar el número a la nube
-  function mandarNumeroAlJuego(numero) {
-    if(!numero) return;
-    const letra = numero <= 15 ? 'B' : numero <= 30 ? 'I' : numero <= 45 ? 'N' : numero <= 60 ? 'G' : 'O';
-    
-    db.ref('partidaActual').set({
-      numero: numero,
-      letra: letra,
-      timestamp: Date.now()
-    });
-    console.log("Enviado a Firebase: ", letra, numero);
-  }
-</script>
+        /**
+         * Función que llama ruleta.js para sincronizar el número cantado
+         */
+        function mandarNumeroAlJuego(numero) {
+            if(!numero) return;
 
-<script src="ruleta.js"></script>
+            // Determinar la letra según el número
+            let letra = '';
+            if (numero <= 15) letra = 'B';
+            else if (numero <= 30) letra = 'I';
+            else if (numero <= 45) letra = 'N';
+            else if (numero <= 60) letra = 'G';
+            else letra = 'O';
+            
+            // Actualizar la base de datos en tiempo real
+            db.ref('partidaActual').set({
+                numero: numero,
+                letra: letra,
+                timestamp: Date.now()
+            }).then(() => {
+                console.log("✅ Sincronizado con Firebase:", letra, numero);
+            }).catch(e => {
+                console.error("❌ Error de red en Firebase:", e);
+            });
+        }
+    </script>
 
+    <script src="ruleta.js"></script>
 </body>
 </html>
