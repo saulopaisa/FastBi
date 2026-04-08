@@ -24,18 +24,8 @@
             color: white;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .header h1 {
-            color: var(--accent-gold);
-            margin: 0;
-            font-size: 1.5rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { color: var(--accent-gold); margin: 0; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px; }
 
         #cartones-container {
             display: flex;
@@ -65,39 +55,11 @@
             border-bottom: 2px solid var(--accent-gold);
         }
 
-        .info-jugador .nombre {
-            display: block;
-            font-weight: 900;
-            font-size: 1.1rem;
-            color: var(--accent-gold);
-        }
+        .info-jugador .nombre { display: block; font-weight: 900; font-size: 1.1rem; color: var(--accent-gold); }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            user-select: none;
-        }
-
-        th {
-            background: var(--accent-red);
-            color: white;
-            font-size: 1.2rem;
-            padding: 8px 0;
-            width: 20%;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        td {
-            height: 55px;
-            text-align: center;
-            vertical-align: middle;
-            font-size: 1.4rem;
-            font-weight: 900;
-            color: var(--primary-blue);
-            border: 1px solid #e2e8f0;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
+        table { width: 100%; border-collapse: collapse; user-select: none; }
+        th { background: var(--accent-red); color: white; font-size: 1.2rem; padding: 8px 0; width: 20%; border: 1px solid rgba(255,255,255,0.2); }
+        td { height: 55px; text-align: center; vertical-align: middle; font-size: 1.4rem; font-weight: 900; color: var(--primary-blue); border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.2s ease; }
 
         td.marcada {
             background-color: var(--accent-gold) !important;
@@ -107,20 +69,32 @@
             box-shadow: inset 0 0 8px rgba(0,0,0,0.2);
         }
 
-        td.free {
-            background-color: var(--primary-blue);
-            color: var(--accent-gold);
-            font-size: 1.5rem;
-        }
+        td.free { background-color: var(--primary-blue); color: var(--accent-gold); font-size: 1.5rem; }
 
+        /* ALERTAS MEJORADAS */
         #bingo-alert-live {
             position: fixed;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .bola-notificacion {
+            background: white; 
+            color: #1d3557; 
+            border: 3px solid #ffb703; 
+            border-radius: 50px; 
+            padding: 10px 20px; 
+            font-weight: 900; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4); 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            animation: slideInRight 0.5s ease-out;
         }
 
         @keyframes slideInRight {
@@ -163,13 +137,13 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 2. LÓGICA DE SINCRONIZACIÓN (DEBE SER IGUAL A GENERAR.JS)
+        // 2. LÓGICA DE CARTONES
         const params = new URLSearchParams(window.location.search);
         const dataEncoded = params.get('p');
         const container = document.getElementById('cartones-container');
 
         if (!dataEncoded) {
-            container.innerHTML = `<div style="background:var(--accent-red); padding:20px; border-radius:10px; text-align:center; margin-top:50px;"><h3>⚠️ Enlace no válido</h3><p>Pide un nuevo link a tu administrador.</p></div>`;
+            container.innerHTML = `<div style="background:var(--accent-red); padding:20px; border-radius:10px; text-align:center; margin-top:50px;"><h3>⚠️ Enlace no válido</h3><p>Pide un nuevo link.</p></div>`;
         } else {
             try {
                 const listaCartones = JSON.parse(atob(dataEncoded));
@@ -178,26 +152,22 @@
                     renderizarCarton(obj.id, obj.nombre, matriz);
                 });
             } catch (e) {
-                container.innerHTML = `<div style="background:var(--accent-red); padding:20px; border-radius:10px; text-align:center; margin-top:50px;"><h3>⚠️ Error de lectura</h3><p>El enlace es incorrecto.</p></div>`;
+                console.error("Error decodificando:", e);
+                container.innerHTML = `<div style="background:var(--accent-red); padding:20px; border-radius:10px; text-align:center; margin-top:50px;"><h3>⚠️ Error de lectura</h3></div>`;
             }
         }
 
         function generarMatrizSincronizada(id) {
             const seedBase = parseInt(id);
             const rangos = [[1,15],[16,30],[31,45],[46,60],[61,75]];
-            
-            // Sincronización exacta: seedBase + indexCol
             const columnas = rangos.map((r, indexCol) => {
                 let n = []; for(let i=r[0]; i<=r[1]; i++) n.push(i);
                 return shuffleDeterminista([...n], seedBase + indexCol).slice(0, 5);
             });
-
             let matrizFilas = [];
             for(let f=0; f<5; f++) {
                 let fila = [];
-                for(let c=0; c<5; c++) {
-                    fila.push((f === 2 && c === 2) ? "FREE" : columnas[c][f]);
-                }
+                for(let c=0; c<5; c++) fila.push((f === 2 && c === 2) ? "FREE" : columnas[c][f]);
                 matrizFilas.push(fila);
             }
             return matrizFilas;
@@ -243,22 +213,29 @@
             }
         }
 
-        // 3. FIREBASE
+        // 3. ESCUCHADOR DE FIREBASE (CON LOGS PARA PRUEBAS)
+        console.log("Conectando a Firebase...");
         db.ref('partidaActual').on('value', (snapshot) => {
             const data = snapshot.val();
+            console.log("Datos de Firebase:", data); // Mira esto en la consola del navegador
+            
             if (data && data.numero) {
-                notificarNuevoNumero(data.letra, data.numero);
+                notificarNuevoNumero(data.letra || "", data.numero);
                 iluminarCoincidencia(data.numero);
             }
+        }, (error) => {
+            console.error("Error de Firebase:", error);
         });
 
         function notificarNuevoNumero(letra, num) {
             const alertBox = document.getElementById('bingo-alert-live');
             const miniBola = document.createElement('div');
-            miniBola.style = `background:white; color:#1d3557; border:3px solid #ffb703; border-radius:50px; padding:10px 20px; font-weight:900; box-shadow:0 4px 15px rgba(0,0,0,0.4); display:flex; align-items:center; gap:10px; animation: slideInRight 0.5s ease-out;`;
+            miniBola.className = "bola-notificacion";
             miniBola.innerHTML = `<span style="color:#e63946; font-size:1.2rem">${letra}</span> <span style="font-size:1.5rem">${num}</span>`;
+            
             alertBox.prepend(miniBola);
             if (navigator.vibrate) navigator.vibrate(100);
+            
             setTimeout(() => {
                 miniBola.style.opacity = "0";
                 miniBola.style.transition = "1s";
@@ -269,6 +246,10 @@
         function iluminarCoincidencia(numSorteado) {
             const celdas = document.querySelectorAll('td');
             celdas.forEach(td => {
+                // Quitamos el efecto anterior si existe
+                td.style.boxShadow = "";
+                td.style.backgroundColor = "";
+                
                 if (td.innerText == numSorteado && !td.classList.contains('marcada')) {
                     td.style.boxShadow = "inset 0 0 20px rgba(255, 183, 3, 0.8)";
                     td.style.backgroundColor = "#fff9db";
