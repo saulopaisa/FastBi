@@ -113,6 +113,11 @@ drawBtn.onclick = () => {
     document.getElementById(`slot-${num}`).classList.add('active');
     document.getElementById('count').innerText = drawnNumbers.length;
 
+    // --- CAMBIO CLAVE: NOTIFICAR A LOS JUGADORES VÍA FIREBASE ---
+    if (typeof mandarNumeroAlJuego === "function") {
+        mandarNumeroAlJuego(num);
+    }
+
     actualizarRecientes();
     escanearCartonesRadar();
 };
