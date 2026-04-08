@@ -6,6 +6,7 @@
     <title>Bingo 75 Pro - Panel de Control</title>
     <link rel="stylesheet" href="ruleta.css">
     <style>
+        /* Estilos adicionales para las mejoras del Radar */
         .radar-header-box {
             display: flex;
             justify-content: space-between;
@@ -123,7 +124,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <script>
-        // Configuración de Firebase
+        // CONFIGURACIÓN DE TU PROYECTO
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
             authDomain: "bingofast.firebaseapp.com",
@@ -142,12 +143,13 @@
         const db = firebase.database();
 
         /**
-         * Función que llama ruleta.js para sincronizar el número cantado
+         * Función puente que será llamada desde ruleta.js
+         * @param {number} numero - El número que acaba de salir en el sorteo
          */
         function mandarNumeroAlJuego(numero) {
             if(!numero) return;
 
-            // Determinar la letra según el número
+            // Lógica de letras idéntica al motor del juego
             let letra = '';
             if (numero <= 15) letra = 'B';
             else if (numero <= 30) letra = 'I';
@@ -155,19 +157,21 @@
             else if (numero <= 60) letra = 'G';
             else letra = 'O';
             
-            // Actualizar la base de datos en tiempo real
-            db.ref('partidaActual').set({
+            // Enviamos los datos a la rama 'partidaActual'
+            db.ref('partidaActual').update({
                 numero: numero,
                 letra: letra,
-                timestamp: Date.now()
+                timestamp: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
                 console.log("✅ Sincronizado con Firebase:", letra, numero);
             }).catch(e => {
-                console.error("❌ Error de red en Firebase:", e);
+                console.error("❌ Error de Firebase:", e);
+                alert("Error de conexión: El número no se envió a los jugadores.");
             });
         }
     </script>
 
     <script src="ruleta.js"></script>
+
 </body>
 </html>
