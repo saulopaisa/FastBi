@@ -5,30 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Cartón de Bingo - Juego en Vivo</title>
     <link rel="stylesheet" href="juego.css">
-    <style>
-        /* Estilo para la notificación flotante de número cantado */
-        .notificacion-numero {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #e63946;
-            color: white;
-            padding: 15px 30px;
-            border-radius: 50px;
-            font-size: 1.5rem;
-            font-weight: 900;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            z-index: 9999;
-            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 4px solid #ffb703;
-        }
+   <style>
+    /* Barra superior fija para los números que van saliendo */
+    .historial-fijo {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: #1d3557;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        z-index: 1000;
+        border-bottom: 3px solid #ffb703;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        overflow-x: auto; /* Por si salen muchos números */
+    }
 
-        @keyframes popIn {
-            0% { transform: translateX(-50%) scale(0); opacity: 0; }
-            100% { transform: translateX(-50%) scale(1); opacity: 1; }
-        }
-    </style>
+    .bola-historial {
+        background: #e63946;
+        color: white;
+        min-width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        font-size: 0.8rem;
+        border: 2px solid white;
+        animation: popIn 0.3s ease-out;
+    }
+
+    .bola-historial small {
+        font-size: 0.5rem;
+        line-height: 1;
+    }
+
+    /* Ajuste para que el contenido del juego no se tape */
+    body {
+        padding-top: 70px; 
+    }
+
+    @keyframes popIn {
+        0% { transform: scale(0); }
+        100% { transform: scale(1); }
+    }
+</style>
 </head>
 <body>
 
