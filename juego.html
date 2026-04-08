@@ -6,95 +6,61 @@
     <title>Mi Cartón de Bingo - Juego en Vivo</title>
     <link rel="stylesheet" href="juego.css">
     <style>
-        /* --- ESTILOS DE LA BARRA HORIZONTAL SUPERIOR --- */
+        /* Estilos para la barra de números arriba */
         .historial-fijo {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: #1d3557;
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            gap: 8px;
-            padding: 10px;
-            z-index: 9999;
-            border-bottom: 3px solid #ffb703;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            overflow-x: auto; /* Permite deslizar si hay muchos números */
-            white-space: nowrap;
+            position: fixed; top: 0; left: 0; width: 100%;
+            background: #1d3557; display: flex; align-items: center;
+            gap: 8px; padding: 10px; z-index: 9999;
+            border-bottom: 3px solid #ffb703; overflow-x: auto;
             min-height: 60px;
-            scrollbar-width: none; /* Oculta scroll en Firefox */
         }
-
-        .historial-fijo::-webkit-scrollbar {
-            display: none; /* Oculta scroll en Chrome/Safari */
-        }
-
         .bola-historial {
-            background: #e63946;
-            color: white;
-            min-width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            font-size: 0.9rem;
-            border: 2px solid white;
-            flex-shrink: 0; /* Evita que se aplasten */
-            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            background: #e63946; color: white; min-width: 45px; height: 45px;
+            border-radius: 50%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; font-weight: 900;
+            border: 2px solid white; flex-shrink: 0;
         }
 
-        .bola-historial small {
-            font-size: 0.55rem;
-            line-height: 1;
-            margin-bottom: -2px;
-            opacity: 0.9;
-        }
-
-        .bola-nueva {
-            border-color: #ffb703;
-            box-shadow: 0 0 15px #ffb703;
-            transform: scale(1.1);
-        }
-
-        /* Ajuste para que el cartón no quede debajo de la barra */
-        body {
-            padding-top: 85px !important; 
-            margin: 0;
-            background-color: #f1faee;
-        }
-
-        @keyframes popIn {
-            0% { transform: scale(0); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .indicador-vacio {
-            color: #a8dadc;
-            font-size: 0.8rem;
-            font-style: italic;
-            width: 100%;
+        /* Panel de entrada de IDs (Lo que tu juego.js necesita) */
+        .setup-panel {
+            background: #f1faee; padding: 15px; border-radius: 10px;
+            margin: 80px 10px 20px 10px; border: 2px dashed #1d3557;
             text-align: center;
         }
+        .setup-panel input {
+            width: 60px; padding: 8px; margin: 5px;
+            border-radius: 5px; border: 1px solid #ccc; text-align: center;
+        }
+        #btnGenerar {
+            background: #1d3557; color: white; border: none;
+            padding: 10px 20px; border-radius: 5px; cursor: pointer;
+            font-weight: bold; margin-top: 10px;
+        }
+
+        body { margin: 0; background-color: #1d3557; color: white; font-family: sans-serif; }
+        .cartones-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; }
+        
+        /* Estilos para que las celdas marcadas se vean bien */
+        .marked { background-color: #ffb703 !important; color: #1d3557 !important; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="barraHistorial" class="historial-fijo">
-        <div class="indicador-vacio">Esperando primer número...</div>
+        <div style="color: #a8dadc; font-size: 0.8rem; width:100%; text-align:center;">Esperando números...</div>
+    </div>
+
+    <div class="setup-panel">
+        <h3 style="color: #1d3557; margin-top:0;">Configura tus Cartones</h3>
+        <input type="number" id="id1" placeholder="ID 1">
+        <input type="number" id="id2" placeholder="ID 2">
+        <input type="number" id="id3" placeholder="ID 3">
+        <input type="number" id="id4" placeholder="ID 4">
+        <br>
+        <button id="btnGenerar">CARGAR CARTONES</button>
     </div>
 
     <div class="juego-container">
-        <header class="juego-header">
-            <h1 class="logo-bingo">BINGO DIGITAL</h1>
-            <p>Toca los números para marcarlos</p>
-        </header>
-
         <div id="contenedorCartones" class="cartones-grid">
             </div>
     </div>
@@ -115,16 +81,14 @@
             measurementId: "G-Z7VH6JYV4D"
         };
 
-        // Inicializar
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
         let historialLocal = [];
 
-        // ESCUCHA EN TIEMPO REAL
+        // ESCUCHA DE FIREBASE
         db.ref('partidaActual').on('value', (snapshot) => {
             const data = snapshot.val();
-            
             if (data && data.numero) {
                 actualizarHistorialSuperior(data.letra, data.numero);
                 resaltarEnCarton(data.numero);
@@ -132,41 +96,23 @@
         });
 
         function actualizarHistorialSuperior(letra, numero) {
-            // Evitar duplicar el último número si la página se refresca
             if (historialLocal[0] === numero) return;
-            
-            historialLocal.unshift(numero); // Agregamos al inicio del array
-
+            historialLocal.unshift(numero);
             const barra = document.getElementById('barraHistorial');
-            
-            // Limpiar el texto de "Esperando..." en la primera bola
             if (historialLocal.length === 1) barra.innerHTML = '';
-
-            // Crear la bola
             const bola = document.createElement('div');
-            bola.className = 'bola-historial bola-nueva';
+            bola.className = 'bola-historial';
             bola.innerHTML = `<small>${letra}</small><span>${numero}</span>`;
-
-            // Quitar el brillo de "bola-nueva" a la bola anterior
-            const anterior = barra.querySelector('.bola-nueva');
-            if (anterior) anterior.classList.remove('bola-nueva');
-
-            // Insertar al principio (izquierda)
             barra.prepend(bola);
-
-            // Auto-scroll al inicio para ver la bola nueva
-            barra.scrollLeft = 0;
-
-            if (navigator.vibrate) navigator.vibrate(150);
         }
 
         function resaltarEnCarton(numero) {
-            const celdas = document.querySelectorAll('.cell');
+            // Busca todas las celdas de los cartones generados
+            const celdas = document.querySelectorAll('td');
             celdas.forEach(celda => {
                 if (parseInt(celda.innerText) === numero) {
-                    celda.style.boxShadow = "0 0 15px #ffb703";
-                    celda.style.border = "3px solid #ffb703";
-                    celda.style.transition = "all 0.3s ease";
+                    celda.style.boxShadow = "inset 0 0 10px #e63946";
+                    celda.style.border = "2px solid #e63946";
                 }
             });
         }
