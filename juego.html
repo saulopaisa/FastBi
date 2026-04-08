@@ -3,86 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bingo Pro - Pantalla de Juego</title>
+    <title>Bingo Pro - Cartones Gigantes</title>
     <link rel="stylesheet" href="juego.css">
     <style>
-        /* --- 1. BARRA SUPERIOR (MÁXIMO 20% DE ALTURA) --- */
+        /* --- 1. BARRA SUPERIOR (MÁXIMO 20% DE LA PANTALLA) --- */
         .historial-fijo {
             position: fixed; top: 0; left: 0; width: 100%;
             background: #111827; 
             display: flex; 
-            flex-wrap: wrap; /* Permite que los números bajen a la siguiente línea */
-            align-content: flex-start;
-            gap: 4px; padding: 8px; z-index: 10000;
+            flex-wrap: wrap; /* Para que bajen a la siguiente fila sin scroll */
+            gap: 3px; padding: 5px; z-index: 10000;
             border-bottom: 2px solid #ffb703;
-            max-height: 20vh; /* Límite estricto del 20% de la altura visual */
-            overflow: hidden; /* Evita el scroll */
+            max-height: 20vh; /* Límite estricto del 20% */
+            overflow: hidden; /* Sin scroll */
             box-sizing: border-box;
+            justify-content: center;
         }
 
-        /* Bolas más pequeñas para que quepan muchas sin scroll */
+        /* Bolas miniatura para que quepan todas en el 20% de altura */
         .bola-historial {
             background: #e63946; color: white; 
-            width: 28px; height: 28px; /* Tamaño optimizado */
+            width: 26px; height: 26px; 
             border-radius: 50%; display: flex; flex-direction: column;
             align-items: center; justify-content: center; font-weight: 800;
-            border: 1px solid rgba(255,255,255,0.5); flex-shrink: 0; 
-            font-size: 0.65rem; line-height: 1;
+            border: 1px solid rgba(255,255,255,0.4); flex-shrink: 0; 
+            font-size: 0.6rem; line-height: 1;
         }
-        .bola-historial small { font-size: 0.4rem; margin-bottom: -2px; }
+        .bola-historial small { font-size: 0.35rem; margin-bottom: -1px; }
 
-        /* --- 2. CONTENEDOR DE CARTONES (MÁS GRANDES) --- */
+        /* --- 2. CUERPO Y CONTENEDOR (CARTONES GIGANTES) --- */
         body { 
             margin: 0; background-color: #0f172a !important; 
             color: white; font-family: sans-serif; 
-            padding-top: 22vh; /* Espacio para que la barra no tape los cartones */
+            padding-top: 22vh; /* Espacio para la barra superior */
         }
 
         .cartones-grid { 
-            display: flex; flex-direction: column; align-items: center; 
-            gap: 30px; padding: 20px; width: 100%; box-sizing: border-box;
+            display: flex; 
+            flex-direction: column; /* Uno debajo del otro para máximo tamaño */
+            align-items: center; 
+            gap: 40px; padding: 10px; width: 100%; box-sizing: border-box;
         }
 
-        /* Agrandamos el cartón */
+        /* CONFIGURACIÓN DEL CARTÓN GIGANTE */
         .bingo-card { 
-            width: 100% !important; 
-            max-width: 500px !important; /* Aumentado de 380px a 500px */
-            transform: scale(1.05); /* Un pequeño aumento extra de escala */
-            margin-bottom: 20px;
+            width: 98% !important; /* Casi todo el ancho de la pantalla */
+            max-width: 700px !important; /* Límite para que no se deforme en PC */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 15px;
+            overflow: hidden;
         }
 
-        /* --- 3. GUÍA DE PREMIO Y ADVERTENCIAS --- */
+        /* Agrandamos la tabla interna */
+        .bingo-table { width: 100%; border-collapse: separate; border-spacing: 4px; }
+        .bingo-table th { font-size: 2rem; padding: 10px; }
+        .bingo-table td { 
+            font-size: 2.5rem !important; /* Números mucho más grandes */
+            height: 80px; 
+            font-weight: 900;
+            border-radius: 8px;
+        }
+
+        /* --- 3. ELEMENTOS DE APOYO --- */
         .contenedor-patron {
             background: rgba(255, 255, 255, 0.05); border-radius: 8px; 
-            padding: 10px; margin: 10px auto; width: fit-content;
+            padding: 8px; margin: 5px auto; width: fit-content;
             text-align: center; border: 1px solid #334155;
         }
         .grid-patron {
-            display: grid; grid-template-columns: repeat(5, 15px);
-            gap: 4px; justify-content: center; margin-top: 5px;
+            display: grid; grid-template-columns: repeat(5, 14px);
+            gap: 3px; justify-content: center;
         }
-        .celda-patron { width: 15px; height: 15px; border-radius: 2px; background: #1e293b; }
-        .celda-patron.activa { background: #ffb703; box-shadow: 0 0 8px #ffb703; }
+        .celda-patron { width: 14px; height: 14px; border-radius: 2px; background: #1e293b; }
+        .celda-patron.activa { background: #ffb703; box-shadow: 0 0 5px #ffb703; }
 
-        .setup-panel { display: none !important; }
-        .logo-bingo { color: #ffb703; text-align: center; font-size: 1.5rem; margin: 0; }
-        .aviso-reto { text-align: center; color: #ef4444; font-size: 0.8rem; font-weight: bold; margin-bottom: 10px; }
+        .logo-bingo { color: #ffb703; text-align: center; font-size: 1.8rem; margin: 10px 0 5px 0; }
+        .aviso-reto { text-align: center; color: #ef4444; font-size: 0.9rem; font-weight: bold; margin-bottom: 15px; }
+        .setup-panel { display: none; }
     </style>
 </head>
 <body>
 
     <div id="barraHistorial" class="historial-fijo">
-        <div id="msgEspera" style="color: #64748b; font-size: 0.7rem; width:100%; text-align:center;">Esperando números cantados...</div>
-    </div>
-
-    <div class="contenedor-patron">
-        <div style="color: #94a3b8; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Forma de Ganar:</div>
-        <div id="gridPatron" class="grid-patron"></div>
+        <div id="msgEspera" style="color: #64748b; font-size: 0.7rem;">Esperando números...</div>
     </div>
 
     <div class="juego-container">
+        <div class="contenedor-patron">
+            <div id="gridPatron" class="grid-patron"></div>
+        </div>
+
         <h1 class="logo-bingo">BINGO DIGITAL</h1>
-        <p class="aviso-reto">⚠️ MARCA TUS NÚMEROS - NO HAY AYUDA VISUAL</p>
+        <p class="aviso-reto">⚠️ MARCA TUS NÚMEROS MANUALMENTE</p>
 
         <div id="contenedorCartones" class="cartones-grid"></div>
     </div>
@@ -97,7 +109,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <script>
-        // Configuración Firebase (Mantenemos la tuya)
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
             authDomain: "bingofast.firebaseapp.com",
@@ -111,35 +122,22 @@
         const db = firebase.database();
         let historialLocal = [];
 
-        // Escuchar números y reinicio
+        // Escuchar partida y reinicio
         db.ref('partidaActual').on('value', (snapshot) => {
             const data = snapshot.val();
-            if (data && data.status === "reiniciado") {
+            if (data?.status === "reiniciado") {
                 localStorage.clear();
                 location.reload();
                 return;
             }
-            if (data && data.numero) {
+            if (data?.numero) {
                 actualizarBarra(data.letra, data.numero);
             }
         });
 
-        // Escuchar patrón
-        db.ref('configuracion/patron').on('value', (snapshot) => {
-            const patron = snapshot.val();
-            const grid = document.getElementById('gridPatron');
-            grid.innerHTML = '';
-            const p = patron || Array(25).fill(false);
-            p.forEach(act => {
-                const c = document.createElement('div');
-                c.className = `celda-patron ${act ? 'activa' : ''}`;
-                grid.appendChild(c);
-            });
-        });
-
         function actualizarBarra(l, n) {
             if (historialLocal.includes(n)) return;
-            historialLocal.push(n); // Los agregamos al final para que llenen la cuadrícula
+            historialLocal.push(n);
             const barra = document.getElementById('barraHistorial');
             if (historialLocal.length === 1) barra.innerHTML = '';
             
@@ -149,7 +147,7 @@
             barra.appendChild(bola);
         }
 
-        // Lógica para procesar el link largo
+        // Cargar cartones desde el link
         window.onload = () => {
             const params = new URLSearchParams(window.location.search);
             const p = params.get('p');
