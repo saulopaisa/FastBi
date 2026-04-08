@@ -5,58 +5,89 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Cartón de Bingo - Juego en Vivo</title>
     <link rel="stylesheet" href="juego.css">
-   <style>
-    /* Barra superior fija para los números que van saliendo */
-    .historial-fijo {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        background: #1d3557;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        padding: 10px;
-        z-index: 1000;
-        border-bottom: 3px solid #ffb703;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        overflow-x: auto; /* Por si salen muchos números */
-    }
+    <style>
+        /* --- ESTILOS DE LA BARRA HORIZONTAL SUPERIOR --- */
+        .historial-fijo {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #1d3557;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            z-index: 9999;
+            border-bottom: 3px solid #ffb703;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            overflow-x: auto; /* Permite deslizar si hay muchos números */
+            white-space: nowrap;
+            min-height: 60px;
+            scrollbar-width: none; /* Oculta scroll en Firefox */
+        }
 
-    .bola-historial {
-        background: #e63946;
-        color: white;
-        min-width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        font-weight: 900;
-        font-size: 0.8rem;
-        border: 2px solid white;
-        animation: popIn 0.3s ease-out;
-    }
+        .historial-fijo::-webkit-scrollbar {
+            display: none; /* Oculta scroll en Chrome/Safari */
+        }
 
-    .bola-historial small {
-        font-size: 0.5rem;
-        line-height: 1;
-    }
+        .bola-historial {
+            background: #e63946;
+            color: white;
+            min-width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 0.9rem;
+            border: 2px solid white;
+            flex-shrink: 0; /* Evita que se aplasten */
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
 
-    /* Ajuste para que el contenido del juego no se tape */
-    body {
-        padding-top: 70px; 
-    }
+        .bola-historial small {
+            font-size: 0.55rem;
+            line-height: 1;
+            margin-bottom: -2px;
+            opacity: 0.9;
+        }
 
-    @keyframes popIn {
-        0% { transform: scale(0); }
-        100% { transform: scale(1); }
-    }
-</style>
+        .bola-nueva {
+            border-color: #ffb703;
+            box-shadow: 0 0 15px #ffb703;
+            transform: scale(1.1);
+        }
+
+        /* Ajuste para que el cartón no quede debajo de la barra */
+        body {
+            padding-top: 85px !important; 
+            margin: 0;
+            background-color: #f1faee;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .indicador-vacio {
+            color: #a8dadc;
+            font-size: 0.8rem;
+            font-style: italic;
+            width: 100%;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
+
+    <div id="barraHistorial" class="historial-fijo">
+        <div class="indicador-vacio">Esperando primer número...</div>
+    </div>
 
     <div class="juego-container">
         <header class="juego-header">
@@ -72,7 +103,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <script>
-        // Configuración de Firebase (Debe ser igual a la de ruleta.html)
+        // Configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
             authDomain: "bingofast.firebaseapp.com",
@@ -84,50 +115,58 @@
             measurementId: "G-Z7VH6JYV4D"
         };
 
-        // Inicializar Firebase
+        // Inicializar
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        console.log("Conectando a Firebase...");
+        let historialLocal = [];
 
         // ESCUCHA EN TIEMPO REAL
         db.ref('partidaActual').on('value', (snapshot) => {
             const data = snapshot.val();
-            console.log("Datos de Firebase:", data);
-
+            
             if (data && data.numero) {
-                mostrarAvisoNumero(data.letra, data.numero);
+                actualizarHistorialSuperior(data.letra, data.numero);
                 resaltarEnCarton(data.numero);
             }
         });
 
-        // Función para mostrar un mensaje visual al jugador
-        function mostrarAvisoNumero(letra, numero) {
-            // Eliminar aviso anterior si existe
-            const viejo = document.querySelector('.notificacion-numero');
-            if (viejo) viejo.remove();
+        function actualizarHistorialSuperior(letra, numero) {
+            // Evitar duplicar el último número si la página se refresca
+            if (historialLocal[0] === numero) return;
+            
+            historialLocal.unshift(numero); // Agregamos al inicio del array
 
-            const aviso = document.createElement('div');
-            aviso.className = 'notificacion-numero';
-            aviso.innerHTML = `¡SALIÓ LA ${letra} - ${numero}!`;
-            document.body.appendChild(aviso);
+            const barra = document.getElementById('barraHistorial');
+            
+            // Limpiar el texto de "Esperando..." en la primera bola
+            if (historialLocal.length === 1) barra.innerHTML = '';
 
-            // Sonido opcional o vibración
-            if (navigator.vibrate) navigator.vibrate(200);
+            // Crear la bola
+            const bola = document.createElement('div');
+            bola.className = 'bola-historial bola-nueva';
+            bola.innerHTML = `<small>${letra}</small><span>${numero}</span>`;
 
-            // Desaparecer después de 5 segundos
-            setTimeout(() => { if(aviso) aviso.remove(); }, 5000);
+            // Quitar el brillo de "bola-nueva" a la bola anterior
+            const anterior = barra.querySelector('.bola-nueva');
+            if (anterior) anterior.classList.remove('bola-nueva');
+
+            // Insertar al principio (izquierda)
+            barra.prepend(bola);
+
+            // Auto-scroll al inicio para ver la bola nueva
+            barra.scrollLeft = 0;
+
+            if (navigator.vibrate) navigator.vibrate(150);
         }
 
-        // Función para iluminar el número si el jugador lo tiene
         function resaltarEnCarton(numero) {
             const celdas = document.querySelectorAll('.cell');
             celdas.forEach(celda => {
                 if (parseInt(celda.innerText) === numero) {
-                    celda.style.boxShadow = "0 0 20px #ffb703";
+                    celda.style.boxShadow = "0 0 15px #ffb703";
                     celda.style.border = "3px solid #ffb703";
-                    // No lo marcamos automáticamente para que el jugador participe, 
-                    // solo le damos una pista visual.
+                    celda.style.transition = "all 0.3s ease";
                 }
             });
         }
