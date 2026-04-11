@@ -1,21 +1,14 @@
-// Esperamos a que todo el HTML esté cargado para evitar errores de "null"
 document.addEventListener('DOMContentLoaded', () => {
     const btnGenerar = document.getElementById('btnGenerar');
     const contenedor = document.getElementById('contenedorCartones');
 
-    if (!btnGenerar || !contenedor) {
-        console.error("Error: No se encontraron los elementos necesarios en el HTML.");
-        return;
-    }
+    if (!btnGenerar || !contenedor) return;
 
-    // 1. CARGAR IDS DESDE EL LINK (Si vienen en Base64 o directo)
     const cargarDesdeURL = () => {
         const params = new URLSearchParams(window.location.search);
         const p = params.get('p');
         if (!p) return;
-
         try {
-            // Intentamos decodificar si es el formato de link largo (Base64)
             const decoded = JSON.parse(atob(p));
             const ids = Array.isArray(decoded) ? decoded : [decoded];
             ids.forEach((item, i) => {
@@ -25,16 +18,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         } catch (e) {
-            // Si falla la decodificación, asumimos que es un ID simple
             const input1 = document.getElementById('id1');
             if (input1) input1.value = p;
         }
-        
-        // Ejecutamos el click para dibujar los cartones
         btnGenerar.click();
     };
 
-    // 2. EVENTO DE GENERAR CARTONES
     btnGenerar.addEventListener('click', () => {
         const ids = [
             document.getElementById('id1')?.value,
@@ -42,9 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('id3')?.value,
             document.getElementById('id4')?.value
         ];
-
         contenedor.innerHTML = "";
-        
         ids.forEach((id, index) => {
             if (id && id.trim() !== "") {
                 localStorage.setItem(`bingo_card_id_${index}`, id);
@@ -53,20 +40,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 3. FUNCIÓN PARA DIBUJAR EL CARTÓN
     function renderCarton(id) {
-        const seed = parseInt(id) || 0;
+        // Usamos una semilla simple para la generación inicial
+        let seed = parseInt(id) || 0;
         const ranges = [[1, 15], [16, 30], [31, 45], [46, 60], [61, 75]];
         
         const cardData = ranges.map(range => {
             let nums = [];
             for (let i = range[0]; i <= range[1]; i++) nums.push(i);
-            // Mezcla determinista para que el cartón #2 siempre sea igual
             return shuffleWithSeed([...nums], seed).slice(0, 5);
         });
 
         const cardDiv = document.createElement('div');
         cardDiv.className = 'bingo-card';
+        cardDiv.id = `card-${id}`; // ID para encontrarlo luego
         
         let tableHtml = `
             <div class="card-id-label">JUGADOR - No. ${id.padStart(3, '0')}</div>
@@ -84,7 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     tableHtml += `<td class="free-space">★</td>`;
                 } else {
                     const num = cardData[c][r];
-                    // Recuperar si el usuario ya había marcado este número
                     const isMarked = localStorage.getItem(`mark_${id}_${num}`) ? 'marked' : '';
                     tableHtml += `<td onclick="toggleMark(this, '${id}', ${num})" class="${isMarked}">${num}</td>`;
                 }
@@ -95,14 +81,18 @@ document.addEventListener('DOMContentLoaded', () => {
         tableHtml += `</tbody></table>`;
         cardDiv.innerHTML = tableHtml;
         contenedor.appendChild(cardDiv);
+
+        // --- CLAVE: Intentar sincronizar con la DB del tablero ---
+        sincronizarConDB(id, cardDiv);
     }
 
-    // 4. LÓGICA DE MEZCLA (SEED)
+    // Lógica de mezcla determinista (Asegúrate que el tablero use la misma)
     function shuffleWithSeed(array, seed) {
         let m = array.length, t, i;
-        let s = seed;
         while (m) {
-            i = Math.floor(Math.abs(Math.sin(s++)) * m--);
+            seed = (seed * 9301 + 49297) % 233280;
+            let rnd = seed / 233280;
+            i = Math.floor(rnd * m--);
             t = array[m];
             array[m] = array[i];
             array[i] = t;
@@ -110,16 +100,39 @@ document.addEventListener('DOMContentLoaded', () => {
         return array;
     }
 
-    // Ejecutar carga automática
+    // Si el tablero guarda los cartones en Firebase, esto los traerá exactos
+    function sincronizarConDB(id, elemento) {
+        if (typeof firebase !== 'undefined') {
+            const db = firebase.database();
+            db.ref(`cartonesRegistrados/${id}`).once('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data && data.numeros) {
+                    const celdas = elemento.querySelectorAll('td:not(.free-space)');
+                    data.numeros.forEach((num, i) => {
+                        if (celdas[i]) {
+                            celdas[i].innerText = num;
+                            // Actualizar el onclick con el número correcto de la DB
+                            celdas[i].setAttribute('onclick', `toggleMark(this, '${id}', ${num})`);
+                            // Re-chequear si estaba marcado el número de la DB
+                            if (localStorage.getItem(`mark_${id}_${num}`)) {
+                                celdas[i].classList.add('marked');
+                            } else {
+                                celdas[i].classList.remove('marked');
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    }
+
     cargarDesdeURL();
 });
 
-// Función global para marcar (necesaria para el onclick del HTML generado)
 function toggleMark(el, id, num) {
     el.classList.toggle('marked');
     if (el.classList.contains('marked')) {
         localStorage.setItem(`mark_${id}_${num}`, "true");
-        // Efecto visual de vibración si es móvil
         if (navigator.vibrate) navigator.vibrate(50); 
     } else {
         localStorage.removeItem(`mark_${id}_${num}`);
