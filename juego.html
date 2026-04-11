@@ -6,82 +6,68 @@
     <title>Bingo Pro - Adaptable</title>
     <link rel="stylesheet" href="juego.css">
     <style>
-    /* --- 1. BARRA SUPERIOR (20% FIJO) --- */
-    .historial-fijo {
-        position: fixed; top: 0; left: 0; width: 100%;
-        background: #111827; display: flex; flex-wrap: wrap;
-        gap: 4px; padding: 5px; z-index: 10000;
-        border-bottom: 2px solid #ffb703;
-        height: 18vh; /* Altura fija para control absoluto */
-        max-height: 20vh; overflow-y: auto; /* Scroll interno si salen demasiados */
-        box-sizing: border-box; justify-content: center;
-    }
-
-    .bola-historial {
-        background: #e63946; color: white; width: 26px; height: 26px;
-        border-radius: 50%; display: flex; flex-direction: column;
-        align-items: center; justify-content: center; font-weight: 800;
-        border: 1px solid rgba(255,255,255,0.4); font-size: 0.6rem;
-    }
-
-    /* --- 2. CONTENEDOR PRINCIPAL --- */
-    body { 
-        margin: 0; background-color: #0f172a !important; 
-        color: white; font-family: sans-serif; 
-        overflow-x: hidden;
-        height: 100vh; display: flex; flex-direction: column;
-    }
-
-    .juego-container {
-        margin-top: 18vh; /* Igual a la altura de la barra */
-        flex: 1; display: flex; flex-direction: column;
-        align-items: center; justify-content: flex-start;
-        padding: 5px; box-sizing: border-box;
-    }
-
-    .cartones-grid { 
-        display: flex; flex-wrap: wrap; 
-        justify-content: center; gap: 15px; width: 100%;
-    }
-
-    /* --- 3. RESPONSIVIDAD PC (SIN SCROLL) --- */
-    @media (min-width: 768px) {
-        .bingo-card { 
-            width: 45% !important; 
-            max-width: 550px;
-            /* LIMITADOR CLAVE: Máximo 60% de la altura de la pantalla */
-            max-height: 65vh; 
-            display: flex; flex-direction: column;
+        /* --- 1. BARRA SUPERIOR (20% FIJO) --- */
+        .historial-fijo {
+            position: fixed; top: 0; left: 0; width: 100%;
+            background: #111827; display: flex; flex-wrap: wrap;
+            gap: 4px; padding: 5px; z-index: 10000;
+            border-bottom: 2px solid #ffb703;
+            height: 18vh; max-height: 20vh; overflow-y: auto;
+            box-sizing: border-box; justify-content: center;
         }
-        .bingo-table { flex: 1; } /* Hace que la tabla llene el espacio sin salirse */
-        .bingo-table td { 
-            font-size: clamp(1.5rem, 5vh, 2.5rem) !important; 
-            height: auto; 
+
+        .bola-historial {
+            background: #e63946; color: white; width: 26px; height: 26px;
+            border-radius: 50%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; font-weight: 800;
+            border: 1px solid rgba(255,255,255,0.4); font-size: 0.6rem;
         }
-        .logo-bingo { font-size: 1.2rem; margin: 2px; }
-    }
 
-    /* --- 4. RESPONSIVIDAD CELULAR (CON SCROLL PERMITIDO) --- */
-    @media (max-width: 767px) {
-        .bingo-card { width: 95% !important; margin-bottom: 20px; }
-        .bingo-table td { font-size: 2rem !important; height: 60px; }
-        body { overflow-y: auto; }
-    }
+        /* --- 2. CONTENEDOR PRINCIPAL --- */
+        body { 
+            margin: 0; background-color: #0f172a !important; 
+            color: white; font-family: sans-serif; overflow-x: hidden;
+            height: 100vh; display: flex; flex-direction: column;
+        }
 
-    /* Estilos estéticos */
-    .bingo-card {
-        background: white; color: #1e293b; border-radius: 10px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.5); overflow: hidden;
-    }
-    .card-id-label { background: #1e3a8a; color: white; padding: 5px; font-weight: bold; text-align: center; font-size: 0.9rem; }
-    .bingo-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    .bingo-table th { background: #1e293b; color: white; padding: 5px; font-size: 1.2rem; }
-    .bingo-table td { border: 1px solid #cbd5e1; text-align: center; cursor: pointer; font-weight: 900; }
-    .bingo-table td.marked { background-color: #ffb703 !important; box-shadow: inset 0 0 10px rgba(0,0,0,0.2); }
-    .free-space { background: #f8fafc; font-size: 0.8rem !important; color: #64748b; }
+        .juego-container {
+            margin-top: 18vh; flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: flex-start;
+            padding: 5px; box-sizing: border-box;
+        }
 
-    .setup-panel { display: none; }
-</style>
+        .cartones-grid { 
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; width: 100%;
+        }
+
+        /* --- 3. RESPONSIVIDAD PC vs MÓVIL --- */
+        @media (min-width: 768px) {
+            .bingo-card { width: 45% !important; max-width: 550px; max-height: 65vh; display: flex; flex-direction: column; }
+            .bingo-table td { font-size: clamp(1.5rem, 5vh, 2.5rem) !important; height: auto; }
+            .logo-bingo { font-size: 1.2rem; margin: 2px; }
+        }
+
+        @media (max-width: 767px) {
+            .bingo-card { width: 95% !important; margin-bottom: 20px; }
+            .bingo-table td { font-size: 2rem !important; height: 60px; }
+            body { overflow-y: auto; }
+        }
+
+        .bingo-card { background: white; color: #1e293b; border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.5); overflow: hidden; }
+        .card-id-label { background: #1e3a8a; color: white; padding: 5px; font-weight: bold; text-align: center; font-size: 0.9rem; }
+        .bingo-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .bingo-table th { background: #1e293b; color: white; padding: 5px; font-size: 1.2rem; }
+        .bingo-table td { border: 1px solid #cbd5e1; text-align: center; cursor: pointer; font-weight: 900; }
+        .bingo-table td.marked { background-color: #ffb703 !important; }
+        .free-space { background: #f8fafc; font-size: 0.8rem !important; color: #64748b; }
+        
+        /* Estilos del patrón */
+        .grid-patron { display: grid; grid-template-columns: repeat(5, 10px); gap: 2px; justify-content: center; margin-bottom: 5px; }
+        .celda-patron { width: 10px; height: 10px; background: #334155; }
+        .celda-patron.activa { background: #ffb703; }
+
+        .setup-panel { display: none; }
+    </style>
 </head>
 <body>
 
@@ -90,13 +76,9 @@
     </div>
 
     <div class="juego-container">
-        <div class="contenedor-patron">
-            <div id="gridPatron" class="grid-patron"></div>
-        </div>
-
+        <div id="gridPatron" class="grid-patron"></div>
         <h1 class="logo-bingo">BINGO DIGITAL</h1>
-        <p class="aviso-reto">⚠️ MARCA MANUAL - SIN AYUDA VISUAL</p>
-
+        <p style="text-align: center; color: #ef4444; font-size: 0.7rem; font-weight: bold; margin: 2px;">⚠️ MARCA MANUAL</p>
         <div id="contenedorCartones" class="cartones-grid"></div>
     </div>
 
@@ -108,60 +90,6 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
-            authDomain: "bingofast.firebaseapp.com",
-            databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
-            projectId: "bingofast",
-            storageBucket: "bingofast.firebasestorage.app",
-            messagingSenderId: "473863283329",
-            appId: "1:473863283329:web:2c4bf96de167d105fa6380"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        let historialLocal = [];
-
-        db.ref('partidaActual').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data?.status === "reiniciado") { localStorage.clear(); location.reload(); return; }
-            if (data?.numero) {
-                if (!historialLocal.includes(data.numero)) {
-                    historialLocal.push(data.numero);
-                    const barra = document.getElementById('barraHistorial');
-                    if (historialLocal.length === 1) barra.innerHTML = '';
-                    const bola = document.createElement('div');
-                    bola.className = 'bola-historial';
-                    bola.innerHTML = `<small>${data.letra}</small><span>${data.numero}</span>`;
-                    barra.appendChild(bola);
-                }
-            }
-        });
-
-        db.ref('configuracion/patron').on('value', (s) => {
-            const p = s.val() || Array(25).fill(false);
-            const g = document.getElementById('gridPatron');
-            g.innerHTML = '';
-            p.forEach(a => {
-                const d = document.createElement('div');
-                d.className = `celda-patron ${a ? 'activa' : ''}`;
-                g.appendChild(d);
-            });
-        });
-
-        window.onload = () => {
-            const p = new URLSearchParams(window.location.search).get('p');
-            if (p) {
-                try {
-                    const d = JSON.parse(atob(p));
-                    const ids = Array.isArray(d) ? d : [d];
-                    ids.forEach((item, i) => { if (i < 4) document.getElementById(`id${i+1}`).value = item.id || item; });
-                } catch(e) { document.getElementById('id1').value = p; }
-                document.getElementById('btnGenerar').click();
-            }
-        };
-    </script>
     <script src="juego.js"></script>
 </body>
 </html>
