@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!btnGenerar || !contenedor) return;
 
+    // 1. CARGAR IDS DESDE EL LINK (Base64 o Directo)
     const cargarDesdeURL = () => {
         const params = new URLSearchParams(window.location.search);
         const p = params.get('p');
@@ -24,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnGenerar.click();
     };
 
+    // 2. EVENTO DE GENERAR
     btnGenerar.addEventListener('click', () => {
         const ids = [
             document.getElementById('id1')?.value,
@@ -31,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('id3')?.value,
             document.getElementById('id4')?.value
         ];
+
         contenedor.innerHTML = "";
         ids.forEach((id, index) => {
             if (id && id.trim() !== "") {
@@ -40,20 +43,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // 3. LA LÓGICA DE GENERACIÓN IDÉNTICA A GENERAR.JS
     function renderCarton(id) {
-        // Usamos una semilla simple para la generación inicial
-        let seed = parseInt(id) || 0;
-        const ranges = [[1, 15], [16, 30], [31, 45], [46, 60], [61, 75]];
+        const seedBase = parseInt(id);
+        const rangos = [[1,15],[16,30],[31,45],[46,60],[61,75]];
         
-        const cardData = ranges.map(range => {
-            let nums = [];
-            for (let i = range[0]; i <= range[1]; i++) nums.push(i);
-            return shuffleWithSeed([...nums], seed).slice(0, 5);
+        // Generamos las columnas con el offset (+ indexCol) igual que en tu generador
+        const columnas = rangos.map((r, indexCol) => {
+            let n = []; 
+            for(let i=r[0]; i<=r[1]; i++) n.push(i);
+            // USAMOS LA MISMA FUNCIÓN SHUFFLE Y LA MISMA SEMILLA
+            return shuffle([...n], seedBase + indexCol).slice(0, 5);
         });
 
         const cardDiv = document.createElement('div');
         cardDiv.className = 'bingo-card';
-        cardDiv.id = `card-${id}`; // ID para encontrarlo luego
         
         let tableHtml = `
             <div class="card-id-label">JUGADOR - No. ${id.padStart(3, '0')}</div>
@@ -64,13 +68,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 <tbody>
         `;
 
+        // Construimos las filas (r) y columnas (c)
         for (let r = 0; r < 5; r++) {
             tableHtml += "<tr>";
             for (let c = 0; c < 5; c++) {
                 if (r === 2 && c === 2) {
                     tableHtml += `<td class="free-space">★</td>`;
                 } else {
-                    const num = cardData[c][r];
+                    const num = columnas[c][r]; // Extraemos el número de la columna procesada
                     const isMarked = localStorage.getItem(`mark_${id}_${num}`) ? 'marked' : '';
                     tableHtml += `<td onclick="toggleMark(this, '${id}', ${num})" class="${isMarked}">${num}</td>`;
                 }
@@ -81,54 +86,24 @@ document.addEventListener('DOMContentLoaded', () => {
         tableHtml += `</tbody></table>`;
         cardDiv.innerHTML = tableHtml;
         contenedor.appendChild(cardDiv);
-
-        // --- CLAVE: Intentar sincronizar con la DB del tablero ---
-        sincronizarConDB(id, cardDiv);
     }
 
-    // Lógica de mezcla determinista (Asegúrate que el tablero use la misma)
-    function shuffleWithSeed(array, seed) {
+    // 4. FUNCIÓN SHUFFLE (COPIA EXACTA DE TU GENERAR.JS)
+    function shuffle(array, seed) {
         let m = array.length, t, i;
         while (m) {
-            seed = (seed * 9301 + 49297) % 233280;
-            let rnd = seed / 233280;
-            i = Math.floor(rnd * m--);
-            t = array[m];
-            array[m] = array[i];
+            i = Math.floor(Math.abs(Math.sin(seed++)) * m--);
+            t = array[m]; 
+            array[m] = array[i]; 
             array[i] = t;
         }
         return array;
     }
 
-    // Si el tablero guarda los cartones en Firebase, esto los traerá exactos
-    function sincronizarConDB(id, elemento) {
-        if (typeof firebase !== 'undefined') {
-            const db = firebase.database();
-            db.ref(`cartonesRegistrados/${id}`).once('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data && data.numeros) {
-                    const celdas = elemento.querySelectorAll('td:not(.free-space)');
-                    data.numeros.forEach((num, i) => {
-                        if (celdas[i]) {
-                            celdas[i].innerText = num;
-                            // Actualizar el onclick con el número correcto de la DB
-                            celdas[i].setAttribute('onclick', `toggleMark(this, '${id}', ${num})`);
-                            // Re-chequear si estaba marcado el número de la DB
-                            if (localStorage.getItem(`mark_${id}_${num}`)) {
-                                celdas[i].classList.add('marked');
-                            } else {
-                                celdas[i].classList.remove('marked');
-                            }
-                        }
-                    });
-                }
-            });
-        }
-    }
-
     cargarDesdeURL();
 });
 
+// Función global para marcar
 function toggleMark(el, id, num) {
     el.classList.toggle('marked');
     if (el.classList.contains('marked')) {
