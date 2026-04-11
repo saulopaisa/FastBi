@@ -6,27 +6,28 @@
     <title>Bingo Pro - Adaptable</title>
     <link rel="stylesheet" href="juego.css">
     <style>
-        /* --- 1. BARRA SUPERIOR (20% FIJO) --- */
+        /* --- 1. BARRA SUPERIOR (MÁXIMO 20% DE ALTURA) --- */
         .historial-fijo {
             position: fixed; top: 0; left: 0; width: 100%;
             background: #111827; display: flex; flex-wrap: wrap;
-            gap: 4px; padding: 5px; z-index: 10000;
+            gap: 4px; padding: 6px; z-index: 10000;
             border-bottom: 2px solid #ffb703;
-            height: 18vh; max-height: 20vh; overflow-y: auto;
+            max-height: 20vh; overflow: hidden;
             box-sizing: border-box; justify-content: center;
         }
 
         .bola-historial {
-            background: #e63946; color: white; width: 26px; height: 26px;
+            background: #e63946; color: white; width: 28px; height: 28px;
             border-radius: 50%; display: flex; flex-direction: column;
             align-items: center; justify-content: center; font-weight: 800;
-            border: 1px solid rgba(255,255,255,0.4); font-size: 0.6rem;
+            border: 1px solid rgba(255,255,255,0.4); font-size: 0.65rem;
         }
 
         /* --- 2. CONTENEDOR PRINCIPAL --- */
         body { 
             margin: 0; background-color: #0f172a !important; 
-            color: white; font-family: sans-serif; overflow-x: hidden;
+            color: white; font-family: sans-serif; 
+            overflow-x: hidden;
             height: 100vh; display: flex; flex-direction: column;
         }
 
@@ -40,7 +41,46 @@
             display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; width: 100%;
         }
 
-        /* --- 3. RESPONSIVIDAD PC vs MÓVIL --- */
+        /* --- 3. DISEÑO DEL CARTÓN GUÍA DEL PATRÓN --- */
+        .contenedor-patron-guia {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid #334155;
+            border-radius: 8px;
+            padding: 8px;
+            margin: 5px auto 10px;
+            text-align: center;
+            width: fit-content;
+        }
+
+        .guia-patron-titulo {
+            color: #94a3b8;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .grid-patron {
+            display: grid;
+            grid-template-columns: repeat(5, 14px);
+            gap: 3px;
+            justify-content: center;
+        }
+
+        .celda-patron {
+            width: 14px;
+            height: 14px;
+            border-radius: 2px;
+            background: #1e293b;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .celda-patron.activa {
+            background: #ffb703;
+            box-shadow: 0 0 5px #ffb703;
+        }
+
+        /* --- 4. RESPONSIVIDAD PC vs MÓVIL --- */
         @media (min-width: 768px) {
             .bingo-card { width: 45% !important; max-width: 550px; max-height: 65vh; display: flex; flex-direction: column; }
             .bingo-table td { font-size: clamp(1.5rem, 5vh, 2.5rem) !important; height: auto; }
@@ -61,11 +101,6 @@
         .bingo-table td.marked { background-color: #ffb703 !important; }
         .free-space { background: #f8fafc; font-size: 0.8rem !important; color: #64748b; }
         
-        /* Estilos del patrón */
-        .grid-patron { display: grid; grid-template-columns: repeat(5, 10px); gap: 2px; justify-content: center; margin-bottom: 5px; }
-        .celda-patron { width: 10px; height: 10px; background: #334155; }
-        .celda-patron.activa { background: #ffb703; }
-
         .setup-panel { display: none; }
     </style>
 </head>
@@ -76,9 +111,15 @@
     </div>
 
     <div class="juego-container">
-        <div id="gridPatron" class="grid-patron"></div>
+        <div class="contenedor-patron-guia">
+            <div class="guia-patron-titulo">Forma de Ganar esta partida</div>
+            <div id="gridPatron" class="grid-patron">
+                </div>
+        </div>
+
         <h1 class="logo-bingo">BINGO DIGITAL</h1>
-        <p style="text-align: center; color: #ef4444; font-size: 0.7rem; font-weight: bold; margin: 2px;">⚠️ MARCA MANUAL</p>
+        <p style="text-align: center; color: #ef4444; font-size: 0.8rem; font-weight: bold; margin: 2px;">⚠️ MARCA MANUAL - NO HAY AYUDA VISUAL</p>
+
         <div id="contenedorCartones" class="cartones-grid"></div>
     </div>
 
@@ -90,6 +131,63 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
+            authDomain: "bingofast.firebaseapp.com",
+            databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
+            projectId: "bingofast",
+            storageBucket: "bingofast.firebasestorage.app",
+            messagingSenderId: "473863283329",
+            appId: "1:473863283329:web:2c4bf96de167d105fa6380"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let historialLocal = [];
+
+        db.ref('partidaActual').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data?.status === "reiniciado") { localStorage.clear(); location.reload(); return; }
+            if (data?.numero) {
+                if (!historialLocal.includes(data.numero)) {
+                    historialLocal.push(data.numero);
+                    const barra = document.getElementById('barraHistorial');
+                    if (historialLocal.length === 1) barra.innerHTML = '';
+                    const bola = document.createElement('div');
+                    bola.className = 'bola-historial';
+                    bola.innerHTML = `<small>${data.letra}</small><span>${data.numero}</span>`;
+                    barra.appendChild(bola);
+                }
+            }
+        });
+
+        // ESCUCHA FIREBASE PARA EL PATRÓN Y DIBUJA EL CARTÓN GUÍA
+        db.ref('configuracion/patron').on('value', (s) => {
+            const p = s.val() || Array(25).fill(false);
+            const g = document.getElementById('gridPatron');
+            g.innerHTML = ''; // Limpiar el cartón guía
+
+            p.forEach(act => {
+                const cVal = document.createElement('div');
+                // Si la celda está activa en el patrón, le añadimos la clase 'activa' (amarillo)
+                cVal.className = `celda-patron ${act ? 'activa' : ''}`;
+                g.appendChild(cVal);
+            });
+        });
+
+        window.onload = () => {
+            const p = new URLSearchParams(window.location.search).get('p');
+            if (p) {
+                try {
+                    const d = JSON.parse(atob(p));
+                    const ids = Array.isArray(d) ? d : [d];
+                    ids.forEach((item, i) => { if (i < 4) document.getElementById(`id${i+1}`).value = item.id || item; });
+                } catch(e) { document.getElementById('id1').value = p; }
+                document.getElementById('btnGenerar').click();
+            }
+        };
+    </script>
     <script src="juego.js"></script>
 </body>
 </html>
