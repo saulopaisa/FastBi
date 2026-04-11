@@ -6,7 +6,7 @@
     <title>Bingo Pro - Adaptable</title>
     <link rel="stylesheet" href="juego.css">
     <style>
-        /* --- 1. BARRA SUPERIOR (MÁXIMO 20% DE ALTURA) --- */
+        /* --- 1. BARRA SUPERIOR --- */
         .historial-fijo {
             position: fixed; top: 0; left: 0; width: 100%;
             background: #111827; display: flex; flex-wrap: wrap;
@@ -32,59 +32,76 @@
         }
 
         .juego-container {
-            margin-top: 18vh; flex: 1; display: flex; flex-direction: column;
+            margin-top: 19vh; flex: 1; display: flex; flex-direction: column;
             align-items: center; justify-content: flex-start;
             padding: 5px; box-sizing: border-box;
         }
 
-        .cartones-grid { 
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; width: 100%;
-        }
-
-        /* --- 3. DISEÑO DEL CARTÓN GUÍA DEL PATRÓN --- */
+        /* --- 3. DISEÑO DEL CARTÓN GUÍA (CORREGIDO) --- */
         .contenedor-patron-guia {
-            background: rgba(255, 255, 255, 0.05);
+            background: #1e293b; /* Fondo sólido para que se vea como tablero */
             border: 2px solid #334155;
             border-radius: 8px;
-            padding: 8px;
-            margin: 5px auto 10px;
-            text-align: center;
+            padding: 10px;
+            margin: 0 auto 15px;
             width: fit-content;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
         .guia-patron-titulo {
             color: #94a3b8;
-            font-size: 0.7rem;
+            font-size: 0.6rem;
             font-weight: bold;
             text-transform: uppercase;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        /* Cabecera BINGO */
+        .guia-letras {
+            display: grid;
+            grid-template-columns: repeat(5, 20px);
+            gap: 4px;
             margin-bottom: 5px;
         }
 
+        .guia-letras span {
+            font-size: 0.75rem;
+            font-weight: 900;
+            color: #ffb703; /* Letras en dorado */
+            text-align: center;
+        }
+
+        /* Cuadrícula de 25 casillas */
         .grid-patron {
             display: grid;
-            grid-template-columns: repeat(5, 14px);
-            gap: 3px;
+            grid-template-columns: repeat(5, 20px);
+            gap: 4px;
             justify-content: center;
         }
 
         .celda-patron {
-            width: 14px;
-            height: 14px;
-            border-radius: 2px;
-            background: #1e293b;
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            background: #0f172a; /* Color de casilla vacía */
             border: 1px solid rgba(255,255,255,0.1);
+            transition: background 0.3s ease;
         }
 
+        /* CUANDO SE MARCA EN LA RULETA (CORREGIDO) */
         .celda-patron.activa {
-            background: #ffb703;
-            box-shadow: 0 0 5px #ffb703;
+            background: #ffb703 !important; /* Amarillo Bingo */
+            box-shadow: 0 0 8px #ffb703;
+            border-color: #ffb703;
         }
 
-        /* --- 4. RESPONSIVIDAD PC vs MÓVIL --- */
+        /* --- 4. CARTONES Y RESPONSIVIDAD --- */
+        .cartones-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; width: 100%; }
+        
         @media (min-width: 768px) {
-            .bingo-card { width: 45% !important; max-width: 550px; max-height: 65vh; display: flex; flex-direction: column; }
-            .bingo-table td { font-size: clamp(1.5rem, 5vh, 2.5rem) !important; height: auto; }
-            .logo-bingo { font-size: 1.2rem; margin: 2px; }
+            .bingo-card { width: 45% !important; max-width: 550px; max-height: 65vh; }
+            .bingo-table td { font-size: clamp(1.5rem, 5vh, 2.5rem) !important; }
         }
 
         @media (max-width: 767px) {
@@ -93,14 +110,13 @@
             body { overflow-y: auto; }
         }
 
-        .bingo-card { background: white; color: #1e293b; border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.5); overflow: hidden; }
-        .card-id-label { background: #1e3a8a; color: white; padding: 5px; font-weight: bold; text-align: center; font-size: 0.9rem; }
-        .bingo-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .bingo-table th { background: #1e293b; color: white; padding: 5px; font-size: 1.2rem; }
+        .bingo-card { background: white; color: #1e293b; border-radius: 10px; overflow: hidden; }
+        .card-id-label { background: #1e3a8a; color: white; padding: 5px; font-weight: bold; text-align: center; }
+        .bingo-table { width: 100%; border-collapse: collapse; }
+        .bingo-table th { background: #1e293b; color: white; padding: 5px; }
         .bingo-table td { border: 1px solid #cbd5e1; text-align: center; cursor: pointer; font-weight: 900; }
         .bingo-table td.marked { background-color: #ffb703 !important; }
         .free-space { background: #f8fafc; font-size: 0.8rem !important; color: #64748b; }
-        
         .setup-panel { display: none; }
     </style>
 </head>
@@ -111,16 +127,17 @@
     </div>
 
     <div class="juego-container">
-       <div class="contenedor-patron-guia">
-    <div class="guia-patron-titulo">Patrón de Victoria</div>
-    <div class="guia-letras">
-        <span>B</span><span>I</span><span>N</span><span>G</span><span>O</span>
-    </div>
-    <div id="gridPatron" class="grid-patron"></div>
-</div>
+        <div class="contenedor-patron-guia">
+            <div class="guia-patron-titulo">Patrón de Victoria</div>
+            <div class="guia-letras">
+                <span>B</span><span>I</span><span>N</span><span>G</span><span>O</span>
+            </div>
+            <div id="gridPatron" class="grid-patron">
+                </div>
+        </div>
 
-        <h1 class="logo-bingo">BINGO DIGITAL</h1>
-        <p style="text-align: center; color: #ef4444; font-size: 0.8rem; font-weight: bold; margin: 2px;">⚠️ MARCA MANUAL - NO HAY AYUDA VISUAL</p>
+        <h1 class="logo-bingo" style="font-size: 1.2rem; margin: 5px;">BINGO DIGITAL</h1>
+        <p style="text-align: center; color: #ef4444; font-size: 0.7rem; font-weight: bold; margin: 2px;">⚠️ MARCA MANUAL</p>
 
         <div id="contenedorCartones" class="cartones-grid"></div>
     </div>
@@ -148,6 +165,7 @@
         const db = firebase.database();
         let historialLocal = [];
 
+        // Escuchar números cantados
         db.ref('partidaActual').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data?.status === "reiniciado") { localStorage.clear(); location.reload(); return; }
@@ -159,22 +177,27 @@
                     const bola = document.createElement('div');
                     bola.className = 'bola-historial';
                     bola.innerHTML = `<small>${data.letra}</small><span>${data.numero}</span>`;
-                    barra.appendChild(bola);
+                    barra.prepend(bola); // Los nuevos números salen de primero
                 }
             }
         });
 
-        // ESCUCHA FIREBASE PARA EL PATRÓN Y DIBUJA EL CARTÓN GUÍA
+        // ESCUCHA DEL PATRÓN (Asegúrate de que 'configuracion/patron' sea la ruta correcta en tu Firebase)
         db.ref('configuracion/patron').on('value', (s) => {
             const p = s.val() || Array(25).fill(false);
             const g = document.getElementById('gridPatron');
-            g.innerHTML = ''; // Limpiar el cartón guía
+            g.innerHTML = ''; 
 
-            p.forEach(act => {
-                const cVal = document.createElement('div');
-                // Si la celda está activa en el patrón, le añadimos la clase 'activa' (amarillo)
-                cVal.className = `celda-patron ${act ? 'activa' : ''}`;
-                g.appendChild(cVal);
+            p.forEach((act, index) => {
+                const celda = document.createElement('div');
+                celda.className = `celda-patron ${act ? 'activa' : ''}`;
+                
+                // Marca el centro (FREE) de forma visual diferente
+                if (index === 12) {
+                    celda.innerHTML = '<span style="font-size:10px; display:block; text-align:center; color:rgba(255,255,255,0.2)">★</span>';
+                }
+                
+                g.appendChild(celda);
             });
         });
 
