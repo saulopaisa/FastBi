@@ -99,3 +99,66 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* --- DISEÑO DEL MINI-CARTÓN GUÍA --- */
+.contenedor-patron-guia {
+    background: #1e293b;
+    border: 2px solid #334155;
+    border-radius: 8px;
+    padding: 10px;
+    margin: 5px auto 15px;
+    width: fit-content;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.guia-patron-titulo {
+    color: #ffb703;
+    font-size: 0.65rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+}
+
+/* Cabecera BINGO del mini-cartón */
+.guia-letras {
+    display: grid;
+    grid-template-columns: repeat(5, 18px);
+    gap: 3px;
+    margin-bottom: 3px;
+    justify-content: center;
+}
+
+.guia-letras span {
+    font-size: 0.7rem;
+    font-weight: 900;
+    color: #94a3b8;
+    text-align: center;
+}
+
+/* Cuadrícula de casillas */
+.grid-patron {
+    display: grid;
+    grid-template-columns: repeat(5, 18px);
+    gap: 3px;
+    justify-content: center;
+}
+
+.celda-patron {
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    background: #0f172a; /* Color de casilla vacía */
+    border: 1px solid rgba(255,255,255,0.1);
+    box-sizing: border-box;
+}
+
+/* Casilla marcada en el patrón de la ruleta */
+.celda-patron.activa {
+    background: #ffb703;
+    border-color: #ffb703;
+    box-shadow: 0 0 8px rgba(255, 183, 3, 0.5);
+}
+
+
+
