@@ -3,16 +3,17 @@ let seleccionados = [];
 
 // --- 1. LÓGICA DE SINCRONIZACIÓN (EL CORAZÓN DEL BINGO) ---
 
+// --- 1. LÓGICA DE SINCRONIZACIÓN (EL CORAZÓN DEL BINGO) ---
+
 function generarMatriz(id) {
     const seedBase = parseInt(id);
     const rangos = [[1,15],[16,30],[31,45],[46,60],[61,75]];
     
-    // indexCol es vital para que cada columna tenga su propia semilla predecible
     const columnas = rangos.map((r, indexCol) => {
         let n = []; 
         for(let i=r[0]; i<=r[1]; i++) n.push(i);
-        // Sincronizamos: ID + índice de columna
-        return shuffle([...n], seedBase + indexCol).slice(0, 5);
+        // Multiplicamos en vez de sumar para evitar coincidencias de semillas entre IDs
+        return shuffle([...n], (seedBase * 10) + indexCol).slice(0, 5);
     });
 
     let m = [];
@@ -28,8 +29,13 @@ function generarMatriz(id) {
 
 function shuffle(array, seed) {
     let m = array.length, t, i;
+    let localSeed = seed; // Usar variable local para la semilla
     while (m) {
-        i = Math.floor(Math.abs(Math.sin(seed++)) * m--);
+        // Fórmula determinista mejorada
+        let x = Math.sin(localSeed++) * 10000;
+        let randomDecimal = x - Math.floor(x);
+        i = Math.floor(randomDecimal * m--);
+        
         t = array[m]; 
         array[m] = array[i]; 
         array[i] = t;
