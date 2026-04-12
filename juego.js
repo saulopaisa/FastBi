@@ -108,3 +108,76 @@ window.onload = () => {
         }
     }
 };
+// --- 3. GENERADOR DE CARTONES (Sincronizado con el Admin) ---
+const generarCartonVisual = (idCarton) => {
+    
+    // 1. LAS MISMAS FUNCIONES MATEMÁTICAS DEL ADMIN
+    const shufflePlayer = (array, seed) => {
+        let m = array.length, t, i;
+        let localSeed = seed;
+        while (m) {
+            let x = Math.sin(localSeed++) * 10000;
+            let randomDecimal = x - Math.floor(x);
+            i = Math.floor(randomDecimal * m--);
+            t = array[m]; array[m] = array[i]; array[i] = t;
+        }
+        return array;
+    };
+
+    const generarMatrizPlayer = (id) => {
+        const seedBase = parseInt(id);
+        const rangos = [[1,15],[16,30],[31,45],[46,60],[61,75]];
+        const columnas = rangos.map((r, indexCol) => {
+            let n = []; 
+            for(let i=r[0]; i<=r[1]; i++) n.push(i);
+            return shufflePlayer([...n], (seedBase * 10) + indexCol).slice(0, 5);
+        });
+
+        let m = [];
+        for(let r=0; r<5; r++) {
+            let fila = [];
+            for(let c=0; c<5; c++) {
+                fila.push((r===2 && c===2) ? "FREE" : columnas[c][r]);
+            }
+            m.push(fila);
+        }
+        return m;
+    };
+
+    // 2. OBTENEMOS LOS NÚMEROS EXACTOS
+    const matrizNumeros = generarMatrizPlayer(idCarton);
+
+    // 3. CONSTRUIMOS EL HTML DEL CARTÓN
+    const card = document.createElement('div');
+    card.className = 'bingo-card';
+    
+    const label = document.createElement('div');
+    label.className = 'card-id-label';
+    label.innerText = `CARTÓN N° ${idCarton}`;
+    card.appendChild(label);
+
+    const table = document.createElement('table');
+    table.className = 'bingo-table';
+    table.innerHTML = `<thead><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr></thead>`;
+    
+    const tbody = document.createElement('tbody');
+    matrizNumeros.forEach((filaFisica, r) => {
+        const tr = document.createElement('tr');
+        filaFisica.forEach((numero, c) => {
+            const td = document.createElement('td');
+            if (numero === 'FREE') {
+                td.className = 'free-space marked';
+                td.innerText = '★';
+            } else {
+                td.innerText = numero;
+            }
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    card.appendChild(table);
+
+    return card;
+};
+
