@@ -1,10 +1,13 @@
-// --- 1. CONFIGURACIÓN Y ESTADO ---
-let historialLocal = [];
+// --- 1. CONFIGURACIÓN Y ESTADO (BLINDADO) ---
+// Usamos var o una comprobación para evitar el error de "Already declared"
+if (typeof historialLocal === 'undefined') {
+    var historialLocal = [];
+}
 
-// Usamos una función para encapsular la escucha y asegurar que el DOM esté listo
+// --- 2. FUNCIÓN DE ESCUCHA EN TIEMPO REAL ---
 const iniciarEscuchaRealtime = () => {
     
-    // --- 2. ESCUCHA DE NÚMEROS ---
+    // ESCUCHA DE NÚMEROS (BOLAS)
     db.ref('partidaActual').on('value', (snapshot) => {
         const data = snapshot.val();
         if (data?.status === "reiniciado") {
@@ -27,27 +30,25 @@ const iniciarEscuchaRealtime = () => {
         }
     });
 
-    // --- 3. ESCUCHA DEL PATRÓN (EL "DIBUJO" DE LA RULETA) ---
+    // ESCUCHA DEL PATRÓN (DIBUJO DE LA RULETA)
     db.ref('configuracion/patron').on('value', (snapshot) => {
         const patronRuleta = snapshot.val();
         const gridGuia = document.getElementById('gridPatron');
         
-        // LOG DE DEPURACIÓN: Abre la consola (F12) y mira si llega esto
-        console.log("Datos recibidos de Firebase:", patronRuleta);
+        // Verificación en consola
+        console.log("Sincronizando dibujo desde ruleta:", patronRuleta);
 
         if (!gridGuia) {
-            console.error("ERROR: No se encontró el elemento #gridPatron en el HTML");
+            console.warn("Aún no existe el elemento #gridPatron");
             return;
         }
         
-        // Si no hay datos, creamos un array vacío de 25
         const datosFinales = patronRuleta || Array(25).fill(false);
-        
         gridGuia.innerHTML = ''; 
 
         datosFinales.forEach((estaActiva, index) => {
             const celda = document.createElement('div');
-            // IMPORTANTE: Asegúrate que el CSS tenga .celda-patron y .activa
+            // IMPORTANTE: Clase 'activa' debe estar definida en tu CSS
             celda.className = `celda-patron ${estaActiva ? 'activa' : ''}`;
             
             if (index === 12) {
@@ -58,10 +59,14 @@ const iniciarEscuchaRealtime = () => {
     });
 };
 
-// --- 4. MODIFICACIÓN EN WINDOW.ONLOAD ---
+// --- 3. INICIALIZACIÓN ---
 window.onload = () => {
-    // Iniciamos la escucha de Firebase SOLO cuando la ventana cargó todo el HTML
-    iniciarEscuchaRealtime();
+    // Solo iniciamos si Firebase está listo
+    if (typeof db !== 'undefined') {
+        iniciarEscuchaRealtime();
+    } else {
+        console.error("Firebase 'db' no está definido. Revisa el orden de tus scripts.");
+    }
 
     const params = new URLSearchParams(window.location.search);
     const p = params.get('p');
@@ -71,12 +76,12 @@ window.onload = () => {
             const idsDecodificados = JSON.parse(atob(p));
             const listaIds = Array.isArray(idsDecodificados) ? idsDecodificados : [idsDecodificados];
             
-            // Aquí debe ir tu función que crea los cartones:
-            // renderizarMisCartones(listaIds); 
+            // Aquí llamarías a tu función de render:
+            // renderizarCartones(listaIds); 
             
             setTimeout(habilitarMarcadoManual, 1000);
         } catch(e) {
-            console.error("Error al cargar IDs:", e);
+            console.error("Error al procesar IDs:", e);
         }
     }
 };
