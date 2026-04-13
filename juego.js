@@ -1,41 +1,54 @@
 // --- 1. ESTADO GLOBAL ---
 var historialLocal = [];
 
-// --- 2. ESCUCHAS DE FIREBASE ---
+// --- 2. ESCUCHAS DE FIREBASE (Sincronización en tiempo real) ---
 const iniciarConexiones = () => {
+    console.log("Conexiones de Firebase iniciadas...");
+
+    // A. Escuchar el Patrón de Victoria
     db.ref('configuracion/patron').on('value', (snapshot) => {
         const patron = snapshot.val() || Array(25).fill(false);
         const grid = document.getElementById('gridPatron');
         if (!grid) return;
         grid.innerHTML = ''; 
+
         patron.forEach((activa, index) => {
             const celda = document.createElement('div');
             celda.className = `celda-patron ${activa ? 'activa' : ''}`;
-            if (index === 12) celda.innerHTML = '<span style="opacity:0.3; font-size:10px; display:block; text-align:center;">★</span>';
+            if (index === 12) {
+                celda.innerHTML = '<span style="opacity:0.3; font-size:10px; display:block; text-align:center;">★</span>';
+            }
             grid.appendChild(celda);
         });
     });
 
+    // B. Escuchar Números Cantados
     db.ref('partidaActual').on('value', (snapshot) => {
         const data = snapshot.val();
-        if (data?.status === "reiniciado") { location.reload(); return; }
-        if (data?.numero && !historialLocal.includes(data.numero)) {
-            historialLocal.push(data.numero);
-            const barra = document.getElementById('barraHistorial');
-            if (barra) {
-                if (historialLocal.length === 1) barra.innerHTML = '';
-                const bola = document.createElement('div');
-                bola.className = 'bola-historial';
-                bola.innerHTML = `<small>${data.letra}</small><span>${data.numero}</span>`;
-                barra.prepend(bola);
+        if (data?.status === "reiniciado") {
+            localStorage.clear();
+            location.reload();
+            return;
+        }
+
+        if (data?.numero) {
+            if (!historialLocal.includes(data.numero)) {
+                historialLocal.push(data.numero);
+                const barra = document.getElementById('barraHistorial');
+                if (barra) {
+                    if (historialLocal.length === 1) barra.innerHTML = '';
+                    const bola = document.createElement('div');
+                    bola.className = 'bola-historial';
+                    bola.innerHTML = `<small>${data.letra}</small><span>${data.numero}</span>`;
+                    barra.prepend(bola);
+                }
             }
         }
     });
 };
 
-// --- 3. GENERADOR DE CARTONES (Protegido) ---
+// --- 3. GENERADOR DE CARTONES (Sincronizado con el Admin) ---
 const generarCartonVisual = (idCarton) => {
-    // Forzamos que el ID sea un número para que la matemática no falle
     const idLimpio = parseInt(idCarton);
     if (isNaN(idLimpio)) return null;
 
@@ -58,6 +71,7 @@ const generarCartonVisual = (idCarton) => {
             for(let i=r[0]; i<=r[1]; i++) n.push(i);
             return shufflePlayer([...n], (id * 10) + indexCol).slice(0, 5);
         });
+
         let m = [];
         for(let r=0; r<5; r++) {
             let fila = [];
@@ -92,52 +106,57 @@ const generarCartonVisual = (idCarton) => {
     return card;
 };
 
-// --- 4. INICIALIZACIÓN (CON FIX PARA INFINITO) ---
+// --- 4. INTERACCIÓN ---
+const habilitarMarcadoManual = () => {
+    const celdas = document.querySelectorAll('.bingo-table td');
+    celdas.forEach(celda => {
+        if (celda.classList.contains('free-space')) return;
+        celda.onclick = function() {
+            this.classList.toggle('marked');
+            if (navigator.vibrate) navigator.vibrate(40);
+        };
+    });
+};
+
+// --- 5. INICIALIZACIÓN (ELIMINA EL CARGANDO INFINITO) ---
 window.onload = () => {
     iniciarConexiones();
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const p = urlParams.get('p');
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get('p');
     const contenedor = document.getElementById('contenedorCartones');
 
     if (!contenedor) return;
 
-    if (!p) {
-        contenedor.innerHTML = "<h3>Error: No se seleccionaron cartones.</h3>";
-        return;
-    }
-
-    try {
-        // 1. Decodificar Base64
-        const stringDecodificado = atob(p);
-        // 2. Convertir a JSON
-        const datos = JSON.parse(stringDecodificado);
-        // 3. Asegurar que sea un Array
-        const listaIds = Array.isArray(datos) ? datos : [datos];
-        
-        contenedor.innerHTML = ""; // <--- AQUÍ MATAMOS EL CARGANDO INFINITO
-
-        listaIds.forEach(item => {
-            // PROTECCIÓN: Si el admin mandó objetos {id, nombre}, extraemos el ID
-            const idParaDibujar = (item && typeof item === 'object') ? item.id : item;
+    if (p) {
+        try {
+            // DECODIFICACIÓN SEGURA: Maneja Base64 + Caracteres Especiales
+            const decodedBase64 = atob(p);
+            const decodedJson = decodeURIComponent(escape(decodedBase64));
+            const datos = JSON.parse(decodedJson);
             
-            const cartonHTML = generarCartonVisual(idParaDibujar);
-            if (cartonHTML) {
-                contenedor.appendChild(cartonHTML);
-            }
-        });
+            const listaIds = Array.isArray(datos) ? datos : [datos];
+            
+            // Matamos el mensaje de carga
+            contenedor.innerHTML = ""; 
 
-        // Habilitar clics
-        setTimeout(() => {
-            document.querySelectorAll('.bingo-table td').forEach(td => {
-                if (!td.classList.contains('free-space')) {
-                    td.onclick = function() { this.classList.toggle('marked'); };
+            listaIds.forEach(item => {
+                // Extrae ID si es objeto o usa el valor si es número
+                const idParaDibujar = (item && typeof item === 'object') ? item.id : item;
+                const nuevoCarton = generarCartonVisual(idParaDibujar);
+                if (nuevoCarton) {
+                    contenedor.appendChild(nuevoCarton);
                 }
             });
-        }, 500);
 
-    } catch (err) {
-        console.error("Fallo total:", err);
-        contenedor.innerHTML = "<h3>Error crítico al generar cartones. Revisa el link.</h3>";
+            // Pequeña espera para asegurar que el DOM cargó los cartones antes de habilitar clics
+            setTimeout(habilitarMarcadoManual, 300);
+
+        } catch (e) {
+            console.error("Error crítico de decodificación:", e);
+            contenedor.innerHTML = "<div style='color:white; text-align:center;'><h3>Error al leer el link</h3><p>Pide un link nuevo al administrador.</p></div>";
+        }
+    } else {
+        contenedor.innerHTML = "<div style='color:white; text-align:center;'><h3>No hay cartones</h3><p>Usa el link que te enviaron por WhatsApp.</p></div>";
     }
 };
