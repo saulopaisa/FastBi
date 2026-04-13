@@ -3,52 +3,42 @@ var historialLocal = [];
 
 // --- 2. ESCUCHAS DE FIREBASE ---
 const iniciarConexiones = () => {
-    console.log("Conexiones de Firebase iniciadas...");
-
-    // A. Escuchar el Patrón de Victoria
     db.ref('configuracion/patron').on('value', (snapshot) => {
         const patron = snapshot.val() || Array(25).fill(false);
         const grid = document.getElementById('gridPatron');
         if (!grid) return;
         grid.innerHTML = ''; 
-
         patron.forEach((activa, index) => {
             const celda = document.createElement('div');
             celda.className = `celda-patron ${activa ? 'activa' : ''}`;
-            if (index === 12) {
-                celda.innerHTML = '<span style="opacity:0.3; font-size:10px; display:block; text-align:center;">★</span>';
-            }
+            if (index === 12) celda.innerHTML = '<span style="opacity:0.3; font-size:10px; display:block; text-align:center;">★</span>';
             grid.appendChild(celda);
         });
     });
 
-    // B. Escuchar Números Cantados
     db.ref('partidaActual').on('value', (snapshot) => {
         const data = snapshot.val();
-        if (data?.status === "reiniciado") {
-            localStorage.clear();
-            location.reload();
-            return;
-        }
-
-        if (data?.numero) {
-            if (!historialLocal.includes(data.numero)) {
-                historialLocal.push(data.numero);
-                const barra = document.getElementById('barraHistorial');
-                if (barra) {
-                    if (historialLocal.length === 1) barra.innerHTML = '';
-                    const bola = document.createElement('div');
-                    bola.className = 'bola-historial';
-                    bola.innerHTML = `<small>${data.letra}</small><span>${data.numero}</span>`;
-                    barra.prepend(bola);
-                }
+        if (data?.status === "reiniciado") { location.reload(); return; }
+        if (data?.numero && !historialLocal.includes(data.numero)) {
+            historialLocal.push(data.numero);
+            const barra = document.getElementById('barraHistorial');
+            if (barra) {
+                if (historialLocal.length === 1) barra.innerHTML = '';
+                const bola = document.createElement('div');
+                bola.className = 'bola-historial';
+                bola.innerHTML = `<small>${data.letra}</small><span>${data.numero}</span>`;
+                barra.prepend(bola);
             }
         }
     });
 };
 
-// --- 3. GENERADOR DE CARTONES (Sincronizado con Admin) ---
+// --- 3. GENERADOR DE CARTONES (Protegido) ---
 const generarCartonVisual = (idCarton) => {
+    // Forzamos que el ID sea un número para que la matemática no falle
+    const idLimpio = parseInt(idCarton);
+    if (isNaN(idLimpio)) return null;
+
     const shufflePlayer = (array, seed) => {
         let m = array.length, t, i;
         let localSeed = seed;
@@ -62,14 +52,12 @@ const generarCartonVisual = (idCarton) => {
     };
 
     const generarMatrizPlayer = (id) => {
-        const seedBase = parseInt(id);
         const rangos = [[1,15],[16,30],[31,45],[46,60],[61,75]];
         const columnas = rangos.map((r, indexCol) => {
             let n = []; 
             for(let i=r[0]; i<=r[1]; i++) n.push(i);
-            return shufflePlayer([...n], (seedBase * 10) + indexCol).slice(0, 5);
+            return shufflePlayer([...n], (id * 10) + indexCol).slice(0, 5);
         });
-
         let m = [];
         for(let r=0; r<5; r++) {
             let fila = [];
@@ -81,79 +69,75 @@ const generarCartonVisual = (idCarton) => {
         return m;
     };
 
-    const matrizNumeros = generarMatrizPlayer(idCarton);
+    const matrizNumeros = generarMatrizPlayer(idLimpio);
     const card = document.createElement('div');
     card.className = 'bingo-card';
+    card.innerHTML = `<div class="card-id-label">CARTÓN N° ${idLimpio}</div>`;
     
-    const label = document.createElement('div');
-    label.className = 'card-id-label';
-    label.innerText = `CARTÓN N° ${idCarton}`;
-    card.appendChild(label);
-
     const table = document.createElement('table');
     table.className = 'bingo-table';
-    table.innerHTML = `<thead><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr></thead>`;
+    let html = '<thead><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr></thead><tbody>';
     
-    const tbody = document.createElement('tbody');
-    matrizNumeros.forEach((filaFisica) => {
-        const tr = document.createElement('tr');
-        filaFisica.forEach((numero) => {
-            const td = document.createElement('td');
-            if (numero === 'FREE') {
-                td.className = 'free-space marked';
-                td.innerText = '★';
-            } else {
-                td.innerText = numero;
-            }
-            tr.appendChild(td);
+    matrizNumeros.forEach(fila => {
+        html += '<tr>';
+        fila.forEach(n => {
+            if(n === 'FREE') html += '<td class="free-space marked">★</td>';
+            else html += `<td>${n}</td>`;
         });
-        tbody.appendChild(tr);
+        html += '</tr>';
     });
-    table.appendChild(tbody);
+    html += '</tbody>';
+    table.innerHTML = html;
     card.appendChild(table);
     return card;
 };
 
-// --- 4. INTERACCIÓN ---
-const habilitarMarcadoManual = () => {
-    const celdas = document.querySelectorAll('.bingo-table td');
-    celdas.forEach(celda => {
-        if (celda.classList.contains('free-space')) return;
-        celda.onclick = function() {
-            this.classList.toggle('marked');
-            if (navigator.vibrate) navigator.vibrate(40);
-        };
-    });
-};
-
-// --- 5. INICIALIZACIÓN (LA CORRECCIÓN ESTÁ AQUÍ) ---
+// --- 4. INICIALIZACIÓN (CON FIX PARA INFINITO) ---
 window.onload = () => {
     iniciarConexiones();
 
-    const params = new URLSearchParams(window.location.search);
-    const p = params.get('p');
+    const urlParams = new URLSearchParams(window.location.search);
+    const p = urlParams.get('p');
     const contenedor = document.getElementById('contenedorCartones');
 
-    if (p && contenedor) {
-        try {
-            const datosDecodificados = JSON.parse(atob(p));
-            const listaIds = Array.isArray(datosDecodificados) ? datosDecodificados : [datosDecodificados];
+    if (!contenedor) return;
+
+    if (!p) {
+        contenedor.innerHTML = "<h3>Error: No se seleccionaron cartones.</h3>";
+        return;
+    }
+
+    try {
+        // 1. Decodificar Base64
+        const stringDecodificado = atob(p);
+        // 2. Convertir a JSON
+        const datos = JSON.parse(stringDecodificado);
+        // 3. Asegurar que sea un Array
+        const listaIds = Array.isArray(datos) ? datos : [datos];
+        
+        contenedor.innerHTML = ""; // <--- AQUÍ MATAMOS EL CARGANDO INFINITO
+
+        listaIds.forEach(item => {
+            // PROTECCIÓN: Si el admin mandó objetos {id, nombre}, extraemos el ID
+            const idParaDibujar = (item && typeof item === 'object') ? item.id : item;
             
-            contenedor.innerHTML = ""; // Limpiar el "Cargando..."
+            const cartonHTML = generarCartonVisual(idParaDibujar);
+            if (cartonHTML) {
+                contenedor.appendChild(cartonHTML);
+            }
+        });
 
-            listaIds.forEach(item => {
-                // Si el item es un objeto {id, nombre}, usamos item.id. Si es solo un número, lo usamos directo.
-                const idReal = (typeof item === 'object') ? item.id : item;
-                const nuevoCarton = generarCartonVisual(idReal);
-                contenedor.appendChild(nuevoCarton);
+        // Habilitar clics
+        setTimeout(() => {
+            document.querySelectorAll('.bingo-table td').forEach(td => {
+                if (!td.classList.contains('free-space')) {
+                    td.onclick = function() { this.classList.toggle('marked'); };
+                }
             });
+        }, 500);
 
-            // Activamos los clicks
-            setTimeout(habilitarMarcadoManual, 500);
-
-        } catch (e) {
-            console.error("Error al decodificar:", e);
-            contenedor.innerHTML = "Error al cargar los cartones.";
-        }
+    } catch (err) {
+        console.error("Fallo total:", err);
+        contenedor.innerHTML = "<h3>Error crítico al generar cartones. Revisa el link.</h3>";
     }
 };
