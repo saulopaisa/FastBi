@@ -1,9 +1,8 @@
+// --- 0. ESTADO INICIAL ---
 let baseDatos = JSON.parse(localStorage.getItem('bingo_cartones')) || [];
 let seleccionados = [];
 
-// --- 1. LÓGICA DE SINCRONIZACIÓN (EL CORAZÓN DEL BINGO) ---
-
-// --- 1. LÓGICA DE SINCRONIZACIÓN (EL CORAZÓN DEL BINGO) ---
+// --- 1. LÓGICA DE SINCRONIZACIÓN (MATEMÁTICA UNIFICADA) ---
 
 function generarMatriz(id) {
     const seedBase = parseInt(id);
@@ -12,7 +11,7 @@ function generarMatriz(id) {
     const columnas = rangos.map((r, indexCol) => {
         let n = []; 
         for(let i=r[0]; i<=r[1]; i++) n.push(i);
-        // Multiplicamos en vez de sumar para evitar coincidencias de semillas entre IDs
+        // Usamos (ID * 10) para evitar que las semillas se solapen entre cartones cercanos
         return shuffle([...n], (seedBase * 10) + indexCol).slice(0, 5);
     });
 
@@ -29,9 +28,9 @@ function generarMatriz(id) {
 
 function shuffle(array, seed) {
     let m = array.length, t, i;
-    let localSeed = seed; // Usar variable local para la semilla
+    let localSeed = seed;
     while (m) {
-        // Fórmula determinista mejorada
+        // Fórmula determinista basada en Seno (idéntica en Admin y Juego)
         let x = Math.sin(localSeed++) * 10000;
         let randomDecimal = x - Math.floor(x);
         i = Math.floor(randomDecimal * m--);
@@ -67,7 +66,7 @@ function renderizarLista(filtro = "") {
 
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size: 0.7rem; color: var(--accent-red); font-weight: 900;">ID #${item.id}</span>
+                <span style="font-size: 0.7rem; color: #e63946; font-weight: 900;">ID #${item.id}</span>
                 <input type="checkbox" ${estaSeleccionado ? 'checked' : ''} 
                        onclick="event.stopPropagation(); alternarSeleccion(${item.id}, '${item.apodo}')" 
                        style="transform: scale(1.4); cursor:pointer;">
@@ -114,29 +113,48 @@ function actualizarPanelSeleccion() {
     }
 }
 
-// --- 3. GENERACIÓN DE LINKS PARA GITHUB ---
+// --- 3. GENERACIÓN DE LINKS (FIX PARA ACENTOS Y CARGANDO INFINITO) ---
 
 function generarLinkMultiple() {
     if (seleccionados.length === 0) return;
     
     const loc = window.location;
     const pathActual = loc.pathname;
-    // Esto asegura que el link siempre busque juego.html en la misma carpeta de GitHub
     const nuevoPath = pathActual.substring(0, pathActual.lastIndexOf('/')) + '/juego.html';
     
-    const pack = btoa(JSON.stringify(seleccionados));
-    const fullUrl = `${loc.origin}${nuevoPath}?p=${pack}`;
-    
-    copiarLink(fullUrl);
+    try {
+        // Codificación robusta para evitar errores con acentos/emojis
+        const jsonString = JSON.stringify(seleccionados);
+        const pack = btoa(unescape(encodeURIComponent(jsonString)));
+        
+        const fullUrl = `${loc.origin}${nuevoPath}?p=${pack}`;
+        copiarLink(fullUrl);
+    } catch (e) {
+        console.error("Error al generar link:", e);
+        alert("Error al procesar los nombres. Intenta usar nombres sin caracteres especiales.");
+    }
 }
 
 function copiarLink(url) {
-    navigator.clipboard.writeText(url).then(() => {
-        alert("¡Link de Juego copiado! Envíalo por WhatsApp.");
-        cancelarSeleccion();
-    }).catch(() => {
-        prompt("Copia el link manualmente:", url);
-    });
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+            alert("¡Link de Juego copiado! Envíalo por WhatsApp.");
+            cancelarSeleccion();
+        }).catch(() => fallbackCopiar(url));
+    } else {
+        fallbackCopiar(url);
+    }
+}
+
+function fallbackCopiar(url) {
+    const textArea = document.createElement("textarea");
+    textArea.value = url;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    alert("¡Link copiado!");
+    cancelarSeleccion();
 }
 
 // --- 4. FUNCIONES DE APOYO ---
@@ -162,7 +180,7 @@ function verCarton(id, apodo) {
     
     const matriz = generarMatriz(id);
     const tabla = document.getElementById('tablaVisor');
-    let html = `<tr style="background:var(--primary-blue); color:white; font-weight:900;"><td>B</td><td>I</td><td>N</td><td>G</td><td>O</td></tr>`;
+    let html = `<tr style="background:#1e3a8a; color:white; font-weight:900;"><td>B</td><td>I</td><td>N</td><td>G</td><td>O</td></tr>`;
     matriz.forEach(fila => {
         html += `<tr>`;
         fila.forEach(c => html += `<td>${c === 'FREE' ? '★' : c}</td>`);
@@ -182,25 +200,6 @@ function cancelarSeleccion() {
     renderizarLista(document.getElementById('buscador').value || "");
 }
 
-function exportarData() {
-    const blob = new Blob([JSON.stringify(baseDatos)], {type: "application/json"});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = "cartones_bingo.json";
-    a.click();
-}
-
-function importarData(event) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        try {
-            baseDatos = JSON.parse(e.target.result);
-            renderizarLista();
-        } catch(err) { alert("Archivo no válido"); }
-    };
-    reader.readAsText(event.target.files[0]);
-}
-
 function limpiarTodo() { 
     if(confirm("¿Borrar todos los cartones guardados?")) { 
         baseDatos = []; 
@@ -210,7 +209,7 @@ function limpiarTodo() {
     } 
 }
 
-// Inicialización del buscador
+// Inicialización
 const buscador = document.getElementById('buscador');
 if(buscador) buscador.oninput = (e) => renderizarLista(e.target.value);
 
