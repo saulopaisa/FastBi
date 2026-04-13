@@ -5,7 +5,7 @@ var historialLocal = [];
 const iniciarConexiones = () => {
     console.log("Conexiones de Firebase iniciadas...");
 
-    // A. Escuchar el Patrón de Victoria
+    // A. Escuchar el Patrón de Victoria (Dibujo guía)
     db.ref('configuracion/patron').on('value', (snapshot) => {
         const patron = snapshot.val() || Array(25).fill(false);
         const grid = document.getElementById('gridPatron');
@@ -22,15 +22,28 @@ const iniciarConexiones = () => {
         });
     });
 
-    // B. Escuchar Números Cantados
+    // B. Escuchar Números Cantados y Estado del Juego
     db.ref('partidaActual').on('value', (snapshot) => {
         const data = snapshot.val();
+        
+        // CORRECCIÓN: Si el admin reinicia, limpiamos la interfaz sin recargar la página
         if (data?.status === "reiniciado") {
-            localStorage.clear();
-            location.reload();
-            return;
+            console.log("Reinicio detectado: Limpiando tablero...");
+            historialLocal = [];
+            const barra = document.getElementById('barraHistorial');
+            if (barra) {
+                barra.innerHTML = '<div style="color: #64748b; font-size: 0.7rem;">Juego reiniciado. Esperando números...</div>';
+            }
+            // Desmarcar todas las celdas (excepto el centro FREE)
+            document.querySelectorAll('.bingo-table td').forEach(td => {
+                if (!td.classList.contains('free-space')) {
+                    td.classList.remove('marked');
+                }
+            });
+            return; 
         }
 
+        // Si llega una nueva bola
         if (data?.numero) {
             if (!historialLocal.includes(data.numero)) {
                 historialLocal.push(data.numero);
@@ -40,6 +53,7 @@ const iniciarConexiones = () => {
                     const bola = document.createElement('div');
                     bola.className = 'bola-historial';
                     bola.innerHTML = `<small>${data.letra}</small><span>${data.numero}</span>`;
+                    // Las nuevas bolas aparecen al principio de la barra
                     barra.prepend(bola);
                 }
             }
@@ -47,7 +61,7 @@ const iniciarConexiones = () => {
     });
 };
 
-// --- 3. GENERADOR DE CARTONES (Sincronizado con el Admin) ---
+// --- 3. GENERADOR DE CARTONES (Lógica determinista) ---
 const generarCartonVisual = (idCarton) => {
     const idLimpio = parseInt(idCarton);
     if (isNaN(idLimpio)) return null;
@@ -106,7 +120,7 @@ const generarCartonVisual = (idCarton) => {
     return card;
 };
 
-// --- 4. INTERACCIÓN ---
+// --- 4. INTERACCIÓN DE MARCADO ---
 const habilitarMarcadoManual = () => {
     const celdas = document.querySelectorAll('.bingo-table td');
     celdas.forEach(celda => {
@@ -118,7 +132,7 @@ const habilitarMarcadoManual = () => {
     });
 };
 
-// --- 5. INICIALIZACIÓN (ELIMINA EL CARGANDO INFINITO) ---
+// --- 5. INICIALIZACIÓN ---
 window.onload = () => {
     iniciarConexiones();
 
@@ -130,18 +144,18 @@ window.onload = () => {
 
     if (p) {
         try {
-            // DECODIFICACIÓN SEGURA: Maneja Base64 + Caracteres Especiales
+            // Decodificación ultra-segura para manejar acentos y caracteres especiales
             const decodedBase64 = atob(p);
             const decodedJson = decodeURIComponent(escape(decodedBase64));
             const datos = JSON.parse(decodedJson);
             
             const listaIds = Array.isArray(datos) ? datos : [datos];
             
-            // Matamos el mensaje de carga
+            // Limpiar el mensaje de "Cargando"
             contenedor.innerHTML = ""; 
 
             listaIds.forEach(item => {
-                // Extrae ID si es objeto o usa el valor si es número
+                // Soporta tanto si el admin envía solo IDs como si envía objetos {id, nombre}
                 const idParaDibujar = (item && typeof item === 'object') ? item.id : item;
                 const nuevoCarton = generarCartonVisual(idParaDibujar);
                 if (nuevoCarton) {
@@ -149,14 +163,14 @@ window.onload = () => {
                 }
             });
 
-            // Pequeña espera para asegurar que el DOM cargó los cartones antes de habilitar clics
+            // Activar la funcionalidad de click en las celdas
             setTimeout(habilitarMarcadoManual, 300);
 
         } catch (e) {
-            console.error("Error crítico de decodificación:", e);
-            contenedor.innerHTML = "<div style='color:white; text-align:center;'><h3>Error al leer el link</h3><p>Pide un link nuevo al administrador.</p></div>";
+            console.error("Error al procesar el link:", e);
+            contenedor.innerHTML = "<div style='color:white; text-align:center;'><h3>Error en el link</h3><p>El formato es incorrecto o está incompleto.</p></div>";
         }
     } else {
-        contenedor.innerHTML = "<div style='color:white; text-align:center;'><h3>No hay cartones</h3><p>Usa el link que te enviaron por WhatsApp.</p></div>";
+        contenedor.innerHTML = "<div style='color:white; text-align:center;'><h3>Esperando cartones</h3><p>Por favor, abre el link que te enviaron.</p></div>";
     }
 };
