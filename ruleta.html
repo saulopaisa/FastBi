@@ -21,14 +21,14 @@
             <h1 class="main-title">BINGO 75</h1>
             
             <div class="control-flujo-box">
-                <div id="badgeEstado" class="status-badge status-esperando">Estado: Esperando</div>
+                <div id="badgeEstado" class="status-badge">Estado: -</div>
                 <div id="cronometroBingo" class="timer-display">00:00</div>
                 
                 <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                    <input type="number" id="minutosInicio" placeholder="Min" style="width: 60px; border-radius: 4px; border: none; padding: 5px;">
-                    <button onclick="programarJuego()" style="background: var(--accent-gold); flex: 1; font-weight: bold; border-radius: 4px; border: none; cursor: pointer;">PROGRAMAR</button>
+                    <input type="number" id="minutosInicio" placeholder="Min" style="width: 60px; padding: 5px;">
+                    <button onclick="programarJuego()" style="background: var(--accent-gold); flex: 1; font-weight: bold; border: none; cursor: pointer;">PROGRAMAR</button>
                 </div>
-                <button onclick="cambiarEstado('jugando', '¡JUEGO INICIADO!')" class="btn-accion" style="background: #10b981;">EMPEZAR AHORA</button>
+                <button onclick="cambiarEstado('jugando', '¡EMPEZAMOS!')" class="btn-accion" style="background: #10b981;">EMPEZAR AHORA</button>
             </div>
 
             <div class="bolo-display">
@@ -47,20 +47,18 @@
                 
                 <div id="radarGanadores" class="radar-box">
                     <div id="listaAlertasBingo"></div>
-                    <div id="textoGanadores">Esperando señales...</div>
+                    <div id="textoGanadores">Monitoreando...</div>
                 </div>
 
-                <div class="verifier-area" style="margin-top: 20px; border-top: 1px solid #444; padding-top: 15px;">
-                    <small style="color: var(--accent-gold)">VERIFICADOR VISUAL:</small>
-                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                        <input type="number" id="idABuscar" placeholder="ID #" style="flex: 1; padding: 8px;">
-                        <button onclick="revisarCartonManual()" style="background: var(--accent-gold); border: none; padding: 0 15px; font-weight: bold;">BUSCAR</button>
+                <div class="verifier-area" style="margin-top: 20px; border-top: 1px solid #444; padding-top: 10px;">
+                    <small>VERIFICADOR VISUAL:</small>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="number" id="idABuscar" placeholder="ID #" style="flex: 1; padding: 5px;">
+                        <button onclick="revisarCartonManual()" style="background: var(--accent-gold); border: none; padding: 5px;">BUSCAR</button>
                     </div>
-                    
                     <div id="areaVerificacion"></div>
-
-                    <div id="botonesPostVerificacion" style="margin-top: 10px;">
-                        <button class="btn-accion" style="background: #6366f1;" onclick="cambiarEstado('jugando', 'BINGO ERRADO - CONTINUAMOS')">BINGO ERRADO: SEGUIR</button>
+                    <div style="margin-top: 10px;">
+                        <button class="btn-accion" style="background: #6366f1;" onclick="cambiarEstado('jugando', 'BINGO ERRADO: SEGUIMOS')">BINGO ERRADO: SEGUIR</button>
                         <button class="btn-accion" style="background: #f59e0b;" onclick="anunciarGanador()">BINGO VÁLIDO: GANADOR</button>
                     </div>
                 </div>
@@ -70,22 +68,22 @@
         </aside>
 
         <main class="panel-derecho">
-            <h3 style="text-align: center; color: var(--primary-blue);">TABLERO DE SEGUIMIENTO GENERAL</h3>
+            <h3 style="text-align: center;">TABLERO DE SEGUIMIENTO GENERAL</h3>
             <div id="historyGrid" class="history-grid"></div>
         </main>
     </div>
 
-    <button id="btnAbrirConfig" class="btn-config-flotante">⚙️ Configurar Patrón</button>
+    <button id="btnAbrirConfig" class="btn-config-flotante">⚙️ Patrón</button>
 
     <div id="modalConfig" class="modal-overlay">
-        <div class="modal-content" style="background:#1e293b; padding:20px; border-radius:12px; color: white; width: 320px;">
-            <h3 style="text-align:center">PATRÓN DE VICTORIA</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px;">
+        <div class="modal-content" style="background:#1e293b; padding:20px; border-radius:12px; color: white;">
+            <h3>CONFIGURAR PATRÓN</h3>
+            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
                 <button onclick="aplicarPredefinido('lleno')">LLENO</button>
                 <button onclick="aplicarPredefinido('equis')">LA X</button>
             </div>
             <div id="gridDibujoPatron" class="grid-patron-admin"></div>
-            <button onclick="guardarPatron()" class="btn-accion" style="background: #10b981; margin-top: 10px;">GUARDAR PATRÓN</button>
+            <button onclick="guardarPatron()" class="btn-accion" style="background: #10b981; margin-top: 10px;">GUARDAR</button>
             <button onclick="document.getElementById('modalConfig').style.display='none'" class="btn-accion" style="background: #444;">CERRAR</button>
         </div>
     </div>
