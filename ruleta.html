@@ -6,137 +6,32 @@
     <title>Bingo 75 Pro - Panel de Control</title>
     <link rel="stylesheet" href="ruleta.css">
     <style>
-        /* Estilos integrados para funciones de control y alertas */
-        :root {
-            --primary-blue: #0f172a;
-            --accent-gold: #ffb703;
-        }
-
-        .control-flujo-box {
-            background: rgba(30, 58, 138, 0.5);
-            border: 1px solid var(--accent-gold);
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-        }
-
+        :root { --primary-blue: #0f172a; --accent-gold: #ffb703; }
+        .control-flujo-box { background: rgba(30, 58, 138, 0.5); border: 1px solid var(--accent-gold); padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; }
         .status-esperando { background: #f59e0b; color: #fff; }
         .status-jugando { background: #10b981; color: #fff; }
         .status-verificando { background: #3b82f6; color: #fff; }
-
-        .btn-anuncio {
-            background: #6366f1;
-            color: white;
-            border: none;
-            padding: 8px;
-            font-size: 0.7rem;
-            border-radius: 4px;
-            width: 100%;
-            margin-top: 5px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .alert-bingo-card {
-            background: #ef4444;
-            color: white;
-            padding: 8px;
-            border-radius: 5px;
-            margin-top: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-
-        .radar-header-box {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-
-        #contadorCartonesReal {
-            background: var(--accent-gold);
-            color: var(--primary-blue);
-            padding: 3px 10px;
-            border-radius: 15px;
-            font-weight: 900;
-            font-size: 0.7rem;
-        }
-
-        .no-arrows::-webkit-inner-spin-button, 
-        .no-arrows::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
-        }
-
-        /* Estilos para el Modal de Configuración */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .grid-patron-admin {
-            display: grid;
-            grid-template-columns: repeat(5, 40px);
-            gap: 5px;
-            justify-content: center;
-            margin: 20px 0;
-        }
-
-        .celda-patron-admin {
-            width: 40px; height: 40px;
-            background: #334155;
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: bold;
-        }
-
-        .celda-patron-admin.activa {
-            background: var(--accent-gold);
-            color: #000;
-        }
+        .btn-anuncio { background: #6366f1; color: white; border: none; padding: 8px; font-size: 0.7rem; border-radius: 4px; width: 100%; margin-top: 5px; font-weight: bold; cursor: pointer; }
+        .alert-bingo-card { background: #ef4444; color: white; padding: 8px; border-radius: 5px; margin-top: 5px; display: flex; justify-content: space-between; align-items: center; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; }
+        .grid-patron-admin { display: grid; grid-template-columns: repeat(5, 40px); gap: 5px; justify-content: center; margin: 20px 0; }
+        .celda-patron-admin { width: 40px; height: 40px; background: #334155; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+        .celda-patron-admin.activa { background: var(--accent-gold); color: #000; }
     </style>
 </head>
 <body>
-
     <div class="layout-container">
         <aside class="panel-izquierdo">
             <h1 class="main-title">BINGO 75</h1>
-            
             <div class="control-flujo-box">
                 <div id="badgeEstado" class="status-badge status-esperando">Estado: Esperando</div>
-                
                 <div style="display: flex; gap: 5px; align-items: center; margin-bottom: 10px;">
-                    <input type="number" id="minutosInicio" class="no-arrows" placeholder="Min" style="width: 50px; padding: 5px; border-radius: 4px;">
-                    <button onclick="iniciarCuentaRegresiva()" style="font-size: 0.6rem; padding: 6px; background: var(--accent-gold); color: black; border: none; font-weight: bold; border-radius: 4px; flex: 1; cursor: pointer;">PROGRAMAR INICIO</button>
+                    <input type="number" id="minutosInicio" placeholder="Min" style="width: 50px; padding: 5px;">
+                    <button onclick="iniciarCuentaRegresiva()" style="background: var(--accent-gold); border: none; padding: 6px; font-weight: bold; cursor: pointer;">PROGRAMAR</button>
                 </div>
-
-                <button onclick="cambiarEstado('jugando', '¡EL JUEGO HA COMENZADO!')" style="width: 100%; background: #10b981; color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; margin-bottom: 5px; cursor: pointer;">EMPEZAR AHORA</button>
-                
+                <button onclick="cambiarEstado('jugando', '¡EL JUEGO HA COMENZADO!')" style="width: 100%; background: #10b981; color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer;">EMPEZAR AHORA</button>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
                     <button class="btn-anuncio" onclick="anunciarVerificacion()">VERIFICANDO...</button>
                     <button class="btn-anuncio" style="background: #f59e0b;" onclick="anunciarGanador()">HAY GANADOR!</button>
@@ -156,37 +51,16 @@
             <div class="controls">
                 <button id="drawBtn">SORTEAR PRÓXIMO</button>
                 <div class="stats">TOTAL CANTADOS: <b id="count">0</b>/75</div>
-                
                 <div id="radarGanadores" class="radar-box">
-                    <div class="radar-header-box">
-                        <small>ALERTAS DE BINGO (EN VIVO):</small>
-                        <div id="contadorCartonesReal">JUGANDO: 0</div>
-                    </div>
                     <div id="listaAlertasBingo"></div>
-                    <div id="textoGanadores" class="texto-ganadores">
-                        Monitoreando señales...
-                    </div>
+                    <div id="textoGanadores">Monitoreando señales...</div>
                 </div>
-
-                <button id="resetBtn" class="secondary" style="margin-top: 10px;">Reiniciar Todo</button>
-
-                <div class="admin-verifier-box">
-                    <p id="labelPatron" class="verifier-label">MODO: MANUAL</p>
-                    <div class="search-group">
-                        <input type="number" id="idABuscar" class="no-arrows" placeholder="ID #">
-                        <button id="btnVerificar" class="btn-check">REVISAR</button>
-                    </div>
-                </div>
+                <button id="resetBtn" class="secondary">Reiniciar Todo</button>
             </div>
-
-            <div id="areaVerificacion" class="mini-carton-container"></div>
         </aside>
 
         <main class="panel-derecho">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h3 style="margin: 0;">TABLERO DE SEGUIMIENTO GENERAL</h3>
-                <a href="generar.html" style="color: var(--accent-gold); font-weight: bold; text-decoration: none; font-size: 0.8rem; border: 1px solid var(--accent-gold); padding: 5px 10px; border-radius: 5px;">+ GESTIONAR CARTONES</a>
-            </div>
+            <h3>TABLERO DE SEGUIMIENTO GENERAL</h3>
             <div id="historyGrid" class="history-grid"></div>
         </main>
     </div>
@@ -194,85 +68,18 @@
     <button id="btnAbrirConfig" class="btn-config-flotante">⚙️ Cambiar Patrón</button>
 
     <div id="modalConfig" class="modal-overlay">
-        <div class="modal-content" style="background:#1e293b; padding:20px; border-radius:15px; border: 2px solid var(--accent-gold); text-align:center;">
+        <div class="modal-content" style="background:#1e293b; padding:20px; border-radius:15px; border: 2px solid var(--accent-gold);">
             <h2 style="color:var(--accent-gold);">CONFIGURAR PATRÓN</h2>
             <div id="gridDibujoPatron" class="grid-patron-admin"></div>
             <div style="display:flex; gap:10px;">
-                <button onclick="guardarPatron()" style="flex:1; background:#10b981; color:white; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;">GUARDAR</button>
-                <button id="btnCerrarConfig" style="flex:1; background:#ef4444; color:white; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;">CERRAR</button>
+                <button onclick="guardarPatron()" style="flex:1; background:#10b981; color:white; padding:10px; border-radius:5px;">GUARDAR</button>
+                <button onclick="document.getElementById('modalConfig').style.display='none'" style="flex:1; background:#ef4444; color:white; padding:10px; border-radius:5px;">CERRAR</button>
             </div>
         </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-
-    <script>
-        // Configuración de Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
-            authDomain: "bingofast.firebaseapp.com",
-            databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
-            projectId: "bingofast",
-            storageBucket: "bingofast.firebasestorage.app",
-            messagingSenderId: "473863283329",
-            appId: "1:473863283329:web:2c4bf96de167d105fa6380",
-            measurementId: "G-Z7VH6JYV4D"
-        };
-
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        // Lógica de UI para el modal (Evita errores en ruleta.js)
-        document.addEventListener('DOMContentLoaded', () => {
-            const modal = document.getElementById('modalConfig');
-            const btnAbrir = document.getElementById('btnAbrirConfig');
-            const btnCerrar = document.getElementById('btnCerrarConfig');
-
-            if(btnAbrir) btnAbrir.onclick = () => modal.style.display = 'flex';
-            if(btnCerrar) btnCerrar.onclick = () => modal.style.display = 'none';
-        });
-
-        // Funciones de control de estado
-        function cambiarEstado(nuevoStatus, mensaje) {
-            db.ref('partidaActual').update({
-                status: nuevoStatus,
-                anuncio: mensaje
-            });
-            actualizarBadgeUI(nuevoStatus);
-        }
-
-        function iniciarCuentaRegresiva() {
-            const min = document.getElementById('minutosInicio').value || 1;
-            const target = Date.now() + (min * 60000);
-            db.ref('partidaActual').update({
-                status: 'esperando',
-                proximoJuego: target,
-                anuncio: `EL JUEGO INICIA EN ${min} MINUTOS`
-            });
-            actualizarBadgeUI('esperando');
-        }
-
-        function anunciarVerificacion() {
-            cambiarEstado('verificando', '⚠️ VERIFICANDO UN CARTÓN...');
-        }
-
-        function anunciarGanador() {
-            const id = prompt("Ingrese el ID del cartón ganador:");
-            if (id) {
-                cambiarEstado('finalizado', `🏆 ¡GANADOR CARTÓN #${id}! 🏆`);
-            }
-        }
-
-        function actualizarBadgeUI(status) {
-            const b = document.getElementById('badgeEstado');
-            if(b) {
-                b.innerText = `Estado: ${status}`;
-                b.className = `status-badge status-${status}`;
-            }
-        }
-    </script>
-
     <script src="ruleta.js"></script>
 </body>
 </html>
