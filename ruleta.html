@@ -6,24 +6,31 @@
     <title>Bingo 75 Pro - Panel de Control</title>
     <link rel="stylesheet" href="ruleta.css">
     <style>
-        :root { --primary-blue: #0f172a; --accent-gold: #ffb703; --danger-red: #ef4444; }
+        :root { --primary: #0f172a; --gold: #ffb703; --success: #10b981; }
         
-        /* FIX: Visibilidad de números en el tablero */
-        .history-grid { display: grid; grid-template-columns: repeat(15, 1fr); gap: 5px; padding: 15px; background: #f8fafc; border-radius: 8px; }
-        .celda-seguimiento { 
-            background: #e2e8f0; color: #1e293b; /* Color oscuro para que se vea */
-            aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 1.1rem; border-radius: 4px; border: 1px solid #cbd5e1;
+        /* Tablero Ajustado para 75 números en pantalla */
+        .history-grid { 
+            display: grid; 
+            grid-template-columns: repeat(15, 1fr); 
+            gap: 2px; 
+            padding: 10px; 
+            background: #f1f5f9; 
+            border-radius: 8px;
+            max-height: 70vh;
         }
-        .celda-seguimiento.cantada { background: var(--accent-gold); color: #000; border-color: #b45309; box-shadow: inset 0 0 8px rgba(0,0,0,0.2); }
+        .celda-seguimiento { 
+            background: #fff; border: 1px solid #cbd5e1;
+            aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; font-weight: bold; color: #334155;
+        }
+        .celda-seguimiento.cantada { background: var(--gold); color: #000; box-shadow: inset 0 0 5px rgba(0,0,0,0.2); }
 
-        .timer-display { background: #000; color: #ff0000; font-family: monospace; font-size: 2.2rem; text-align: center; padding: 10px; border-radius: 8px; margin: 10px 0; border: 2px solid #333; }
-        .btn-accion { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 5px; color: white; transition: 0.3s; }
-        .btn-accion:disabled { background: #64748b !important; cursor: not-allowed; opacity: 0.6; }
+        /* Lista de cartones activos */
+        .card-selector-box { background: #1e293b; padding: 10px; border-radius: 8px; margin-top: 10px; max-height: 150px; overflow-y: auto; }
+        .card-item { display: flex; justify-content: space-between; color: white; font-size: 0.8rem; padding: 4px; border-bottom: 1px solid #334155; }
         
-        .mini-carton-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; background: #334155; padding: 8px; border-radius: 6px; margin-top: 10px; }
-        .mini-celda { background: #fff; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; color: #000; }
-        .mini-celda.marcada { background: var(--accent-gold); }
+        .timer-display { background: #000; color: #f00; font-family: monospace; font-size: 2rem; text-align: center; border: 2px solid #333; margin: 5px 0; }
+        .btn-accion:disabled { background: #475569 !important; cursor: not-allowed; opacity: 0.5; }
     </style>
 </head>
 <body>
@@ -31,71 +38,66 @@
         <aside class="panel-izquierdo">
             <h1 class="main-title">BINGO 75</h1>
             
-            <div class="control-flujo-box">
-                <div id="badgeEstado" class="status-badge">Estado: -</div>
-                <div id="cronometroBingo" class="timer-display">00:00</div>
-                
-                <div id="guiaAdmin" style="background: #1e293b; padding: 8px; border-radius: 5px; margin-bottom: 10px; font-size: 0.8rem; color: #94a3b8; border-left: 4px solid var(--accent-gold);">
-                    ⚠️ 1. Selecciona un Patrón <br> 2. Programa el tiempo
-                </div>
-
-                <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                    <input type="number" id="minutosInicio" placeholder="Min" style="width: 60px; padding: 5px;">
-                    <button id="btnProgramar" onclick="programarJuego()" disabled style="background: var(--accent-gold); flex: 1; font-weight: bold; border: none; cursor: pointer;">PROGRAMAR</button>
-                </div>
-                <button onclick="cambiarEstado('jugando', '¡JUEGO INICIADO!')" class="btn-accion" style="background: #10b981;">EMPEZAR AHORA</button>
+            <div id="onlineCount" style="text-align: center; color: var(--gold); font-weight: bold; font-size: 0.9rem; margin-bottom: 10px;">
+                👥 JUGADORES ONLINE: 0
             </div>
 
-            <div class="bolo-display">
-                <div id="currentLetter">-</div>
-                <div id="currentNumber">--</div>
+            <div class="control-flujo-box">
+                <div id="cronometroBingo" class="timer-display">00:00</div>
+                <div style="display: flex; gap: 5px;">
+                    <input type="number" id="minutosInicio" placeholder="Min" style="width: 60px;">
+                    <button id="btnProgramar" onclick="programarJuego()" class="btn-accion" disabled style="background: var(--gold); flex: 1; color: #000;">PROGRAMAR</button>
+                </div>
+                <button id="btnEmpezar" onclick="cambiarEstado('jugando', '¡JUEGO INICIADO!')" class="btn-accion" disabled style="background: var(--success); margin-top: 5px;">EMPEZAR YA</button>
+            </div>
+
+            <div class="card-selector-box">
+                <small style="color: var(--gold)">¿QUIÉNES JUEGAN ESTA RONDA?</small>
+                <div id="listaParticipantes"></div>
             </div>
 
             <div class="controls">
-                <button id="drawBtn" class="btn-accion" style="background: #3b82f6;">SORTEAR PRÓXIMO</button>
+                <button id="drawBtn" class="btn-accion" disabled style="background: #3b82f6;">SORTEAR PRÓXIMO</button>
                 
                 <div id="radarGanadores" class="radar-box">
                     <div id="listaAlertasBingo"></div>
-                    <div id="textoGanadores">Monitoreando...</div>
                 </div>
 
-                <div class="verifier-area" style="margin-top: 20px; border-top: 1px solid #444; padding-top: 10px;">
-                    <button class="btn-accion" style="background: #6366f1;" onclick="cambiarEstado('verificando', 'Verificando cartón... Por favor espere.')">🔔 AVISAR: VERIFICANDO...</button>
+                <div class="verifier-area" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
+                    <button id="btnVerificando" class="btn-accion" disabled style="background: #6366f1;" onclick="cambiarEstado('verificando', 'Verificando cartón... ¡Pausa!')">🔔 AVISAR: VERIFICANDO...</button>
                     
-                    <div style="display: flex; gap: 5px; margin-top: 10px;">
-                        <input type="number" id="idABuscar" placeholder="ID #" style="flex: 1; padding: 5px;">
-                        <button onclick="revisarCartonManual()" style="background: var(--accent-gold); border: none; padding: 5px; font-weight: bold;">BUSCAR</button>
+                    <div style="display: flex; gap: 5px; margin-top: 5px;">
+                        <input type="number" id="idABuscar" placeholder="ID #" style="flex: 1;">
+                        <button onclick="revisarCartonManual()" style="background: var(--gold); border: none; padding: 5px;">BUSCAR</button>
                     </div>
                     <div id="areaVerificacion"></div>
                     
-                    <div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                        <button onclick="cambiarEstado('jugando', 'BINGO ERRADO - SEGUIMOS')" style="background: #475569; font-size: 0.7rem; padding: 8px; color: white; border: none; border-radius: 4px;">BINGO ERRADO</button>
-                        <button onclick="anunciarGanador()" style="background: var(--accent-gold); font-size: 0.7rem; padding: 8px; font-weight: bold; border: none; border-radius: 4px;">BINGO VÁLIDO</button>
+                    <div style="margin-top: 5px; display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                        <button onclick="cambiarEstado('jugando', 'BINGO ERRADO - SEGUIMOS JUGANDO')" style="background: #ef4444; color: white; border: none; padding: 8px; border-radius: 4px;">BINGO ERRADO</button>
+                        <button onclick="anunciarGanador()" style="background: var(--gold); font-weight: bold; border: none;">BINGO VÁLIDO</button>
                     </div>
                 </div>
 
-                <button id="resetBtn" class="secondary" style="margin-top: 20px;">Reiniciar Partida</button>
+                <button id="resetBtn" class="secondary" style="margin-top: 15px;">Reiniciar Todo</button>
             </div>
         </aside>
 
         <main class="panel-derecho">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
-                <h3 style="color: var(--primary-blue);">TABLERO DE SEGUIMIENTO</h3>
-                <a href="generar.html" style="background: var(--primary-blue); color: white; text-decoration: none; padding: 8px 15px; border-radius: 5px; font-size: 0.8rem; font-weight: bold;">+ GESTIONAR CARTONES</a>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px;">
+                <h3>TABLERO DE SEGUIMIENTO</h3>
+                <a href="generar.html" style="background: var(--primary); color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; font-size: 0.8rem;">GESTIONAR CARTONES</a>
             </div>
             <div id="historyGrid" class="history-grid"></div>
         </main>
     </div>
 
-    <button id="btnAbrirConfig" class="btn-config-flotante" style="position: fixed; bottom: 20px; left: 20px; background: #1e293b; color: white; padding: 10px; border-radius: 50px; border: 2px solid var(--accent-gold); cursor: pointer;">⚙️ CONFIGURAR PATRÓN</button>
+    <button id="btnAbrirConfig" class="btn-config-flotante" style="position: fixed; bottom: 20px; left: 20px; background: #1e293b; color: white; padding: 10px; border: 2px solid var(--gold); border-radius: 50px; cursor: pointer; z-index: 100;">⚙️ 1. CONFIGURAR PATRÓN</button>
 
     <div id="modalConfig" class="modal-overlay">
-        <div class="modal-content" style="background:#1e293b; padding:20px; border-radius:12px; color: white; width: 300px;">
-            <h3 style="text-align: center;">PATRÓN DE VICTORIA</h3>
-            <p style="font-size: 0.7rem; color: #94a3b8; text-align: center;">Selecciona las casillas para ganar</p>
+        <div class="modal-content" style="background:#1e293b; padding:20px; border-radius:12px; color: white; width: 280px;">
+            <h3 style="text-align:center">DIBUJA EL PATRÓN</h3>
             <div id="gridDibujoPatron" class="grid-patron-admin"></div>
-            <button onclick="guardarPatron()" class="btn-accion" style="background: #10b981; margin-top: 15px;">GUARDAR Y ACTIVAR RELOJ</button>
-            <button onclick="document.getElementById('modalConfig').style.display='none'" class="btn-accion" style="background: #444;">CANCELAR</button>
+            <button onclick="guardarPatron()" class="btn-accion" style="background: var(--success); margin-top: 15px;">GUARDAR Y DESBLOQUEAR JUEGO</button>
         </div>
     </div>
 
