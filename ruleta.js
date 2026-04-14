@@ -1,4 +1,3 @@
-// CONFIGURACIÓN FIREBASE (Usa la tuya)
 const firebaseConfig = {
     apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
     authDomain: "bingofast.firebaseapp.com",
@@ -14,12 +13,12 @@ const db = firebase.database();
 
 let cantados = [];
 let patronVictoria = Array(25).fill(false);
-let patronSeleccionado = false;
-let estadoActual = 'esperando';
+let cartonesParticipantes = {};
 
 document.addEventListener('DOMContentLoaded', () => {
     generarTableroSeguimiento();
     inicializarListeners();
+    cargarListaCartones(); // Cargar cartones para seleccionar quién juega
     
     document.getElementById('btnAbrirConfig').onclick = () => {
         document.getElementById('modalConfig').style.display = 'flex';
@@ -28,69 +27,92 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function inicializarListeners() {
+    // 1. Contador de Jugadores Online
+    db.ref('presencia').on('value', snap => {
+        const count = snap.exists() ? Object.keys(snap.val()).length : 0;
+        document.getElementById('onlineCount').innerText = `👥 JUGADORES ONLINE: ${count}`;
+    });
+
+    // 2. Bolas y Tablero
     db.ref('historialBolas').on('value', snap => {
         cantados = snap.exists() ? Object.values(snap.val()) : [];
         actualizarTableroVisual();
     });
 
+    // 3. Estado de la Partida
     db.ref('partidaActual').on('value', snap => {
         const data = snap.val();
         if (!data) return;
-        
-        estadoActual = data.status;
 
-        // REGLA: Si hay temporizador activo, deshabilitar botón de sorteo
-        const drawBtn = document.getElementById('drawBtn');
-        if (data.status === 'esperando') {
-            drawBtn.disabled = true;
-            drawBtn.innerText = "ESPERANDO RELOJ...";
+        const timer = document.getElementById('cronometroBingo');
+        if (data.status === 'esperando' && data.proximoJuego) {
             correrReloj(data.proximoJuego);
-        } else {
-            drawBtn.disabled = false;
-            drawBtn.innerText = "SORTEAR PRÓXIMO";
-            document.getElementById('cronometroBingo').innerText = "00:00";
+            bloquearTodo(true); // Bloquear sorteo mientras hay reloj
+        } else if (data.status === 'jugando') {
+            timer.innerText = "00:00";
+            bloquearTodo(false); // Habilitar sorteo
         }
-
-        const b = document.getElementById('badgeEstado');
-        b.innerText = `Estado: ${data.status.toUpperCase()}`;
-        b.className = `status-badge status-${data.status}`;
     });
 }
 
-// --- LÓGICA DE FLUJO ADMIN ---
-function programarJuego() {
-    if (!patronSeleccionado) {
-        alert("¡ALTO! Primero debes configurar y guardar el PATRÓN de victoria.");
-        return;
-    }
-    const min = document.getElementById('minutosInicio').value;
-    if (!min || min <= 0) {
-        alert("Por favor, coloca un tiempo (minutos) para iniciar.");
-        return;
-    }
+// --- GESTIÓN DE PARTICIPANTES ---
+function cargarListaCartones() {
+    db.ref('cartonesGenerados').once('value', snap => {
+        const lista = document.getElementById('listaParticipantes');
+        lista.innerHTML = '';
+        if (!snap.exists()) return;
 
+        snap.forEach(child => {
+            const id = child.key;
+            const item = document.createElement('div');
+            item.className = 'card-item';
+            item.innerHTML = `
+                <span>Cartón #${id}</span>
+                <input type="checkbox" id="check-${id}" checked onchange="toggleParticipante('${id}')">
+            `;
+            lista.appendChild(item);
+            cartonesParticipantes[id] = true; // Por defecto todos juegan
+        });
+        actualizarParticipantesDB();
+    });
+}
+
+function toggleParticipante(id) {
+    cartonesParticipantes[id] = document.getElementById(`check-${id}`).checked;
+    actualizarParticipantesDB();
+}
+
+function actualizarParticipantesDB() {
+    // Guardamos en un nodo aparte quiénes están activos para esta partida
+    const activos = Object.keys(cartonesParticipantes).filter(id => cartonesParticipantes[id]);
+    db.ref('partidaActual/participantesActivos').set(activos);
+}
+
+// --- FLUJO DE CONTROL (BLOQUEOS) ---
+function bloquearTodo(bloquear) {
+    document.getElementById('drawBtn').disabled = bloquear;
+    document.getElementById('btnVerificando').disabled = bloquear;
+    document.getElementById('btnEmpezar').disabled = !bloquear; // Solo se habilita si hay reloj o pausa
+}
+
+function guardarPatron() {
+    db.ref('configuracion/patron').set(patronVictoria).then(() => {
+        document.getElementById('btnProgramar').disabled = false;
+        document.getElementById('btnAbrirConfig').innerText = "✅ PATRÓN LISTO";
+        document.getElementById('modalConfig').style.display = 'none';
+        alert("Paso 1 completado: Patrón guardado. Ahora programa el tiempo.");
+    });
+}
+
+function programarJuego() {
+    const min = document.getElementById('minutosInicio').value;
+    if (!min) return alert("Coloca los minutos primero.");
+    
     const target = Date.now() + (min * 60000);
     db.ref('partidaActual').update({
         status: 'esperando',
         proximoJuego: target,
         anuncio: `EL JUEGO INICIA EN ${min} MINUTOS`
-    });
-}
-
-function guardarPatron() {
-    const check = patronVictoria.filter(p => p === true).length;
-    if (check < 2) {
-        alert("Selecciona un patrón válido (al menos 2 casillas).");
-        return;
-    }
-
-    db.ref('configuracion/patron').set(patronVictoria).then(() => {
-        patronSeleccionado = true;
-        document.getElementById('btnProgramar').disabled = false;
-        document.getElementById('guiaAdmin').innerHTML = "✅ Patrón guardado. Ahora coloca el tiempo y dale a PROGRAMAR.";
-        document.getElementById('guiaAdmin').style.borderLeftColor = "#10b981";
-        document.getElementById('modalConfig').style.display = 'none';
-        alert("Patrón guardado correctamente. Ya puedes programar el tiempo.");
     });
 }
 
@@ -102,10 +124,6 @@ function correrReloj(target) {
         if (dif <= 0) {
             clearInterval(interval);
             timer.innerText = "¡YA!";
-            if (estadoActual === 'esperando') {
-                cambiarEstado('jugando', '¡EMPEZAMOS!');
-                sortearProximo(); // Auto-sorteo una vez al terminar
-            }
             return;
         }
         const min = Math.floor(dif / 60000);
@@ -114,21 +132,17 @@ function correrReloj(target) {
     }, 1000);
 }
 
-// --- FUNCIONES DE BINGO ---
+// --- FUNCIONES DE JUEGO ---
 function sortearProximo() {
-    if (estadoActual === 'esperando') return;
     if (cantados.length >= 75) return;
-    
     let num;
     do { num = Math.floor(Math.random() * 75) + 1; } while (cantados.includes(num));
     
     const letras = ['B','I','N','G','O'];
     const letra = letras[Math.floor((num-1)/15)];
     
-    document.getElementById('currentLetter').innerText = letra;
-    document.getElementById('currentNumber').innerText = num;
     db.ref('historialBolas').push(num);
-    db.ref('partidaActual').update({ numero: num, letra: letra, status: "jugando" });
+    db.ref('partidaActual').update({ numero: num, letra: letra, status: "jugando", anuncio: `BOLA CANTADA: ${letra}${num}` });
 }
 
 function cambiarEstado(st, msg) {
@@ -138,11 +152,11 @@ function cambiarEstado(st, msg) {
 
 function anunciarGanador() {
     const id = document.getElementById('idABuscar').value;
-    if(!id) return alert("Ingresa el ID del cartón ganador");
-    cambiarEstado('finalizado', `🏆 ¡EL CARTÓN #${id} ES EL GANADOR! 🏆`);
+    if(!id) return alert("ID necesario");
+    cambiarEstado('finalizado', `🏆 ¡TENEMOS UN GANADOR! CARTÓN #${id} 🏆`);
 }
 
-// --- VISUAL ---
+// --- VISUAL Y TABLERO ---
 function generarTableroSeguimiento() {
     const tablero = document.getElementById('historyGrid');
     tablero.innerHTML = '';
@@ -176,12 +190,8 @@ function crearCuadriculaDibujo() {
 
 document.getElementById('drawBtn').onclick = sortearProximo;
 document.getElementById('resetBtn').onclick = () => {
-    if(confirm("¿Seguro que quieres borrar todo y reiniciar?")){
-        db.ref().update({
-            'historialBolas': null,
-            'notificaciones/bingo': null,
-            'partidaActual': { status: 'reinicio', numero: '--', letra: '-' }
-        });
+    if(confirm("Reiniciar partida?")) {
+        db.ref().update({ 'historialBolas': null, 'notificaciones/bingo': null, 'partidaActual/status': 'reinicio' });
         location.reload();
     }
 };
