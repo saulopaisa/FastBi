@@ -13,167 +13,66 @@ const db = firebase.database();
 
 let cantados = [];
 let patronVictoria = Array(25).fill(false);
-let cartonesParticipantes = {};
+let cartonesSeleccionados = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     generarTableroSeguimiento();
     inicializarListeners();
-    cargarListaCartones(); // Cargar cartones para seleccionar quién juega
-    
-    document.getElementById('btnAbrirConfig').onclick = () => {
-        document.getElementById('modalConfig').style.display = 'flex';
-        crearCuadriculaDibujo();
-    };
 });
 
 function inicializarListeners() {
-    // 1. Contador de Jugadores Online
+    // Contador Online
     db.ref('presencia').on('value', snap => {
         const count = snap.exists() ? Object.keys(snap.val()).length : 0;
         document.getElementById('onlineCount').innerText = `👥 JUGADORES ONLINE: ${count}`;
     });
 
-    // 2. Bolas y Tablero
+    // Bolas
     db.ref('historialBolas').on('value', snap => {
         cantados = snap.exists() ? Object.values(snap.val()) : [];
         actualizarTableroVisual();
     });
 
-    // 3. Estado de la Partida
+    // Estado Partida
     db.ref('partidaActual').on('value', snap => {
         const data = snap.val();
         if (!data) return;
+        
+        const drawBtn = document.getElementById('drawBtn');
+        const vBtn = document.getElementById('btnVerificando');
+        const eBtn = document.getElementById('btnErrado');
+        const valBtn = document.getElementById('btnValido');
 
-        const timer = document.getElementById('cronometroBingo');
-        if (data.status === 'esperando' && data.proximoJuego) {
+        if (data.status === 'esperando') {
             correrReloj(data.proximoJuego);
-            bloquearTodo(true); // Bloquear sorteo mientras hay reloj
-        } else if (data.status === 'jugando') {
-            timer.innerText = "00:00";
-            bloquearTodo(false); // Habilitar sorteo
+            drawBtn.disabled = true;
+        } else if (data.status === 'jugando' || data.status === 'verificando') {
+            document.getElementById('cronometroBingo').innerText = "00:00";
+            drawBtn.disabled = false;
+            vBtn.disabled = false;
+            eBtn.disabled = false;
+            valBtn.disabled = false;
         }
     });
 }
 
-// --- GESTIÓN DE PARTICIPANTES ---
-function cargarListaCartones() {
-    db.ref('cartonesGenerados').once('value', snap => {
-        const lista = document.getElementById('listaParticipantes');
-        lista.innerHTML = '';
-        if (!snap.exists()) return;
-
-        snap.forEach(child => {
-            const id = child.key;
-            const item = document.createElement('div');
-            item.className = 'card-item';
-            item.innerHTML = `
-                <span>Cartón #${id}</span>
-                <input type="checkbox" id="check-${id}" checked onchange="toggleParticipante('${id}')">
-            `;
-            lista.appendChild(item);
-            cartonesParticipantes[id] = true; // Por defecto todos juegan
-        });
-        actualizarParticipantesDB();
-    });
+// --- MODAL PATRÓN ---
+function abrirModalPatron() {
+    document.getElementById('modalPatron').style.display = 'flex';
+    crearCuadriculaDibujo();
 }
 
-function toggleParticipante(id) {
-    cartonesParticipantes[id] = document.getElementById(`check-${id}`).checked;
-    actualizarParticipantesDB();
-}
-
-function actualizarParticipantesDB() {
-    // Guardamos en un nodo aparte quiénes están activos para esta partida
-    const activos = Object.keys(cartonesParticipantes).filter(id => cartonesParticipantes[id]);
-    db.ref('partidaActual/participantesActivos').set(activos);
-}
-
-// --- FLUJO DE CONTROL (BLOQUEOS) ---
-function bloquearTodo(bloquear) {
-    document.getElementById('drawBtn').disabled = bloquear;
-    document.getElementById('btnVerificando').disabled = bloquear;
-    document.getElementById('btnEmpezar').disabled = !bloquear; // Solo se habilita si hay reloj o pausa
-}
-
-function guardarPatron() {
-    db.ref('configuracion/patron').set(patronVictoria).then(() => {
-        document.getElementById('btnProgramar').disabled = false;
-        document.getElementById('btnAbrirConfig').innerText = "✅ PATRÓN LISTO";
-        document.getElementById('modalConfig').style.display = 'none';
-        alert("Paso 1 completado: Patrón guardado. Ahora programa el tiempo.");
-    });
-}
-
-function programarJuego() {
-    const min = document.getElementById('minutosInicio').value;
-    if (!min) return alert("Coloca los minutos primero.");
-    
-    const target = Date.now() + (min * 60000);
-    db.ref('partidaActual').update({
-        status: 'esperando',
-        proximoJuego: target,
-        anuncio: `EL JUEGO INICIA EN ${min} MINUTOS`
-    });
-}
-
-// --- CRONÓMETRO ---
-function correrReloj(target) {
-    const timer = document.getElementById('cronometroBingo');
-    const interval = setInterval(() => {
-        const dif = target - Date.now();
-        if (dif <= 0) {
-            clearInterval(interval);
-            timer.innerText = "¡YA!";
-            return;
-        }
-        const min = Math.floor(dif / 60000);
-        const seg = Math.floor((dif % 60000) / 1000);
-        timer.innerText = `${min}:${seg < 10 ? '0'+seg : seg}`;
-    }, 1000);
-}
-
-// --- FUNCIONES DE JUEGO ---
-function sortearProximo() {
-    if (cantados.length >= 75) return;
-    let num;
-    do { num = Math.floor(Math.random() * 75) + 1; } while (cantados.includes(num));
-    
-    const letras = ['B','I','N','G','O'];
-    const letra = letras[Math.floor((num-1)/15)];
-    
-    db.ref('historialBolas').push(num);
-    db.ref('partidaActual').update({ numero: num, letra: letra, status: "jugando", anuncio: `BOLA CANTADA: ${letra}${num}` });
-}
-
-function cambiarEstado(st, msg) {
-    db.ref('partidaActual').update({ status: st, anuncio: msg });
-    if(st === 'jugando') db.ref('notificaciones/bingo').remove();
-}
-
-function anunciarGanador() {
-    const id = document.getElementById('idABuscar').value;
-    if(!id) return alert("ID necesario");
-    cambiarEstado('finalizado', `🏆 ¡TENEMOS UN GANADOR! CARTÓN #${id} 🏆`);
-}
-
-// --- VISUAL Y TABLERO ---
-function generarTableroSeguimiento() {
-    const tablero = document.getElementById('historyGrid');
-    tablero.innerHTML = '';
-    for (let i = 1; i <= 75; i++) {
-        const div = document.createElement('div');
-        div.id = `num-${i}`;
-        div.className = 'celda-seguimiento';
-        div.innerText = i;
-        tablero.appendChild(div);
+function aplicarPredefinido(tipo) {
+    patronVictoria = Array(25).fill(false);
+    if(tipo === 'lleno') patronVictoria = Array(25).fill(true);
+    if(tipo === 'equis') {
+        for(let i=0; i<5; i++) { patronVictoria[i*6] = true; patronVictoria[i*4 + 4] = true; }
     }
-}
-
-function actualizarTableroVisual() {
-    document.querySelectorAll('.celda-seguimiento').forEach(c => {
-        const n = parseInt(c.innerText);
-        c.classList.toggle('cantada', cantados.includes(n));
-    });
+    if(tipo === 'esquinas') {
+        patronVictoria[0] = patronVictoria[4] = patronVictoria[20] = patronVictoria[24] = true;
+    }
+    patronVictoria[12] = true; // El centro siempre es estrella
+    crearCuadriculaDibujo();
 }
 
 function crearCuadriculaDibujo() {
@@ -188,9 +87,114 @@ function crearCuadriculaDibujo() {
     });
 }
 
+function guardarPatron() {
+    db.ref('configuracion/patron').set(patronVictoria).then(() => {
+        document.getElementById('modalPatron').style.display = 'none';
+        document.getElementById('btnAbrirCartones').disabled = false; // Desbloquea paso 2
+        document.getElementById('btnAbrirConfig').innerText = "✅ PATRÓN GUARDADO";
+        alert("Paso 1: Patrón guardado. Ahora selecciona los cartones.");
+    });
+}
+
+// --- MODAL CARTONES ---
+function abrirModalCartones() {
+    db.ref('cartonesGenerados').once('value', snap => {
+        const cont = document.getElementById('listaCheckCartones');
+        cont.innerHTML = '';
+        if(!snap.exists()) return alert("No hay cartones generados");
+        
+        snap.forEach(child => {
+            const id = child.key;
+            const div = document.createElement('div');
+            div.className = 'check-item';
+            div.innerHTML = `<input type="checkbox" value="${id}" checked> #${id}`;
+            cont.appendChild(div);
+        });
+        document.getElementById('modalCartones').style.display = 'flex';
+    });
+}
+
+function guardarSeleccionCartones() {
+    const checks = document.querySelectorAll('#listaCheckCartones input:checked');
+    cartonesSeleccionados = Array.from(checks).map(c => c.value);
+    
+    if(cartonesSeleccionados.length === 0) return alert("Selecciona al menos 1 cartón");
+    
+    db.ref('partidaActual/participantesActivos').set(cartonesSeleccionados).then(() => {
+        document.getElementById('modalCartones').style.display = 'none';
+        document.getElementById('btnProgramar').disabled = false; // Desbloquea paso 3
+        document.getElementById('btnAbrirCartones').innerText = "✅ CARTONES LISTOS";
+        alert("Paso 2: Jugadores confirmados. Ya puedes programar el inicio.");
+    });
+}
+
+// --- LÓGICA DE JUEGO ---
+function programarJuego() {
+    const min = document.getElementById('minutosInicio').value;
+    if(!min) return alert("Escribe los minutos.");
+    const target = Date.now() + (min * 60000);
+    db.ref('partidaActual').update({ status: 'esperando', proximoJuego: target, anuncio: `INICIO EN ${min} MINUTOS` });
+}
+
+function sortearProximo() {
+    if (cantados.length >= 75) return;
+    let num;
+    do { num = Math.floor(Math.random() * 75) + 1; } while (cantados.includes(num));
+    const letras = ['B','I','N','G','O'];
+    const letra = letras[Math.floor((num-1)/15)];
+    db.ref('historialBolas').push(num);
+    db.ref('partidaActual').update({ numero: num, letra: letra, status: "jugando", anuncio: `BOLA: ${letra}-${num}` });
+}
+
+function cambiarEstado(st, msg) {
+    db.ref('partidaActual').update({ status: st, anuncio: msg });
+    if(st === 'jugando') db.ref('notificaciones/bingo').remove();
+}
+
+function anunciarGanador() {
+    const id = document.getElementById('idABuscar').value;
+    if(!id) return alert("Escribe el ID ganador");
+    cambiarEstado('finalizado', `🏆 ¡CARTÓN #${id} ES EL GANADOR! 🏆`);
+}
+
+// --- TABLERO ---
+function generarTableroSeguimiento() {
+    const tablero = document.getElementById('historyGrid');
+    tablero.innerHTML = '';
+    for (let i = 1; i <= 75; i++) {
+        const div = document.createElement('div');
+        div.className = 'celda-seguimiento';
+        div.id = `num-${i}`;
+        div.innerText = i;
+        tablero.appendChild(div);
+    }
+}
+
+function actualizarTableroVisual() {
+    document.querySelectorAll('.celda-seguimiento').forEach(c => {
+        const n = parseInt(c.innerText);
+        c.classList.toggle('cantada', cantados.includes(n));
+    });
+}
+
+function correrReloj(target) {
+    const interval = setInterval(() => {
+        const dif = target - Date.now();
+        if (dif <= 0) {
+            clearInterval(interval);
+            document.getElementById('cronometroBingo').innerText = "¡YA!";
+            document.getElementById('btnEmpezar').disabled = false;
+            return;
+        }
+        const min = Math.floor(dif / 60000);
+        const seg = Math.floor((dif % 60000) / 1000);
+        document.getElementById('cronometroBingo').innerText = `${min}:${seg < 10 ? '0'+seg : seg}`;
+    }, 1000);
+}
+
 document.getElementById('drawBtn').onclick = sortearProximo;
 document.getElementById('resetBtn').onclick = () => {
-    if(confirm("Reiniciar partida?")) {
+    if(confirm("¿Reiniciar partida?")){
         db.ref().update({ 'historialBolas': null, 'notificaciones/bingo': null, 'partidaActual/status': 'reinicio' });
         location.reload();
     }
