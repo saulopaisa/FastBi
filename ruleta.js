@@ -14,125 +14,113 @@ const db = firebase.database();
 
 let cantados = [];
 let patronVictoria = Array(25).fill(false);
-let sorteoAutomaticoHecho = false;
+let autoSorteoRealizado = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     generarTableroSeguimiento();
     inicializarListeners();
     
-    // Configuración del botón de patrón
-    const btnConfig = document.getElementById('btnAbrirConfig');
-    if(btnConfig) btnConfig.onclick = () => document.getElementById('modalConfig').style.display = 'flex';
+    document.getElementById('btnAbrirConfig').onclick = () => {
+        document.getElementById('modalConfig').style.display = 'flex';
+        crearCuadriculaDibujo();
+    };
 });
 
 function inicializarListeners() {
-    // 1. Bolas Cantadas
+    // Escuchar Bolas
     db.ref('historialBolas').on('value', snap => {
         cantados = snap.exists() ? Object.values(snap.val()) : [];
         actualizarTableroVisual();
-        // Si hay una miniatura abierta, actualizar sus marcas
         if(document.getElementById('idABuscar').value) revisarCartonManual();
     });
 
-    // 2. Cronómetro y Estado
+    // Escuchar Cronómetro y Estado
     db.ref('partidaActual').on('value', snap => {
         const data = snap.val();
         if (!data) return;
 
+        // Actualizar Cronómetro
         if (data.status === 'esperando' && data.proximoJuego) {
-            correrCronometro(data.proximoJuego);
+            correrReloj(data.proximoJuego);
         } else {
             document.getElementById('cronometroBingo').innerText = "00:00";
         }
 
+        // Actualizar Badge
         const b = document.getElementById('badgeEstado');
-        if(b) {
-            b.innerText = `Estado: ${data.status.toUpperCase()}`;
-            b.className = `status-badge status-${data.status}`;
-        }
+        b.innerText = `Estado: ${data.status.toUpperCase()}`;
+        b.className = `status-badge status-${data.status}`;
     });
 
-    // 3. Alertas de Bingo (Radar)
+    // Radar de Alertas
     db.ref('notificaciones/bingo').on('value', snap => {
         const contenedor = document.getElementById('listaAlertasBingo');
         const txt = document.getElementById('textoGanadores');
         if (snap.exists()) {
             const data = snap.val();
-            if(txt) txt.style.display = 'none';
-            contenedor.innerHTML = `<div class="alert-bingo-card" style="background:#ef4444; color:white; padding:10px; border-radius:5px; margin-bottom:5px;">
-                🚨 CARTÓN #${data.id} CANTÓ BINGO! 
-                <button onclick="revisarCartonManual(${data.id})" style="background:white; border:none; padding:2px 5px; cursor:pointer;">VER</button>
-            </div>`;
+            txt.style.display = 'none';
+            contenedor.innerHTML = `<div class="alert-bingo-card" style="background:#ef4444; color:white; padding:8px; border-radius:5px;">🚨 CARTÓN #${data.id}! <button onclick="revisarCartonManual(${data.id})">VER</button></div>`;
             new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(()=>{});
         } else {
-            if(contenedor) contenedor.innerHTML = '';
-            if(txt) txt.style.display = 'block';
+            contenedor.innerHTML = '';
+            txt.style.display = 'block';
         }
     });
 }
 
-// --- CRONÓMETRO ---
-function correrCronometro(target) {
-    const timerElement = document.getElementById('cronometroBingo');
+// --- CRONÓMETRO Y AUTO-SORTEO ---
+function correrReloj(target) {
     const interval = setInterval(() => {
-        const ahora = Date.now();
-        const dif = target - ahora;
-
+        const dif = target - Date.now();
         if (dif <= 0) {
             clearInterval(interval);
-            timerElement.innerText = "¡YA!";
-            if (!sorteoAutomaticoHecho) {
-                sorteoAutomaticoHecho = true;
+            document.getElementById('cronometroBingo').innerText = "¡YA!";
+            if (!autoSorteoRealizado) {
+                autoSorteoRealizado = true;
                 cambiarEstado('jugando', '¡PARTIDA INICIADA!');
-                setTimeout(sortearProximo, 1000); // Primer sorteo automático
+                setTimeout(sortearProximo, 1000); 
             }
             return;
         }
-
         const min = Math.floor(dif / 60000);
         const seg = Math.floor((dif % 60000) / 1000);
-        timerElement.innerText = `${min.toString().padStart(2,'0')}:${seg.toString().padStart(2,'0')}`;
+        document.getElementById('cronometroBingo').innerText = `${min}:${seg < 10 ? '0'+seg : seg}`;
     }, 1000);
 }
 
 function programarJuego() {
     const min = document.getElementById('minutosInicio').value || 1;
     const target = Date.now() + (min * 60000);
-    sorteoAutomaticoHecho = false;
-    db.ref('partidaActual').update({
-        status: 'esperando',
-        proximoJuego: target,
-        anuncio: `INICIAMOS EN ${min} MINUTOS`
-    });
+    autoSorteoRealizado = false;
+    db.ref('partidaActual').update({ status: 'esperando', proximoJuego: target, anuncio: `INICIO EN ${min} MIN` });
 }
 
-// --- BUSCADOR CON MINIATURA ---
-function revisarCartonManual(idFromRadar) {
-    const id = idFromRadar || document.getElementById('idABuscar').value;
+// --- BUSCADOR Y MINIATURA ---
+function revisarCartonManual(idRadar) {
+    const id = idRadar || document.getElementById('idABuscar').value;
     if (!id) return;
-    if(!idFromRadar) document.getElementById('idABuscar').value = id;
+    if (idRadar) document.getElementById('idABuscar').value = id;
 
     db.ref(`cartonesGenerados/${id}`).once('value', snap => {
         const area = document.getElementById('areaVerificacion');
         if (!snap.exists()) {
-            area.innerHTML = "<small style='color:red'>El cartón #" + id + " no existe.</small>";
+            area.innerHTML = "<small style='color:red'>No existe el cartón</small>";
             return;
         }
-        
         const numeros = snap.val().numeros;
         let html = `<div class="mini-carton-grid">`;
-        numeros.forEach((num, index) => {
-            const esCantada = cantados.includes(num);
-            const esCentro = index === 12;
-            const clase = esCentro ? 'mini-celda estrella' : (esCantada ? 'mini-celda marcada' : 'mini-celda');
-            html += `<div class="${clase}">${esCentro ? '★' : num}</div>`;
+        numeros.forEach((n, i) => {
+            const cantada = cantados.includes(n);
+            const centro = i === 12;
+            const clase = centro ? 'mini-celda estrella' : (cantada ? 'mini-celda marcada' : 'mini-celda');
+            html += `<div class="${clase}">${centro ? '★' : n}</div>`;
         });
         html += `</div>`;
         area.innerHTML = html;
     });
 }
 
-// --- LÓGICA DE JUEGO ---
+// --- LÓGICA DE SORTEO ---
 function sortearProximo() {
     if (cantados.length >= 75) return;
     let num;
@@ -146,8 +134,8 @@ function sortearProximo() {
 
     db.ref('historialBolas').push(num);
     db.ref('partidaActual').update({ numero: num, letra: letra, status: "jugando" });
-    
-    // Lista de últimos 5
+
+    // Historial últimos 5
     const list = document.getElementById('recentList');
     if(list) {
         const item = document.createElement('div');
@@ -160,18 +148,17 @@ function sortearProximo() {
 
 function cambiarEstado(st, msg) {
     db.ref('partidaActual').update({ status: st, anuncio: msg });
-    if(st === 'jugando') db.ref('notificaciones/bingo').remove(); // Limpiar alerta al seguir
+    if(st === 'jugando') db.ref('notificaciones/bingo').remove();
 }
 
 function anunciarGanador() {
     const id = document.getElementById('idABuscar').value;
-    cambiarEstado('finalizado', `🏆 ¡EL CARTÓN #${id} ES EL GANADOR! 🏆`);
+    cambiarEstado('finalizado', `🏆 ¡CARTÓN #${id} GANADOR! 🏆`);
 }
 
-// --- TABLERO 1-75 ---
+// --- TABLERO GENERAL ---
 function generarTableroSeguimiento() {
     const tablero = document.getElementById('historyGrid');
-    if (!tablero) return;
     tablero.innerHTML = '';
     for (let i = 1; i <= 75; i++) {
         const div = document.createElement('div');
@@ -187,15 +174,14 @@ function actualizarTableroVisual() {
         const n = parseInt(c.innerText);
         c.classList.toggle('cantada', cantados.includes(n));
     });
-    const cont = document.getElementById('count');
-    if(cont) cont.innerText = cantados.length;
+    document.getElementById('count').innerText = cantados.length;
 }
 
 // --- PATRONES ---
 function aplicarPredefinido(tipo) {
     patronVictoria = Array(25).fill(false);
-    if (tipo === 'lleno') patronVictoria = Array(25).fill(true);
-    if (tipo === 'equis') {
+    if(tipo === 'lleno') patronVictoria = Array(25).fill(true);
+    if(tipo === 'equis') {
         for(let i=0; i<5; i++) { patronVictoria[i*6] = true; patronVictoria[i*4 + 4] = true; }
     }
     patronVictoria[12] = true;
@@ -203,28 +189,27 @@ function aplicarPredefinido(tipo) {
 }
 
 function crearCuadriculaDibujo() {
-    const container = document.getElementById('gridDibujoPatron');
-    if(!container) return;
-    container.innerHTML = '';
-    patronVictoria.forEach((activa, i) => {
+    const cont = document.getElementById('gridDibujoPatron');
+    cont.innerHTML = '';
+    patronVictoria.forEach((act, i) => {
         const d = document.createElement('div');
-        d.className = `celda-patron-admin ${activa ? 'activa' : ''}`;
+        d.className = `celda-patron-admin ${act ? 'activa' : ''}`;
         if(i === 12) d.innerText = "★";
-        d.onclick = () => { if(i!==12) { patronVictoria[i] = !patronVictoria[i]; d.classList.toggle('activa'); } };
-        container.appendChild(d);
+        d.onclick = () => { if(i!==12){ patronVictoria[i] = !patronVictoria[i]; d.classList.toggle('activa'); } };
+        cont.appendChild(d);
     });
 }
 
 function guardarPatron() {
-    db.ref('configuracion/patron').set(patronVictoria).then(() => alert("Patrón guardado."));
+    db.ref('configuracion/patron').set(patronVictoria).then(() => alert("Patrón Guardado"));
 }
 
 document.getElementById('drawBtn').onclick = sortearProximo;
 document.getElementById('resetBtn').onclick = () => {
-    if(confirm("¿Reiniciar todo?")) {
+    if(confirm("¿Reiniciar todo?")){
         db.ref('historialBolas').remove();
         db.ref('notificaciones/bingo').remove();
-        db.ref('partidaActual').set({ status: 'reiniciado', numero: '--', letra: '-', ultimoCambio: Date.now() });
+        db.ref('partidaActual').set({ status: 'reiniciado', numero: '--', letra: '-' });
         location.reload();
     }
 };
