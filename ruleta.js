@@ -1,19 +1,29 @@
-// --- 1. CONFIGURACIÓN Y ESTADO ---
+// --- CONFIGURACIÓN FIREBASE ---
+const firebaseConfig = {
+    apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
+    authDomain: "bingofast.firebaseapp.com",
+    databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
+    projectId: "bingofast",
+    storageBucket: "bingofast.firebasestorage.app",
+    messagingSenderId: "473863283329",
+    appId: "1:473863283329:web:2c4bf96de167d105fa6380"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
 let cantados = [];
 let patronVictoria = Array(25).fill(false);
 
-// --- 2. INICIALIZACIÓN ---
+// --- INICIALIZACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Motor de Ruleta Iniciado...");
     generarTableroSeguimiento();
     
-    // Inicializar el dibujo del patrón si el modal está presente
-    const gridDibujo = document.getElementById('gridDibujoPatron');
-    if (gridDibujo) {
-        crearCuadriculaDibujo(gridDibujo);
-    }
+    // Abrir Modal
+    const btnConfig = document.getElementById('btnAbrirConfig');
+    if(btnConfig) btnConfig.onclick = () => document.getElementById('modalConfig').style.display = 'flex';
 
-    // Sincronizar historial de bolas ya cantadas al cargar/actualizar
+    // Sincronizar historial
     db.ref('historialBolas').on('value', (snapshot) => {
         if (snapshot.exists()) {
             cantados = Object.values(snapshot.val());
@@ -21,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Escuchar el patrón desde la DB
+    // Cargar Patrón
     db.ref('configuracion/patron').on('value', (snapshot) => {
         if (snapshot.exists()) {
             patronVictoria = snapshot.val();
@@ -31,11 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// --- 3. TABLERO DE SEGUIMIENTO (Grid de 75) ---
 function generarTableroSeguimiento() {
-    const tablero = document.getElementById('historyGrid'); // ID coincidente con tu HTML
+    const tablero = document.getElementById('historyGrid');
     if (!tablero) return;
-
     tablero.innerHTML = '';
     for (let i = 1; i <= 75; i++) {
         const div = document.createElement('div');
@@ -47,115 +55,80 @@ function generarTableroSeguimiento() {
 }
 
 function actualizarTableroVisual() {
-    // Limpiar marcas previas
     document.querySelectorAll('.celda-seguimiento').forEach(c => c.classList.remove('cantada'));
-    // Marcar las actuales
     cantados.forEach(num => {
         const celda = document.getElementById(`num-${num}`);
         if (celda) celda.classList.add('cantada');
     });
-    // Actualizar contador
     const cont = document.getElementById('count');
     if (cont) cont.innerText = cantados.length;
 }
 
-// --- 4. LÓGICA DE SORTEO ---
+// --- SORTEO ---
 const drawBtn = document.getElementById('drawBtn');
-if(drawBtn) {
-    drawBtn.onclick = sortearProximo;
-}
+if(drawBtn) drawBtn.onclick = sortearProximo;
 
 function sortearProximo() {
-    if (cantados.length >= 75) return alert("¡Bingo completo!");
-
+    if (cantados.length >= 75) return alert("Bingo finalizado");
     let num;
-    do {
-        num = Math.floor(Math.random() * 75) + 1;
-    } while (cantados.includes(num));
+    do { num = Math.floor(Math.random() * 75) + 1; } while (cantados.includes(num));
 
     const letra = obtenerLetra(num);
+    document.getElementById('currentLetter').innerText = letra;
+    document.getElementById('currentNumber').innerText = num;
 
-    // Actualizar Interfaz Principal
-    const txtLetra = document.getElementById('currentLetter');
-    const txtNum = document.getElementById('currentNumber');
-    if (txtLetra) txtLetra.innerText = letra;
-    if (txtNum) txtNum.innerText = num;
-
-    // Guardar en Firebase e Historial
     db.ref('historialBolas').push(num);
     db.ref('partidaActual').update({
-        numero: num,
-        letra: letra,
-        status: "jugando",
-        ultimoCambio: Date.now()
+        numero: num, letra: letra, status: "jugando", ultimoCambio: Date.now()
     });
-
-    // Agregar a "Últimos 5" (Visual)
-    actualizarUltimosCinco(letra, num);
-}
-
-function actualizarUltimosCinco(l, n) {
-    const lista = document.getElementById('recentList');
-    if (!lista) return;
-    const item = document.createElement('div');
-    item.className = 'recent-item';
-    item.innerText = `${l}${n}`;
-    lista.prepend(item);
-    if (lista.children.length > 5) lista.lastChild.remove();
 }
 
 function obtenerLetra(n) {
-    if (n <= 15) return 'B';
-    if (n <= 30) return 'I';
-    if (n <= 45) return 'N';
-    if (n <= 60) return 'G';
-    return 'O';
+    if (n <= 15) return 'B'; if (n <= 30) return 'I'; if (n <= 45) return 'N'; if (n <= 60) return 'G'; return 'O';
 }
 
-// --- 5. DIBUJO DEL PATRÓN ---
+// --- ESTADOS ---
+function cambiarEstado(st, msg) {
+    db.ref('partidaActual').update({ status: st, anuncio: msg });
+    const b = document.getElementById('badgeEstado');
+    if(b) { b.innerText = `Estado: ${st}`; b.className = `status-badge status-${st}`; }
+}
+
+function anunciarVerificacion() { cambiarEstado('verificando', '⚠️ VERIFICANDO CARTÓN...'); }
+function anunciarGanador() { 
+    const id = prompt("ID del Ganador:"); 
+    if(id) cambiarEstado('finalizado', `🏆 GANADOR #${id} 🏆`); 
+}
+
+function iniciarCuentaRegresiva() {
+    const min = document.getElementById('minutosInicio').value || 1;
+    const target = Date.now() + (min * 60000);
+    db.ref('partidaActual').update({ status: 'esperando', proximoJuego: target, anuncio: `INICIO EN ${min} MIN` });
+}
+
+// --- PATRÓN ---
 function crearCuadriculaDibujo(contenedor) {
     contenedor.innerHTML = '';
     patronVictoria.forEach((activa, index) => {
         const celda = document.createElement('div');
         celda.className = `celda-patron-admin ${activa ? 'activa' : ''}`;
-        if (index === 12) {
-            celda.classList.add('activa');
-            celda.innerText = "★";
-        }
-        celda.onclick = () => {
-            if (index === 12) return;
-            patronVictoria[index] = !patronVictoria[index];
-            celda.classList.toggle('activa');
-        };
+        if (index === 12) { celda.classList.add('activa'); celda.innerText = "★"; }
+        celda.onclick = () => { if (index === 12) return; patronVictoria[index] = !patronVictoria[index]; celda.classList.toggle('activa'); };
         contenedor.appendChild(celda);
     });
 }
 
 function guardarPatron() {
-    db.ref('configuracion/patron').set(patronVictoria)
-        .then(() => {
-            alert("Patrón sincronizado.");
-            document.getElementById('modalConfig').style.display = 'none';
-        });
-}
-
-// --- 6. REINICIO ---
-const resetBtn = document.getElementById('resetBtn');
-if(resetBtn) {
-    resetBtn.onclick = reiniciarPartida;
-}
-
-function reiniciarPartida() {
-    if (!confirm("¿Deseas reiniciar la partida actual?")) return;
-
-    db.ref('historialBolas').remove();
-    db.ref('notificaciones/bingo').remove(); // Limpiar alertas de ganadores
-    db.ref('partidaActual').set({
-        status: "reiniciado",
-        numero: "--",
-        letra: "-",
-        ultimoCambio: Date.now()
+    db.ref('configuracion/patron').set(patronVictoria).then(() => {
+        alert("Patrón guardado");
+        document.getElementById('modalConfig').style.display = 'none';
     });
-    
-    location.reload();
 }
+
+// --- REINICIO ---
+document.getElementById('resetBtn').onclick = () => {
+    if(!confirm("¿Reiniciar?")) return;
+    db.ref('historialBolas').remove();
+    db.ref('partidaActual').set({ status: "reiniciado", numero: "--", letra: "-", ultimoCambio: Date.now() });
+    location.reload();
+};
