@@ -7,12 +7,12 @@
     <link rel="stylesheet" href="ruleta.css">
     <style>
         :root { --primary-blue: #0f172a; --accent-gold: #ffb703; }
-        .timer-display { background: #000; color: #ff0000; font-family: 'Courier New', monospace; font-size: 1.5rem; text-align: center; padding: 5px; border-radius: 4px; margin-top: 5px; border: 1px solid #333; }
-        .mini-carton-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: #334155; padding: 5px; border-radius: 4px; margin-top: 10px; }
-        .mini-celda { background: #fff; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: #000; border-radius: 2px; }
-        .mini-celda.marcada { background: #ffb703; color: #000; box-shadow: inset 0 0 5px rgba(0,0,0,0.5); }
+        .timer-display { background: #000; color: #ff0000; font-family: monospace; font-size: 2rem; text-align: center; padding: 10px; border-radius: 8px; margin: 10px 0; border: 2px solid #333; }
+        .mini-carton-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; background: #334155; padding: 8px; border-radius: 6px; margin-top: 10px; border: 1px solid var(--accent-gold); }
+        .mini-celda { background: #fff; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; color: #000; border-radius: 3px; }
+        .mini-celda.marcada { background: var(--accent-gold); color: #000; box-shadow: inset 0 0 5px rgba(0,0,0,0.4); }
         .mini-celda.estrella { background: #0f172a; color: #fff; }
-        .btn-seguir { background: #6366f1; color: white; width: 100%; padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .btn-accion { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 5px; color: white; }
     </style>
 </head>
 <body>
@@ -24,12 +24,11 @@
                 <div id="badgeEstado" class="status-badge status-esperando">Estado: Esperando</div>
                 <div id="cronometroBingo" class="timer-display">00:00</div>
                 
-                <div style="display: flex; gap: 5px; margin-top: 10px;">
-                    <input type="number" id="minutosInicio" placeholder="Min" style="width: 50px;">
-                    <button onclick="programarJuego()" style="background: var(--accent-gold); flex: 1; font-weight: bold;">PROGRAMAR</button>
+                <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                    <input type="number" id="minutosInicio" placeholder="Min" style="width: 60px; border-radius: 4px; border: none; padding: 5px;">
+                    <button onclick="programarJuego()" style="background: var(--accent-gold); flex: 1; font-weight: bold; border-radius: 4px; border: none; cursor: pointer;">PROGRAMAR</button>
                 </div>
-                
-                <button onclick="cambiarEstado('jugando', '¡JUEGO INICIADO!')" style="width: 100%; background: #10b981; color: white; margin-top: 10px; padding: 10px; font-weight: bold;">EMPEZAR AHORA</button>
+                <button onclick="cambiarEstado('jugando', '¡JUEGO INICIADO!')" class="btn-accion" style="background: #10b981;">EMPEZAR AHORA</button>
             </div>
 
             <div class="bolo-display">
@@ -37,36 +36,57 @@
                 <div id="currentNumber">--</div>
             </div>
 
+            <div class="recent-box">
+                <small>ÚLTIMOS 5:</small>
+                <div id="recentList" class="recent-list"></div>
+            </div>
+
             <div class="controls">
                 <button id="drawBtn">SORTEAR PRÓXIMO</button>
+                <div class="stats">TOTAL CANTADOS: <b id="count">0</b>/75</div>
+                
                 <div id="radarGanadores" class="radar-box">
                     <div id="listaAlertasBingo"></div>
-                    <div id="textoGanadores">Monitoreando...</div>
+                    <div id="textoGanadores">Esperando señales...</div>
                 </div>
 
-                <div class="verifier-area">
-                    <small>VERIFICADOR VISUAL:</small>
-                    <div style="display: flex; gap: 2px;">
-                        <input type="number" id="idABuscar" placeholder="ID #" style="flex: 1;">
-                        <button onclick="revisarCartonManual()">BUSCAR</button>
+                <div class="verifier-area" style="margin-top: 20px; border-top: 1px solid #444; padding-top: 15px;">
+                    <small style="color: var(--accent-gold)">VERIFICADOR VISUAL:</small>
+                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                        <input type="number" id="idABuscar" placeholder="ID #" style="flex: 1; padding: 8px;">
+                        <button onclick="revisarCartonManual()" style="background: var(--accent-gold); border: none; padding: 0 15px; font-weight: bold;">BUSCAR</button>
                     </div>
+                    
                     <div id="areaVerificacion"></div>
-                    <button class="btn-seguir" onclick="cambiarEstado('jugando', 'BINGO ERRADO - CONTINUAMOS')">BINGO ERRADO: SEGUIR</button>
-                    <button class="btn-anuncio" style="background:#f59e0b" onclick="anunciarGanador()">BINGO VÁLIDO: GANADOR</button>
+
+                    <div id="botonesPostVerificacion" style="margin-top: 10px;">
+                        <button class="btn-accion" style="background: #6366f1;" onclick="cambiarEstado('jugando', 'BINGO ERRADO - CONTINUAMOS')">BINGO ERRADO: SEGUIR</button>
+                        <button class="btn-accion" style="background: #f59e0b;" onclick="anunciarGanador()">BINGO VÁLIDO: GANADOR</button>
+                    </div>
                 </div>
+
+                <button id="resetBtn" class="secondary" style="margin-top: 20px;">Reiniciar Todo</button>
             </div>
         </aside>
 
         <main class="panel-derecho">
+            <h3 style="text-align: center; color: var(--primary-blue);">TABLERO DE SEGUIMIENTO GENERAL</h3>
             <div id="historyGrid" class="history-grid"></div>
         </main>
     </div>
 
+    <button id="btnAbrirConfig" class="btn-config-flotante">⚙️ Configurar Patrón</button>
+
     <div id="modalConfig" class="modal-overlay">
-        <div class="modal-content" style="background:#1e293b; padding:20px; border-radius:10px;">
+        <div class="modal-content" style="background:#1e293b; padding:20px; border-radius:12px; color: white; width: 320px;">
+            <h3 style="text-align:center">PATRÓN DE VICTORIA</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px;">
+                <button onclick="aplicarPredefinido('lleno')">LLENO</button>
+                <button onclick="aplicarPredefinido('equis')">LA X</button>
+            </div>
             <div id="gridDibujoPatron" class="grid-patron-admin"></div>
-            <button onclick="guardarPatron()" style="width: 100%; background:#10b981; color:white;">GUARDAR PATRÓN</button>
-            <button onclick="document.getElementById('modalConfig').style.display='none'">CERRAR</button>
+            <button onclick="guardarPatron()" class="btn-accion" style="background: #10b981; margin-top: 10px;">GUARDAR PATRÓN</button>
+            <button onclick="document.getElementById('modalConfig').style.display='none'" class="btn-accion" style="background: #444;">CERRAR</button>
         </div>
     </div>
 
