@@ -3,113 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bingo Admin - Responsive</title>
-    <link rel="stylesheet" href="ruleta.css">
-    <link rel="stylesheet" href="generar.css">
+    <title>Bingo Pro Admin - Generador</title>
+
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
+            authDomain: "bingofast.firebaseapp.com",
+            databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
+            projectId: "bingofast",
+            storageBucket: "bingofast.firebasestorage.app",
+            messagingSenderId: "473863283329",
+            appId: "1:473863283329:web:2c4bf96de167d105fa6380"
+        };
+        // Inicializamos Firebase
+        firebase.initializeApp(firebaseConfig);
+        // Creamos la variable 'db' que usará tu archivo generar.js
+        var db = firebase.database(); 
+    </script>
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e1e1e; color: #333; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .main-container { display: flex; max-width: 1000px; width: 100%; background: #0f172a; border-radius: 10px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .panel-izquierdo { width: 40%; padding: 20px; background: #1e293b; color: white; display: flex; flex-direction: column; gap: 15px; }
+        .panel-derecho { width: 60%; background: #f8fafc; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        .titulo { text-align: center; color: #fff; text-shadow: 2px 2px 0px #ef4444; font-size: 1.5rem; font-weight: 900; margin: 0; }
+        .contador-box { background: #eab308; color: #000; text-align: center; padding: 10px; font-weight: bold; border-radius: 5px; }
+        
+        .controles-generar { display: flex; gap: 10px; }
+        .controles-generar input { flex: 1; padding: 10px; border-radius: 5px; border: none; font-size: 1rem; }
+        .controles-generar button { background: #eab308; color: #000; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; }
+        
+        .buscador { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #475569; background: #0f172a; color: white; box-sizing: border-box; }
+        
+        .botones-accion { display: flex; gap: 5px; justify-content: space-between; }
+        .botones-accion button { padding: 8px 12px; border-radius: 5px; border: none; background: #f8fafc; font-size: 0.8rem; font-weight: bold; cursor: pointer; flex: 1; }
+        
+        #contenedorLista { flex: 1; background: #0f172a; border-radius: 5px; padding: 10px; overflow-y: auto; max-height: 300px; display: flex; flex-direction: column; gap: 10px; }
+        .id-card { background: white; color: black; padding: 10px; border-radius: 5px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+        .id-card.selected { border-color: #25d366; background: #e6ffed; }
+        
+        .btn-juego { background: #ef4444; color: white; text-align: center; padding: 15px; border-radius: 5px; font-weight: bold; cursor: pointer; border: none; width: 100%; text-decoration: none; display: block; margin-top: auto; }
+        
+        /* Visor de Cartón */
+        table { border-collapse: collapse; width: 80%; margin-top: 15px; background: white; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        th, td { border: 2px solid #cbd5e1; padding: 15px; font-size: 1.2rem; font-weight: bold; }
+        td:nth-child(3) { background: #f1f5f9; } /* Columna N ligeramente diferente */
+        
+        /* Panel Selección Maestra (Links Múltiples) */
+        #seleccion-maestra { background: #25d366; padding: 10px; border-radius: 5px; margin-top: 10px; flex-direction: column; gap: 5px; display: none; }
+    </style>
 </head>
 <body>
 
-<div class="admin-layout">
-    <div class="panel-control">
-        <h1 class="main-title">BINGO PRO ADMIN</h1>
+    <div class="main-container">
         
-        <div class="status-info">REGISTRADOS: <span id="countDisplay">0</span></div>
+        <div class="panel-izquierdo">
+            <h1 class="titulo">BINGO PRO ADMIN</h1>
+            
+            <div class="contador-box">
+                REGISTRADOS: <span id="countDisplay">0</span>
+            </div>
 
-        <div class="batch-box">
-            <div class="input-row">
-                <input type="number" id="inputCantidad" placeholder="Cant.">
+            <div class="controles-generar">
+                <input type="number" id="inputCantidad" placeholder="2" min="1">
                 <button id="btnGenerar">GENERAR LOTE</button>
             </div>
-            <input type="text" id="buscador" class="search-box" placeholder="🔍 Buscar nombre o ID...">
+
+            <input type="text" id="buscador" class="buscador" placeholder="🔍 Buscar nombre o ID...">
+
+            <div class="botones-accion">
+                <button onclick="generarLinkMultiple()">Copiar Link</button>
+                <button onclick="limpiarTodo()" style="color: red;">Borrar Todo</button>
+            </div>
+
+            <div id="seleccion-maestra">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong>Cartones Seleccionados: <span id="countSeleccion">0</span>/4</strong>
+                    <button onclick="cancelarSeleccion()" style="background:transparent; border:none; color:white; font-weight:bold; cursor:pointer;">X</button>
+                </div>
+                <div id="listaSeleccionados" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:5px;"></div>
+            </div>
+
+            <div id="contenedorLista">
+                </div>
+
+            <a href="ruleta.html" class="btn-juego">IR AL JUEGO →</a>
+        </div>
+
+        <div class="panel-derecho">
             
-            <div style="display: flex; gap: 5px; margin-top: 10px;">
-                <button onclick="exportarData()" style="flex:1; padding: 5px; font-size: 0.7rem;">💾 Guardar</button>
-                <button onclick="document.getElementById('fileInput').click()" style="flex:1; padding: 5px; font-size: 0.7rem;">📂 Abrir</button>
-                <button onclick="limpiarTodo()" style="flex:1; padding: 5px; font-size: 0.7rem; color: red;">🗑️ Borrar</button>
-              <button class="btn btn-nav" onclick="window.location.href='ver_todo.html'">Ver Todos</button>
-                <input type="file" id="fileInput" style="display:none" onchange="importarData(event)">
+            <div id="placeholderVisor" style="text-align: center; color: #94a3b8;">
+                <h2 style="color: #64748b; margin-bottom: 5px;">VISTA PREVIA</h2>
+                <p>Toca un cartón para ver sus números</p>
             </div>
-        </div>
 
-        <div class="scroll-lista">
-            <div class="grid-items" id="contenedorLista"></div>
-        </div>
-
-        <a href="ruleta.html" style="text-decoration: none; background: var(--accent-red); color: white; padding: 15px; text-align: center; border-radius: 10px; font-weight: 900;">IR AL JUEGO →</a>
-    </div>
-
-    <div class="panel-visualizacion">
-        <div id="visorDetallado" style="display: none; width: 100%; flex-direction: column; align-items: center;">
-            <div id="nombreVisor" style="background: var(--accent-gold); color: var(--primary-blue); padding: 8px 20px; border-radius: 20px; font-weight: 900; margin-bottom: 15px;">JUGADOR</div>
-            <div class="big-carton-render">
-                <table class="big-table" id="tablaVisor"></table>
-                <div style="margin-top: 10px; color: #888; font-size: 0.8rem; text-align: center;" id="idVisor">ID #0</div>
+            <div id="visorDetallado" style="display: none; flex-direction: column; align-items: center; width: 100%;">
+                <h2 id="nombreVisor" style="margin: 0; color: #1e293b; font-size: 1.8rem; text-transform: uppercase;">-</h2>
+                <span id="idVisor" style="background: #ef4444; color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; margin-top: 5px;">-</span>
+                
+                <table id="tablaVisor">
+                    </table>
             </div>
-        </div>
-        <div id="placeholderVisor" style="color: #94a3b8; text-align: center;">
-            <h3>VISTA PREVIA</h3>
-            <p>Toca un cartón para ver sus números</p>
-        </div>
-    </div>
-</div>
 
-<div id="seleccion-maestra" style="
-    position: fixed; 
-    bottom: 20px; 
-    left: 50%; 
-    transform: translateX(-50%); 
-    width: 95%; 
-    max-width: 500px; 
-    background: #1d3557; 
-    border: 2px solid #25d366; 
-    border-radius: 12px; 
-    padding: 10px; 
-    z-index: 10000; 
-    box-shadow: 0 5px 25px rgba(0,0,0,0.5); 
-    display: none; 
-    align-items: center; 
-    gap: 10px;
-    box-sizing: border-box;
-">
-    <div style="color: white; font-size: 0.8rem; font-weight: bold; flex-shrink: 0;">
-        <span id="countSeleccion" style="background: #25d366; padding: 2px 8px; border-radius: 6px; color: #1d3557;">0</span>/4
-    </div>
-    
-    <div id="listaSeleccionados" style="
-        display: flex; 
-        gap: 5px; 
-        flex-grow: 1; 
-        overflow-x: auto; 
-        scrollbar-width: none; /* Oculta scroll en Firefox */
-        -ms-overflow-style: none; /* Oculta scroll en IE */
-    ">
         </div>
 
-    <button onclick="generarLinkMultiple()" style="
-        background: #25d366; 
-        color: white; 
-        border: none; 
-        padding: 8px 12px; 
-        border-radius: 8px; 
-        font-weight: 900; 
-        cursor: pointer; 
-        white-space: nowrap;
-        flex-shrink: 0;
-        font-size: 0.75rem;
-    ">
-        🔗 LINK
-    </button>
-    
-    <button onclick="cancelarSeleccion()" style="
-        background: transparent; 
-        color: #ff4d4d; 
-        border: none; 
-        font-size: 1.5rem; 
-        cursor: pointer; 
-        flex-shrink: 0;
-        line-height: 1;
-    ">×</button>
-</div>
-<script src="generar.js"></script>
+    </div>
+
+    <script src="generar.js"></script>
+
 </body>
 </html>
