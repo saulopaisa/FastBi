@@ -2,109 +2,94 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bingo 75 Pro - Panel de Control</title>
     <link rel="stylesheet" href="ruleta.css">
     <style>
-        :root { --primary: #0f172a; --gold: #ffb703; --success: #10b981; --danger: #ef4444; }
+        :root { --gold: #ffb703; --success: #10b981; --danger: #ef4444; }
         
-        /* Tablero Ultra-Compacto para 75 números */
+        /* Tablero para 75 números sin scroll */
         .history-grid { 
             display: grid; 
             grid-template-columns: repeat(15, 1fr); 
             gap: 2px; 
             padding: 10px; 
-            background: #cbd5e1; 
+            background: #e2e8f0; 
             border-radius: 8px;
         }
         .celda-seguimiento { 
             background: #fff; border: 1px solid #94a3b8;
             aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center;
-            font-size: 0.85rem; font-weight: 800; color: #1e293b;
+            font-size: 0.8rem; font-weight: bold; color: #1e293b;
         }
-        .celda-seguimiento.cantada { background: var(--gold); color: #000; border-color: #b45309; }
+        .celda-seguimiento.cantada { background: var(--gold); color: #000; }
 
-        .timer-display { background: #000; color: #f00; font-family: monospace; font-size: 2.2rem; text-align: center; border: 2px solid #333; margin: 5px 0; }
-        .btn-accion { width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 5px; color: white; }
-        .btn-accion:disabled { background: #475569 !important; opacity: 0.4; cursor: not-allowed; }
+        .btn-accion { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 8px; color: white; transition: 0.3s; }
+        .btn-accion:disabled { background: #475569 !important; opacity: 0.3; cursor: not-allowed; transform: scale(0.98); }
         
-        /* Estilos Modales */
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; }
-        .modal-content { background: #1e293b; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; color: white; border: 1px solid var(--gold); }
-        .grid-seleccion-cartones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-height: 300px; overflow-y: auto; padding: 10px; background: #0f172a; border-radius: 8px; }
-        .check-item { background: #334155; padding: 8px; border-radius: 5px; display: flex; align-items: center; gap: 5px; font-size: 0.8rem; }
+        /* Modales */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; }
+        .modal-content { background: #1e293b; padding: 20px; border-radius: 12px; width: 90%; max-width: 400px; color: white; border: 2px solid var(--gold); }
+        .grid-seleccion-cartones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-height: 250px; overflow-y: auto; margin: 15px 0; }
     </style>
 </head>
 <body>
     <div class="layout-container">
         <aside class="panel-izquierdo">
             <h1 class="main-title">BINGO 75</h1>
+            <div id="onlineCount" style="text-align: center; color: var(--gold); margin-bottom: 10px;">👥 ONLINE: 0</div>
+
+            <button id="btnEtapa1" onclick="abrirModalCartones()" class="btn-accion" style="background: #6366f1;">1. SELECCIONAR JUGADORES</button>
             
-            <div id="onlineCount" style="text-align: center; color: var(--gold); font-size: 0.9rem; margin-bottom: 10px;">👥 ONLINE: 0</div>
+            <button id="btnEtapa2" onclick="abrirModalPatron()" class="btn-accion" disabled style="background: #f59e0b;">2. CONFIGURAR PATRÓN</button>
 
-            <div class="control-flujo-box">
-                <div id="cronometroBingo" class="timer-display">00:00</div>
-                <div style="display: flex; gap: 5px;">
-                    <input type="number" id="minutosInicio" placeholder="Min" style="width: 60px; padding: 5px;">
-                    <button id="btnProgramar" onclick="programarJuego()" class="btn-accion" disabled style="background: var(--gold); color: #000; flex: 1;">PROGRAMAR</button>
+            <div id="panelJuego" style="opacity: 0.4; pointer-events: none;">
+                <div id="cronometroBingo" style="background:#000; color:#f00; font-family:monospace; font-size:2rem; text-align:center; padding:5px; border:1px solid #333;">00:00</div>
+                <div style="display: flex; gap: 5px; margin-top:5px;">
+                    <input type="number" id="minutosInicio" placeholder="Min" style="width: 60px;">
+                    <button id="btnProgramar" onclick="programarJuego()" style="background:var(--gold); color:black; border:none; flex:1; font-weight:bold;">PROGRAMAR</button>
                 </div>
-                <button id="btnEmpezar" onclick="cambiarEstado('jugando', '¡PARTIDA INICIADA!')" class="btn-accion" disabled style="background: var(--success); margin-top: 5px;">EMPEZAR YA</button>
-            </div>
-
-            <div class="controls" style="margin-top: 15px;">
-                <button id="btnAbrirCartones" onclick="abrirModalCartones()" class="btn-accion" disabled style="background: #6366f1;">2. SELECCIONAR CARTONES</button>
+                <button id="btnEmpezar" onclick="cambiarEstado('jugando', '¡QUE COMIENCE EL BINGO!')" class="btn-accion" style="background:var(--success); margin-top:5px;">EMPEZAR AHORA</button>
                 
-                <button id="drawBtn" class="btn-accion" disabled style="background: #3b82f6;">SORTEAR PRÓXIMO</button>
-
-                <div class="verifier-area" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
-                    <button id="btnVerificando" class="btn-accion" disabled style="background: #8b5cf6;" onclick="cambiarEstado('verificando', 'Verificando... ¡Pausen sus cartones!')">🔔 AVISAR: VERIFICANDO...</button>
-                    
-                    <div style="display: flex; gap: 5px;">
-                        <input type="number" id="idABuscar" placeholder="ID #" style="flex: 1;">
-                        <button onclick="revisarCartonManual()" style="background: var(--gold); border: none; padding: 5px; font-weight: bold;">BUSCAR</button>
-                    </div>
-                    <div id="areaVerificacion"></div>
-                    
-                    <div style="margin-top: 5px; display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                        <button id="btnErrado" class="btn-accion" disabled onclick="cambiarEstado('jugando', 'BINGO ERRADO: CONTINUAMOS JUGANDO')" style="background: var(--danger); font-size: 0.7rem;">BINGO ERRADO</button>
-                        <button id="btnValido" class="btn-accion" disabled onclick="anunciarGanador()" style="background: var(--success); font-size: 0.7rem;">BINGO VÁLIDO</button>
-                    </div>
-                </div>
-                <button id="resetBtn" class="secondary" style="margin-top: 10px; width: 100%;">Reiniciar Todo</button>
+                <button id="drawBtn" class="btn-accion" style="background: #3b82f6; margin-top: 10px;">SORTEAR BOLA</button>
             </div>
+
+            <div class="verifier-area" style="margin-top: 15px; border-top: 1px solid #444; padding-top: 10px;">
+                <div style="display: flex; gap: 5px;">
+                    <input type="number" id="idABuscar" placeholder="ID Cartón" style="flex:1">
+                    <button onclick="revisarCartonManual()" style="background:var(--gold); border:none; padding:5px;">REVISAR</button>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px;">
+                    <button onclick="cambiarEstado('jugando', 'BINGO ERRADO - SE PROSIGUE EL BINGO')" style="background:var(--danger); font-size: 0.7rem; padding: 10px; border:none; color:white; border-radius:4px;">BINGO ERRADO</button>
+                    <button onclick="anunciarGanador()" style="background:var(--success); font-size: 0.7rem; padding: 10px; border:none; color:white; border-radius:4px;">BINGO VÁLIDO</button>
+                </div>
+            </div>
+            <button id="resetBtn" style="width:100%; margin-top:20px; background:none; color:gray; border:1px solid #444; cursor:pointer">Reiniciar Todo</button>
         </aside>
 
         <main class="panel-derecho">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 15px;">
-                <h3 style="margin:0">TABLERO DE SEGUIMIENTO</h3>
-                <a href="generar.html" class="btn-gestion">+ GESTIONAR</a>
-            </div>
+            <h3 style="padding: 10px; margin:0">TABLERO DE SEGUIMIENTO (1-75)</h3>
             <div id="historyGrid" class="history-grid"></div>
         </main>
     </div>
 
-    <button id="btnAbrirConfig" onclick="abrirModalPatron()" class="btn-config-flotante" style="position: fixed; bottom: 20px; left: 20px; background: #1e293b; color: white; padding: 12px; border: 2px solid var(--gold); border-radius: 50px; cursor: pointer; z-index: 1001; font-weight: bold;">⚙️ 1. CONFIGURAR PATRÓN</button>
-
-    <div id="modalPatron" class="modal-overlay">
+    <div id="modalCartones" class="modal-overlay">
         <div class="modal-content">
-            <h3 style="text-align: center;">DIBUJA EL PATRÓN</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px;">
-                <button onclick="aplicarPredefinido('lleno')" style="background: #334155; color: white; border: 1px solid #444;">LLENO</button>
-                <button onclick="aplicarPredefinido('equis')" style="background: #334155; color: white; border: 1px solid #444;">LA X</button>
-                <button onclick="aplicarPredefinido('esquinas')" style="background: #334155; color: white; border: 1px solid #444;">4 ESQUINAS</button>
-                <button onclick="aplicarPredefinido('limpiar')" style="background: #444; color: white; border: 1px solid #444;">BORRAR</button>
-            </div>
-            <div id="gridDibujoPatron" class="grid-patron-admin"></div>
-            <button onclick="guardarPatron()" class="btn-accion" style="background: var(--success); margin-top: 15px;">GUARDAR PATRÓN</button>
+            <h3 style="text-align:center">PASO 1: ¿QUIÉN JUEGA?</h3>
+            <div id="listaCheckCartones" class="grid-seleccion-cartones"></div>
+            <button onclick="confirmarJugadores()" class="btn-accion" style="background:var(--success)">CONFIRMAR Y PASAR AL PATRÓN</button>
         </div>
     </div>
 
-    <div id="modalCartones" class="modal-overlay">
+    <div id="modalPatron" class="modal-overlay">
         <div class="modal-content">
-            <h3 style="text-align: center;">CARTONES PARTICIPANTES</h3>
-            <p style="font-size: 0.7rem; color: #94a3b8; text-align: center;">Desmarca los cartones que NO jugarán esta ronda</p>
-            <div id="listaCheckCartones" class="grid-seleccion-cartones"></div>
-            <button onclick="guardarSeleccionCartones()" class="btn-accion" style="background: var(--success); margin-top: 15px;">CONFIRMAR JUGADORES</button>
+            <h3 style="text-align:center">PASO 2: ELIGE EL PATRÓN</h3>
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; margin-bottom:10px;">
+                <button onclick="aplicarPredefinido('lleno')" style="font-size:0.7rem">LLENO</button>
+                <button onclick="aplicarPredefinido('equis')" style="font-size:0.7rem">LA X</button>
+                <button onclick="aplicarPredefinido('limpiar')" style="font-size:0.7rem">BORRAR</button>
+            </div>
+            <div id="gridDibujoPatron" class="grid-patron-admin"></div>
+            <button onclick="confirmarPatron()" class="btn-accion" style="background:var(--success); margin-top:10px;">CONFIRMAR Y ACTIVAR JUEGO</button>
         </div>
     </div>
 
