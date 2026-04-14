@@ -6,7 +6,59 @@
     <title>Bingo 75 Pro - Panel de Control</title>
     <link rel="stylesheet" href="ruleta.css">
     <style>
-        /* Estilos adicionales para las mejoras del Radar */
+        /* Estilos para las nuevas funciones de control */
+        .control-flujo-box {
+            background: rgba(30, 58, 138, 0.5);
+            border: 1px solid var(--accent-gold);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .status-esperando { background: #f59e0b; color: #fff; }
+        .status-jugando { background: #10b981; color: #fff; }
+        .status-verificando { background: #3b82f6; color: #fff; }
+
+        .btn-anuncio {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 8px;
+            font-size: 0.7rem;
+            border-radius: 4px;
+            width: 100%;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        .alert-bingo-card {
+            background: #ef4444;
+            color: white;
+            padding: 8px;
+            border-radius: 5px;
+            margin-top: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
         .radar-header-box {
             display: flex;
             justify-content: space-between;
@@ -25,18 +77,6 @@
             transition: all 0.3s ease;
         }
 
-        button:hover, .btn-check:hover, .btn-confirmar:hover {
-            filter: brightness(1.1);
-            transform: translateY(-2px);
-            cursor: pointer;
-        }
-
-        .highlight-id:hover {
-            background: var(--accent-gold) !important;
-            color: var(--primary-blue) !important;
-            border-radius: 4px;
-        }
-
         .no-arrows::-webkit-inner-spin-button, 
         .no-arrows::-webkit-outer-spin-button { 
             -webkit-appearance: none; 
@@ -50,6 +90,22 @@
         <aside class="panel-izquierdo">
             <h1 class="main-title">BINGO 75</h1>
             
+            <div class="control-flujo-box">
+                <div id="badgeEstado" class="status-badge status-esperando">Estado: Esperando</div>
+                
+                <div style="display: flex; gap: 5px; align-items: center; margin-bottom: 10px;">
+                    <input type="number" id="minutosInicio" class="no-arrows" placeholder="Min" style="width: 50px; padding: 5px; border-radius: 4px;">
+                    <button onclick="iniciarCuentaRegresiva()" style="font-size: 0.6rem; padding: 6px; background: var(--accent-gold); color: black; border: none; font-weight: bold; border-radius: 4px; flex: 1;">PROGRAMAR INICIO</button>
+                </div>
+
+                <button onclick="cambiarEstado('jugando', '¡EL JUEGO HA COMENZADO!')" style="width: 100%; background: #10b981; color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; margin-bottom: 5px;">EMPEZAR AHORA</button>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                    <button class="btn-anuncio" onclick="anunciarVerificacion()">VERIFICANDO...</button>
+                    <button class="btn-anuncio" style="background: #f59e0b;" onclick="anunciarGanador()">HAY GANADOR!</button>
+                </div>
+            </div>
+
             <div class="bolo-display">
                 <div id="currentLetter">-</div>
                 <div id="currentNumber">--</div>
@@ -66,11 +122,13 @@
                 
                 <div id="radarGanadores" class="radar-box">
                     <div class="radar-header-box">
-                        <small>ALERTAS DE BINGO:</small>
+                        <small>ALERTAS DE BINGO (EN VIVO):</small>
                         <div id="contadorCartonesReal">JUGANDO: 0</div>
                     </div>
+                    <div id="listaAlertasBingo">
+                        </div>
                     <div id="textoGanadores" class="texto-ganadores">
-                        Inicia el juego para monitorear...
+                        Monitoreando señales...
                     </div>
                 </div>
 
@@ -99,32 +157,10 @@
 
     <button id="btnAbrirConfig" class="btn-config-flotante">⚙️ Cambiar Patrón</button>
 
-    <div id="modalPatron" class="modal-overlay">
-        <div class="modal-content">
-            <h2>CONFIGURACIÓN DE RONDA</h2>
-            <p>Selecciona una jugada rápida o dibuja tu patrón:</p>
-            
-            <div class="presets-container">
-                <button onclick="aplicarPreset('lleno')">Cartón Lleno</button>
-                <button onclick="aplicarPreset('cuadro')">Cuadro Grande</button>
-                <button onclick="aplicarPreset('x')">Cruz en X</button>
-                <button onclick="aplicarPreset('s')">Forma en S</button>
-            </div>
-
-            <div class="selection-grid" id="gridSeleccion"></div>
-            
-            <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
-                <button id="btnConfirmarPatron" class="btn-confirmar">CONFIRMAR Y EMPEZAR</button>
-                <button onclick="limpiarSeleccion()" class="secondary" style="border: 1px solid white !important; color: white; background: transparent;">Limpiar</button>
-            </div>
-        </div>
-    </div>
-
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <script>
-        // CONFIGURACIÓN DE TU PROYECTO
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
             authDomain: "bingofast.firebaseapp.com",
@@ -136,37 +172,86 @@
             measurementId: "G-Z7VH6JYV4D"
         };
 
-        // Inicializar Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        /**
-         * Función puente que será llamada desde ruleta.js
-         * @param {number} numero - El número que acaba de salir en el sorteo
-         */
+        // 1. ESCUCHAR ALERTAS DE BINGO (Jugadores)
+        db.ref('notificaciones/bingo').on('value', (snapshot) => {
+            const data = snapshot.val();
+            const contenedor = document.getElementById('listaAlertasBingo');
+            const textoStatus = document.getElementById('textoGanadores');
+            
+            if (data) {
+                textoStatus.style.display = 'none';
+                contenedor.innerHTML = `
+                    <div class="alert-bingo-card">
+                        <span>🚨 CARTÓN <b>#${data.id}</b> CANTO BINGO!</span>
+                        <button onclick="revisarGanador(${data.id})" style="background:white; border:none; padding:2px 5px; border-radius:3px; cursor:pointer; font-weight:bold;">VER</button>
+                    </div>
+                `;
+                // Sonido de alerta opcional
+                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                audio.play();
+            } else {
+                contenedor.innerHTML = '';
+                textoStatus.style.display = 'block';
+            }
+        });
+
+        // 2. FUNCIONES DE CONTROL DE ESTADO
+        function cambiarEstado(nuevoStatus, mensaje) {
+            db.ref('partidaActual').update({
+                status: nuevoStatus,
+                anuncio: mensaje
+            });
+            actualizarBadgeUI(nuevoStatus);
+        }
+
+        function iniciarCuentaRegresiva() {
+            const min = document.getElementById('minutosInicio').value || 1;
+            const target = Date.now() + (min * 60000);
+            
+            db.ref('partidaActual').update({
+                status: 'esperando',
+                proximoJuego: target,
+                anuncio: `EL JUEGO INICIA EN ${min} MINUTOS`
+            });
+            actualizarBadgeUI('esperando');
+            alert(`Cronómetro activado para ${min} minutos`);
+        }
+
+        function anunciarVerificacion() {
+            cambiarEstado('verificando', '⚠️ UN MOMENTO... ESTAMOS VERIFICANDO UN CARTÓN');
+        }
+
+        function anunciarGanador() {
+            const id = prompt("Ingrese el ID del cartón ganador:");
+            if (id) {
+                cambiarEstado('finalizado', `🏆 ¡FELICIDADES! EL CARTÓN #${id} ES EL GANADOR 🏆`);
+            }
+        }
+
+        function actualizarBadgeUI(status) {
+            const b = document.getElementById('badgeEstado');
+            b.innerText = `Estado: ${status}`;
+            b.className = `status-badge status-${status}`;
+        }
+
+        function revisarGanador(id) {
+            document.getElementById('idABuscar').value = id;
+            document.getElementById('btnVerificar').click(); // Dispara la búsqueda en ruleta.js
+        }
+
+        // Función original mantenida
         function mandarNumeroAlJuego(numero) {
             if(!numero) return;
-
-            // Lógica de letras idéntica al motor del juego
-            let letra = '';
-            if (numero <= 15) letra = 'B';
-            else if (numero <= 30) letra = 'I';
-            else if (numero <= 45) letra = 'N';
-            else if (numero <= 60) letra = 'G';
-            else letra = 'O';
+            let letra = (numero <= 15) ? 'B' : (numero <= 30) ? 'I' : (numero <= 45) ? 'N' : (numero <= 60) ? 'G' : 'O';
             
-            // Enviamos los datos a la rama 'partidaActual'
             db.ref('partidaActual').update({
                 numero: numero,
                 letra: letra,
+                status: 'jugando', // Asegura que el estado sea jugando al cantar bola
                 timestamp: firebase.database.ServerValue.TIMESTAMP
-            }).then(() => {
-                console.log("✅ Sincronizado con Firebase:", letra, numero);
-            }).catch(e => {
-                console.error("❌ Error de Firebase:", e);
-                alert("Error de conexión: El número no se envió a los jugadores.");
             });
         }
     </script>
