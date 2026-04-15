@@ -1,41 +1,34 @@
-// --- CONFIGURACIÓN Y PROTECCIÓN DE INICIO ---
-var db;
-document.addEventListener("DOMContentLoaded", () => {
-    // Verificamos que Firebase esté cargado antes de usarlo
-    if (typeof firebase !== 'undefined') {
-        db = firebase.database();
-        inicializarTablero75();
-        conectarOnlineCount();
-    } else {
-        console.error("Firebase no detectado. Revisa las etiquetas <script> en tu HTML.");
-    }
-});
+// --- CONFIGURACIÓN GLOBAL ---
+var db = firebase.database();
 
-// Variables de estado
+// Variables de Juego
 window.cantados = JSON.parse(localStorage.getItem('bingo_cantados')) || [];
 window.patronBingo = Array(25).fill(false);
 window.jugadoresActivos = [];
 
-// --- 1. SELECCIONAR JUGADORES (Sincronizado con Generador) ---
+// --- ETAPA 1: SELECCIÓN DE JUGADORES ---
 window.abrirModalCartones = function() {
     const modal = document.getElementById('modalCartones');
     const lista = document.getElementById('listaCheckCartones');
-    if(!modal || !lista) return;
-
+    
+    if (!modal || !lista) return;
+    
     modal.style.display = 'flex';
-    lista.innerHTML = "<p style='color:var(--gold)'>Cargando jugadores...</p>";
+    lista.innerHTML = "<p style='color:var(--gold); grid-column:1/-1; text-align:center;'>Conectando con base de datos...</p>";
 
-    // Accedemos al nodo que crea tu página de "Generar"
+    // Leer los cartones generados en la otra página
     db.ref('cartonesGenerados').once('value', (snapshot) => {
         lista.innerHTML = "";
         if (!snapshot.exists()) {
-            lista.innerHTML = "<p>No hay cartones registrados.</p>";
+            lista.innerHTML = "<p style='grid-column:1/-1; text-align:center;'>No hay cartones generados.</p>";
             return;
         }
+        
         snapshot.forEach((child) => {
             const c = child.val();
             const item = document.createElement('div');
-            item.style = "background:#334155; padding:8px; border-radius:4px; font-size:0.75rem; display:flex; gap:5px; align-items:center;";
+            item.className = "item-jugador-check";
+            item.style = "background:#334155; padding:8px; border-radius:4px; display:flex; gap:10px; align-items:center; color:white; font-size:0.8rem;";
             item.innerHTML = `
                 <input type="checkbox" id="chk-${c.id}" value="${c.id}">
                 <label for="chk-${c.id}"><b>#${c.id}</b><br>${c.apodo}</label>
@@ -46,11 +39,11 @@ window.abrirModalCartones = function() {
 };
 
 window.confirmarJugadores = function() {
-    const checks = document.querySelectorAll('#listaCheckCartones input:checked');
-    window.jugadoresActivos = Array.from(checks).map(c => parseInt(c.value));
-    
+    const seleccionados = document.querySelectorAll('#listaCheckCartones input:checked');
+    window.jugadoresActivos = Array.from(seleccionados).map(cb => parseInt(cb.value));
+
     if (window.jugadoresActivos.length === 0) {
-        alert("Debes seleccionar al menos un jugador para la ronda.");
+        alert("Selecciona al menos un jugador para iniciar.");
         return;
     }
 
@@ -60,24 +53,24 @@ window.confirmarJugadores = function() {
     document.getElementById('btnEtapa1').style.opacity = "0.5";
 };
 
-// --- 2. CONFIGURAR PATRÓN ---
+// --- ETAPA 2: PATRÓN ---
 window.abrirModalPatron = function() {
     const modal = document.getElementById('modalPatron');
     const grid = document.getElementById('gridDibujoPatron');
-    if(!modal || !grid) return;
+    if (!modal || !grid) return;
 
     modal.style.display = 'flex';
     grid.innerHTML = "";
     
-    window.patronBingo.forEach((estado, i) => {
-        const btn = document.createElement('div');
-        btn.className = `celda-patron ${estado ? 'activa' : ''}`;
-        if(i === 12) btn.innerHTML = "⭐";
-        btn.onclick = () => {
+    window.patronBingo.forEach((activo, i) => {
+        const celda = document.createElement('div');
+        celda.className = `celda-patron ${activo ? 'activa' : ''}`;
+        if (i === 12) celda.innerHTML = "⭐";
+        celda.onclick = () => {
             window.patronBingo[i] = !window.patronBingo[i];
-            btn.classList.toggle('activa');
+            celda.classList.toggle('activa');
         };
-        grid.appendChild(btn);
+        grid.appendChild(celda);
     });
 };
 
@@ -89,12 +82,12 @@ window.confirmarPatron = function() {
     document.getElementById('panelJuego').style.pointerEvents = "all";
 };
 
-// --- 3. JUEGO Y SORTEO ---
+// --- ETAPA 3: SORTEO ---
 const drawBtn = document.getElementById('drawBtn');
-if(drawBtn) {
+if (drawBtn) {
     drawBtn.onclick = function() {
-        if (window.cantados.length >= 75) return alert("¡Todas las bolas han salido!");
-        
+        if (window.cantados.length >= 75) return alert("Fin del juego");
+
         let bola;
         do {
             bola = Math.floor(Math.random() * 75) + 1;
@@ -103,8 +96,9 @@ if(drawBtn) {
         window.cantados.push(bola);
         localStorage.setItem('bingo_cantados', JSON.stringify(window.cantados));
         
-        marcarBolaEnTablero(bola);
-        
+        const celda = document.getElementById(`seguimiento-${bola}`);
+        if (celda) celda.classList.add('cantada');
+
         db.ref('estadoBingo').update({
             ultima: bola,
             lista: window.cantados,
@@ -116,29 +110,16 @@ if(drawBtn) {
 // --- UTILIDADES ---
 function inicializarTablero75() {
     const grid = document.getElementById('historyGrid');
-    if(!grid) return;
+    if (!grid) return;
     grid.innerHTML = "";
     for (let i = 1; i <= 75; i++) {
         const div = document.createElement('div');
         div.className = 'celda-seguimiento';
         div.id = `seguimiento-${i}`;
         div.innerText = i;
-        if(window.cantados.includes(i)) div.classList.add('cantada');
+        if (window.cantados.includes(i)) div.classList.add('cantada');
         grid.appendChild(div);
     }
-}
-
-function marcarBolaEnTablero(num) {
-    const el = document.getElementById(`seguimiento-${num}`);
-    if(el) el.classList.add('cantada');
-}
-
-function conectarOnlineCount() {
-    db.ref('presencia').on('value', (snap) => {
-        const count = snap.numChildren() || 0;
-        const el = document.getElementById('onlineCount');
-        if(el) el.innerText = `👥 ONLINE: ${count}`;
-    });
 }
 
 window.aplicarPredefinido = function(tipo) {
@@ -146,12 +127,11 @@ window.aplicarPredefinido = function(tipo) {
     if (tipo === 'limpiar') window.patronBingo = Array(25).fill(false);
     if (tipo === 'equis') {
         window.patronBingo = Array(25).fill(false);
-        [0,4,6,8,12,16,18,20,24].forEach(pos => window.patronBingo[pos] = true);
+        [0, 4, 6, 8, 12, 16, 18, 20, 24].forEach(p => window.patronBingo[p] = true);
     }
     window.abrirModalPatron();
 };
 
-window.cambiarEstado = function(est, msg) {
-    db.ref('estadoBingo/estado').set(est);
-    if(msg) alert(msg);
-};
+document.addEventListener("DOMContentLoaded", () => {
+    inicializarTablero75();
+});
