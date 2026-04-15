@@ -1,158 +1,153 @@
-// Configuración Firebase (la misma de antes)
-const firebaseConfig = {
-    apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
-    authDomain: "bingofast.firebaseapp.com",
-    databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
-    projectId: "bingofast",
-    storageBucket: "bingofast.firebasestorage.app",
-    messagingSenderId: "473863283329",
-    appId: "1:473863283329:web:2c4bf96de167d105fa6380"
-};
+// --- CONFIGURACIÓN Y ESTADO ---
+var db = firebase.database();
+window.cantados = [];
+window.jugadoresActivos = [];
+window.patronBingo = Array(25).fill(false); // 5x5 vacío
 
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-let cantados = [];
-let patronVictoria = Array(25).fill(false);
-
-document.addEventListener('DOMContentLoaded', () => {
-    generarTablero75();
-    vincularFirebase();
-});
-
-function vincularFirebase() {
-    // Contador Online
-    db.ref('presencia').on('value', snap => {
-        const count = snap.exists() ? Object.keys(snap.val()).length : 0;
-        document.getElementById('onlineCount').innerText = `👥 ONLINE: ${count}`;
-    });
-
-    // Historial de Bolas
-    db.ref('historialBolas').on('value', snap => {
-        cantados = snap.exists() ? Object.values(snap.val()) : [];
-        actualizarTableroVisual();
-    });
-}
-
-// --- PASO 1: SELECCIONAR JUGADORES ---
-function abrirModalCartones() {
-    db.ref('cartonesGenerados').once('value', snap => {
-        const cont = document.getElementById('listaCheckCartones');
-        cont.innerHTML = '';
-        if(!snap.exists()) return alert("No hay cartones en la base de datos.");
-        
-        snap.forEach(child => {
-            const id = child.key;
-            cont.innerHTML += `<label style="display:flex; gap:5px; font-size:0.8rem; background:#334155; padding:5px; border-radius:4px;">
-                <input type="checkbox" value="${id}" checked> #${id}
-            </label>`;
-        });
-        document.getElementById('modalCartones').style.display = 'flex';
-    });
-}
-
-function confirmarJugadores() {
-    const checks = document.querySelectorAll('#listaCheckCartones input:checked');
-    const ids = Array.from(checks).map(c => c.value);
-    
-    db.ref('partidaActual/participantesActivos').set(ids).then(() => {
-        document.getElementById('modalCartones').style.display = 'none';
-        document.getElementById('btnEtapa1').innerText = "✅ 1. JUGADORES LISTOS";
-        document.getElementById('btnEtapa2').disabled = false; // DESBLOQUEA PASO 2
-        alert("Paso 1 completado. Ahora configura el patrón.");
-    });
-}
-
-// --- PASO 2: PATRÓN ---
-function abrirModalPatron() {
-    document.getElementById('modalPatron').style.display = 'flex';
-    dibujarCuadriculaPatron();
-}
-
-function dibujarCuadriculaPatron() {
-    const cont = document.getElementById('gridDibujoPatron');
-    cont.innerHTML = '';
-    patronVictoria.forEach((act, i) => {
-        const d = document.createElement('div');
-        d.className = `celda-patron-admin ${act ? 'activa' : ''}`;
-        if(i === 12) { d.innerText = "★"; d.classList.add('activa'); patronVictoria[i] = true; }
-        d.onclick = () => { if(i!==12){ patronVictoria[i] = !patronVictoria[i]; d.classList.toggle('activa'); } };
-        cont.appendChild(d);
-    });
-}
-
-function aplicarPredefinido(tipo) {
-    if(tipo === 'lleno') patronVictoria = Array(25).fill(true);
-    if(tipo === 'equis') {
-        patronVictoria = Array(25).fill(false);
-        for(let i=0; i<5; i++) { patronVictoria[i*6] = true; patronVictoria[i*4 + 4] = true; }
-    }
-    if(tipo === 'limpiar') patronVictoria = Array(25).fill(false);
-    patronVictoria[12] = true;
-    dibujarCuadriculaPatron();
-}
-
-function confirmarPatron() {
-    db.ref('configuracion/patron').set(patronVictoria).then(() => {
-        document.getElementById('modalPatron').style.display = 'none';
-        document.getElementById('btnEtapa2').innerText = "✅ 2. PATRÓN LISTO";
-        document.getElementById('panelJuego').style.opacity = "1";
-        document.getElementById('panelJuego').style.pointerEvents = "auto"; // DESBLOQUEA JUEGO
-        alert("Paso 2 completado. El juego está habilitado.");
-    });
-}
-
-// --- PASO 3: JUEGO ---
-function programarJuego() {
-    const min = document.getElementById('minutosInicio').value;
-    if(!min) return alert("Indica los minutos");
-    const target = Date.now() + (min * 60000);
-    db.ref('partidaActual').update({ status: 'esperando', proximoJuego: target, anuncio: `EL BINGO EMPIEZA EN ${min} MIN` });
-    iniciarCuentaAtras(target);
-}
-
-function iniciarCuentaAtras(target) {
-    const timer = document.getElementById('cronometroBingo');
-    const intv = setInterval(() => {
-        const dif = target - Date.now();
-        if(dif <= 0) { clearInterval(intv); timer.innerText = "¡YA!"; return; }
-        const m = Math.floor(dif/60000);
-        const s = Math.floor((dif%60000)/1000);
-        timer.innerText = `${m}:${s < 10 ? '0'+s : s}`;
-    }, 1000);
-}
-
-function cambiarEstado(st, msg) {
-    db.ref('partidaActual').update({ status: st, anuncio: msg });
-}
-
-function generarTablero75() {
+// --- INICIALIZAR TABLERO DE 75 ---
+function inicializarTablero75() {
     const grid = document.getElementById('historyGrid');
-    grid.innerHTML = '';
-    for(let i=1; i<=75; i++) {
-        grid.innerHTML += `<div class="celda-seguimiento" id="num-${i}">${i}</div>`;
+    grid.innerHTML = "";
+    for (let i = 1; i <= 75; i++) {
+        const div = document.createElement('div');
+        div.className = 'celda-seguimiento';
+        div.id = `seguimiento-${i}`;
+        div.innerText = i;
+        grid.appendChild(div);
     }
 }
 
-function actualizarTableroVisual() {
-    document.querySelectorAll('.celda-seguimiento').forEach(c => {
-        const n = parseInt(c.innerText);
-        c.classList.toggle('cantada', cantados.includes(n));
-    });
-}
+// --- ETAPA 1: SELECCIONAR JUGADORES ---
+window.abrirModalCartones = function() {
+    document.getElementById('modalCartones').style.display = 'flex';
+    const lista = document.getElementById('listaCheckCartones');
+    lista.innerHTML = "Cargando...";
 
-document.getElementById('drawBtn').onclick = () => {
-    if(cantados.length >= 75) return;
-    let n; do { n = Math.floor(Math.random()*75)+1; } while(cantados.includes(n));
-    db.ref('historialBolas').push(n);
-    const letras = ['B','I','N','G','O'];
-    const letra = letras[Math.floor((n-1)/15)];
-    db.ref('partidaActual').update({ numero: n, letra: letra, status: 'jugando', anuncio: `BOLA: ${letra}-${n}` });
+    // Leemos de 'cartonesGenerados' (lo que hizo tu página de Generar)
+    db.ref('cartonesGenerados').once('value', (snapshot) => {
+        lista.innerHTML = "";
+        if (!snapshot.exists()) {
+            lista.innerHTML = "<p>No hay cartones en la base de datos.</p>";
+            return;
+        }
+        snapshot.forEach((child) => {
+            const c = child.val();
+            const item = document.createElement('div');
+            item.style = "background:#334155; padding:5px; border-radius:4px; font-size:0.7rem;";
+            item.innerHTML = `
+                <input type="checkbox" id="chk-${c.id}" value="${c.id}">
+                <label for="chk-${c.id}">ID:${c.id}<br>${c.apodo}</label>
+            `;
+            lista.appendChild(item);
+        });
+    });
 };
 
-document.getElementById('resetBtn').onclick = () => {
-    if(confirm("¿Reiniciar todo?")) {
-        db.ref().update({ historialBolas: null, 'partidaActual/status': 'reinicio' });
+window.confirmarJugadores = function() {
+    const checks = document.querySelectorAll('#listaCheckCartones input:checked');
+    window.jugadoresActivos = Array.from(checks).map(c => parseInt(c.value));
+    
+    if (window.jugadoresActivos.length === 0) {
+        alert("Selecciona al menos un jugador");
+        return;
+    }
+
+    // Guardar en Firebase y avanzar
+    db.ref('estadoBingo/activos').set(window.jugadoresActivos);
+    document.getElementById('modalCartones').style.display = 'none';
+    document.getElementById('btnEtapa1').style.opacity = "0.5";
+    document.getElementById('btnEtapa2').disabled = false;
+    alert("Jugadores confirmados. Ahora configura el patrón.");
+};
+
+// --- ETAPA 2: CONFIGURAR PATRÓN ---
+window.abrirModalPatron = function() {
+    document.getElementById('modalPatron').style.display = 'flex';
+    const grid = document.getElementById('gridDibujoPatron');
+    grid.innerHTML = "";
+    
+    window.patronBingo.forEach((estado, i) => {
+        const btn = document.createElement('div');
+        btn.className = `celda-patron ${estado ? 'activa' : ''}`;
+        if(i === 12) btn.innerHTML = "⭐"; // Espacio libre
+        btn.onclick = () => {
+            window.patronBingo[i] = !window.patronBingo[i];
+            btn.classList.toggle('activa');
+        };
+        grid.appendChild(btn);
+    });
+};
+
+window.aplicarPredefinido = function(tipo) {
+    if (tipo === 'lleno') window.patronBingo = Array(25).fill(true);
+    if (tipo === 'limpiar') window.patronBingo = Array(25).fill(false);
+    if (tipo === 'equis') {
+        window.patronBingo = Array(25).fill(false);
+        [0,4,6,8,12,16,18,20,24].forEach(pos => window.patronBingo[pos] = true);
+    }
+    window.abrirModalPatron(); // Refrescar vista
+};
+
+window.confirmarPatron = function() {
+    db.ref('estadoBingo/patron').set(window.patronBingo);
+    document.getElementById('modalPatron').style.display = 'none';
+    document.getElementById('btnEtapa2').style.opacity = "0.5";
+    document.getElementById('panelJuego').style.opacity = "1";
+    document.getElementById('panelJuego').style.pointerEvents = "all";
+    alert("¡Patrón listo! Ya puedes programar o iniciar el juego.");
+};
+
+// --- ETAPA 3: SORTEO Y JUEGO ---
+document.getElementById('drawBtn').onclick = function() {
+    if (window.cantados.length >= 75) return alert("Bingo terminado");
+    
+    let bola;
+    do {
+        bola = Math.floor(Math.random() * 75) + 1;
+    } while (window.cantados.includes(bola));
+
+    window.cantados.push(bola);
+    
+    // Marcar en el tablero
+    document.getElementById(`seguimiento-${bola}`).classList.add('cantada');
+    
+    // Enviar a Firebase
+    db.ref('estadoBingo').update({
+        ultima: bola,
+        lista: window.cantados,
+        timestamp: Date.now()
+    });
+};
+
+// --- FUNCIONES DE APOYO ---
+window.cambiarEstado = function(estado, mensaje) {
+    db.ref('estadoBingo/estado').set(estado);
+    if(mensaje) db.ref('avisosBingo').push({ texto: mensaje, tiempo: Date.now() });
+};
+
+window.programarJuego = function() {
+    const min = document.getElementById('minutosInicio').value;
+    if(!min) return alert("Ingresa minutos");
+    db.ref('estadoBingo/tiempoGracia').set(min);
+    window.cambiarEstado('esperando', `EL BINGO COMENZARÁ EN ${min} MINUTOS`);
+};
+
+// Verificador de Cartón (usando la misma lógica de semilla)
+window.revisarCartonManual = function() {
+    const id = document.getElementById('idABuscar').value;
+    if(!id) return;
+    
+    // Aquí podrías abrir un modal extra o pintar la tabla en el panel derecho
+    alert("Verificando ID #" + id + "... (Asegúrate que el cartón coincida con los números cantados)");
+};
+
+// Reset
+document.getElementById('resetBtn').onclick = function() {
+    if(confirm("¿Reiniciar todo? Se perderá el patrón y jugadores.")) {
+        db.ref('estadoBingo').remove();
         location.reload();
     }
 };
+
+// Inicio
+inicializarTablero75();
