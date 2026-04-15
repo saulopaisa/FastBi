@@ -30,71 +30,89 @@
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; }
         .modal-content { background: #1e293b; padding: 20px; border-radius: 12px; width: 90%; max-width: 400px; color: white; border: 2px solid var(--gold); }
         .grid-seleccion-cartones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-height: 250px; overflow-y: auto; margin: 15px 0; }
+        
+        /* Estilos para dibujar el patrón */
+        .grid-patron-admin { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; background: #0f172a; padding: 10px; border-radius: 8px; }
+        .celda-patron { aspect-ratio: 1; background: #334155; border: 1px solid #475569; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+        .celda-patron.activa { background: #eab308; box-shadow: 0 0 10px #eab308; }
     </style>
 </head>
 <body>
-    <div class="layout-container">
-        <aside class="panel-izquierdo">
-            <h1 class="main-title">BINGO 75</h1>
+    <div class="layout-container" style="display: flex; height: 100vh;">
+        <aside class="panel-izquierdo" style="width: 350px; padding: 20px; background: #1e293b; border-right: 2px solid #334155; color: white; display: flex; flex-direction: column;">
+            <h1 class="main-title" style="color: #ef4444; text-align: center;">BINGO 75</h1>
             <div id="onlineCount" style="text-align: center; color: var(--gold); margin-bottom: 10px;">👥 ONLINE: 0</div>
 
-            <button id="btnEtapa1" onclick="abrirModalCartones()" class="btn-accion" style="background: #6366f1;">1. SELECCIONAR JUGADORES</button>
+            <button id="btnEtapa1" onclick="window.abrirModalCartones()" class="btn-accion" style="background: #6366f1;">1. SELECCIONAR JUGADORES</button>
             
-            <button id="btnEtapa2" onclick="abrirModalPatron()" class="btn-accion" disabled style="background: #f59e0b;">2. CONFIGURAR PATRÓN</button>
+            <button id="btnEtapa2" onclick="window.abrirModalPatron()" class="btn-accion" disabled style="background: #f59e0b;">2. CONFIGURAR PATRÓN</button>
 
             <div id="panelJuego" style="opacity: 0.4; pointer-events: none;">
                 <div id="cronometroBingo" style="background:#000; color:#f00; font-family:monospace; font-size:2rem; text-align:center; padding:5px; border:1px solid #333;">00:00</div>
                 <div style="display: flex; gap: 5px; margin-top:5px;">
                     <input type="number" id="minutosInicio" placeholder="Min" style="width: 60px;">
-                    <button id="btnProgramar" onclick="programarJuego()" style="background:var(--gold); color:black; border:none; flex:1; font-weight:bold;">PROGRAMAR</button>
+                    <button id="btnProgramar" onclick="window.programarJuego()" style="background:var(--gold); color:black; border:none; flex:1; font-weight:bold;">PROGRAMAR</button>
                 </div>
-                <button id="btnEmpezar" onclick="cambiarEstado('jugando', '¡QUE COMIENCE EL BINGO!')" class="btn-accion" style="background:var(--success); margin-top:5px;">EMPEZAR AHORA</button>
+                <button id="btnEmpezar" onclick="window.cambiarEstado('jugando', '¡QUE COMIENCE EL BINGO!')" class="btn-accion" style="background:var(--success); margin-top:5px;">EMPEZAR AHORA</button>
                 
-                <button id="drawBtn" class="btn-accion" style="background: #3b82f6; margin-top: 10px;">SORTEAR BOLA</button>
+                <button id="drawBtn" class="btn-accion" style="background: #3b82f6; margin-top: 10px; padding: 15px; font-size: 1.1rem;">SORTEAR BOLA</button>
             </div>
 
             <div class="verifier-area" style="margin-top: 15px; border-top: 1px solid #444; padding-top: 10px;">
                 <div style="display: flex; gap: 5px;">
-                    <input type="number" id="idABuscar" placeholder="ID Cartón" style="flex:1">
-                    <button onclick="revisarCartonManual()" style="background:var(--gold); border:none; padding:5px;">REVISAR</button>
+                    <input type="number" id="idABuscar" placeholder="ID Cartón" style="flex:1; padding: 8px;">
+                    <button onclick="window.revisarCartonManual()" style="background:var(--gold); border:none; padding:8px; font-weight: bold;">REVISAR</button>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px;">
-                    <button onclick="cambiarEstado('jugando', 'BINGO ERRADO - SE PROSIGUE EL BINGO')" style="background:var(--danger); font-size: 0.7rem; padding: 10px; border:none; color:white; border-radius:4px;">BINGO ERRADO</button>
-                    <button onclick="anunciarGanador()" style="background:var(--success); font-size: 0.7rem; padding: 10px; border:none; color:white; border-radius:4px;">BINGO VÁLIDO</button>
+                    <button onclick="window.cambiarEstado('jugando', 'BINGO ERRADO - SE PROSIGUE EL BINGO')" style="background:var(--danger); font-size: 0.7rem; padding: 10px; border:none; color:white; border-radius:4px; font-weight: bold; cursor: pointer;">BINGO ERRADO</button>
+                    <button onclick="window.anunciarGanador()" style="background:var(--success); font-size: 0.7rem; padding: 10px; border:none; color:white; border-radius:4px; font-weight: bold; cursor: pointer;">BINGO VÁLIDO</button>
                 </div>
             </div>
-            <button id="resetBtn" style="width:100%; margin-top:20px; background:none; color:gray; border:1px solid #444; cursor:pointer">Reiniciar Todo</button>
+            <button id="resetBtn" style="width:100%; margin-top:auto; padding: 10px; background:none; color:gray; border:1px solid #444; cursor:pointer">Reiniciar Todo</button>
         </aside>
 
-        <main class="panel-derecho">
-            <h3 style="padding: 10px; margin:0">TABLERO DE SEGUIMIENTO (1-75)</h3>
+        <main class="panel-derecho" style="flex: 1; background: #f1f5f9; padding: 20px;">
+            <h3 style="padding: 10px; margin:0; color: #1e293b;">TABLERO DE SEGUIMIENTO (1-75)</h3>
             <div id="historyGrid" class="history-grid"></div>
         </main>
     </div>
 
     <div id="modalCartones" class="modal-overlay">
         <div class="modal-content">
-            <h3 style="text-align:center">PASO 1: ¿QUIÉN JUEGA?</h3>
+            <h3 style="text-align:center; margin-top: 0;">PASO 1: ¿QUIÉN JUEGA?</h3>
             <div id="listaCheckCartones" class="grid-seleccion-cartones"></div>
-            <button onclick="confirmarJugadores()" class="btn-accion" style="background:var(--success)">CONFIRMAR Y PASAR AL PATRÓN</button>
+            <button onclick="window.confirmarJugadores()" class="btn-accion" style="background:var(--success)">CONFIRMAR Y PASAR AL PATRÓN</button>
         </div>
     </div>
 
     <div id="modalPatron" class="modal-overlay">
         <div class="modal-content">
-            <h3 style="text-align:center">PASO 2: ELIGE EL PATRÓN</h3>
+            <h3 style="text-align:center; margin-top: 0;">PASO 2: ELIGE EL PATRÓN</h3>
             <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; margin-bottom:10px;">
-                <button onclick="aplicarPredefinido('lleno')" style="font-size:0.7rem">LLENO</button>
-                <button onclick="aplicarPredefinido('equis')" style="font-size:0.7rem">LA X</button>
-                <button onclick="aplicarPredefinido('limpiar')" style="font-size:0.7rem">BORRAR</button>
+                <button onclick="window.aplicarPredefinido('lleno')" style="font-size:0.7rem; padding: 5px; cursor: pointer;">LLENO</button>
+                <button onclick="window.aplicarPredefinido('equis')" style="font-size:0.7rem; padding: 5px; cursor: pointer;">LA X</button>
+                <button onclick="window.aplicarPredefinido('limpiar')" style="font-size:0.7rem; padding: 5px; cursor: pointer;">BORRAR</button>
             </div>
             <div id="gridDibujoPatron" class="grid-patron-admin"></div>
-            <button onclick="confirmarPatron()" class="btn-accion" style="background:var(--success); margin-top:10px;">CONFIRMAR Y ACTIVAR JUEGO</button>
+            <button onclick="window.confirmarPatron()" class="btn-accion" style="background:var(--success); margin-top:10px;">CONFIRMAR Y ACTIVAR JUEGO</button>
         </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
+            authDomain: "bingofast.firebaseapp.com",
+            databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
+            projectId: "bingofast",
+            storageBucket: "bingofast.firebasestorage.app",
+            messagingSenderId: "473863283329",
+            appId: "1:473863283329:web:2c4bf96de167d105fa6380"
+        };
+        // Inicializa Firebase para evitar el error rojo
+        firebase.initializeApp(firebaseConfig);
+    </script>
     <script src="ruleta.js"></script>
 </body>
 </html>
