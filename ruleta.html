@@ -98,21 +98,20 @@
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
-            authDomain: "bingofast.firebaseapp.com",
-            databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
-            projectId: "bingofast",
-            storageBucket: "bingofast.firebasestorage.app",
-            messagingSenderId: "473863283329",
-            appId: "1:473863283329:web:2c4bf96de167d105fa6380"
-        };
-        // Inicializa Firebase para evitar el error rojo
-        firebase.initializeApp(firebaseConfig);
-    </script>
-    <script src="ruleta.js"></script>
+   <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
+        authDomain: "bingofast.firebaseapp.com",
+        databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
+        projectId: "bingofast",
+        storageBucket: "bingofast.firebasestorage.app",
+        messagingSenderId: "473863283329",
+        appId: "1:473863283329:web:2c4bf96de167d105fa6380"
+    };
+    firebase.initializeApp(firebaseConfig);
+    var db = firebase.database(); // Inicialización global inmediata
+</script>
 </body>
 </html>
