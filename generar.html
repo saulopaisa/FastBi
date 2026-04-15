@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Bingo Pro Admin - Generador</title>
+    <title>Bingo 75 Pro - Panel de Control</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
@@ -17,81 +17,76 @@
             appId: "1:473863283329:web:2c4bf96de167d105fa6380"
         };
         firebase.initializeApp(firebaseConfig);
-        var db = firebase.database(); 
+        var db = firebase.database();
     </script>
 
     <style>
-        body { font-family: sans-serif; background: #0f172a; color: #fff; margin: 0; padding: 10px; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
-        .main-container { display: flex; width: 100%; max-width: 1200px; height: 95vh; background: #1e293b; border-radius: 12px; overflow: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 350px; background: #1e293b; padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 2px solid #334155; }
+        .main-content { flex: 1; background: #f1f5f9; padding: 20px; overflow-y: auto; color: #1e293b; }
         
-        .panel-izquierdo { width: 380px; padding: 20px; background: #0f172a; display: flex; flex-direction: column; gap: 10px; border-right: 2px solid #334155; }
-        .titulo { text-align: center; color: #ef4444; margin: 0; font-size: 1.5rem; }
-        
-        /* Contenedor de lista con espacio recuperado */
-        #contenedorLista { 
-            flex-grow: 1; 
-            overflow-y: auto; 
-            background: #1e293b; 
-            padding: 10px; 
-            border-radius: 8px; 
-            border: 1px solid #334155;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+        /* Tablero */
+        .grid-tablero { display: grid; grid-template-columns: repeat(15, 1fr); gap: 5px; background: white; padding: 15px; border-radius: 8px; }
+        .celda { border: 1px solid #cbd5e1; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; color: #94a3b8; border-radius: 4px; }
+        .celda.marcada { background: #eab308; color: #000; border-color: #ca8a04; transform: scale(1.05); }
 
-        .id-card { background: #fff; color: #000; padding: 10px; border-radius: 6px; cursor: pointer; border-left: 5px solid #ef4444; }
-        .controles input, .buscador { padding: 10px; border-radius: 4px; border: none; width: 100%; box-sizing: border-box; }
-        .btn-gen { background: #eab308; color: #000; font-weight: bold; padding: 10px; border: none; border-radius: 4px; cursor: pointer; }
+        /* Controles */
+        .btn { padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .btn-primary { background: #ef4444; color: white; font-size: 1.1rem; }
+        .btn-secondary { background: #334155; color: white; }
         
-        .panel-derecho { flex: 1; background: #f8fafc; padding: 20px; color: #1e293b; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
-        table { border-collapse: collapse; width: 100%; max-width: 350px; background: white; margin-top: 10px; }
-        td { border: 1px solid #ddd; padding: 12px; text-align: center; font-weight: bold; }
-        .header-bingo td { background: #1e3a8a; color: white; }
+        /* Verificador Visual */
+        #visor-verificacion { background: white; padding: 15px; border-radius: 8px; margin-top: 10px; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .bingo-table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+        .bingo-table td { border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="main-container">
-    <div class="panel-izquierdo">
-        <h1 class="titulo">BINGO PRO ADMIN</h1>
-        <div style="background:#eab308; color:black; text-align:center; padding:5px; border-radius:4px; font-weight:bold;">
-            REGISTRADOS: <span id="countDisplay">0</span>
+    <div class="sidebar">
+        <h2 style="color:#ef4444; text-align:center; margin:0;">BINGO 75</h2>
+        
+        <div style="background:#0f172a; padding:15px; border-radius:8px; text-align:center;">
+            <div id="balota-actual" style="font-size: 4rem; font-weight: 900; color: #ef4444;">--</div>
+            <div id="letra-actual" style="font-size: 1.5rem; color: #94a3b8;">Sorteando...</div>
         </div>
 
-        <div class="controles" style="display:flex; gap:5px;">
-            <input type="number" id="inputCantidad" placeholder="Cant.">
-            <button class="btn-gen" onclick="window.generarLote()">GENERAR</button>
+        <button class="btn btn-primary" onclick="window.sortearProximo()">SORTEAR PRÓXIMO</button>
+        
+        <div style="display:flex; gap:5px;">
+            <input type="number" id="inputTiempo" placeholder="Min" style="width:60px; padding:10px; border-radius:4px; border:none;">
+            <button class="btn btn-secondary" style="flex:1;" onclick="window.programarJuego()">PROGRAMAR</button>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-            <button onclick="window.exportarBD()">💾 Guardar</button>
-            <button onclick="document.getElementById('inputFile').click()">📂 Abrir</button>
-            <button onclick="window.verTodosLosCartones()">👁️ Ver Todos</button>
-            <button onclick="window.limpiarTodo()" style="color:red;">🗑️ Borrar</button>
-            <input type="file" id="inputFile" style="display:none" onchange="window.importarBD(this)">
-        </div>
-
-        <input type="text" id="buscador" class="buscador" placeholder="🔍 Buscar nombre o ID..." oninput="window.renderizarLista(this.value)">
-
-        <div id="contenedorLista">
+        <div id="historial-balotas" style="background:#0f172a; flex-grow:1; border-radius:8px; padding:10px; overflow-y:auto; font-size:0.9rem;">
             </div>
 
-        <a href="ruleta.html" style="background:#ef4444; color:white; text-align:center; padding:15px; border-radius:8px; text-decoration:none; font-weight:bold;">IR AL JUEGO →</a>
+        <div style="border-top:1px solid #334155; pt:10px;">
+            <input type="number" id="inputVerificador" placeholder="ID Cartón" style="width:100%; padding:10px; margin-bottom:5px; border-radius:4px;">
+            <button class="btn btn-secondary" style="width:100%;" onclick="window.revisarCartonManual()">VERIFICAR CARTÓN</button>
+        </div>
+
+        <button class="btn btn-secondary" onclick="window.reiniciarPartida()" style="background:#475569;">REINICIAR TODO</button>
     </div>
 
-    <div class="panel-derecho">
-        <div id="visorDetallado" style="width:100%; display:none; flex-direction:column; align-items:center;">
-            <h2 id="nombreVisor" style="margin:0;">-</h2>
-            <div id="tablaContenedor"></div>
+    <div class="main-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h1 style="margin:0;">TABLERO DE SEGUIMIENTO</h1>
+            <a href="generar.html" style="text-decoration:none; background:#1e293b; color:white; padding:8px 15px; border-radius:4px; font-size:0.8rem;">+ GESTIONAR CARTONES</a>
         </div>
-        <div id="placeholder">
-            <h2>VISTA PREVIA</h2>
-            <p>Selecciona un cartón de la lista</p>
+
+        <div class="grid-tablero" id="tablero-principal"></div>
+
+        <div id="visor-verificacion">
+            <h3 id="titulo-verificador" style="margin:0; color:#1e3a8a;">Verificando...</h3>
+            <div id="tabla-verificador-contenedor"></div>
+        </div>
+        
+        <div id="placeholder-ruleta" style="text-align:center; margin-top:50px; color:#94a3b8;">
+            <p>Esperando sorteo o verificación de ID...</p>
         </div>
     </div>
-</div>
 
-<script src="generar.js"></script>
+    <script src="ruleta.js"></script>
 </body>
 </html>
