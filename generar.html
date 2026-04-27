@@ -2,45 +2,49 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bingo Pro Admin - Generador</title>
-    <link rel="stylesheet" href="generar.css">
     <style>
-        /* Estilos rápidos para asegurar visibilidad */
-        .contenedor-admin { display: flex; height: 100vh; background: #0f172a; color: white; font-family: sans-serif; }
-        .panel-control { width: 350px; padding: 20px; background: #1e293b; border-right: 2px solid #334155; }
-        .input-lote { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: none; font-size: 1rem; }
-        .btn-primario { width: 100%; padding: 12px; background: #f59e0b; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #1e293b; }
-        .btn-secundario { width: 100%; padding: 12px; background: #ef4444; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; margin-top: 10px; }
-        .btn-juego { width: 100%; padding: 12px; background: #3b82f6; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; margin-top: 20px; }
-        .vista-previa { flex: 1; padding: 20px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; color: #1e293b; }
-        .stats { background: #f59e0b; color: #1e293b; padding: 10px; text-align: center; font-weight: bold; border-radius: 6px; margin-bottom: 20px; }
-        #lista-cartones { margin-top: 20px; max-height: 300px; overflow-y: auto; }
+        :root { --azul-fondo: #0f172a; --panel-gris: #1e293b; --dorado: #f59e0b; --rojo: #ef4444; }
+        body { margin: 0; font-family: sans-serif; background: var(--azul-fondo); color: white; }
+        .admin-layout { display: flex; height: 100vh; }
+        .sidebar { width: 350px; background: var(--panel-gris); padding: 20px; border-right: 2px solid #334155; }
+        .stats-box { background: var(--dorado); color: #1e293b; padding: 10px; text-align: center; font-weight: bold; border-radius: 6px; margin-bottom: 15px; }
+        .input-group { margin-bottom: 15px; }
+        input { width: 100%; padding: 12px; box-sizing: border-box; border-radius: 6px; border: none; font-size: 1rem; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+        .btn-gen { background: var(--dorado); color: #1e293b; }
+        .btn-juego { background: #3b82f6; color: white; margin-top: 20px; }
+        .btn-borrar { background: var(--rojo); color: white; }
+        .preview-area { flex: 1; background: #f1f5f9; color: #1e293b; display: flex; align-items: center; justify-content: center; }
+        #lista-cartones { margin-top: 20px; max-height: 250px; overflow-y: auto; }
+        .card-item { background: #334155; padding: 10px; margin-bottom: 5px; border-radius: 4px; cursor: pointer; color: white; }
     </style>
 </head>
 <body>
-    <div class="contenedor-admin">
-        <aside class="panel-control">
-            <h2 style="text-align: center; color: #ef4444;">BINGO PRO ADMIN</h2>
-            
-            <div id="contadorRegistrados" class="stats">REGISTRADOS: 0</div>
 
-            <input type="number" id="cantidadGenerar" class="input-lote" placeholder="Cant. de cartones">
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <h2 style="text-align:center; color: var(--rojo);">BINGO PRO ADMIN</h2>
             
-            <button onclick="window.generarLote()" class="btn-primario">GENERAR LOTE</button>
-            
-            <div id="lista-cartones">
-                </div>
+            <div id="contadorRegistrados" class="stats-box">REGISTRADOS: 0</div>
 
-            <button onclick="window.borrarTodo()" class="btn-secundario">BORRAR TODO</button>
+            <div class="input-group">
+                <input type="number" id="cantidadGenerar" placeholder="Cantidad de cartones (1-500)">
+            </div>
+            
+            <button onclick="window.generarLote()" class="btn-gen">GENERAR LOTE</button>
+
+            <div id="lista-cartones"></div>
+
+            <button onclick="window.borrarTodo()" class="btn-borrar">BORRAR TODO</button>
             
             <button id="btnIrJuego" class="btn-juego">IR AL JUEGO →</button>
         </aside>
 
-        <main class="vista-previa">
+        <main class="preview-area">
             <div id="vista-previa-contenido">
-                <h3>VISTA PREVIA</h3>
-                <p>Toca un cartón para ver sus números</p>
+                <h3 style="text-align:center;">VISTA PREVIA</h3>
+                <p>Selecciona un cartón para ver sus números</p>
             </div>
         </main>
     </div>
