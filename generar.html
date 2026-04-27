@@ -5,64 +5,73 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bingo Pro Admin - Generador</title>
     <style>
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; overflow: hidden; }
-        .contenedor-admin { display: flex; height: 100vh; }
+        /* CSS RECONSTRUIDO SEGÚN TUS CAPTURAS */
+        body { margin: 0; font-family: Arial, sans-serif; background: #0b0f1a; display: flex; height: 100vh; color: white; }
         
-        /* Panel Lateral Oscuro */
-        .panel-control { width: 350px; background: #1e293b; padding: 25px; border-right: 2px solid #334155; display: flex; flex-direction: column; }
-        .titulo-admin { color: #ef4444; text-align: center; margin-bottom: 20px; font-weight: 800; letter-spacing: 1px; }
-        
-        /* Caja de Estadísticas Amarilla */
-        .stats { background: #f59e0b; color: #1e293b; padding: 12px; text-align: center; font-weight: bold; border-radius: 8px; margin-bottom: 20px; font-size: 1.1rem; }
-        
-        /* Inputs y Botones */
-        .input-lote { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 2px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 1rem; }
-        .btn-primario { width: 100%; padding: 14px; background: #f59e0b; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #1e293b; transition: 0.3s; }
-        .btn-primario:hover { background: #d97706; }
-        
-        .btn-secundario { width: 100%; padding: 12px; background: #ef4444; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; margin-top: 10px; }
-        .btn-juego { width: 100%; padding: 14px; background: #3b82f6; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; margin-top: auto; }
-        
-        /* Lista de Cartones */
-        #lista-cartones { flex: 1; margin: 20px 0; overflow-y: auto; padding-right: 5px; }
-        .card-item { background: #334155; padding: 12px; margin-bottom: 8px; border-radius: 6px; cursor: pointer; border: 1px solid #475569; transition: 0.2s; }
-        .card-item:hover { background: #475569; border-color: #f59e0b; }
+        .sidebar { width: 320px; background: #16213e; padding: 15px; display: flex; flex-direction: column; border-right: 1px solid #2d3436; }
+        .main-content { flex: 1; background: #ffffff; color: #7f8c8d; display: flex; align-items: center; justify-content: center; flex-direction: column; }
 
-        /* Área de Vista Previa Clara */
-        .vista-previa { flex: 1; background: #f1f5f9; padding: 40px; display: flex; align-items: center; justify-content: center; }
-        #vista-previa-contenido { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); color: #1e293b; min-width: 300px; text-align: center; }
+        .titulo { color: #ff4d4d; text-align: center; font-size: 1.4rem; font-weight: bold; margin-bottom: 10px; }
+        
+        .btn-registrados { background: #ffca28; color: black; border: none; padding: 10px; border-radius: 4px; font-weight: bold; width: 100%; margin-bottom: 10px; }
+        
+        .input-group { display: flex; gap: 5px; margin-bottom: 10px; }
+        .input-group input { flex: 1; padding: 8px; border-radius: 4px; border: none; }
+        .btn-generar { background: #ffca28; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+
+        .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px; }
+        .btn-small { background: #2c3e50; color: #ecf0f1; border: none; padding: 8px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
+
+        .search-bar { width: 100%; padding: 8px; border-radius: 4px; border: none; margin-bottom: 10px; box-sizing: border-box; }
+
+        .lista-container { flex: 1; overflow-y: auto; background: #0f172a; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+        .card-jugador { background: white; color: black; border-radius: 6px; padding: 10px; margin-bottom: 8px; border-left: 5px solid #ff4d4d; position: relative; cursor: pointer; }
+        .card-jugador h4 { margin: 0; color: #ff4d4d; font-size: 0.9rem; }
+        .card-jugador p { margin: 3px 0 0 0; font-size: 0.85rem; }
+
+        .btn-ir-juego { background: #ff4d4d; color: white; border: none; padding: 15px; border-radius: 4px; font-weight: bold; width: 100%; cursor: pointer; margin-top: auto; }
+        
+        h2.vista-previa-txt { font-size: 2.5rem; color: #bdc3c7; margin: 0; }
     </style>
 </head>
 <body>
-    <div class="contenedor-admin">
-        <aside class="panel-control">
-            <h1 class="titulo-admin">BINGO PRO ADMIN</h1>
-            
-            <div id="contadorRegistrados" class="stats">REGISTRADOS: 0</div>
 
-            <input type="number" id="cantidadGenerar" class="input-lote" placeholder="Cantidad a generar">
-            
-            <button onclick="window.generarLote()" class="btn-primario">GENERAR LOTE</button>
-            
-            <div id="lista-cartones">
-                </div>
+    <div class="sidebar">
+        <div class="titulo">BINGO PRO ADMIN</div>
+        
+        <button class="btn-registrados" id="contadorRegistrados">REGISTRADOS: 0</button>
 
-            <button onclick="window.borrarTodo()" class="btn-secundario">BORRAR TODO</button>
-            
-            <button id="btnIrJuego" class="btn-juego">IR AL JUEGO →</button>
-        </aside>
+        <div class="input-group">
+            <input type="number" id="cantidadGenerar" placeholder="Cant.">
+            <button class="btn-generar" onclick="window.generarLote()">GENERAR</button>
+        </div>
 
-        <main class="vista-previa">
-            <div id="vista-previa-contenido">
-                <h3 style="margin: 0;">VISTA PREVIA</h3>
-                <p style="color: #64748b;">Selecciona un cartón del panel izquierdo para visualizar sus números.</p>
+        <div class="grid-buttons">
+            <button class="btn-small">💾 Guardar JSON</button>
+            <button class="btn-small">📂 Abrir JSON</button>
+            <button class="btn-small" onclick="window.verTodos()">👁️ Ver Todos</button>
+            <button class="btn-small" onclick="window.borrarTodo()">🗑️ Borrar Todo</button>
+        </div>
+
+        <input type="text" class="search-bar" placeholder="Buscar nombre o ID...">
+
+        <div class="lista-container" id="listaCartones">
             </div>
-        </main>
+
+        <button class="btn-ir-juego" onclick="location.href='ruleta.html'">IR AL JUEGO →</button>
+    </div>
+
+    <div class="main-content">
+        <div id="vista-previa-contenido" style="text-align: center;">
+            <h2 class="vista-previa-txt">VISTA PREVIA</h2>
+            <p>Selecciona un cartón de la lista</p>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script>
+        // TU CONFIGURACIÓN
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
             authDomain: "bingofast.firebaseapp.com",
