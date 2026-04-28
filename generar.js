@@ -10,7 +10,7 @@ function generarSalaNueva() {
 }
 
 // ============ GENERADOR DE CARTÓN (TODOS DIFERENTES) ============
-const cartonesGenerados = new Set(); // Para evitar duplicados
+const cartonesGenerados = new Set();
 
 function generarCartonBingo() {
     let carton;
@@ -48,11 +48,10 @@ function generarColumna(min, max) {
     }
     
     numeros.sort((a, b) => a - b);
-    // El centro (índice 2) será reemplazado por FREE solo en la columna N
     return numeros;
 }
 
-// ============ GENERAR LOTE ============
+// ============ GENERAR LOTE (CORREGIDO) ============
 function generarLote() {
     const input = document.getElementById('cantidadGenerar');
     const cantidad = parseInt(input.value) || 1;
@@ -65,40 +64,40 @@ function generarLote() {
     console.log('🎲 Generando ' + cantidad + ' cartones únicos...');
     mostrarToast('⏳ Generando ' + cantidad + ' cartones...');
     
-    let generados = 0;
+    // Usar un timestamp único para todo el lote
+    const timestamp = Date.now();
+    const updates = {};
     
     for (let i = 0; i < cantidad; i++) {
-        const id = 'c-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
+        // ID único con timestamp + contador + random
+        const id = 'c-' + timestamp + '-' + i + '-' + Math.random().toString(36).substr(2, 5);
         const carton = generarCartonBingo();
         
-        // Marcar solo el centro de la columna N como FREE
+        // Marcar el centro de N como FREE
         carton.N[2] = 'FREE';
         
-        const datosCarton = {
+        updates['salas/' + SALA_ID + '/cartones/' + id] = {
             id: id,
-            numero: generados + 1, // Número entero visible
-            nombre: 'Cartón ' + (generados + 1),
+            numero: i + 1,
+            nombre: 'Cartón ' + (i + 1),
             carton: carton,
             estado: 'disponible',
             asignadoA: '',
             creado: firebase.database.ServerValue.TIMESTAMP
         };
-        
-        db.ref('salas/' + SALA_ID + '/cartones/' + id)
-            .set(datosCarton)
-            .then(() => {
-                generados++;
-                if (generados === cantidad) {
-                    console.log('✅ ' + generados + ' cartones generados');
-                    mostrarToast('✅ ' + generados + ' cartones generados');
-                    input.value = '';
-                }
-            })
-            .catch(error => {
-                console.error('❌ Error:', error);
-                mostrarToast('❌ Error al generar', 'error');
-            });
     }
+    
+    // Actualizar todo de una vez
+    db.ref().update(updates)
+        .then(() => {
+            console.log('✅ ' + cantidad + ' cartones generados');
+            mostrarToast('✅ ' + cantidad + ' cartones generados');
+            input.value = '';
+        })
+        .catch(error => {
+            console.error('❌ Error:', error);
+            mostrarToast('❌ Error al generar', 'error');
+        });
 }
 
 // ============ SELECCIÓN MÚLTIPLE ============
@@ -125,8 +124,12 @@ function actualizarBotonAsignar() {
     const btnAsignar = document.getElementById('btnAsignar');
     if (btnAsignar) {
         const cantidad = cartonesSeleccionados.size;
-        btnAsignar.textContent = cantidad > 0 ? '👤 ASIGNAR (' + cantidad + ')' : '👤 ASIGNAR';
-        btnAsignar.style.display = cantidad > 0 ? 'block' : 'none';
+        if (cantidad > 0) {
+            btnAsignar.textContent = '👤 ASIGNAR (' + cantidad + ')';
+            btnAsignar.style.display = 'block';
+        } else {
+            btnAsignar.style.display = 'none';
+        }
     }
 }
 
@@ -150,10 +153,8 @@ function asignarAJugador() {
     
     db.ref().update(updates)
         .then(() => {
-            // Generar link del jugador con todos sus cartones
             const linkJugador = generarLinkJugador(nombreJugador.trim(), cartonesIds);
             
-            // Mostrar link en vista previa
             const preview = document.getElementById('vista-previa-contenido');
             preview.innerHTML = 
                 '<div style="padding:20px;">' +
@@ -170,7 +171,6 @@ function asignarAJugador() {
                 '<button onclick="exportarPDFJugador(\'' + nombreJugador.trim() + '\', ' + JSON.stringify(cartonesIds) + ')" style="background:#8b5cf6; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; margin-top:10px;">📄 Exportar PDF del Jugador</button>' +
                 '</div>';
             
-            // Limpiar selección
             cartonesSeleccionados.clear();
             document.querySelectorAll('.card-carton.seleccionado').forEach(c => c.classList.remove('seleccionado'));
             actualizarBotonAsignar();
@@ -192,7 +192,6 @@ function generarLinkJugador(nombre, cartonesIds) {
 function copiarLinkJugador() {
     const input = document.getElementById('linkJugadorInput');
     if (input) {
-        input.select();
         navigator.clipboard.writeText(input.value).then(() => {
             mostrarToast('✅ Link copiado');
         });
@@ -228,7 +227,6 @@ function generarHTMLCarton(datos) {
     
     let html = '<div style="padding:20px;">';
     
-    // Cabecera con número de cartón (no ID)
     html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">';
     html += '<div>';
     html += '<h2 style="color:#1e293b; margin:0;">Cartón #' + numero + '</h2>';
@@ -242,7 +240,6 @@ function generarHTMLCarton(datos) {
     html += '</div>';
     html += '</div>';
     
-    // Tabla del cartón
     html += '<table style="width:100%; border-collapse:collapse; margin:15px auto; max-width:350px;">';
     html += '<tr style="background:#ff4d4d; color:white;">';
     html += '<th style="padding:12px;">B</th><th style="padding:12px;">I</th><th style="padding:12px;">N</th><th style="padding:12px;">G</th><th style="padding:12px;">O</th>';
@@ -262,7 +259,6 @@ function generarHTMLCarton(datos) {
     
     html += '</table>';
     
-    // Botones de acción
     html += '<div style="margin-top:15px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">';
     html += '<button onclick="copiarLinkCarton(\'' + id + '\')" style="background:#3b82f6; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size:0.85rem;">🔗 Link Individual</button>';
     html += '<button onclick="cambiarEstadoCarton(\'' + id + '\')" style="background:#f59e0b; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size:0.85rem;">🔄 Estado</button>';
@@ -275,7 +271,6 @@ function generarHTMLCarton(datos) {
 
 // ============ EXPORTAR PDF ============
 async function exportarPDFCarton(id) {
-    // Cargar html2pdf si no está disponible
     if (typeof html2pdf === 'undefined') {
         await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
     }
@@ -445,7 +440,6 @@ function generarTablaPDF(carton) {
     return tabla;
 }
 
-// ============ CARGAR SCRIPT DINÁMICO ============
 function cargarScript(url) {
     return new Promise((resolve, reject) => {
         const script = document.createElement('script');
@@ -456,7 +450,7 @@ function cargarScript(url) {
     });
 }
 
-// ============ RESTO DE FUNCIONES (MANTENER IGUAL) ============
+// ============ FUNCIONES AUXILIARES ============
 function renombrarCarton(id, nombre) {
     if (nombre && nombre.trim()) {
         db.ref('salas/' + SALA_ID + '/cartones/' + id).update({ nombre: nombre.trim() });
@@ -610,7 +604,7 @@ function mostrarToast(mensaje, tipo) {
     }, 2500);
 }
 
-// ============ SINCRONIZACIÓN ============
+// ============ SINCRONIZACIÓN (CORREGIDA) ============
 function iniciarSincronizacion() {
     db.ref('salas/' + SALA_ID + '/cartones').on('value', snapshot => {
         const total = snapshot.numChildren() || 0;
@@ -626,10 +620,14 @@ function iniciarSincronizacion() {
         
         contenedor.innerHTML = '';
         
+        // Convertir a array
         const cartones = [];
         snapshot.forEach(child => cartones.push({ key: child.key, ...child.val() }));
-        cartones.sort((a, b) => (b.creado || 0) - (a.creado || 0));
         
+        // Ordenar por número
+        cartones.sort((a, b) => (a.numero || 0) - (b.numero || 0));
+        
+        // Renderizar
         cartones.forEach(carton => {
             const div = document.createElement('div');
             div.className = 'card-carton';
@@ -650,13 +648,13 @@ function iniciarSincronizacion() {
                     '<span class="carton-id"># ' + numero + '</span>' +
                     '<span class="carton-estado estado-' + estado + '">' + estado + '</span>' +
                 '</div>' +
-                (asignadoA ? '<div style="font-size:0.7rem; color:#10b981; margin-bottom:4px;">👤 ' + asignadoA + '</div>' : '') +
+                (asignadoA ? '<div class="carton-asignado">👤 ' + asignadoA + '</div>' : '') +
                 '<input type="text" class="input-nombre-carton" value="' + (carton.nombre || '') + '" ' +
                     'onchange="renombrarCarton(\'' + carton.key + '\', this.value)" onclick="event.stopPropagation()" placeholder="Nombre...">' +
                 '<div class="carton-acciones">' +
-                    '<button class="btn-accion-pequeno" onclick="toggleSeleccionCarton(\'' + carton.key + '\', event)" style="background:' + (cartonesSeleccionados.has(carton.key) ? '#10b981' : '#6b7280') + ';" title="Seleccionar">' + (cartonesSeleccionados.has(carton.key) ? '✓' : '○') + '</button>' +
+                    '<button class="btn-accion-pequeno seleccionar' + (cartonesSeleccionados.has(carton.key) ? ' activo' : '') + '" onclick="toggleSeleccionCarton(\'' + carton.key + '\', event)" title="Seleccionar">' + (cartonesSeleccionados.has(carton.key) ? '✓' : '○') + '</button>' +
                     '<button class="btn-accion-pequeno link" onclick="event.stopPropagation(); copiarLinkCarton(\'' + carton.key + '\')">🔗</button>' +
-                    '<button class="btn-accion-pequeno" onclick="event.stopPropagation(); cambiarEstadoCarton(\'' + carton.key + '\')" style="background:#f59e0b;">🔄</button>' +
+                    '<button class="btn-accion-pequeno estado-btn" onclick="event.stopPropagation(); cambiarEstadoCarton(\'' + carton.key + '\')">🔄</button>' +
                     '<button class="btn-accion-pequeno eliminar" onclick="event.stopPropagation(); eliminarCarton(\'' + carton.key + '\')">🗑️</button>' +
                 '</div>';
             
