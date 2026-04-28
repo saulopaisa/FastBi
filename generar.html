@@ -2,65 +2,416 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Bingo Pro Admin - Generador</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Pro Admin - Generador de Cartones</title>
     <style>
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #0b0f1a; display: flex; height: 100vh; color: white; overflow: hidden; }
-        .sidebar { width: 340px; background: #16213e; padding: 20px; display: flex; flex-direction: column; border-right: 1px solid #2d3436; }
-        .main-content { flex: 1; background: #f8fafc; display: flex; align-items: center; justify-content: center; }
-        .titulo { color: #ff4d4d; text-align: center; font-size: 1.5rem; font-weight: 900; margin-bottom: 15px; }
-        
-        /* ID IMPORTANTE: contadorRegistrados */
-        .btn-registrados { background: #ffca28; color: #16213e; border: none; padding: 12px; border-radius: 6px; font-weight: bold; width: 100%; margin-bottom: 15px; text-align: center; }
-        
-        .input-lote-group { display: flex; gap: 8px; margin-bottom: 15px; }
-        .input-lote-group input { flex: 1; padding: 10px; border-radius: 4px; border: none; text-align: center; font-weight: bold; }
-        .btn-generar { background: #ffca28; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; color: #16213e; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-        .grid-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .btn-tool { background: #2d3748; color: #edf2f7; border: none; padding: 10px; border-radius: 4px; font-size: 0.85rem; cursor: pointer; }
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0b0f1a;
+            display: flex;
+            height: 100vh;
+            color: white;
+            overflow: hidden;
+        }
 
-        /* ID IMPORTANTE: listaCartones */
-        .lista-container { flex: 1; overflow-y: auto; background: #0f172a; border-radius: 8px; padding: 10px; border: 1px solid #1e293b; margin-bottom: 15px; }
-        .card-jugador { background: white; color: #1e293b; border-radius: 6px; padding: 12px; margin-bottom: 10px; border-left: 6px solid #ff4d4d; cursor: pointer; }
-        .card-jugador h4 { margin: 0 0 5px 0; color: #ff4d4d; font-size: 0.85rem; }
-        .input-apodo { width: 100%; border: 1px solid #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.9rem; }
+        /* ============ SIDEBAR IZQUIERDO ============ */
+        .sidebar {
+            width: 380px;
+            min-width: 380px;
+            background: linear-gradient(180deg, #16213e 0%, #0f172a 100%);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            border-right: 2px solid #2d3436;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
 
-        .btn-ir-juego { background: #ff4d4d; color: white; border: none; padding: 16px; border-radius: 6px; font-weight: bold; width: 100%; cursor: pointer; }
-        .preview-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; color: #1e293b; }
+        .titulo {
+            color: #ff4d4d;
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(255,77,77,0.3);
+            letter-spacing: 2px;
+        }
+
+        .subtitulo {
+            color: #94a3b8;
+            text-align: center;
+            font-size: 0.8rem;
+            margin-bottom: 15px;
+            font-weight: 300;
+        }
+
+        /* Contador de registrados */
+        .btn-registrados {
+            background: linear-gradient(135deg, #ffca28 0%, #ffb300 100%);
+            color: #16213e;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            width: 100%;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 10px rgba(255,202,40,0.3);
+            transition: transform 0.2s;
+        }
+
+        .btn-registrados:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Grupo de creación */
+        .crear-jugador-group {
+            margin-bottom: 20px;
+        }
+
+        .btn-crear-jugador {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            width: 100%;
+            font-size: 1rem;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(16,185,129,0.3);
+        }
+
+        .btn-crear-jugador:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(16,185,129,0.5);
+        }
+
+        /* Grid de herramientas */
+        .grid-tools {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn-tool {
+            background: #2d3748;
+            color: #edf2f7;
+            border: 1px solid #4a5568;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-tool:hover {
+            background: #3d4a5c;
+            border-color: #ff4d4d;
+            transform: translateY(-1px);
+        }
+
+        .btn-tool.pdf {
+            background: #553c9a;
+            border-color: #6b46c1;
+        }
+
+        .btn-tool.pdf:hover {
+            background: #6b46c1;
+        }
+
+        /* Lista de jugadores */
+        .lista-container {
+            flex: 1;
+            overflow-y: auto;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 10px;
+            padding: 10px;
+            border: 1px solid #1e293b;
+            margin-bottom: 15px;
+        }
+
+        .lista-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .lista-container::-webkit-scrollbar-thumb {
+            background: #ff4d4d;
+            border-radius: 3px;
+        }
+
+        .lista-container::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        .card-jugador {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            color: #1e293b;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 5px solid #ff4d4d;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .card-jugador:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(255,77,77,0.3);
+        }
+
+        .card-jugador h4 {
+            margin: 0 0 5px 0;
+            color: #ff4d4d;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .card-jugador .info-jugador {
+            color: #64748b;
+            font-size: 0.75rem;
+            margin: 3px 0;
+        }
+
+        .btn-accion-pequeno {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .btn-accion-pequeno:hover {
+            background: #2563eb;
+            transform: scale(1.05);
+        }
+
+        .btn-accion-pequeno.agregar {
+            background: #f59e0b;
+        }
+
+        .btn-accion-pequeno.pdf {
+            background: #8b5cf6;
+        }
+
+        .btn-accion-pequeno.link {
+            background: #10b981;
+        }
+
+        /* Botón IR AL JUEGO */
+        .btn-ir-juego {
+            background: linear-gradient(135deg, #ff4d4d 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(255,77,77,0.4);
+            letter-spacing: 1px;
+        }
+
+        .btn-ir-juego:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,77,77,0.6);
+            background: linear-gradient(135deg, #ff6b6b 0%, #ef4444 100%);
+        }
+
+        /* ============ CONTENIDO PRINCIPAL ============ */
+        .main-content {
+            flex: 1;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .preview-box {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            text-align: center;
+            color: #1e293b;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transition: all 0.3s;
+        }
+
+        .preview-box::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .preview-box::-webkit-scrollbar-thumb {
+            background: #ff4d4d;
+            border-radius: 4px;
+        }
+
+        .preview-empty {
+            color: #cbd5e1;
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+
+        .preview-empty p {
+            font-size: 1rem;
+            color: #94a3b8;
+            margin-top: 10px;
+        }
+
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                min-width: 100%;
+                max-height: 50vh;
+                border-right: none;
+                border-bottom: 2px solid #2d3436;
+            }
+
+            .main-content {
+                padding: 10px;
+            }
+
+            .preview-box {
+                padding: 20px;
+            }
+        }
+
+        /* Animaciones */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-jugador {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Tooltip para botones */
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            z-index: 100;
+        }
     </style>
 </head>
 <body>
+    <!-- ============ SIDEBAR IZQUIERDO ============ -->
     <div class="sidebar">
-        <div class="titulo">BINGO PRO ADMIN</div>
-        <div id="contadorRegistrados" class="btn-registrados">REGISTRADOS: 0</div>
-
-        <div class="input-lote-group">
-            <input type="number" id="cantidadGenerar" placeholder="Cant.">
-            <button class="btn-generar" onclick="window.generarLote()">GENERAR</button>
+        <div class="titulo">🎯 BINGO PRO</div>
+        <div class="subtitulo">Panel de Administración</div>
+        
+        <!-- Contador de registrados -->
+        <div id="contadorRegistrados" class="btn-registrados">
+            👥 REGISTRADOS: 0
         </div>
 
+        <!-- Botón principal para crear jugador -->
+        <div class="crear-jugador-group">
+            <button class="btn-crear-jugador" onclick="window.crearJugador()">
+                ➕ NUEVO JUGADOR
+            </button>
+        </div>
+
+        <!-- Herramientas -->
         <div class="grid-tools">
-            <button class="btn-tool" onclick="window.exportarJSON()">💾 Guardar</button>
-            <button class="btn-tool" onclick="document.getElementById('fileIn').click()">📂 Abrir</button>
-            <button class="btn-tool" onclick="window.verTodos()">👁️ Ver Link</button>
-            <button class="btn-tool" onclick="window.borrarTodo()">🗑️ Borrar</button>
+            <button class="btn-tool tooltip" data-tooltip="Guardar todo en JSON" onclick="window.exportarJSON()">
+                💾 Guardar
+            </button>
+            <button class="btn-tool tooltip" data-tooltip="Cargar backup JSON" onclick="document.getElementById('fileIn').click()">
+                📂 Abrir
+            </button>
+            <button class="btn-tool pdf tooltip" data-tooltip="Exportar todo a PDF" onclick="window.exportarTodoPDF()">
+                📄 PDF Todo
+            </button>
+            <button class="btn-tool tooltip" data-tooltip="Ver todos los links" onclick="window.verTodos()">
+                🔗 Links
+            </button>
+            <button class="btn-tool tooltip" data-tooltip="Eliminar todo" onclick="window.borrarTodo()" style="grid-column: span 2;">
+                🗑️ Borrar Todo
+            </button>
         </div>
-        <input type="file" id="fileIn" style="display:none" onchange="window.importarJSON(event)">
+        
+        <!-- Input file oculto para importar -->
+        <input type="file" id="fileIn" style="display:none" accept=".json" onchange="window.importarJSON(event)">
 
-        <div class="lista-container" id="listaCartones"></div>
+        <!-- Lista de jugadores -->
+        <div class="lista-container" id="listaCartones">
+            <p style="color:#94a3b8; text-align:center; padding:20px;">
+                No hay jugadores creados aún
+            </p>
+        </div>
 
-        <button class="btn-ir-juego" onclick="location.href='ruleta.html'">IR AL JUEGO →</button>
+        <!-- Botón para ir al juego -->
+        <button class="btn-ir-juego" onclick="location.href='ruleta.html'">
+            🎮 IR AL JUEGO →
+        </button>
     </div>
 
+    <!-- ============ CONTENIDO PRINCIPAL ============ -->
     <div class="main-content">
         <div id="vista-previa-contenido" class="preview-box">
-            <h2 style="color:#cbd5e1; font-size: 2.5rem;">VISTA PREVIA</h2>
-            <p>Selecciona un cartón para inspeccionar</p>
+            <div class="preview-empty">
+                <h2>👁️ VISTA PREVIA</h2>
+                <p>Selecciona un jugador para ver sus cartones</p>
+                <p style="font-size:0.8rem; margin-top:20px;">
+                    💡 Tip: Puedes crear jugadores con múltiples cartones
+                </p>
+            </div>
         </div>
     </div>
 
+    <!-- ============ SCRIPTS ============ -->
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    
+    <!-- Configuración de Firebase -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
@@ -71,11 +422,83 @@
             messagingSenderId: "473863283329",
             appId: "1:473863283329:web:2c4bf96de167d105fa6380"
         };
-        // Inicializar antes que el script externo
+        
+        // Inicializar Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
+            console.log('🔥 Firebase inicializado correctamente');
         }
     </script>
+    
+    <!-- Nuestro script principal -->
     <script src="generar.js"></script>
+    
+    <!-- Script para manejo de la UI -->
+    <script>
+        // Mejoras de UI adicionales
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎨 Interfaz de administración cargada');
+            
+            // Efecto hover en las cards de jugadores
+            const listaContainer = document.getElementById('listaCartones');
+            if (listaContainer) {
+                listaContainer.addEventListener('mouseover', function(e) {
+                    const card = e.target.closest('.card-jugador');
+                    if (card) {
+                        card.style.transform = 'translateX(8px)';
+                    }
+                });
+                
+                listaContainer.addEventListener('mouseout', function(e) {
+                    const card = e.target.closest('.card-jugador');
+                    if (card) {
+                        card.style.transform = 'translateX(0)';
+                    }
+                });
+            }
+        });
+
+        // Función global para copiar al portapapeles
+        window.copiarAlPortapapeles = function(texto) {
+            navigator.clipboard.writeText(texto).then(() => {
+                // Feedback visual
+                const toast = document.createElement('div');
+                toast.textContent = '✅ Copiado al portapapeles';
+                toast.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    background: #10b981;
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    z-index: 9999;
+                    font-weight: bold;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                    animation: slideIn 0.3s ease-out;
+                `;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.animation = 'slideOut 0.3s ease-out';
+                    setTimeout(() => toast.remove(), 300);
+                }, 2000);
+            });
+        };
+
+        // Animaciones CSS para toast
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100px); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100px); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 </body>
 </html>
