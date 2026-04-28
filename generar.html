@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="generar.css">
 </head>
 <body>
-    <!-- SIDEBAR -->
     <div class="sidebar">
         <div class="titulo">🎯 BINGO PRO</div>
         <div class="subtitulo">Generador de Cartones</div>
@@ -28,6 +27,11 @@
             <button class="btn-tool danger" id="btnBorrar">🗑️ Borrar</button>
         </div>
         
+        <!-- Botón de ASIGNAR (aparece al seleccionar) -->
+        <button class="btn-asignar" id="btnAsignar" style="display:none;" onclick="asignarAJugador()">
+            👤 ASIGNAR A JUGADOR
+        </button>
+        
         <input type="file" id="fileIn" style="display:none" accept=".json">
 
         <div class="buscador">
@@ -41,22 +45,18 @@
         <button class="btn-ir-juego" id="btnIrJuego">🎮 IR AL JUEGO →</button>
     </div>
 
-    <!-- CONTENIDO PRINCIPAL -->
     <div class="main-content">
         <div id="vista-previa-contenido" class="preview-box">
             <div class="preview-empty">
                 <h2>👁️ VISTA PREVIA</h2>
                 <p>Selecciona un cartón para verlo en detalle</p>
-                <p style="font-size:0.8rem; margin-top:20px;">💡 Tip: Genera cartones y asígnalos a jugadores</p>
+                <p style="font-size:0.8rem; margin-top:20px;">💡 Selecciona varios cartones y asígnalos a un jugador</p>
             </div>
         </div>
     </div>
 
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    
-    <!-- Configuración de Firebase (ÚNICA declaración) -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
@@ -67,13 +67,10 @@
             messagingSenderId: "473863283329",
             appId: "1:473863283329:web:2c4bf96de167d105fa6380"
         };
-        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        console.log('🔥 Firebase inicializado correctamente');
+        console.log('🔥 Firebase listo');
     </script>
-    
-    <!-- Lógica de la aplicación -->
     <script src="generar.js"></script>
 </body>
 </html>
