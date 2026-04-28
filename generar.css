@@ -1,3 +1,4 @@
+/* ============ RESET Y BASE ============ */
 * {
     margin: 0;
     padding: 0;
@@ -14,6 +15,7 @@ body {
     overflow: hidden;
 }
 
+/* ============ SIDEBAR IZQUIERDO ============ */
 .sidebar {
     width: 400px;
     min-width: 400px;
@@ -44,6 +46,7 @@ body {
     font-weight: 300;
 }
 
+/* ============ CONTADOR ============ */
 .btn-contador {
     background: linear-gradient(135deg, #ffca28 0%, #ffb300 100%);
     color: #16213e;
@@ -58,6 +61,7 @@ body {
     box-shadow: 0 4px 10px rgba(255,202,40,0.3);
 }
 
+/* ============ GRUPO DE GENERACIÓN ============ */
 .input-lote-group {
     display: flex;
     gap: 8px;
@@ -100,6 +104,29 @@ body {
     box-shadow: 0 6px 15px rgba(16,185,129,0.5);
 }
 
+/* ============ BOTÓN ASIGNAR ============ */
+.btn-asignar {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    width: 100%;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    transition: all 0.3s;
+    animation: fadeIn 0.3s;
+    box-shadow: 0 4px 10px rgba(139,92,246,0.3);
+}
+
+.btn-asignar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(139,92,246,0.5);
+}
+
+/* ============ GRID DE HERRAMIENTAS ============ */
 .grid-tools {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -126,10 +153,34 @@ body {
     transform: translateY(-1px);
 }
 
-.btn-tool.pdf { background: #553c9a; border-color: #6b46c1; }
-.btn-tool.links { background: #1e40af; border-color: #2563eb; }
-.btn-tool.danger { color: #ef4444; }
+.btn-tool.pdf {
+    background: #553c9a;
+    border-color: #6b46c1;
+}
 
+.btn-tool.pdf:hover {
+    background: #6b46c1;
+}
+
+.btn-tool.links {
+    background: #1e40af;
+    border-color: #2563eb;
+}
+
+.btn-tool.links:hover {
+    background: #2563eb;
+}
+
+.btn-tool.danger {
+    color: #ef4444;
+}
+
+.btn-tool.danger:hover {
+    background: #3d4a5c;
+    border-color: #ef4444;
+}
+
+/* ============ BUSCADOR ============ */
 .buscador {
     margin-bottom: 10px;
 }
@@ -153,6 +204,7 @@ body {
     color: #64748b;
 }
 
+/* ============ LISTA DE CARTONES ============ */
 .lista-container {
     flex: 1;
     overflow-y: auto;
@@ -177,6 +229,7 @@ body {
     background: #0f172a;
 }
 
+/* ============ CARD DE CARTÓN ============ */
 .card-carton {
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
     color: #1e293b;
@@ -198,6 +251,7 @@ body {
 .card-carton.seleccionado {
     border-left: 5px solid #10b981;
     background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    box-shadow: 0 4px 15px rgba(16,185,129,0.3);
 }
 
 .carton-header {
@@ -208,7 +262,7 @@ body {
 }
 
 .carton-id {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     color: #64748b;
     font-weight: 600;
 }
@@ -220,9 +274,27 @@ body {
     font-weight: 600;
 }
 
-.estado-disponible { background: #dcfce7; color: #166534; }
-.estado-asignado { background: #fef3c7; color: #92400e; }
-.estado-usado { background: #fee2e2; color: #991b1b; }
+.estado-disponible {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.estado-asignado {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.estado-usado {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.carton-asignado {
+    font-size: 0.7rem;
+    color: #10b981;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
 
 .input-nombre-carton {
     width: 100%;
@@ -257,11 +329,52 @@ body {
     flex: 1;
 }
 
-.btn-accion-pequeno:hover { background: #2563eb; transform: scale(1.05); }
-.btn-accion-pequeno.pdf { background: #8b5cf6; }
-.btn-accion-pequeno.link { background: #10b981; }
-.btn-accion-pequeno.eliminar { background: #ef4444; }
+.btn-accion-pequeno:hover {
+    background: #2563eb;
+    transform: scale(1.05);
+}
 
+.btn-accion-pequeno.pdf {
+    background: #8b5cf6;
+}
+
+.btn-accion-pequeno.pdf:hover {
+    background: #7c3aed;
+}
+
+.btn-accion-pequeno.link {
+    background: #10b981;
+}
+
+.btn-accion-pequeno.link:hover {
+    background: #059669;
+}
+
+.btn-accion-pequeno.eliminar {
+    background: #ef4444;
+}
+
+.btn-accion-pequeno.eliminar:hover {
+    background: #dc2626;
+}
+
+.btn-accion-pequeno.seleccionar {
+    background: #6b7280;
+}
+
+.btn-accion-pequeno.seleccionar.activo {
+    background: #10b981;
+}
+
+.btn-accion-pequeno.estado-btn {
+    background: #f59e0b;
+}
+
+.btn-accion-pequeno.estado-btn:hover {
+    background: #d97706;
+}
+
+/* ============ BOTÓN IR AL JUEGO ============ */
 .btn-ir-juego {
     background: linear-gradient(135deg, #ff4d4d 0%, #dc2626 100%);
     color: white;
@@ -281,8 +394,10 @@ body {
 .btn-ir-juego:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(255,77,77,0.6);
+    background: linear-gradient(135deg, #ff6b6b 0%, #ef4444 100%);
 }
 
+/* ============ CONTENIDO PRINCIPAL ============ */
 .main-content {
     flex: 1;
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
@@ -306,8 +421,14 @@ body {
     overflow-y: auto;
 }
 
-.preview-box::-webkit-scrollbar { width: 8px; }
-.preview-box::-webkit-scrollbar-thumb { background: #ff4d4d; border-radius: 4px; }
+.preview-box::-webkit-scrollbar {
+    width: 8px;
+}
+
+.preview-box::-webkit-scrollbar-thumb {
+    background: #ff4d4d;
+    border-radius: 4px;
+}
 
 .preview-empty {
     color: #cbd5e1;
@@ -321,6 +442,7 @@ body {
     margin-top: 10px;
 }
 
+/* ============ TOAST ============ */
 .toast {
     position: fixed;
     bottom: 20px;
@@ -335,23 +457,46 @@ body {
     animation: slideIn 0.3s ease-out;
 }
 
+/* ============ ANIMACIONES ============ */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes slideIn {
-    from { transform: translateX(100px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    from {
+        transform: translateX(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 @keyframes slideOut {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(100px); opacity: 0; }
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100px);
+        opacity: 0;
+    }
 }
 
+/* ============ RESPONSIVE ============ */
 @media (max-width: 768px) {
-    body { flex-direction: column; }
+    body {
+        flex-direction: column;
+    }
+
     .sidebar {
         width: 100%;
         min-width: 100%;
@@ -359,28 +504,35 @@ body {
         border-right: none;
         border-bottom: 2px solid #2d3436;
     }
-    .main-content { padding: 10px; }
-    .preview-box { padding: 15px; }
-    .grid-tools { grid-template-columns: 1fr 1fr 1fr; }
+
+    .main-content {
+        padding: 10px;
+    }
+
+    .preview-box {
+        padding: 15px;
+    }
+
+    .grid-tools {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
 }
 
-/* Botón de asignar */
-.btn-asignar {
-    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-    color: white;
-    border: none;
-    padding: 12px;
-    border-radius: 8px;
-    font-weight: bold;
-    width: 100%;
-    cursor: pointer;
-    font-size: 0.9rem;
-    margin-bottom: 10px;
-    transition: all 0.3s;
-    animation: fadeIn 0.3s;
-}
+@media (max-width: 480px) {
+    .sidebar {
+        padding: 10px;
+    }
 
-.btn-asignar:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(139,92,246,0.4);
+    .grid-tools {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .titulo {
+        font-size: 1.2rem;
+    }
+
+    .btn-generar {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
 }
