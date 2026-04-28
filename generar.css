@@ -363,3 +363,24 @@ body {
     .preview-box { padding: 15px; }
     .grid-tools { grid-template-columns: 1fr 1fr 1fr; }
 }
+
+/* Botón de asignar */
+.btn-asignar {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    width: 100%;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    transition: all 0.3s;
+    animation: fadeIn 0.3s;
+}
+
+.btn-asignar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(139,92,246,0.4);
+}
