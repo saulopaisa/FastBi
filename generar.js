@@ -1,116 +1,87 @@
-var db = firebase.database();
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Bingo Pro Admin - Generador</title>
+    <style>
+        /* ESTILOS FIEL A TUS CAPTURAS */
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #0b0f1a; display: flex; height: 100vh; color: white; overflow: hidden; }
+        .sidebar { width: 340px; background: #16213e; padding: 20px; display: flex; flex-direction: column; border-right: 1px solid #2d3436; }
+        .main-content { flex: 1; background: #f8fafc; display: flex; align-items: center; justify-content: center; }
 
-// --- GENERACIÓN CON NÚMEROS REALES ---
-window.generarLote = function() {
-    const input = document.getElementById('cantidadGenerar');
-    const cantidad = parseInt(input.value);
+        .titulo { color: #ff4d4d; text-align: center; font-size: 1.5rem; font-weight: 900; margin-bottom: 15px; }
+        .btn-registrados { background: #ffca28; color: #16213e; border: none; padding: 12px; border-radius: 6px; font-weight: bold; width: 100%; margin-bottom: 15px; text-align: center; font-size: 1.1rem; }
+        
+        .input-lote-group { display: flex; gap: 8px; margin-bottom: 15px; }
+        .input-lote-group input { flex: 1; padding: 10px; border-radius: 4px; border: none; text-align: center; font-weight: bold; }
+        .btn-generar { background: #ffca28; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; color: #16213e; }
 
-    if (isNaN(cantidad) || cantidad <= 0) return alert("Ingresa una cantidad.");
+        .grid-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .btn-tool { background: #2d3748; color: #edf2f7; border: none; padding: 10px; border-radius: 4px; font-size: 0.85rem; cursor: pointer; }
 
-    for (let i = 0; i < cantidad; i++) {
-        const id = Math.floor(1000 + Math.random() * 9000);
-        db.ref('cartonesGenerados/' + id).set({
-            id: id,
-            apodo: "Jugador " + id,
-            numeros: generarNumerosBingo(), // Función para que el cartón no esté vacío
-            timestamp: Date.now()
-        });
-    }
-    input.value = "";
-};
-
-function generarNumerosBingo() {
-    const columnas = { 'B': [1,15], 'I': [16,30], 'N': [31,45], 'G': [46,60], 'O': [61,75] };
-    let data = {};
-    Object.keys(columnas).forEach(letra => {
-        let n = [];
-        while(n.length < 5) {
-            let r = Math.floor(Math.random() * (columnas[letra][1] - columnas[letra][0] + 1)) + columnas[letra][0];
-            if(!n.includes(r)) n.push(r);
+        /* EL LISTADO QUE FALTABA (Zona marcada en seleccion.PNG) */
+        .lista-container { 
+            flex: 1; overflow-y: auto; background: #0f172a; border-radius: 8px; 
+            padding: 10px; border: 1px solid #1e293b; margin-bottom: 15px;
         }
-        data[letra] = n;
-    });
-    data['N'][2] = 0; // Centro libre
-    return data;
-}
-
-// --- ACTUALIZAR NOMBRE (Renombrar) ---
-window.actualizarNombre = function(id, nuevoNombre) {
-    db.ref('cartonesGenerados/' + id).update({ apodo: nuevoNombre });
-};
-
-// --- LISTA DINÁMICA ---
-function cargarLista() {
-    db.ref('cartonesGenerados').on('value', (snapshot) => {
-        const total = snapshot.numChildren() || 0;
-        document.getElementById('contadorRegistrados').innerText = "REGISTRADOS: " + total;
-
-        const lista = document.getElementById('listaCartones');
-        if (!lista) return;
-        lista.innerHTML = "";
-
-        snapshot.forEach((child) => {
-            const c = child.val();
-            const card = document.createElement('div');
-            card.className = "card-jugador";
-            
-            // Al hacer clic en la tarjeta (no en el input), ver vista previa
-            card.onclick = (e) => {
-                if(e.target.tagName !== 'INPUT') window.verVistaPrevia(c.id);
-            };
-
-            card.innerHTML = `
-                <h4>ID #${c.id}</h4>
-                <input type="text" class="input-renombrar" value="${c.apodo}" 
-                    onchange="window.actualizarNombre('${c.id}', this.value)"
-                    onclick="event.stopPropagation()">
-            `;
-            lista.appendChild(card);
-        });
-    });
-}
-
-// --- VISTA PREVIA DETALLADA ---
-window.verVistaPrevia = function(id) {
-    const preview = document.getElementById('vista-previa-contenido');
-    db.ref('cartonesGenerados/' + id).once('value', (snap) => {
-        const c = snap.val();
-        if (!c) return;
-
-        let tablaHtml = `
-            <h2 style="margin:0; color:#334155;">JUGADOR: ${c.apodo}</h2>
-            <p style="color:#ef4444; font-weight:bold;">CARTÓN #${c.id}</p>
-            <div class="tabla-bingo">
-                <div class="header-bingo">B</div><div class="header-bingo">I</div><div class="header-bingo">N</div><div class="header-bingo">G</div><div class="header-bingo">O</div>
-        `;
-
-        for (let i = 0; i < 5; i++) {
-            ['B','I','N','G','O'].forEach(l => {
-                const num = c.numeros[l][i] === 0 ? "⭐" : c.numeros[l][i];
-                tablaHtml += `<div class="celda">${num}</div>`;
-            });
+        
+        .card-jugador { 
+            background: white; color: #1e293b; border-radius: 6px; padding: 12px; 
+            margin-bottom: 10px; border-left: 6px solid #ff4d4d; cursor: pointer;
         }
-        tablaHtml += `</div>`;
-        preview.innerHTML = tablaHtml;
-    });
-};
+        .card-jugador h4 { margin: 0 0 5px 0; color: #ff4d4d; font-size: 0.85rem; }
+        .input-apodo { width: 100%; border: 1px solid #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.9rem; outline: none; }
 
-// --- OTRAS FUNCIONES ---
-window.borrarTodo = function() { if(confirm("¿Borrar todo?")) db.ref('cartonesGenerados').remove(); };
+        .btn-ir-juego { background: #ff4d4d; color: white; border: none; padding: 16px; border-radius: 6px; font-weight: bold; width: 100%; cursor: pointer; }
+        
+        /* Vista Previa */
+        .preview-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; color: #1e293b; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="titulo">BINGO PRO ADMIN</div>
+        <div id="contador" class="btn-registrados">REGISTRADOS: 0</div>
 
-window.exportarJSON = function() {
-    db.ref('cartonesGenerados').once('value', s => {
-        const blob = new Blob([JSON.stringify(s.val())], {type:'application/json'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'bingo_backup.json'; a.click();
-    });
-};
+        <div class="input-lote-group">
+            <input type="number" id="cantidadGenerar" placeholder="Cant.">
+            <button class="btn-generar" onclick="window.generarLote()">GENERAR</button>
+        </div>
 
-window.importarJSON = function(e) {
-    const reader = new FileReader();
-    reader.onload = (ev) => db.ref('cartonesGenerados').update(JSON.parse(ev.target.result));
-    reader.readAsText(e.target.files[0]);
-};
+        <div class="grid-tools">
+            <button class="btn-tool" onclick="window.exportar()">💾 Guardar</button>
+            <button class="btn-tool" onclick="document.getElementById('fIn').click()">📂 Abrir</button>
+            <button class="btn-tool" onclick="window.verLink()">👁️ Ver Link</button>
+            <button class="btn-tool" onclick="window.borrarTodo()">🗑️ Borrar</button>
+        </div>
+        <input type="file" id="fIn" style="display:none" onchange="window.importar(event)">
 
-window.verTodos = function() { prompt("Link de juego:", window.location.origin + "/FastBi/jugador.html"); };
+        <div class="lista-container" id="listaCartones"></div>
 
-document.addEventListener("DOMContentLoaded", cargarLista);
+        <button class="btn-ir-juego" onclick="location.href='ruleta.html'">IR AL JUEGO →</button>
+    </div>
+
+    <div class="main-content">
+        <div id="vista-previa" class="preview-box">
+            <h2 style="color:#cbd5e1; font-size: 2.5rem;">VISTA PREVIA</h2>
+            <p>Selecciona un cartón para inspeccionar</p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
+            authDomain: "bingofast.firebaseapp.com",
+            databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
+            projectId: "bingofast",
+            storageBucket: "bingofast.firebasestorage.app",
+            messagingSenderId: "473863283329",
+            appId: "1:473863283329:web:2c4bf96de167d105fa6380"
+        };
+        firebase.initializeApp(firebaseConfig);
+    </script>
+    <script src="generar.js"></script>
+</body>
+</html>
