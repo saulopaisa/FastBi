@@ -4,54 +4,44 @@
     <meta charset="UTF-8">
     <title>Bingo Pro Admin - Generador</title>
     <style>
-        /* DISEÑO RESTAURADO */
+        /* ESTILOS FIEL A TUS CAPTURAS */
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #0b0f1a; display: flex; height: 100vh; color: white; overflow: hidden; }
-        
         .sidebar { width: 340px; background: #16213e; padding: 20px; display: flex; flex-direction: column; border-right: 1px solid #2d3436; }
-        .main-content { flex: 1; background: #f8fafc; display: flex; align-items: center; justify-content: center; overflow: auto; }
+        .main-content { flex: 1; background: #f8fafc; display: flex; align-items: center; justify-content: center; }
 
         .titulo { color: #ff4d4d; text-align: center; font-size: 1.5rem; font-weight: 900; margin-bottom: 15px; }
-        .btn-registrados { background: #ffca28; color: #16213e; border: none; padding: 12px; border-radius: 6px; font-weight: bold; width: 100%; margin-bottom: 15px; text-align: center; }
+        .btn-registrados { background: #ffca28; color: #16213e; border: none; padding: 12px; border-radius: 6px; font-weight: bold; width: 100%; margin-bottom: 15px; text-align: center; font-size: 1.1rem; }
         
-        /* Controles */
         .input-lote-group { display: flex; gap: 8px; margin-bottom: 15px; }
-        .input-lote-group input { flex: 1; padding: 10px; border-radius: 4px; border: none; text-align: center; }
+        .input-lote-group input { flex: 1; padding: 10px; border-radius: 4px; border: none; text-align: center; font-weight: bold; }
         .btn-generar { background: #ffca28; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; color: #16213e; }
 
         .grid-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .btn-tool { background: #2d3748; color: #edf2f7; border: none; padding: 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
+        .btn-tool { background: #2d3748; color: #edf2f7; border: none; padding: 10px; border-radius: 4px; font-size: 0.85rem; cursor: pointer; }
 
-        /* LISTA DE CARTONES (Diseño exacto de tu captura) */
-        .lista-container { flex: 1; overflow-y: auto; background: #0f172a; border-radius: 8px; padding: 10px; border: 1px solid #1e293b; }
+        /* EL LISTADO QUE FALTABA (Zona marcada en seleccion.PNG) */
+        .lista-container { 
+            flex: 1; overflow-y: auto; background: #0f172a; border-radius: 8px; 
+            padding: 10px; border: 1px solid #1e293b; margin-bottom: 15px;
+        }
         
         .card-jugador { 
-            background: white; color: #334155; border-radius: 6px; padding: 12px; margin-bottom: 10px; 
-            border-left: 6px solid #ff4d4d; cursor: pointer; position: relative; transition: 0.2s;
+            background: white; color: #1e293b; border-radius: 6px; padding: 12px; 
+            margin-bottom: 10px; border-left: 6px solid #ff4d4d; cursor: pointer;
         }
-        .card-jugador:hover { transform: translateX(5px); background: #f1f5f9; }
-        .card-jugador h4 { margin: 0 0 5px 0; color: #ff4d4d; font-size: 0.9rem; pointer-events: none; }
-        
-        /* Input para renombrar dentro de la tarjeta */
-        .input-renombrar { 
-            width: 100%; border: 1px solid #e2e8f0; padding: 5px; border-radius: 4px; 
-            font-size: 0.85rem; color: #475569; outline: none;
-        }
-        .input-renombrar:focus { border-color: #ff4d4d; }
+        .card-jugador h4 { margin: 0 0 5px 0; color: #ff4d4d; font-size: 0.85rem; }
+        .input-apodo { width: 100%; border: 1px solid #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.9rem; outline: none; }
 
-        .btn-ir-juego { background: #ff4d4d; color: white; border: none; padding: 16px; border-radius: 6px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 15px; }
+        .btn-ir-juego { background: #ff4d4d; color: white; border: none; padding: 16px; border-radius: 6px; font-weight: bold; width: 100%; cursor: pointer; }
         
-        /* Estilos para la tabla en la Vista Previa */
-        .preview-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; color: #1e293b; }
-        .tabla-bingo { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 20px; background: #cbd5e1; padding: 5px; border-radius: 4px; }
-        .celda { background: white; padding: 15px; font-weight: bold; font-size: 1.2rem; border-radius: 2px; min-width: 50px; }
-        .header-bingo { background: #ff4d4d; color: white; padding: 10px; font-weight: 900; }
+        /* Vista Previa */
+        .preview-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; color: #1e293b; }
     </style>
 </head>
 <body>
-
     <div class="sidebar">
         <div class="titulo">BINGO PRO ADMIN</div>
-        <div id="contadorRegistrados" class="btn-registrados">REGISTRADOS: 0</div>
+        <div id="contador" class="btn-registrados">REGISTRADOS: 0</div>
 
         <div class="input-lote-group">
             <input type="number" id="cantidadGenerar" placeholder="Cant.">
@@ -59,23 +49,22 @@
         </div>
 
         <div class="grid-tools">
-            <button class="btn-tool" onclick="window.exportarJSON()">💾 Guardar</button>
-            <button class="btn-tool" onclick="document.getElementById('fileIn').click()">📂 Abrir</button>
-            <button class="btn-tool" onclick="window.verTodos()">👁️ Ver Link</button>
+            <button class="btn-tool" onclick="window.exportar()">💾 Guardar</button>
+            <button class="btn-tool" onclick="document.getElementById('fIn').click()">📂 Abrir</button>
+            <button class="btn-tool" onclick="window.verLink()">👁️ Ver Link</button>
             <button class="btn-tool" onclick="window.borrarTodo()">🗑️ Borrar</button>
         </div>
-        <input type="file" id="fileIn" style="display:none" onchange="window.importarJSON(event)">
+        <input type="file" id="fIn" style="display:none" onchange="window.importar(event)">
 
-        <div class="lista-container" id="listaCartones">
-            </div>
+        <div class="lista-container" id="listaCartones"></div>
 
         <button class="btn-ir-juego" onclick="location.href='ruleta.html'">IR AL JUEGO →</button>
     </div>
 
     <div class="main-content">
-        <div id="vista-previa-contenido" class="preview-box">
-            <h2 style="color: #bdc3c7; font-size: 2.5rem;">VISTA PREVIA</h2>
-            <p>Selecciona un cartón de la lista para inspeccionar</p>
+        <div id="vista-previa" class="preview-box">
+            <h2 style="color:#cbd5e1; font-size: 2.5rem;">VISTA PREVIA</h2>
+            <p>Selecciona un cartón para inspeccionar</p>
         </div>
     </div>
 
