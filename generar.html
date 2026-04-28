@@ -36,11 +36,11 @@
             <button class="btn-tool pdf" onclick="window.exportarPDF()" title="Exportar seleccionados a PDF">
                 📄 PDF
             </button>
-            <button class="btn-tool links" onclick="window.verTodos()" title="Ver links de cartones">
+            <button class="btn-tool links" onclick="window.verLinks()" title="Ver links de cartones">
                 🔗 Links
             </button>
             <button class="btn-tool" onclick="window.seleccionarTodos()" title="Seleccionar todos">
-                ✅ Sel. Todos
+                ✅ Todos
             </button>
             <button class="btn-tool danger" onclick="window.borrarTodo()" title="Eliminar todos los cartones">
                 🗑️ Borrar
@@ -55,7 +55,7 @@
             <input type="text" id="buscadorCartones" placeholder="🔍 Buscar por nombre o ID..." oninput="window.filtrarCartones(this.value)">
         </div>
 
-        <!-- Lista de cartones -->
+        <!-- Lista de cartones (MÁS ESPACIO) -->
         <div class="lista-container" id="listaCartones">
             <p style="color:#94a3b8; text-align:center; padding:20px;">
                 No hay cartones generados aún
@@ -86,9 +86,26 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     
-    <!-- Configuración y lógica -->
-    <script src="firebase-config.js"></script>
+    <!-- Configuración y lógica (RUTAS CORREGIDAS) -->
+    <script>
+        // Configuración de Firebase INLINE para evitar error 404
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
+            authDomain: "bingofast.firebaseapp.com",
+            databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
+            projectId: "bingofast",
+            storageBucket: "bingofast.firebasestorage.app",
+            messagingSenderId: "473863283329",
+            appId: "1:473863283329:web:2c4bf96de167d105fa6380"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+            console.log('🔥 Firebase inicializado correctamente');
+        }
+        
+        const db = firebase.database();
+    </script>
     <script src="generar.js"></script>
-    <script src="ui-helpers.js"></script>
 </body>
 </html>
