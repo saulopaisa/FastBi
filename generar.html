@@ -80,11 +80,33 @@
         </div>
     </div>
 
-    <!-- Firebase -->
+    <!-- Firebase primero -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     
-    <!-- Script principal -->
+    <!-- Inicializar Firebase -->
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
+            authDomain: "bingofast.firebaseapp.com",
+            databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
+            projectId: "bingofast",
+            storageBucket: "bingofast.firebasestorage.app",
+            messagingSenderId: "473863283329",
+            appId: "1:473863283329:web:2c4bf96de167d105fa6380"
+        };
+        
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        
+        // Crear referencia global a la base de datos
+        const db = firebase.database();
+        
+        console.log('🔥 Firebase inicializado correctamente');
+    </script>
+    
+    <!-- Lógica de la aplicación -->
     <script src="generar.js"></script>
 </body>
 </html>
