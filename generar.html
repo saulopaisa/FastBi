@@ -7,64 +7,38 @@
     <link rel="stylesheet" href="generar.css">
 </head>
 <body>
-    <!-- SIDEBAR IZQUIERDO -->
+    <!-- SIDEBAR -->
     <div class="sidebar">
         <div class="titulo">🎯 BINGO PRO</div>
         <div class="subtitulo">Generador de Cartones</div>
         
-        <!-- Contador -->
-        <div id="contadorRegistrados" class="btn-contador">
-            🎫 CARTONES: 0
-        </div>
+        <div id="contadorRegistrados" class="btn-contador">🎫 CARTONES: 0</div>
 
-        <!-- Generar lote -->
         <div class="input-lote-group">
             <input type="number" id="cantidadGenerar" placeholder="Cant." min="1" max="100" value="1">
-            <button class="btn-generar" id="btnGenerar">
-                ⚡ GENERAR
-            </button>
+            <button class="btn-generar" id="btnGenerar">⚡ GENERAR</button>
         </div>
 
-        <!-- Herramientas -->
         <div class="grid-tools">
-            <button class="btn-tool" id="btnGuardar">
-                💾 Guardar
-            </button>
-            <button class="btn-tool" id="btnAbrir">
-                📂 Abrir
-            </button>
-            <button class="btn-tool pdf" id="btnPDF">
-                📄 PDF
-            </button>
-            <button class="btn-tool links" id="btnLinks">
-                🔗 Links
-            </button>
-            <button class="btn-tool" id="btnSelTodos">
-                ✅ Todos
-            </button>
-            <button class="btn-tool danger" id="btnBorrar">
-                🗑️ Borrar
-            </button>
+            <button class="btn-tool" id="btnGuardar">💾 Guardar</button>
+            <button class="btn-tool" id="btnAbrir">📂 Abrir</button>
+            <button class="btn-tool pdf" id="btnPDF">📄 PDF</button>
+            <button class="btn-tool links" id="btnLinks">🔗 Links</button>
+            <button class="btn-tool" id="btnSelTodos">✅ Todos</button>
+            <button class="btn-tool danger" id="btnBorrar">🗑️ Borrar</button>
         </div>
         
         <input type="file" id="fileIn" style="display:none" accept=".json">
 
-        <!-- Buscador -->
         <div class="buscador">
             <input type="text" id="buscadorCartones" placeholder="🔍 Buscar cartón...">
         </div>
 
-        <!-- Lista de cartones -->
         <div class="lista-container" id="listaCartones">
-            <p style="color:#94a3b8; text-align:center; padding:20px;">
-                No hay cartones generados aún
-            </p>
+            <p style="color:#94a3b8; text-align:center; padding:20px;">No hay cartones generados aún</p>
         </div>
 
-        <!-- Ir al juego -->
-        <button class="btn-ir-juego" id="btnIrJuego">
-            🎮 IR AL JUEGO →
-        </button>
+        <button class="btn-ir-juego" id="btnIrJuego">🎮 IR AL JUEGO →</button>
     </div>
 
     <!-- CONTENIDO PRINCIPAL -->
@@ -73,20 +47,17 @@
             <div class="preview-empty">
                 <h2>👁️ VISTA PREVIA</h2>
                 <p>Selecciona un cartón para verlo en detalle</p>
-                <p style="font-size:0.8rem; margin-top:20px;">
-                    💡 Tip: Genera cartones y asígnalos a jugadores
-                </p>
+                <p style="font-size:0.8rem; margin-top:20px;">💡 Tip: Genera cartones y asígnalos a jugadores</p>
             </div>
         </div>
     </div>
 
-    <!-- Firebase primero -->
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     
-    <!-- Inicializar Firebase -->
+    <!-- Configuración de Firebase (ÚNICA declaración) -->
     <script>
-        // Configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
             authDomain: "bingofast.firebaseapp.com",
@@ -97,12 +68,8 @@
             appId: "1:473863283329:web:2c4bf96de167d105fa6380"
         };
         
-        // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
-        
-        // Crear referencia global a la base de datos
         const db = firebase.database();
-        
         console.log('🔥 Firebase inicializado correctamente');
     </script>
     
