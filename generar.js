@@ -1,87 +1,92 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Bingo Pro Admin - Generador</title>
-    <style>
-        /* ESTILOS FIEL A TUS CAPTURAS */
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #0b0f1a; display: flex; height: 100vh; color: white; overflow: hidden; }
-        .sidebar { width: 340px; background: #16213e; padding: 20px; display: flex; flex-direction: column; border-right: 1px solid #2d3436; }
-        .main-content { flex: 1; background: #f8fafc; display: flex; align-items: center; justify-content: center; }
+// Aseguramos que la base de datos se cargue correctamente
+var db = firebase.database();
 
-        .titulo { color: #ff4d4d; text-align: center; font-size: 1.5rem; font-weight: 900; margin-bottom: 15px; }
-        .btn-registrados { background: #ffca28; color: #16213e; border: none; padding: 12px; border-radius: 6px; font-weight: bold; width: 100%; margin-bottom: 15px; text-align: center; font-size: 1.1rem; }
-        
-        .input-lote-group { display: flex; gap: 8px; margin-bottom: 15px; }
-        .input-lote-group input { flex: 1; padding: 10px; border-radius: 4px; border: none; text-align: center; font-weight: bold; }
-        .btn-generar { background: #ffca28; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; color: #16213e; }
+// --- FUNCIÓN GENERAR ---
+window.generarLote = function() {
+    const input = document.getElementById('cantidadGenerar');
+    if (!input) return;
+    
+    const cantidad = parseInt(input.value);
+    if (isNaN(cantidad) || cantidad <= 0) return alert("Ingresa un número válido");
 
-        .grid-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .btn-tool { background: #2d3748; color: #edf2f7; border: none; padding: 10px; border-radius: 4px; font-size: 0.85rem; cursor: pointer; }
+    for (let i = 0; i < cantidad; i++) {
+        const id = Math.floor(1000 + Math.random() * 9000);
+        db.ref('cartonesGenerados/' + id).set({
+            id: id,
+            apodo: "Jugador " + id,
+            timestamp: Date.now()
+        });
+    }
+    input.value = "";
+};
 
-        /* EL LISTADO QUE FALTABA (Zona marcada en seleccion.PNG) */
-        .lista-container { 
-            flex: 1; overflow-y: auto; background: #0f172a; border-radius: 8px; 
-            padding: 10px; border: 1px solid #1e293b; margin-bottom: 15px;
+// --- RENOMBRAR ---
+window.actualizarNombre = function(id, nuevoNombre) {
+    db.ref('cartonesGenerados/' + id).update({ apodo: nuevoNombre });
+};
+
+// --- MOSTRAR VISTA PREVIA ---
+window.verVistaPrevia = function(id) {
+    const preview = document.getElementById('vista-previa-contenido');
+    if (!preview) return;
+
+    db.ref('cartonesGenerados/' + id).once('value', (snap) => {
+        const data = snap.val();
+        if (data) {
+            preview.innerHTML = `
+                <h2 style="color:#16213e; margin:0;">${data.apodo}</h2>
+                <p style="color:#ff4d4d; font-weight:bold; font-size:1.2rem;">CARTÓN #${data.id}</p>
+                <hr>
+                <p>Listo para el sorteo</p>
+            `;
         }
-        
-        .card-jugador { 
-            background: white; color: #1e293b; border-radius: 6px; padding: 12px; 
-            margin-bottom: 10px; border-left: 6px solid #ff4d4d; cursor: pointer;
+    });
+};
+
+// --- SINCRONIZACIÓN DE LA LISTA ---
+function cargarCartones() {
+    db.ref('cartonesGenerados').on('value', (snapshot) => {
+        // 1. Actualizar el Contador
+        const btnContador = document.getElementById('contadorRegistrados');
+        if (btnContador) {
+            btnContador.innerText = "REGISTRADOS: " + (snapshot.numChildren() || 0);
         }
-        .card-jugador h4 { margin: 0 0 5px 0; color: #ff4d4d; font-size: 0.85rem; }
-        .input-apodo { width: 100%; border: 1px solid #cbd5e1; padding: 6px; border-radius: 4px; font-size: 0.9rem; outline: none; }
 
-        .btn-ir-juego { background: #ff4d4d; color: white; border: none; padding: 16px; border-radius: 6px; font-weight: bold; width: 100%; cursor: pointer; }
+        // 2. Actualizar la Lista Visual
+        const contenedor = document.getElementById('listaCartones');
+        if (!contenedor) return;
         
-        /* Vista Previa */
-        .preview-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; color: #1e293b; }
-    </style>
-</head>
-<body>
-    <div class="sidebar">
-        <div class="titulo">BINGO PRO ADMIN</div>
-        <div id="contador" class="btn-registrados">REGISTRADOS: 0</div>
+        contenedor.innerHTML = "";
+        snapshot.forEach((child) => {
+            const c = child.val();
+            const div = document.createElement('div');
+            div.className = "card-jugador";
+            div.onclick = (e) => {
+                if(e.target.tagName !== 'INPUT') window.verVistaPrevia(c.id);
+            };
 
-        <div class="input-lote-group">
-            <input type="number" id="cantidadGenerar" placeholder="Cant.">
-            <button class="btn-generar" onclick="window.generarLote()">GENERAR</button>
-        </div>
+            div.innerHTML = `
+                <h4>ID #${c.id}</h4>
+                <input type="text" class="input-apodo" value="${c.apodo}" 
+                    onchange="window.actualizarNombre('${c.id}', this.value)"
+                    onclick="event.stopPropagation()">
+            `;
+            contenedor.appendChild(div);
+        });
+    });
+}
 
-        <div class="grid-tools">
-            <button class="btn-tool" onclick="window.exportar()">💾 Guardar</button>
-            <button class="btn-tool" onclick="document.getElementById('fIn').click()">📂 Abrir</button>
-            <button class="btn-tool" onclick="window.verLink()">👁️ Ver Link</button>
-            <button class="btn-tool" onclick="window.borrarTodo()">🗑️ Borrar</button>
-        </div>
-        <input type="file" id="fIn" style="display:none" onchange="window.importar(event)">
+// --- UTILIDADES ---
+window.borrarTodo = function() {
+    if(confirm("¿Seguro que quieres borrar todos los cartones?")) {
+        db.ref('cartonesGenerados').remove();
+    }
+};
 
-        <div class="lista-container" id="listaCartones"></div>
+window.verTodos = function() {
+    const link = window.location.origin + "/FastBi/jugador.html";
+    prompt("Copia el link para los jugadores:", link);
+};
 
-        <button class="btn-ir-juego" onclick="location.href='ruleta.html'">IR AL JUEGO →</button>
-    </div>
-
-    <div class="main-content">
-        <div id="vista-previa" class="preview-box">
-            <h2 style="color:#cbd5e1; font-size: 2.5rem;">VISTA PREVIA</h2>
-            <p>Selecciona un cartón para inspeccionar</p>
-        </div>
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
-            authDomain: "bingofast.firebaseapp.com",
-            databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
-            projectId: "bingofast",
-            storageBucket: "bingofast.firebasestorage.app",
-            messagingSenderId: "473863283329",
-            appId: "1:473863283329:web:2c4bf96de167d105fa6380"
-        };
-        firebase.initializeApp(firebaseConfig);
-    </script>
-    <script src="generar.js"></script>
-</body>
-</html>
+// Iniciar proceso cuando el DOM esté listo
+document.addEventListener("DOMContentLoaded", cargarCartones);
