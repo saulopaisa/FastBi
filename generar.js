@@ -1,7 +1,10 @@
-// generar.js - Versión final simplificada
+// generar.js - Versión final completa
 
 const SALA_ID = localStorage.getItem('salaActiva') || 'sala-' + Date.now().toString(36);
 localStorage.setItem('salaActiva', SALA_ID);
+
+// ============ CARTONES SELECCIONADOS ============
+let seleccionados = new Set();
 
 // ============ GENERAR COLUMNA ============
 function generarColumna(min, max) {
@@ -26,18 +29,25 @@ function generarCarton() {
     return c;
 }
 
-// ============ MOSTRAR LISTA MANUALMENTE ============
+// ============ ACTUALIZAR BOTÓN ASIGNAR ============
+function actualizarBtnAsignar() {
+    const btn = document.getElementById('btnAsignar');
+    if (btn) {
+        if (seleccionados.size > 0) {
+            btn.textContent = '👤 ASIGNAR (' + seleccionados.size + ')';
+            btn.style.display = 'block';
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+}
+
+// ============ MOSTRAR LISTA ============
 function mostrarLista() {
-    console.log('🔄 Actualizando lista...');
-    
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
         const total = snap.numChildren() || 0;
-        console.log('📦 Cartones en Firebase: ' + total);
-        
-        // Actualizar contador
         document.getElementById('contadorRegistrados').innerHTML = '🎫 CARTONES: ' + total;
         
-        // Actualizar lista
         const contenedor = document.getElementById('listaCartones');
         contenedor.innerHTML = '';
         
@@ -51,20 +61,19 @@ function mostrarLista() {
             cartones.push({ key: child.key, data: child.val() });
         });
         
-        // Ordenar por número
         cartones.sort(function(a, b) {
             return (a.data.numero || 0) - (b.data.numero || 0);
         });
         
-        // Crear cards
         cartones.forEach(function(item) {
             const c = item.data;
             const id = item.key;
+            const estaSeleccionado = seleccionados.has(id);
             
             const div = document.createElement('div');
             div.className = 'card-carton';
             div.setAttribute('data-id', id);
-            div.style.cssText = 'background:white; color:#1e293b; border-radius:8px; padding:12px; margin-bottom:8px; border-left:5px solid #3b82f6; cursor:pointer;';
+            if (estaSeleccionado) div.classList.add('seleccionado');
             
             div.onclick = function(e) {
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
@@ -72,24 +81,37 @@ function mostrarLista() {
             };
             
             div.innerHTML = 
-                '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">' +
-                '<strong style="font-size:0.9rem;"># ' + (c.numero || '?') + '</strong>' +
-                '<span style="font-size:0.65rem; background:#dcfce7; color:#166534; padding:2px 8px; border-radius:12px;">' + (c.estado || 'disponible') + '</span>' +
+                '<div class="carton-header">' +
+                '<span class="carton-id"># ' + (c.numero || '?') + '</span>' +
+                '<span class="carton-estado estado-' + (c.estado || 'disponible') + '">' + (c.estado || 'disponible') + '</span>' +
                 '</div>' +
-                (c.asignadoA ? '<div style="font-size:0.7rem; color:#10b981; margin-bottom:4px;">👤 ' + c.asignadoA + '</div>' : '') +
-                '<input type="text" value="' + (c.nombre || '') + '" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-size:0.85rem; margin-bottom:5px;" ' +
+                (c.asignadoA ? '<div class="carton-asignado">👤 ' + c.asignadoA + '</div>' : '') +
+                '<input type="text" class="input-nombre-carton" value="' + (c.nombre || '') + '" ' +
                 'onchange="renombrarCarton(\'' + id + '\', this.value)" onclick="event.stopPropagation()" placeholder="Nombre...">' +
-                '<div style="display:flex; gap:4px;">' +
-                '<button onclick="event.stopPropagation(); copiarLink(\'' + id + '\')" style="flex:1; padding:5px; background:#3b82f6; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem;">🔗</button>' +
-                '<button onclick="event.stopPropagation(); cambiarEstado(\'' + id + '\')" style="flex:1; padding:5px; background:#f59e0b; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem;">🔄</button>' +
-                '<button onclick="event.stopPropagation(); eliminarCarton(\'' + id + '\')" style="flex:1; padding:5px; background:#ef4444; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem;">🗑️</button>' +
+                '<div class="carton-acciones">' +
+                '<button class="btn-accion-pequeno seleccionar' + (estaSeleccionado ? ' activo' : '') + '" ' +
+                'onclick="event.stopPropagation(); toggleSeleccion(\'' + id + '\')" title="Seleccionar">' + 
+                (estaSeleccionado ? '✓' : '○') + '</button>' +
+                '<button class="btn-accion-pequeno link" onclick="event.stopPropagation(); copiarLink(\'' + id + '\')" title="Link individual">🔗</button>' +
+                '<button class="btn-accion-pequeno estado-btn" onclick="event.stopPropagation(); cambiarEstado(\'' + id + '\')" title="Cambiar estado">🔄</button>' +
+                '<button class="btn-accion-pequeno eliminar" onclick="event.stopPropagation(); eliminarCarton(\'' + id + '\')" title="Eliminar">🗑️</button>' +
                 '</div>';
             
             contenedor.appendChild(div);
         });
         
-        console.log('✅ Lista actualizada: ' + total + ' cartones');
+        actualizarBtnAsignar();
     });
+}
+
+// ============ TOGGLE SELECCIÓN ============
+function toggleSeleccion(id) {
+    if (seleccionados.has(id)) {
+        seleccionados.delete(id);
+    } else {
+        seleccionados.add(id);
+    }
+    mostrarLista();
 }
 
 // ============ GENERAR LOTE ============
@@ -102,17 +124,12 @@ function generarLote() {
         return;
     }
     
-    console.log('🎲 Generando ' + cantidad + ' cartones...');
-    
-    // Primero obtener el último número
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
         let maxNum = 0;
         snap.forEach(function(child) {
             const num = child.val().numero || 0;
             if (num > maxNum) maxNum = num;
         });
-        
-        console.log('Último número: ' + maxNum);
         
         let creados = 0;
         
@@ -121,7 +138,7 @@ function generarLote() {
             const id = 'c-' + Date.now() + '-' + i + '-' + Math.random().toString(36).substr(2, 5);
             const carton = generarCarton();
             
-            const datos = {
+            db.ref('salas/' + SALA_ID + '/cartones/' + id).set({
                 id: id,
                 numero: nuevoNum,
                 nombre: 'Cartón ' + nuevoNum,
@@ -129,17 +146,10 @@ function generarLote() {
                 estado: 'disponible',
                 asignadoA: '',
                 creado: Date.now()
-            };
-            
-            db.ref('salas/' + SALA_ID + '/cartones/' + id).set(datos, function(error) {
-                if (error) {
-                    console.error('❌ Error:', error);
-                } else {
+            }, function(error) {
+                if (!error) {
                     creados++;
-                    console.log('✅ Cartón #' + nuevoNum + ' creado (' + creados + '/' + cantidad + ')');
-                    
                     if (creados === cantidad) {
-                        console.log('🎉 Todos creados. Actualizando lista...');
                         mostrarLista();
                         input.value = '';
                     }
@@ -149,7 +159,134 @@ function generarLote() {
     });
 }
 
-// ============ VISTA PREVIA ============
+// ============ ASIGNAR A JUGADOR ============
+function asignarAJugador() {
+    if (seleccionados.size === 0) {
+        alert('Selecciona al menos un cartón');
+        return;
+    }
+    
+    const nombre = prompt('👤 Nombre del jugador:');
+    if (!nombre || !nombre.trim()) return;
+    
+    const nombreJugador = nombre.trim();
+    const ids = Array.from(seleccionados);
+    let completados = 0;
+    
+    // Actualizar cada cartón
+    ids.forEach(function(id) {
+        db.ref('salas/' + SALA_ID + '/cartones/' + id).update({
+            estado: 'asignado',
+            asignadoA: nombreJugador
+        }, function(error) {
+            if (!error) {
+                completados++;
+                if (completados === ids.length) {
+                    // Limpiar selección
+                    seleccionados.clear();
+                    mostrarLista();
+                    
+                    // Generar link
+                    const link = generarLinkJugador(nombreJugador, ids);
+                    
+                    // Mostrar en vista previa
+                    mostrarAsignacionExitosa(nombreJugador, ids, link);
+                }
+            }
+        });
+    });
+}
+
+function generarLinkJugador(nombre, ids) {
+    const base = location.origin + location.pathname.replace('generar.html', '');
+    return base + 'jugador.html?nombre=' + encodeURIComponent(nombre) + '&cartones=' + ids.join(',') + '&sala=' + SALA_ID;
+}
+
+function mostrarAsignacionExitosa(nombre, ids, link) {
+    const preview = document.getElementById('vista-previa-contenido');
+    
+    let html = '<div style="padding:20px;">';
+    html += '<h2 style="color:#10b981; margin-bottom:5px;">✅ Cartones Asignados</h2>';
+    html += '<h3 style="color:#1e293b; font-size:1.3rem;">👤 ' + nombre + '</h3>';
+    html += '<p style="color:#64748b;">' + ids.length + ' cartón(es) asignado(s)</p>';
+    
+    // Mostrar números de cartones
+    html += '<div style="display:flex; gap:8px; flex-wrap:wrap; margin:15px 0;">';
+    ids.forEach(function(id) {
+        html += '<span style="background:#3b82f6; color:white; padding:5px 12px; border-radius:20px; font-size:0.85rem;">Cartón #' + id.slice(-4) + '</span>';
+    });
+    html += '</div>';
+    
+    // Link del jugador
+    html += '<div style="background:#f1f5f9; padding:15px; border-radius:8px; margin:15px 0;">';
+    html += '<p style="color:#64748b; font-size:0.8rem; margin-bottom:8px;">🔗 Link del jugador:</p>';
+    html += '<div style="display:flex; gap:10px;">';
+    html += '<input id="linkJugadorInput" value="' + link + '" readonly style="flex:1; padding:10px; border:2px solid #3b82f6; border-radius:6px; font-size:0.85rem;" onclick="this.select()">';
+    html += '<button onclick="copiarLinkJugador()" style="background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold;">📋 COPIAR</button>';
+    html += '</div>';
+    html += '</div>';
+    
+    // Botón para ver cartones del jugador
+    html += '<button onclick="verCartonesJugador(\'' + nombre + '\', ' + JSON.stringify(ids) + ')" style="background:#8b5cf6; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;">📄 Ver Cartones del Jugador</button>';
+    
+    html += '</div>';
+    
+    preview.innerHTML = html;
+}
+
+function copiarLinkJugador() {
+    const input = document.getElementById('linkJugadorInput');
+    if (input) {
+        navigator.clipboard.writeText(input.value).then(function() {
+            mostrarToast('✅ Link copiado al portapapeles');
+        });
+    }
+}
+
+// ============ VER CARTONES DEL JUGADOR ============
+function verCartonesJugador(nombre, ids) {
+    const preview = document.getElementById('vista-previa-contenido');
+    
+    let html = '<div style="padding:20px;">';
+    html += '<h2 style="color:#1e293b;">👤 ' + nombre + '</h2>';
+    html += '<p style="color:#64748b;">' + ids.length + ' cartón(es)</p>';
+    html += '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-top:15px;">';
+    
+    let cargados = 0;
+    
+    ids.forEach(function(id) {
+        db.ref('salas/' + SALA_ID + '/cartones/' + id).once('value', function(snap) {
+            const d = snap.val();
+            if (d && d.carton) {
+                html += '<div style="border:2px solid #e2e8f0; border-radius:8px; padding:10px;">';
+                html += '<h4 style="text-align:center; color:#ff4d4d; margin-bottom:8px;">Cartón #' + d.numero + '</h4>';
+                html += '<table style="width:100%; border-collapse:collapse; font-size:0.75rem;">';
+                html += '<tr style="background:#ff4d4d; color:white;"><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
+                
+                for (let f = 0; f < 5; f++) {
+                    html += '<tr>';
+                    ['B','I','N','G','O'].forEach(function(l) {
+                        const v = d.carton[l][f];
+                        const centro = (l === 'N' && f === 2);
+                        html += '<td style="padding:5px; border:1px solid #e2e8f0; text-align:center;';
+                        if (centro) html += 'background:#fef3c7;';
+                        html += '">' + (centro ? '⭐' : v) + '</td>';
+                    });
+                    html += '</tr>';
+                }
+                html += '</table></div>';
+            }
+            
+            cargados++;
+            if (cargados === ids.length) {
+                html += '</div></div>';
+                preview.innerHTML = html;
+            }
+        });
+    });
+}
+
+// ============ VISTA PREVIA INDIVIDUAL ============
 function verPreview(id) {
     const preview = document.getElementById('vista-previa-contenido');
     
@@ -161,31 +298,49 @@ function verPreview(id) {
         }
         
         let html = '<div style="padding:20px;">';
-        html += '<h2 style="color:#1e293b;">Cartón #' + d.numero + '</h2>';
-        html += '<p style="color:#64748b;">Estado: ' + (d.estado || 'disponible') + '</p>';
-        if (d.asignadoA) html += '<p style="color:#10b981;">👤 ' + d.asignadoA + '</p>';
         
+        // Cabecera con información
+        html += '<div style="margin-bottom:20px;">';
+        html += '<h2 style="color:#1e293b; margin-bottom:5px;">Cartón #' + d.numero + '</h2>';
+        if (d.nombre && d.nombre !== 'Cartón ' + d.numero) {
+            html += '<p style="color:#64748b;">' + d.nombre + '</p>';
+        }
+        html += '<p style="color:#64748b; font-size:0.85rem;">Estado: <strong>' + (d.estado || 'disponible') + '</strong></p>';
+        if (d.asignadoA) {
+            html += '<p style="color:#10b981; font-size:0.9rem;">👤 Asignado a: <strong>' + d.asignadoA + '</strong></p>';
+        }
+        html += '</div>';
+        
+        // Tabla del cartón
         html += '<table style="width:100%; border-collapse:collapse; max-width:350px; margin:15px auto;">';
-        html += '<tr style="background:#ff4d4d; color:white;"><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
+        html += '<tr style="background:#ff4d4d; color:white;"><th style="padding:12px;">B</th><th style="padding:12px;">I</th><th style="padding:12px;">N</th><th style="padding:12px;">G</th><th style="padding:12px;">O</th></tr>';
         
         for (let f = 0; f < 5; f++) {
             html += '<tr>';
             ['B','I','N','G','O'].forEach(function(l) {
                 const v = d.carton[l][f];
                 const centro = (l === 'N' && f === 2);
-                html += '<td style="padding:10px; border:2px solid #e2e8f0; text-align:center; font-weight:bold;';
+                html += '<td style="padding:12px; border:2px solid #e2e8f0; text-align:center; font-weight:bold; font-size:1.1rem;';
                 if (centro) html += 'background:#fef3c7;';
                 html += '">' + (centro ? '⭐' : v) + '</td>';
             });
             html += '</tr>';
         }
-        html += '</table></div>';
+        html += '</table>';
+        
+        // Botones de acción
+        html += '<div style="margin-top:15px; display:flex; gap:8px; justify-content:center;">';
+        html += '<button onclick="copiarLink(\'' + id + '\')" style="background:#3b82f6; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">🔗 Link Individual</button>';
+        html += '<button onclick="cambiarEstado(\'' + id + '\')" style="background:#f59e0b; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">🔄 Cambiar Estado</button>';
+        html += '</div>';
+        
+        html += '</div>';
         
         preview.innerHTML = html;
     });
 }
 
-// ============ FUNCIONES ============
+// ============ FUNCIONES AUXILIARES ============
 function renombrarCarton(id, nombre) {
     if (nombre && nombre.trim()) {
         db.ref('salas/' + SALA_ID + '/cartones/' + id).update({ nombre: nombre.trim() });
@@ -207,12 +362,13 @@ function cambiarEstado(id) {
 function copiarLink(id) {
     const link = location.origin + location.pathname.replace('generar.html', '') + 'carton.html?carton=' + id + '&sala=' + SALA_ID;
     navigator.clipboard.writeText(link).then(function() {
-        alert('✅ Link copiado');
+        mostrarToast('✅ Link copiado');
     });
 }
 
 function eliminarCarton(id) {
     if (confirm('¿Eliminar este cartón?')) {
+        seleccionados.delete(id);
         db.ref('salas/' + SALA_ID + '/cartones/' + id).remove(function() {
             mostrarLista();
         });
@@ -221,6 +377,7 @@ function eliminarCarton(id) {
 
 function borrarTodo() {
     if (confirm('⚠️ ¿Eliminar TODOS los cartones?')) {
+        seleccionados.clear();
         db.ref('salas/' + SALA_ID + '/cartones').remove(function() {
             document.getElementById('vista-previa-contenido').innerHTML = '<div class="preview-empty"><h2>✅ Eliminados</h2></div>';
             mostrarLista();
@@ -257,24 +414,37 @@ function importarJSON(e) {
 function verLinks() {
     const preview = document.getElementById('vista-previa-contenido');
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
-        let html = '<h2 style="color:#ff4d4d;">🔗 LINKS</h2>';
+        let html = '<h2 style="color:#ff4d4d;">🔗 LINKS</h2><div style="max-height:500px; overflow-y:auto; text-align:left;">';
         const base = location.origin + location.pathname.replace('generar.html', '');
         snap.forEach(function(child) {
             const c = child.val();
             const link = base + 'carton.html?carton=' + c.id + '&sala=' + SALA_ID;
-            html += '<div style="background:#f1f5f9; padding:10px; margin:5px 0; border-radius:6px; text-align:left;">';
-            html += '<strong>#' + c.numero + '</strong> - ' + (c.nombre || '');
+            html += '<div style="background:#f1f5f9; padding:10px; margin:5px 0; border-radius:6px;">';
+            html += '<strong>#' + c.numero + '</strong> - ' + (c.nombre || '') + (c.asignadoA ? ' (' + c.asignadoA + ')' : '');
             html += '<input value="' + link + '" readonly style="width:100%; padding:5px; margin-top:5px;" onclick="this.select()">';
             html += '</div>';
         });
+        html += '</div>';
         preview.innerHTML = html;
     });
 }
 
 function seleccionarTodos() {
-    document.querySelectorAll('.card-carton').forEach(function(c) {
-        c.classList.toggle('seleccionado');
+    const cards = document.querySelectorAll('.card-carton');
+    const todasSeleccionadas = Array.from(cards).every(function(c) {
+        return c.classList.contains('seleccionado');
     });
+    
+    cards.forEach(function(card) {
+        const id = card.getAttribute('data-id');
+        if (todasSeleccionadas) {
+            seleccionados.delete(id);
+        } else {
+            seleccionados.add(id);
+        }
+    });
+    
+    mostrarLista();
 }
 
 function filtrarCartones(t) {
@@ -284,12 +454,21 @@ function filtrarCartones(t) {
     });
 }
 
+function mostrarToast(mensaje) {
+    const t = document.querySelector('.toast');
+    if (t) t.remove();
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = mensaje;
+    document.body.appendChild(toast);
+    setTimeout(function() { if (toast.parentNode) toast.remove(); }, 2000);
+}
+
 // ============ INICIAR ============
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 App iniciada');
+    console.log('🚀 Bingo Pro Admin');
     console.log('📁 Sala: ' + SALA_ID);
     
-    // Botones
     document.getElementById('btnGenerar').addEventListener('click', generarLote);
     document.getElementById('btnGuardar').addEventListener('click', exportarJSON);
     document.getElementById('btnAbrir').addEventListener('click', function() {
@@ -312,6 +491,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Enter') generarLote();
     });
     
-    // Mostrar lista inicial
+    // Exponer función de asignar
+    window.asignarAJugador = asignarAJugador;
+    
     mostrarLista();
 });
