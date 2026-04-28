@@ -1,27 +1,8 @@
 // generar.js - Generador de Cartones de Bingo
-// Versión estable y funcional
-
-// ============ CONFIGURACIÓN DE FIREBASE ============
-const firebaseConfig = {
-    apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
-    authDomain: "bingofast.firebaseapp.com",
-    databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
-    projectId: "bingofast",
-    storageBucket: "bingofast.firebasestorage.app",
-    messagingSenderId: "473863283329",
-    appId: "1:473863283329:web:2c4bf96de167d105fa6380"
-};
-
-// Inicializar Firebase
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-const db = firebase.database();
+// Este script usa la variable 'db' que ya fue declarada en el HTML
 
 // ============ CONFIGURACIÓN DE SALA ============
-const CONFIG = {
-    SALA_ID: localStorage.getItem('salaActiva') || generarSalaNueva()
-};
+const SALA_ID = localStorage.getItem('salaActiva') || generarSalaNueva();
 
 function generarSalaNueva() {
     const salaId = 'sala-' + Date.now().toString(36);
@@ -53,25 +34,21 @@ function generarColumna(min, max) {
     }
     
     numeros.sort((a, b) => a - b);
-    numeros[2] = '⭐'; // Espacio libre en el centro
+    numeros[2] = '⭐'; // Espacio libre
     return numeros;
 }
 
-// ============ FUNCIONES PRINCIPALES ============
-
-// Generar lote de cartones
+// ============ GENERAR LOTE DE CARTONES ============
 function generarLote() {
     const input = document.getElementById('cantidadGenerar');
     const cantidad = parseInt(input.value) || 1;
     
     if (cantidad < 1 || cantidad > 100) {
-        alert('Ingresa un número entre 1 y 100');
+        alert('⚠️ Ingresa un número entre 1 y 100');
         return;
     }
     
-    console.log('Generando ' + cantidad + ' cartones...');
-    
-    let completados = 0;
+    console.log('🎲 Generando ' + cantidad + ' cartones...');
     
     for (let i = 0; i < cantidad; i++) {
         const id = 'carton-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
@@ -85,61 +62,69 @@ function generarLote() {
             creado: Date.now()
         };
         
-        db.ref('salas/' + CONFIG.SALA_ID + '/cartones/' + id)
+        db.ref('salas/' + SALA_ID + '/cartones/' + id)
             .set(datosCarton)
             .then(() => {
-                completados++;
-                console.log('✅ Cartón ' + completados + '/' + cantidad + ' creado');
-                
-                if (completados === cantidad) {
-                    console.log('🎉 Todos los cartones generados');
-                    input.value = '';
-                }
+                console.log('✅ Cartón creado: ' + id);
             })
             .catch(error => {
                 console.error('❌ Error al crear cartón:', error);
-                alert('Error al crear cartón. Verifica la consola.');
             });
     }
+    
+    input.value = '';
+    mostrarToast('✅ Generando ' + cantidad + ' cartones...');
 }
 
-// Ver vista previa del cartón
+// ============ VISTA PREVIA ============
 function verVistaPrevia(id) {
     const preview = document.getElementById('vista-previa-contenido');
     
-    db.ref('salas/' + CONFIG.SALA_ID + '/cartones/' + id)
+    db.ref('salas/' + SALA_ID + '/cartones/' + id)
         .once('value')
         .then(snap => {
             const datos = snap.val();
             if (datos && datos.carton) {
                 preview.innerHTML = generarHTMLCarton(datos);
                 
-                // Marcar seleccionado en la lista
-                document.querySelectorAll('.card-carton').forEach(c => c.classList.remove('seleccionado'));
+                // Marcar seleccionado
+                document.querySelectorAll('.card-carton').forEach(c => {
+                    c.classList.remove('seleccionado');
+                });
                 const card = document.querySelector('[data-id="' + id + '"]');
                 if (card) card.classList.add('seleccionado');
+            } else {
+                preview.innerHTML = '<p style="color:red">❌ Cartón no encontrado</p>';
             }
+        })
+        .catch(error => {
+            console.error('Error al cargar cartón:', error);
         });
 }
 
 function generarHTMLCarton(datos) {
-    const { nombre, id, carton, estado } = datos;
+    const nombre = datos.nombre || 'Sin nombre';
+    const id = datos.id || '';
+    const carton = datos.carton;
+    const estado = datos.estado || 'disponible';
     
     let html = '<div style="padding:20px;">';
-    html += '<h2 style="color:#1e293b;">' + nombre + '</h2>';
-    html += '<p style="color:#64748b;">ID: ' + id + '</p>';
-    html += '<p>Estado: <strong>' + estado + '</strong></p>';
+    html += '<h2 style="color:#1e293b; margin-bottom:5px;">' + nombre + '</h2>';
+    html += '<p style="color:#64748b; font-size:0.8rem;">ID: ' + id + '</p>';
+    html += '<p style="color:#64748b; font-size:0.8rem;">Estado: <strong>' + estado + '</strong></p>';
     
     // Tabla del cartón
-    html += '<table style="width:100%; border-collapse:collapse; margin-top:20px; max-width:400px; margin-left:auto; margin-right:auto;">';
-    html += '<tr style="background:#ff4d4d; color:white;"><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
+    html += '<table style="width:100%; border-collapse:collapse; margin:20px auto; max-width:350px;">';
+    html += '<tr style="background:#ff4d4d; color:white;">';
+    html += '<th style="padding:10px;">B</th><th style="padding:10px;">I</th><th style="padding:10px;">N</th><th style="padding:10px;">G</th><th style="padding:10px;">O</th>';
+    html += '</tr>';
     
     for (let fila = 0; fila < 5; fila++) {
         html += '<tr>';
         ['B', 'I', 'N', 'G', 'O'].forEach(letra => {
             const valor = carton[letra][fila];
             const esCentro = (letra === 'N' && fila === 2);
-            html += '<td style="padding:12px; border:2px solid #e2e8f0; text-align:center; font-weight:bold;';
+            html += '<td style="padding:10px; border:2px solid #e2e8f0; text-align:center; font-weight:bold;';
             if (esCentro) html += 'background:#fef3c7;';
             html += '">' + valor + '</td>';
         });
@@ -148,64 +133,108 @@ function generarHTMLCarton(datos) {
     
     html += '</table>';
     
-    // Botones de acción
-    html += '<div style="margin-top:20px; display:flex; gap:10px; justify-content:center;">';
-    html += '<button onclick="copiarLinkCarton(\'' + id + '\')" style="background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;">🔗 Copiar Link</button>';
-    html += '<button onclick="eliminarCarton(\'' + id + '\')" style="background:#ef4444; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;">🗑️ Eliminar</button>';
+    // Botones
+    html += '<div style="margin-top:15px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">';
+    html += '<button onclick="copiarLinkCarton(\'' + id + '\')" style="background:#3b82f6; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size:0.85rem;">🔗 Copiar Link</button>';
+    html += '<button onclick="cambiarEstadoCarton(\'' + id + '\')" style="background:#f59e0b; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size:0.85rem;">🔄 Cambiar Estado</button>';
+    html += '<button onclick="eliminarCarton(\'' + id + '\')" style="background:#ef4444; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size:0.85rem;">🗑️ Eliminar</button>';
     html += '</div>';
     
     html += '</div>';
     return html;
 }
 
-// Renombrar cartón
+// ============ RENOMBRAR ============
 function renombrarCarton(id, nombre) {
-    if (nombre.trim()) {
-        db.ref('salas/' + CONFIG.SALA_ID + '/cartones/' + id).update({ nombre: nombre.trim() });
+    if (nombre && nombre.trim()) {
+        db.ref('salas/' + SALA_ID + '/cartones/' + id).update({
+            nombre: nombre.trim()
+        });
+        mostrarToast('✅ Nombre actualizado');
     }
 }
 
-// Copiar link del cartón
-function copiarLinkCarton(id) {
-    const link = location.origin + location.pathname.replace('generar.html', '') + 'carton.html?carton=' + id + '&sala=' + CONFIG.SALA_ID;
-    navigator.clipboard.writeText(link).then(() => {
-        mostrarToast('✅ Link copiado');
+// ============ CAMBIAR ESTADO ============
+function cambiarEstadoCarton(id) {
+    db.ref('salas/' + SALA_ID + '/cartones/' + id).once('value').then(snap => {
+        const datos = snap.val();
+        const estadoActual = datos.estado || 'disponible';
+        
+        const estados = ['disponible', 'asignado', 'usado'];
+        const indiceActual = estados.indexOf(estadoActual);
+        const nuevoEstado = estados[(indiceActual + 1) % estados.length];
+        
+        db.ref('salas/' + SALA_ID + '/cartones/' + id).update({
+            estado: nuevoEstado
+        }).then(() => {
+            mostrarToast('Estado: ' + nuevoEstado);
+            verVistaPrevia(id); // Refrescar vista
+        });
     });
 }
 
-// Eliminar cartón
+// ============ COPIAR LINK ============
+function copiarLinkCarton(id) {
+    const baseUrl = window.location.origin + window.location.pathname.replace('generar.html', '');
+    const link = baseUrl + 'carton.html?carton=' + id + '&sala=' + SALA_ID;
+    
+    navigator.clipboard.writeText(link).then(() => {
+        mostrarToast('✅ Link copiado al portapapeles');
+    }).catch(() => {
+        // Fallback para navegadores que no soportan clipboard
+        prompt('Copia este link:', link);
+    });
+}
+
+// ============ ELIMINAR ============
 function eliminarCarton(id) {
     if (confirm('¿Eliminar este cartón?')) {
-        db.ref('salas/' + CONFIG.SALA_ID + '/cartones/' + id).remove();
+        db.ref('salas/' + SALA_ID + '/cartones/' + id).remove()
+            .then(() => mostrarToast('🗑️ Cartón eliminado'));
     }
 }
 
-// Borrar todos los cartones
 function borrarTodo() {
-    if (confirm('¿Eliminar TODOS los cartones?')) {
-        db.ref('salas/' + CONFIG.SALA_ID + '/cartones').remove();
-        document.getElementById('vista-previa-contenido').innerHTML = '<div class="preview-empty"><h2>Cartones eliminados</h2></div>';
+    if (confirm('⚠️ ¿Eliminar TODOS los cartones de esta sala?')) {
+        db.ref('salas/' + SALA_ID + '/cartones').remove()
+            .then(() => {
+                document.getElementById('vista-previa-contenido').innerHTML = 
+                    '<div class="preview-empty"><h2>✅ Todos los cartones eliminados</h2></div>';
+                mostrarToast('🗑️ Todos los cartones eliminados');
+            });
     }
 }
 
-// Exportar JSON
+// ============ EXPORTAR JSON ============
 function exportarJSON() {
-    db.ref('salas/' + CONFIG.SALA_ID + '/cartones').once('value').then(snap => {
+    db.ref('salas/' + SALA_ID + '/cartones').once('value').then(snap => {
+        if (!snap.exists()) {
+            alert('No hay cartones para exportar');
+            return;
+        }
+        
         const data = {
-            sala: CONFIG.SALA_ID,
+            version: '1.0',
+            salaId: SALA_ID,
             fecha: new Date().toISOString(),
-            cartones: snap.val() || {}
+            cartones: snap.val()
         };
         
         const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'cartones-' + CONFIG.SALA_ID + '.json';
+        a.href = url;
+        a.download = 'cartones-bingo-' + SALA_ID + '.json';
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        mostrarToast('💾 Exportado correctamente');
     });
 }
 
-// Importar JSON
+// ============ IMPORTAR JSON ============
 function importarJSON(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -214,75 +243,144 @@ function importarJSON(event) {
     reader.onload = function(e) {
         try {
             const data = JSON.parse(e.target.result);
-            if (data.cartones && confirm('¿Importar ' + Object.keys(data.cartones).length + ' cartones?')) {
-                db.ref('salas/' + CONFIG.SALA_ID + '/cartones').set(data.cartones);
+            
+            if (!data.cartones) {
+                throw new Error('Formato inválido');
             }
-        } catch (err) {
-            alert('Error al leer el archivo');
+            
+            const cantidad = Object.keys(data.cartones).length;
+            
+            if (confirm('¿Importar ' + cantidad + ' cartones?')) {
+                // Usar update en lugar de set para no borrar existentes
+                const updates = {};
+                Object.keys(data.cartones).forEach(key => {
+                    updates['salas/' + SALA_ID + '/cartones/' + key] = data.cartones[key];
+                });
+                
+                db.ref().update(updates)
+                    .then(() => {
+                        mostrarToast('✅ ' + cantidad + ' cartones importados');
+                    })
+                    .catch(error => {
+                        console.error('Error importando:', error);
+                        alert('Error al importar cartones');
+                    });
+            }
+        } catch (error) {
+            alert('❌ Error al leer el archivo: ' + error.message);
         }
     };
     reader.readAsText(file);
+    event.target.value = ''; // Limpiar input
 }
 
-// Ver links de cartones
+// ============ VER LINKS ============
 function verLinks() {
     const preview = document.getElementById('vista-previa-contenido');
     
-    db.ref('salas/' + CONFIG.SALA_ID + '/cartones').once('value').then(snap => {
-        let html = '<h2 style="color:#ff4d4d; margin-bottom:20px;">🔗 LINKS DE CARTONES</h2>';
-        
+    db.ref('salas/' + SALA_ID + '/cartones').once('value').then(snap => {
         if (!snap.exists()) {
-            html += '<p>No hay cartones</p>';
-        } else {
-            snap.forEach(child => {
-                const carton = child.val();
-                const link = location.origin + location.pathname.replace('generar.html', '') + 'carton.html?carton=' + carton.id + '&sala=' + CONFIG.SALA_ID;
-                
-                html += '<div style="background:#f1f5f9; padding:10px; margin:5px 0; border-radius:6px; text-align:left;">';
-                html += '<strong>' + carton.nombre + '</strong><br>';
-                html += '<input value="' + link + '" readonly style="width:100%; padding:5px; margin-top:5px;" onclick="this.select()">';
-                html += '</div>';
-            });
+            preview.innerHTML = '<div class="preview-empty"><h2>📋 Sin cartones</h2><p>Genera algunos cartones primero</p></div>';
+            return;
         }
         
+        let html = '<h2 style="color:#ff4d4d; margin-bottom:15px;">🔗 LINKS DE CARTONES</h2>';
+        html += '<div style="max-height:500px; overflow-y:auto; text-align:left;">';
+        
+        const baseUrl = window.location.origin + window.location.pathname.replace('generar.html', '');
+        
+        snap.forEach(child => {
+            const carton = child.val();
+            const link = baseUrl + 'carton.html?carton=' + carton.id + '&sala=' + SALA_ID;
+            
+            html += '<div style="background:#f1f5f9; padding:10px; margin:8px 0; border-radius:6px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">';
+            html += '<strong>' + (carton.nombre || 'Sin nombre') + '</strong>';
+            html += '<span style="font-size:0.7rem; background:' + getEstadoColor(carton.estado) + '; color:white; padding:2px 8px; border-radius:10px;">' + (carton.estado || 'disponible') + '</span>';
+            html += '</div>';
+            html += '<div style="display:flex; gap:5px;">';
+            html += '<input value="' + link + '" readonly style="flex:1; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-size:0.75rem;" onclick="this.select()">';
+            html += '<button onclick="copiarLinkCarton(\'' + carton.id + '\')" style="background:#3b82f6; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:0.75rem;">📋</button>';
+            html += '</div>';
+            html += '</div>';
+        });
+        
+        html += '</div>';
         preview.innerHTML = html;
     });
 }
 
-// Seleccionar todos los cartones
-function seleccionarTodos() {
-    document.querySelectorAll('.card-carton').forEach(card => {
-        card.classList.toggle('seleccionado');
-    });
+function getEstadoColor(estado) {
+    const colores = {
+        'disponible': '#10b981',
+        'asignado': '#f59e0b',
+        'usado': '#ef4444'
+    };
+    return colores[estado] || '#6b7280';
 }
 
-// Filtrar cartones
+// ============ SELECCIONAR TODOS ============
+function seleccionarTodos() {
+    const cards = document.querySelectorAll('.card-carton');
+    const todasSeleccionadas = Array.from(cards).every(c => c.classList.contains('seleccionado'));
+    
+    cards.forEach(card => {
+        if (todasSeleccionadas) {
+            card.classList.remove('seleccionado');
+        } else {
+            card.classList.add('seleccionado');
+        }
+    });
+    
+    mostrarToast(todasSeleccionadas ? 'Selección limpiada' : 'Todos seleccionados');
+}
+
+// ============ FILTRAR ============
 function filtrarCartones(texto) {
     const filtro = texto.toLowerCase();
     document.querySelectorAll('.card-carton').forEach(card => {
         const nombre = (card.querySelector('.input-nombre-carton')?.value || '').toLowerCase();
         const id = (card.getAttribute('data-id') || '').toLowerCase();
-        card.style.display = (nombre.includes(filtro) || id.includes(filtro)) ? '' : 'none';
+        
+        if (nombre.includes(filtro) || id.includes(filtro)) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
     });
 }
 
-// Toast notification
+// ============ TOAST ============
 function mostrarToast(mensaje) {
+    // Eliminar toast anterior si existe
+    const toastAnterior = document.querySelector('.toast');
+    if (toastAnterior) toastAnterior.remove();
+    
     const toast = document.createElement('div');
     toast.className = 'toast';
     toast.textContent = mensaje;
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2000);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 2500);
 }
 
 // ============ SINCRONIZACIÓN EN TIEMPO REAL ============
 function iniciarSincronizacion() {
-    const refCartones = db.ref('salas/' + CONFIG.SALA_ID + '/cartones');
+    const refCartones = db.ref('salas/' + SALA_ID + '/cartones');
     
     refCartones.on('value', snapshot => {
         // Actualizar contador
         const total = snapshot.numChildren() || 0;
-        document.getElementById('contadorRegistrados').innerHTML = '🎫 CARTONES: ' + total;
+        const contador = document.getElementById('contadorRegistrados');
+        if (contador) {
+            contador.innerHTML = '🎫 CARTONES: ' + total;
+        }
         
         // Actualizar lista
         const contenedor = document.getElementById('listaCartones');
@@ -295,6 +393,7 @@ function iniciarSincronizacion() {
         
         contenedor.innerHTML = '';
         
+        // Convertir a array y ordenar
         const cartones = [];
         snapshot.forEach(child => {
             cartones.push({ key: child.key, ...child.val() });
@@ -302,27 +401,33 @@ function iniciarSincronizacion() {
         
         cartones.sort((a, b) => (b.creado || 0) - (a.creado || 0));
         
+        // Crear cards
         cartones.forEach(carton => {
             const div = document.createElement('div');
             div.className = 'card-carton';
             div.setAttribute('data-id', carton.key);
-            div.onclick = e => {
+            
+            div.onclick = function(e) {
+                // No hacer nada si se clickeó en input o botón
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
                 verVistaPrevia(carton.key);
             };
             
-            const estadoClass = 'estado-' + (carton.estado || 'disponible');
+            const estado = carton.estado || 'disponible';
+            const estadoClass = 'estado-' + estado;
+            const idCorto = (carton.key || '').slice(-8);
             
             div.innerHTML = 
                 '<div class="carton-header">' +
-                    '<span class="carton-id">#' + (carton.key || '').slice(-8) + '</span>' +
-                    '<span class="carton-estado ' + estadoClass + '">' + (carton.estado || 'disponible') + '</span>' +
+                    '<span class="carton-id">#' + idCorto + '</span>' +
+                    '<span class="carton-estado ' + estadoClass + '">' + estado + '</span>' +
                 '</div>' +
                 '<input type="text" class="input-nombre-carton" value="' + (carton.nombre || '') + '" ' +
                     'onchange="renombrarCarton(\'' + carton.key + '\', this.value)" ' +
-                    'onclick="event.stopPropagation()" placeholder="Nombre...">' +
+                    'onclick="event.stopPropagation()" placeholder="Nombre del cartón...">' +
                 '<div class="carton-acciones">' +
                     '<button class="btn-accion-pequeno link" onclick="event.stopPropagation(); copiarLinkCarton(\'' + carton.key + '\')">🔗</button>' +
+                    '<button class="btn-accion-pequeno" onclick="event.stopPropagation(); cambiarEstadoCarton(\'' + carton.key + '\')" style="background:#f59e0b;">🔄</button>' +
                     '<button class="btn-accion-pequeno eliminar" onclick="event.stopPropagation(); eliminarCarton(\'' + carton.key + '\')">🗑️</button>' +
                 '</div>';
             
@@ -332,27 +437,45 @@ function iniciarSincronizacion() {
 }
 
 // ============ INICIALIZACIÓN ============
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🎮 Bingo Admin iniciado');
-    console.log('📁 Sala:', CONFIG.SALA_ID);
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎮 Bingo Admin - Generador de Cartones');
+    console.log('📁 Sala activa: ' + SALA_ID);
+    console.log('✅ Listo para generar cartones');
     
     // Configurar eventos de botones
-    document.getElementById('btnGenerar').onclick = generarLote;
-    document.getElementById('btnGuardar').onclick = exportarJSON;
-    document.getElementById('btnAbrir').onclick = () => document.getElementById('fileIn').click();
-    document.getElementById('btnPDF').onclick = () => alert('Función PDF en desarrollo');
-    document.getElementById('btnLinks').onclick = verLinks;
-    document.getElementById('btnSelTodos').onclick = seleccionarTodos;
-    document.getElementById('btnBorrar').onclick = borrarTodo;
-    document.getElementById('btnIrJuego').onclick = () => location.href = 'ruleta.html';
-    document.getElementById('fileIn').onchange = importarJSON;
-    document.getElementById('buscadorCartones').oninput = e => filtrarCartones(e.target.value);
+    document.getElementById('btnGenerar').addEventListener('click', generarLote);
+    document.getElementById('btnGuardar').addEventListener('click', exportarJSON);
+    document.getElementById('btnAbrir').addEventListener('click', function() {
+        document.getElementById('fileIn').click();
+    });
+    document.getElementById('btnPDF').addEventListener('click', function() {
+        alert('📄 Función PDF en desarrollo');
+    });
+    document.getElementById('btnLinks').addEventListener('click', verLinks);
+    document.getElementById('btnSelTodos').addEventListener('click', seleccionarTodos);
+    document.getElementById('btnBorrar').addEventListener('click', borrarTodo);
+    document.getElementById('btnIrJuego').addEventListener('click', function() {
+        window.location.href = 'ruleta.html';
+    });
+    document.getElementById('fileIn').addEventListener('change', importarJSON);
+    document.getElementById('buscadorCartones').addEventListener('input', function(e) {
+        filtrarCartones(e.target.value);
+    });
     
-    // Iniciar sincronización
+    // Permitir generar con Enter
+    document.getElementById('cantidadGenerar').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') generarLote();
+    });
+    
+    // Iniciar sincronización con Firebase
     iniciarSincronizacion();
     
     // Verificar conexión
-    db.ref('.info/connected').on('value', snap => {
-        console.log(snap.val() ? '🟢 Conectado a Firebase' : '🔴 Sin conexión');
+    db.ref('.info/connected').on('value', function(snap) {
+        if (snap.val() === true) {
+            console.log('🟢 Conectado a Firebase');
+        } else {
+            console.warn('🔴 Sin conexión a Firebase');
+        }
     });
 });
