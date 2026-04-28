@@ -7,105 +7,84 @@
     <link rel="stylesheet" href="generar.css">
 </head>
 <body>
-    <!-- ============ SIDEBAR IZQUIERDO ============ -->
+    <!-- SIDEBAR IZQUIERDO -->
     <div class="sidebar">
         <div class="titulo">🎯 BINGO PRO</div>
         <div class="subtitulo">Generador de Cartones</div>
         
-        <!-- Contador de cartones -->
+        <!-- Contador -->
         <div id="contadorRegistrados" class="btn-contador">
             🎫 CARTONES: 0
         </div>
 
-        <!-- Generar lote de cartones -->
+        <!-- Generar lote -->
         <div class="input-lote-group">
-            <input type="number" id="cantidadGenerar" placeholder="Cantidad" min="1" max="100" value="1">
-            <button class="btn-generar" onclick="window.generarLote()">
+            <input type="number" id="cantidadGenerar" placeholder="Cant." min="1" max="100" value="1">
+            <button class="btn-generar" id="btnGenerar">
                 ⚡ GENERAR
             </button>
         </div>
 
         <!-- Herramientas -->
         <div class="grid-tools">
-            <button class="btn-tool" onclick="window.exportarJSON()" title="Guardar todos los cartones">
+            <button class="btn-tool" id="btnGuardar">
                 💾 Guardar
             </button>
-            <button class="btn-tool" onclick="document.getElementById('fileIn').click()" title="Cargar cartones guardados">
+            <button class="btn-tool" id="btnAbrir">
                 📂 Abrir
             </button>
-            <button class="btn-tool pdf" onclick="window.exportarPDF()" title="Exportar seleccionados a PDF">
+            <button class="btn-tool pdf" id="btnPDF">
                 📄 PDF
             </button>
-            <button class="btn-tool links" onclick="window.verLinks()" title="Ver links de cartones">
+            <button class="btn-tool links" id="btnLinks">
                 🔗 Links
             </button>
-            <button class="btn-tool" onclick="window.seleccionarTodos()" title="Seleccionar todos">
+            <button class="btn-tool" id="btnSelTodos">
                 ✅ Todos
             </button>
-            <button class="btn-tool danger" onclick="window.borrarTodo()" title="Eliminar todos los cartones">
+            <button class="btn-tool danger" id="btnBorrar">
                 🗑️ Borrar
             </button>
         </div>
         
-        <!-- Input file oculto para importar -->
-        <input type="file" id="fileIn" style="display:none" accept=".json" onchange="window.importarJSON(event)">
+        <input type="file" id="fileIn" style="display:none" accept=".json">
 
         <!-- Buscador -->
         <div class="buscador">
-            <input type="text" id="buscadorCartones" placeholder="🔍 Buscar por nombre o ID..." oninput="window.filtrarCartones(this.value)">
+            <input type="text" id="buscadorCartones" placeholder="🔍 Buscar cartón...">
         </div>
 
-        <!-- Lista de cartones (MÁS ESPACIO) -->
+        <!-- Lista de cartones -->
         <div class="lista-container" id="listaCartones">
             <p style="color:#94a3b8; text-align:center; padding:20px;">
                 No hay cartones generados aún
             </p>
         </div>
 
-        <!-- Botón para ir al juego -->
-        <button class="btn-ir-juego" onclick="location.href='ruleta.html'">
+        <!-- Ir al juego -->
+        <button class="btn-ir-juego" id="btnIrJuego">
             🎮 IR AL JUEGO →
         </button>
     </div>
 
-    <!-- ============ CONTENIDO PRINCIPAL ============ -->
+    <!-- CONTENIDO PRINCIPAL -->
     <div class="main-content">
         <div id="vista-previa-contenido" class="preview-box">
             <div class="preview-empty">
                 <h2>👁️ VISTA PREVIA</h2>
                 <p>Selecciona un cartón para verlo en detalle</p>
                 <p style="font-size:0.8rem; margin-top:20px;">
-                    💡 Tip: Puedes renombrar cartones y asignarlos después
+                    💡 Tip: Genera cartones y asígnalos a jugadores
                 </p>
             </div>
         </div>
     </div>
 
-    <!-- ============ SCRIPTS ============ -->
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     
-    <!-- Configuración y lógica (RUTAS CORREGIDAS) -->
-    <script>
-        // Configuración de Firebase INLINE para evitar error 404
-        const firebaseConfig = {
-            apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
-            authDomain: "bingofast.firebaseapp.com",
-            databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
-            projectId: "bingofast",
-            storageBucket: "bingofast.firebasestorage.app",
-            messagingSenderId: "473863283329",
-            appId: "1:473863283329:web:2c4bf96de167d105fa6380"
-        };
-        
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-            console.log('🔥 Firebase inicializado correctamente');
-        }
-        
-        const db = firebase.database();
-    </script>
+    <!-- Script principal -->
     <script src="generar.js"></script>
 </body>
 </html>
