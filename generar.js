@@ -1,4 +1,4 @@
-// generar.js - Versión final con jugadores y PDF
+// generar.js - Versión final completa
 
 const SALA_ID = localStorage.getItem('salaActiva') || 'sala-' + Date.now().toString(36);
 localStorage.setItem('salaActiva', SALA_ID);
@@ -123,7 +123,7 @@ function mostrarLista() {
     });
 }
 
-// ============ SELECCIÓN CON CHECKBOX ============
+// ============ SELECCIÓN ============
 function toggleSeleccionCheck(id, checked) {
     if (checked) {
         seleccionados.add(id);
@@ -134,7 +134,6 @@ function toggleSeleccionCheck(id, checked) {
     actualizarCheckTodos();
     actualizarContadorSeleccion();
     
-    // Actualizar clase visual
     const card = document.querySelector('[data-id="' + id + '"]');
     if (card) {
         if (checked) {
@@ -208,6 +207,7 @@ function generarLote() {
                     if (creados === cantidad) {
                         mostrarLista();
                         input.value = '';
+                        mostrarToast('✅ ' + cantidad + ' cartones generados');
                     }
                 }
             });
@@ -289,19 +289,20 @@ function buscarJugador() {
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
         seleccionados.clear();
         let encontrados = 0;
+        const idsEncontrados = [];
         
         snap.forEach(function(child) {
             const c = child.val();
             if (c.asignadoA && c.asignadoA.toLowerCase() === nombreBuscado) {
                 seleccionados.add(c.id);
+                idsEncontrados.push(c.id);
                 encontrados++;
             }
         });
         
         if (encontrados > 0) {
             mostrarLista();
-            const ids = Array.from(seleccionados);
-            const link = generarLinkJugador(nombre.trim(), ids);
+            const link = generarLinkJugador(nombre.trim(), idsEncontrados);
             
             const preview = document.getElementById('vista-previa-contenido');
             preview.innerHTML = 
@@ -312,7 +313,7 @@ function buscarJugador() {
                 '<input id="linkJugadorInput" value="' + link + '" readonly style="width:100%; padding:8px; border:2px solid #3b82f6; border-radius:6px; font-size:0.8rem;" onclick="this.select()">' +
                 '<button onclick="copiarLinkJugador()" style="background:#3b82f6; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; margin-top:5px; width:100%;">📋 Copiar Link</button>' +
                 '</div>' +
-                '<button onclick="verCartonesJugador(\'' + nombre.trim() + '\', ' + JSON.stringify(ids) + ')" style="background:#8b5cf6; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; width:100%;">📄 Ver Cartones</button>' +
+                '<button onclick="verCartonesJugador(\'' + nombre.trim() + '\', ' + JSON.stringify(idsEncontrados) + ')" style="background:#8b5cf6; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; width:100%;">📄 Ver Cartones</button>' +
                 '</div>';
         } else {
             alert('❌ Jugador no encontrado');
@@ -320,7 +321,7 @@ function buscarJugador() {
     });
 }
 
-// ============ VER JUGADORES ============
+// ============ VER JUGADORES (CORREGIDO) ============
 function verJugadores() {
     const preview = document.getElementById('vista-previa-contenido');
     
@@ -353,20 +354,22 @@ function verJugadores() {
             const link = generarLinkJugador(nombre, ids);
             
             html += '<div style="background:#f8fafc; padding:12px; margin:8px 0; border-radius:8px; border-left:4px solid #3b82f6;">';
-            html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
-            html += '<div>';
+            html += '<div style="display:flex; justify-content:space-between; align-items:flex-start;">';
+            html += '<div style="flex:1;">';
             html += '<h4 style="margin:0; color:#1e293b;">👤 ' + nombre + '</h4>';
             html += '<p style="color:#64748b; font-size:0.8rem; margin:3px 0;">' + cartones.length + ' cartón(es)</p>';
-            html += '<div style="display:flex; gap:5px; flex-wrap:wrap; margin-top:5px;">';
             
+            // Lista de cartones clickeables
+            html += '<div style="display:flex; gap:5px; flex-wrap:wrap; margin-top:8px;">';
             cartones.forEach(function(c) {
-                html += '<span style="background:#e2e8f0; padding:2px 8px; border-radius:10px; font-size:0.7rem;">#' + c.numero + '</span>';
+                html += '<span onclick="verPreview(\'' + c.id + '\')" style="background:#e2e8f0; padding:5px 10px; border-radius:15px; font-size:0.75rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background=\'#3b82f6\'; this.style.color=\'white\'" onmouseout="this.style.background=\'#e2e8f0\'; this.style.color=\'#1e293b\'">#' + c.numero + '</span>';
             });
-            
             html += '</div></div>';
-            html += '<div style="display:flex; flex-direction:column; gap:5px;">';
+            
+            html += '<div style="display:flex; flex-direction:column; gap:5px; margin-left:10px;">';
             html += '<button onclick="seleccionarJugador(\'' + nombre + '\', ' + JSON.stringify(ids) + ')" style="background:#10b981; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:0.75rem;">✅ Seleccionar</button>';
             html += '<button onclick="copiarLinkJugadorDirecto(\'' + link + '\')" style="background:#3b82f6; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:0.75rem;">📋 Link</button>';
+            html += '<button onclick="verCartonesJugador(\'' + nombre + '\', ' + JSON.stringify(ids) + ')" style="background:#8b5cf6; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:0.75rem;">📄 Ver</button>';
             html += '</div></div></div>';
         });
         
@@ -390,14 +393,17 @@ function copiarLinkJugadorDirecto(link) {
     });
 }
 
-// ============ VER CARTONES DEL JUGADOR ============
+// ============ VER CARTONES DEL JUGADOR (CORREGIDO) ============
 function verCartonesJugador(nombre, ids) {
     const preview = document.getElementById('vista-previa-contenido');
     
+    preview.innerHTML = '<p style="color:#94a3b8;">Cargando cartones...</p>';
+    
     let html = '<div style="padding:15px;">';
-    html += '<h3 style="color:#1e293b;">👤 ' + nombre + '</h3>';
+    html += '<h3 style="color:#1e293b; margin-bottom:5px;">👤 ' + nombre + '</h3>';
     html += '<p style="color:#64748b; font-size:0.85rem;">' + ids.length + ' cartón(es)</p>';
-    html += '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:8px; margin-top:10px; max-height:60vh; overflow-y:auto;">';
+    html += '<button onclick="verJugadores()" style="background:#64748b; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:0.75rem; margin-bottom:10px;">← Volver a Jugadores</button>';
+    html += '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:8px; max-height:55vh; overflow-y:auto;">';
     
     let cargados = 0;
     let htmlCartones = '';
@@ -406,7 +412,7 @@ function verCartonesJugador(nombre, ids) {
         db.ref('salas/' + SALA_ID + '/cartones/' + id).once('value', function(snap) {
             const d = snap.val();
             if (d && d.carton) {
-                htmlCartones += '<div style="border:2px solid #e2e8f0; border-radius:8px; padding:8px;">';
+                htmlCartones += '<div style="border:2px solid #e2e8f0; border-radius:8px; padding:8px; cursor:pointer;" onclick="verPreview(\'' + id + '\')">';
                 htmlCartones += '<h4 style="text-align:center; color:#ff4d4d; margin-bottom:5px; font-size:0.8rem;">Cartón #' + d.numero + '</h4>';
                 htmlCartones += '<table style="width:100%; border-collapse:collapse; font-size:0.65rem;">';
                 htmlCartones += '<tr style="background:#ff4d4d; color:white;"><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
@@ -440,12 +446,13 @@ function verPreview(id) {
     db.ref('salas/' + SALA_ID + '/cartones/' + id).once('value', function(snap) {
         const d = snap.val();
         if (!d || !d.carton) {
-            preview.innerHTML = '<p>No encontrado</p>';
+            preview.innerHTML = '<p style="color:red;">❌ Cartón no encontrado</p>';
             return;
         }
         
         let html = '<div style="padding:15px;">';
-        html += '<h3 style="color:#1e293b;">Cartón #' + d.numero + '</h3>';
+        html += '<button onclick="verJugadores()" style="background:#64748b; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:0.75rem; margin-bottom:10px;">← Volver</button>';
+        html += '<h3 style="color:#1e293b; margin-bottom:5px;">Cartón #' + d.numero + '</h3>';
         if (d.nombre && d.nombre !== 'Cartón ' + d.numero) {
             html += '<p style="color:#64748b; font-size:0.85rem;">' + d.nombre + '</p>';
         }
@@ -486,7 +493,6 @@ async function exportarPDF() {
         await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
     }
     
-    // Si hay selección, exportar selección. Si no, exportar todo
     const ids = seleccionados.size > 0 ? Array.from(seleccionados) : null;
     
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
@@ -510,8 +516,6 @@ async function exportarPDF() {
         
         snap.forEach(function(child) {
             const c = child.val();
-            
-            // Si hay selección, solo incluir los seleccionados
             if (ids && !ids.includes(c.id)) return;
             
             html += '<div style="border:2px solid #000; padding:8px; page-break-inside:avoid;">';
@@ -669,56 +673,34 @@ function mostrarToast(mensaje) {
     setTimeout(function() { if (toast.parentNode) toast.remove(); }, 2000);
 }
 
-// Reemplaza SOLO la parte de INICIALIZACIÓN al final del archivo:
-
 // ============ INICIAR ============
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Bingo Pro Admin');
     console.log('📁 Sala: ' + SALA_ID);
     
-    // Verificar que los elementos existen antes de agregar eventos
-    const btnGenerar = document.getElementById('btnGenerar');
-    const btnGuardar = document.getElementById('btnGuardar');
-    const btnAbrir = document.getElementById('btnAbrir');
-    const btnPDF = document.getElementById('btnPDF');
-    const btnLinks = document.getElementById('btnLinks');
-    const btnJugadores = document.getElementById('btnJugadores');
-    const btnBorrar = document.getElementById('btnBorrar');
-    const btnBuscarJugador = document.getElementById('btnBuscarJugador');
-    const btnIrJuego = document.getElementById('btnIrJuego');
-    const fileIn = document.getElementById('fileIn');
-    const buscadorCartones = document.getElementById('buscadorCartones');
-    const cantidadGenerar = document.getElementById('cantidadGenerar');
-    const checkTodos = document.getElementById('checkTodos');
-    const btnAsignar = document.getElementById('btnAsignar');
-    
-    if (btnGenerar) btnGenerar.addEventListener('click', generarLote);
-    if (btnGuardar) btnGuardar.addEventListener('click', exportarJSON);
-    if (btnAbrir) btnAbrir.addEventListener('click', function() {
+    // Botones
+    document.getElementById('btnGenerar').addEventListener('click', generarLote);
+    document.getElementById('btnGuardar').addEventListener('click', exportarJSON);
+    document.getElementById('btnAbrir').addEventListener('click', function() {
         document.getElementById('fileIn').click();
     });
-    if (btnPDF) btnPDF.addEventListener('click', exportarPDF);
-    if (btnLinks) btnLinks.addEventListener('click', verLinks);
-    if (btnJugadores) btnJugadores.addEventListener('click', verJugadores);
-    if (btnBorrar) btnBorrar.addEventListener('click', borrarTodo);
-    if (btnBuscarJugador) btnBuscarJugador.addEventListener('click', buscarJugador);
-    if (btnIrJuego) btnIrJuego.addEventListener('click', function() {
+    document.getElementById('btnPDF').addEventListener('click', exportarPDF);
+    document.getElementById('btnLinks').addEventListener('click', verLinks);
+    document.getElementById('btnJugadores').addEventListener('click', verJugadores);
+    document.getElementById('btnBorrar').addEventListener('click', borrarTodo);
+    document.getElementById('btnBuscarJugador').addEventListener('click', buscarJugador);
+    document.getElementById('btnIrJuego').addEventListener('click', function() {
         location.href = 'ruleta.html';
     });
-    if (btnAsignar) btnAsignar.addEventListener('click', asignarAJugador);
-    if (fileIn) fileIn.addEventListener('change', importarJSON);
-    if (buscadorCartones) buscadorCartones.addEventListener('input', function(e) {
+    document.getElementById('btnAsignar').addEventListener('click', asignarAJugador);
+    document.getElementById('fileIn').addEventListener('change', importarJSON);
+    document.getElementById('buscadorCartones').addEventListener('input', function(e) {
         filtrarCartones(e.target.value);
     });
-    if (cantidadGenerar) cantidadGenerar.addEventListener('keypress', function(e) {
+    document.getElementById('cantidadGenerar').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') generarLote();
     });
-    if (checkTodos) checkTodos.addEventListener('change', seleccionarTodosCheckbox);
-    
-    // Exponer funciones globales
-    window.asignarAJugador = asignarAJugador;
-    window.buscarJugador = buscarJugador;
-    window.seleccionarTodosCheckbox = seleccionarTodosCheckbox;
+    document.getElementById('checkTodos').addEventListener('change', seleccionarTodosCheckbox);
     
     mostrarLista();
 });
