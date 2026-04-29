@@ -669,33 +669,56 @@ function mostrarToast(mensaje) {
     setTimeout(function() { if (toast.parentNode) toast.remove(); }, 2000);
 }
 
+// Reemplaza SOLO la parte de INICIALIZACIÓN al final del archivo:
+
 // ============ INICIAR ============
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Bingo Pro Admin');
     console.log('📁 Sala: ' + SALA_ID);
     
-    document.getElementById('btnGenerar').addEventListener('click', generarLote);
-    document.getElementById('btnGuardar').addEventListener('click', exportarJSON);
-    document.getElementById('btnAbrir').addEventListener('click', function() {
+    // Verificar que los elementos existen antes de agregar eventos
+    const btnGenerar = document.getElementById('btnGenerar');
+    const btnGuardar = document.getElementById('btnGuardar');
+    const btnAbrir = document.getElementById('btnAbrir');
+    const btnPDF = document.getElementById('btnPDF');
+    const btnLinks = document.getElementById('btnLinks');
+    const btnJugadores = document.getElementById('btnJugadores');
+    const btnBorrar = document.getElementById('btnBorrar');
+    const btnBuscarJugador = document.getElementById('btnBuscarJugador');
+    const btnIrJuego = document.getElementById('btnIrJuego');
+    const fileIn = document.getElementById('fileIn');
+    const buscadorCartones = document.getElementById('buscadorCartones');
+    const cantidadGenerar = document.getElementById('cantidadGenerar');
+    const checkTodos = document.getElementById('checkTodos');
+    const btnAsignar = document.getElementById('btnAsignar');
+    
+    if (btnGenerar) btnGenerar.addEventListener('click', generarLote);
+    if (btnGuardar) btnGuardar.addEventListener('click', exportarJSON);
+    if (btnAbrir) btnAbrir.addEventListener('click', function() {
         document.getElementById('fileIn').click();
     });
-    document.getElementById('btnPDF').addEventListener('click', exportarPDF);
-    document.getElementById('btnLinks').addEventListener('click', verLinks);
-    document.getElementById('btnJugadores').addEventListener('click', verJugadores);
-    document.getElementById('btnBorrar').addEventListener('click', borrarTodo);
-    document.getElementById('btnBuscarJugador').addEventListener('click', buscarJugador);
-    document.getElementById('btnIrJuego').addEventListener('click', function() {
+    if (btnPDF) btnPDF.addEventListener('click', exportarPDF);
+    if (btnLinks) btnLinks.addEventListener('click', verLinks);
+    if (btnJugadores) btnJugadores.addEventListener('click', verJugadores);
+    if (btnBorrar) btnBorrar.addEventListener('click', borrarTodo);
+    if (btnBuscarJugador) btnBuscarJugador.addEventListener('click', buscarJugador);
+    if (btnIrJuego) btnIrJuego.addEventListener('click', function() {
         location.href = 'ruleta.html';
     });
-    document.getElementById('fileIn').addEventListener('change', importarJSON);
-    document.getElementById('buscadorCartones').addEventListener('input', function(e) {
+    if (btnAsignar) btnAsignar.addEventListener('click', asignarAJugador);
+    if (fileIn) fileIn.addEventListener('change', importarJSON);
+    if (buscadorCartones) buscadorCartones.addEventListener('input', function(e) {
         filtrarCartones(e.target.value);
     });
-    document.getElementById('cantidadGenerar').addEventListener('keypress', function(e) {
+    if (cantidadGenerar) cantidadGenerar.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') generarLote();
     });
+    if (checkTodos) checkTodos.addEventListener('change', seleccionarTodosCheckbox);
     
+    // Exponer funciones globales
     window.asignarAJugador = asignarAJugador;
+    window.buscarJugador = buscarJugador;
+    window.seleccionarTodosCheckbox = seleccionarTodosCheckbox;
     
     mostrarLista();
 });
