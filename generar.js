@@ -1,9 +1,8 @@
-// generar.js - Versión final completa
+// generar.js - Versión final corregida
 
 const SALA_ID = localStorage.getItem('salaActiva') || 'sala-' + Date.now().toString(36);
 localStorage.setItem('salaActiva', SALA_ID);
 
-// ============ CARTONES SELECCIONADOS ============
 let seleccionados = new Set();
 
 // ============ GENERAR COLUMNA ============
@@ -90,11 +89,10 @@ function mostrarLista() {
                 'onchange="renombrarCarton(\'' + id + '\', this.value)" onclick="event.stopPropagation()" placeholder="Nombre...">' +
                 '<div class="carton-acciones">' +
                 '<button class="btn-accion-pequeno seleccionar' + (estaSeleccionado ? ' activo' : '') + '" ' +
-                'onclick="event.stopPropagation(); toggleSeleccion(\'' + id + '\')" title="Seleccionar">' + 
-                (estaSeleccionado ? '✓' : '○') + '</button>' +
-                '<button class="btn-accion-pequeno link" onclick="event.stopPropagation(); copiarLink(\'' + id + '\')" title="Link individual">🔗</button>' +
-                '<button class="btn-accion-pequeno estado-btn" onclick="event.stopPropagation(); cambiarEstado(\'' + id + '\')" title="Cambiar estado">🔄</button>' +
-                '<button class="btn-accion-pequeno eliminar" onclick="event.stopPropagation(); eliminarCarton(\'' + id + '\')" title="Eliminar">🗑️</button>' +
+                'onclick="event.stopPropagation(); toggleSeleccion(\'' + id + '\')">' + (estaSeleccionado ? '✓' : '○') + '</button>' +
+                '<button class="btn-accion-pequeno link" onclick="event.stopPropagation(); copiarLink(\'' + id + '\')">🔗</button>' +
+                '<button class="btn-accion-pequeno estado-btn" onclick="event.stopPropagation(); cambiarEstado(\'' + id + '\')">🔄</button>' +
+                '<button class="btn-accion-pequeno eliminar" onclick="event.stopPropagation(); eliminarCarton(\'' + id + '\')">🗑️</button>' +
                 '</div>';
             
             contenedor.appendChild(div);
@@ -173,7 +171,6 @@ function asignarAJugador() {
     const ids = Array.from(seleccionados);
     let completados = 0;
     
-    // Actualizar cada cartón
     ids.forEach(function(id) {
         db.ref('salas/' + SALA_ID + '/cartones/' + id).update({
             estado: 'asignado',
@@ -182,14 +179,10 @@ function asignarAJugador() {
             if (!error) {
                 completados++;
                 if (completados === ids.length) {
-                    // Limpiar selección
                     seleccionados.clear();
                     mostrarLista();
                     
-                    // Generar link
                     const link = generarLinkJugador(nombreJugador, ids);
-                    
-                    // Mostrar en vista previa
                     mostrarAsignacionExitosa(nombreJugador, ids, link);
                 }
             }
@@ -205,30 +198,19 @@ function generarLinkJugador(nombre, ids) {
 function mostrarAsignacionExitosa(nombre, ids, link) {
     const preview = document.getElementById('vista-previa-contenido');
     
-    let html = '<div style="padding:20px;">';
-    html += '<h2 style="color:#10b981; margin-bottom:5px;">✅ Cartones Asignados</h2>';
-    html += '<h3 style="color:#1e293b; font-size:1.3rem;">👤 ' + nombre + '</h3>';
-    html += '<p style="color:#64748b;">' + ids.length + ' cartón(es) asignado(s)</p>';
+    let html = '<div style="padding:15px;">';
+    html += '<h3 style="color:#10b981; margin-bottom:5px;">✅ Cartones Asignados</h3>';
+    html += '<p style="font-size:1.1rem; color:#1e293b;"><strong>👤 ' + nombre + '</strong></p>';
+    html += '<p style="color:#64748b; font-size:0.85rem;">' + ids.length + ' cartón(es) asignado(s)</p>';
     
-    // Mostrar números de cartones
-    html += '<div style="display:flex; gap:8px; flex-wrap:wrap; margin:15px 0;">';
-    ids.forEach(function(id) {
-        html += '<span style="background:#3b82f6; color:white; padding:5px 12px; border-radius:20px; font-size:0.85rem;">Cartón #' + id.slice(-4) + '</span>';
-    });
-    html += '</div>';
+    html += '<div style="background:#f1f5f9; padding:10px; border-radius:8px; margin:10px 0;">';
+    html += '<p style="color:#64748b; font-size:0.75rem; margin-bottom:5px;">🔗 Link del jugador:</p>';
+    html += '<div style="display:flex; gap:8px;">';
+    html += '<input id="linkJugadorInput" value="' + link + '" readonly style="flex:1; padding:8px; border:2px solid #3b82f6; border-radius:6px; font-size:0.8rem;" onclick="this.select()">';
+    html += '<button onclick="copiarLinkJugador()" style="background:#3b82f6; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem;">📋</button>';
+    html += '</div></div>';
     
-    // Link del jugador
-    html += '<div style="background:#f1f5f9; padding:15px; border-radius:8px; margin:15px 0;">';
-    html += '<p style="color:#64748b; font-size:0.8rem; margin-bottom:8px;">🔗 Link del jugador:</p>';
-    html += '<div style="display:flex; gap:10px;">';
-    html += '<input id="linkJugadorInput" value="' + link + '" readonly style="flex:1; padding:10px; border:2px solid #3b82f6; border-radius:6px; font-size:0.85rem;" onclick="this.select()">';
-    html += '<button onclick="copiarLinkJugador()" style="background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold;">📋 COPIAR</button>';
-    html += '</div>';
-    html += '</div>';
-    
-    // Botón para ver cartones del jugador
-    html += '<button onclick="verCartonesJugador(\'' + nombre + '\', ' + JSON.stringify(ids) + ')" style="background:#8b5cf6; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;">📄 Ver Cartones del Jugador</button>';
-    
+    html += '<button onclick="verCartonesJugador(\'' + nombre + '\', ' + JSON.stringify(ids) + ')" style="background:#8b5cf6; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size:0.85rem;">📄 Ver Cartones</button>';
     html += '</div>';
     
     preview.innerHTML = html;
@@ -238,19 +220,65 @@ function copiarLinkJugador() {
     const input = document.getElementById('linkJugadorInput');
     if (input) {
         navigator.clipboard.writeText(input.value).then(function() {
-            mostrarToast('✅ Link copiado al portapapeles');
+            mostrarToast('✅ Link copiado');
         });
     }
+}
+
+// ============ BUSCAR JUGADOR Y SELECCIONAR SUS CARTONES ============
+function buscarJugador() {
+    const nombre = prompt('🔍 Nombre del jugador a buscar:');
+    if (!nombre || !nombre.trim()) return;
+    
+    const nombreBuscado = nombre.trim().toLowerCase();
+    
+    db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
+        seleccionados.clear();
+        let encontrados = 0;
+        
+        snap.forEach(function(child) {
+            const c = child.val();
+            if (c.asignadoA && c.asignadoA.toLowerCase() === nombreBuscado) {
+                seleccionados.add(c.id);
+                encontrados++;
+            }
+        });
+        
+        if (encontrados > 0) {
+            mostrarLista();
+            
+            // Generar link con todos los cartones del jugador
+            const ids = Array.from(seleccionados);
+            const link = generarLinkJugador(nombre.trim(), ids);
+            
+            const preview = document.getElementById('vista-previa-contenido');
+            preview.innerHTML = 
+                '<div style="padding:15px;">' +
+                '<h3 style="color:#3b82f6;">🔍 Jugador encontrado</h3>' +
+                '<p style="font-size:1.1rem;"><strong>👤 ' + nombre.trim() + '</strong></p>' +
+                '<p style="color:#64748b;">' + encontrados + ' cartón(es) seleccionado(s)</p>' +
+                '<div style="background:#f1f5f9; padding:10px; border-radius:8px; margin:10px 0;">' +
+                '<p style="color:#64748b; font-size:0.75rem; margin-bottom:5px;">🔗 Link del jugador:</p>' +
+                '<div style="display:flex; gap:8px;">' +
+                '<input id="linkJugadorInput" value="' + link + '" readonly style="flex:1; padding:8px; border:2px solid #3b82f6; border-radius:6px; font-size:0.8rem;" onclick="this.select()">' +
+                '<button onclick="copiarLinkJugador()" style="background:#3b82f6; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem;">📋</button>' +
+                '</div></div>' +
+                '<button onclick="verCartonesJugador(\'' + nombre.trim() + '\', ' + JSON.stringify(ids) + ')" style="background:#8b5cf6; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size:0.85rem;">📄 Ver Cartones</button>' +
+                '</div>';
+        } else {
+            alert('❌ No se encontraron cartones para: ' + nombre.trim());
+        }
+    });
 }
 
 // ============ VER CARTONES DEL JUGADOR ============
 function verCartonesJugador(nombre, ids) {
     const preview = document.getElementById('vista-previa-contenido');
     
-    let html = '<div style="padding:20px;">';
-    html += '<h2 style="color:#1e293b;">👤 ' + nombre + '</h2>';
-    html += '<p style="color:#64748b;">' + ids.length + ' cartón(es)</p>';
-    html += '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-top:15px;">';
+    let html = '<div style="padding:15px;">';
+    html += '<h3 style="color:#1e293b; margin-bottom:5px;">👤 ' + nombre + '</h3>';
+    html += '<p style="color:#64748b; font-size:0.85rem;">' + ids.length + ' cartón(es)</p>';
+    html += '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-top:10px; max-height:60vh; overflow-y:auto;">';
     
     let cargados = 0;
     
@@ -258,9 +286,9 @@ function verCartonesJugador(nombre, ids) {
         db.ref('salas/' + SALA_ID + '/cartones/' + id).once('value', function(snap) {
             const d = snap.val();
             if (d && d.carton) {
-                html += '<div style="border:2px solid #e2e8f0; border-radius:8px; padding:10px;">';
-                html += '<h4 style="text-align:center; color:#ff4d4d; margin-bottom:8px;">Cartón #' + d.numero + '</h4>';
-                html += '<table style="width:100%; border-collapse:collapse; font-size:0.75rem;">';
+                html += '<div style="border:2px solid #e2e8f0; border-radius:8px; padding:8px;">';
+                html += '<h4 style="text-align:center; color:#ff4d4d; margin-bottom:5px; font-size:0.85rem;">Cartón #' + d.numero + '</h4>';
+                html += '<table style="width:100%; border-collapse:collapse; font-size:0.7rem;">';
                 html += '<tr style="background:#ff4d4d; color:white;"><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
                 
                 for (let f = 0; f < 5; f++) {
@@ -268,7 +296,7 @@ function verCartonesJugador(nombre, ids) {
                     ['B','I','N','G','O'].forEach(function(l) {
                         const v = d.carton[l][f];
                         const centro = (l === 'N' && f === 2);
-                        html += '<td style="padding:5px; border:1px solid #e2e8f0; text-align:center;';
+                        html += '<td style="padding:4px; border:1px solid #e2e8f0; text-align:center;';
                         if (centro) html += 'background:#fef3c7;';
                         html += '">' + (centro ? '⭐' : v) + '</td>';
                     });
@@ -297,30 +325,25 @@ function verPreview(id) {
             return;
         }
         
-        let html = '<div style="padding:20px;">';
-        
-        // Cabecera con información
-        html += '<div style="margin-bottom:20px;">';
-        html += '<h2 style="color:#1e293b; margin-bottom:5px;">Cartón #' + d.numero + '</h2>';
+        let html = '<div style="padding:15px;">';
+        html += '<h3 style="color:#1e293b; margin-bottom:5px;">Cartón #' + d.numero + '</h3>';
         if (d.nombre && d.nombre !== 'Cartón ' + d.numero) {
-            html += '<p style="color:#64748b;">' + d.nombre + '</p>';
+            html += '<p style="color:#64748b; font-size:0.85rem;">' + d.nombre + '</p>';
         }
-        html += '<p style="color:#64748b; font-size:0.85rem;">Estado: <strong>' + (d.estado || 'disponible') + '</strong></p>';
+        html += '<p style="color:#64748b; font-size:0.8rem;">Estado: <strong>' + (d.estado || 'disponible') + '</strong></p>';
         if (d.asignadoA) {
-            html += '<p style="color:#10b981; font-size:0.9rem;">👤 Asignado a: <strong>' + d.asignadoA + '</strong></p>';
+            html += '<p style="color:#10b981; font-size:0.85rem;">👤 <strong>' + d.asignadoA + '</strong></p>';
         }
-        html += '</div>';
         
-        // Tabla del cartón
-        html += '<table style="width:100%; border-collapse:collapse; max-width:350px; margin:15px auto;">';
-        html += '<tr style="background:#ff4d4d; color:white;"><th style="padding:12px;">B</th><th style="padding:12px;">I</th><th style="padding:12px;">N</th><th style="padding:12px;">G</th><th style="padding:12px;">O</th></tr>';
+        html += '<table style="width:100%; border-collapse:collapse; max-width:300px; margin:10px auto;">';
+        html += '<tr style="background:#ff4d4d; color:white;"><th style="padding:8px;">B</th><th style="padding:8px;">I</th><th style="padding:8px;">N</th><th style="padding:8px;">G</th><th style="padding:8px;">O</th></tr>';
         
         for (let f = 0; f < 5; f++) {
             html += '<tr>';
             ['B','I','N','G','O'].forEach(function(l) {
                 const v = d.carton[l][f];
                 const centro = (l === 'N' && f === 2);
-                html += '<td style="padding:12px; border:2px solid #e2e8f0; text-align:center; font-weight:bold; font-size:1.1rem;';
+                html += '<td style="padding:8px; border:2px solid #e2e8f0; text-align:center; font-weight:bold;';
                 if (centro) html += 'background:#fef3c7;';
                 html += '">' + (centro ? '⭐' : v) + '</td>';
             });
@@ -328,14 +351,12 @@ function verPreview(id) {
         }
         html += '</table>';
         
-        // Botones de acción
-        html += '<div style="margin-top:15px; display:flex; gap:8px; justify-content:center;">';
-        html += '<button onclick="copiarLink(\'' + id + '\')" style="background:#3b82f6; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">🔗 Link Individual</button>';
-        html += '<button onclick="cambiarEstado(\'' + id + '\')" style="background:#f59e0b; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">🔄 Cambiar Estado</button>';
+        html += '<div style="margin-top:10px; display:flex; gap:6px; justify-content:center;">';
+        html += '<button onclick="copiarLink(\'' + id + '\')" style="background:#3b82f6; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem;">🔗 Link</button>';
+        html += '<button onclick="cambiarEstado(\'' + id + '\')" style="background:#f59e0b; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem;">🔄 Estado</button>';
         html += '</div>';
         
         html += '</div>';
-        
         preview.innerHTML = html;
     });
 }
@@ -414,14 +435,14 @@ function importarJSON(e) {
 function verLinks() {
     const preview = document.getElementById('vista-previa-contenido');
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
-        let html = '<h2 style="color:#ff4d4d;">🔗 LINKS</h2><div style="max-height:500px; overflow-y:auto; text-align:left;">';
+        let html = '<h3 style="color:#ff4d4d; margin-bottom:10px;">🔗 LINKS</h3><div style="max-height:60vh; overflow-y:auto; text-align:left;">';
         const base = location.origin + location.pathname.replace('generar.html', '');
         snap.forEach(function(child) {
             const c = child.val();
             const link = base + 'carton.html?carton=' + c.id + '&sala=' + SALA_ID;
-            html += '<div style="background:#f1f5f9; padding:10px; margin:5px 0; border-radius:6px;">';
-            html += '<strong>#' + c.numero + '</strong> - ' + (c.nombre || '') + (c.asignadoA ? ' (' + c.asignadoA + ')' : '');
-            html += '<input value="' + link + '" readonly style="width:100%; padding:5px; margin-top:5px;" onclick="this.select()">';
+            html += '<div style="background:#f1f5f9; padding:8px; margin:4px 0; border-radius:6px;">';
+            html += '<strong>#' + c.numero + '</strong> - ' + (c.nombre || '') + (c.asignadoA ? ' <span style="color:#10b981;">(' + c.asignadoA + ')</span>' : '');
+            html += '<input value="' + link + '" readonly style="width:100%; padding:4px; margin-top:4px; font-size:0.75rem;" onclick="this.select()">';
             html += '</div>';
         });
         html += '</div>';
@@ -491,8 +512,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Enter') generarLote();
     });
     
-    // Exponer función de asignar
     window.asignarAJugador = asignarAJugador;
+    window.buscarJugador = buscarJugador;
     
     mostrarLista();
 });
