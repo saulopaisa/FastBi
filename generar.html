@@ -23,19 +23,26 @@
             <button class="btn-tool" id="btnAbrir">📂 Abrir</button>
             <button class="btn-tool pdf" id="btnPDF">📄 PDF</button>
             <button class="btn-tool links" id="btnLinks">🔗 Links</button>
-            <button class="btn-tool" id="btnSelTodos">✅ Todos</button>
+            <button class="btn-tool jugadores" id="btnJugadores">👥 Jugadores</button>
             <button class="btn-tool danger" id="btnBorrar">🗑️ Borrar</button>
         </div>
         
-        <!-- Botón de ASIGNAR (aparece al seleccionar) -->
-        <button class="btn-asignar" id="btnAsignar" style="display:none;" onclick="asignarAJugador()">
-            👤 ASIGNAR A JUGADOR
-        </button>
+        <button class="btn-asignar" id="btnAsignar" style="display:none;">👤 ASIGNAR A JUGADOR</button>
+        <button class="btn-buscar-jugador" id="btnBuscarJugador">🔍 BUSCAR JUGADOR</button>
         
         <input type="file" id="fileIn" style="display:none" accept=".json">
 
         <div class="buscador">
             <input type="text" id="buscadorCartones" placeholder="🔍 Buscar cartón...">
+        </div>
+
+        <!-- Checkbox seleccionar todos -->
+        <div class="seleccionar-todos-container">
+            <label class="checkbox-label">
+                <input type="checkbox" id="checkTodos" onchange="seleccionarTodosCheckbox()">
+                <span>Seleccionar todos los cartones</span>
+            </label>
+            <span id="cantidadSeleccionados" class="cantidad-seleccionados">0 seleccionados</span>
         </div>
 
         <div class="lista-container" id="listaCartones">
