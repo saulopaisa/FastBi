@@ -5,7 +5,7 @@
 }
 
 body {
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: #0b0f1a;
     display: flex;
     height: 100vh;
@@ -13,7 +13,7 @@ body {
     overflow: hidden;
 }
 
-/* SIDEBAR - AHORA MÁS GRANDE */
+/* SIDEBAR */
 .sidebar {
     width: 480px;
     min-width: 480px;
@@ -78,12 +78,14 @@ body {
     cursor: pointer;
     color: white;
     font-size: 0.85rem;
+    transition: all 0.3s;
 }
 
 .btn-generar:hover {
     transform: translateY(-2px);
 }
 
+/* Botón asignar */
 .btn-asignar {
     background: linear-gradient(135deg, #8b5cf6, #7c3aed);
     color: white;
@@ -97,8 +99,15 @@ body {
     margin-bottom: 10px;
     display: none;
     animation: fadeIn 0.3s;
+    transition: all 0.3s;
 }
 
+.btn-asignar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(139,92,246,0.4);
+}
+
+/* Botón buscar jugador */
 .btn-buscar-jugador {
     background: #3b82f6;
     color: white;
@@ -109,13 +118,16 @@ body {
     width: 100%;
     cursor: pointer;
     font-size: 0.85rem;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+    transition: all 0.3s;
 }
 
 .btn-buscar-jugador:hover {
     background: #2563eb;
+    transform: translateY(-1px);
 }
 
+/* Grid herramientas */
 .grid-tools {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -132,16 +144,24 @@ body {
     font-size: 0.75rem;
     cursor: pointer;
     text-align: center;
+    transition: all 0.3s;
 }
 
 .btn-tool:hover {
     background: #3d4a5c;
+    transform: translateY(-1px);
 }
 
-.btn-tool.pdf { background: #553c9a; }
-.btn-tool.links { background: #1e40af; }
+.btn-tool.pdf { background: #553c9a; border-color: #6b46c1; }
+.btn-tool.pdf:hover { background: #6b46c1; }
+.btn-tool.links { background: #1e40af; border-color: #2563eb; }
+.btn-tool.links:hover { background: #2563eb; }
+.btn-tool.jugadores { background: #0e7490; border-color: #0891b2; }
+.btn-tool.jugadores:hover { background: #0891b2; }
 .btn-tool.danger { color: #ef4444; }
+.btn-tool.danger:hover { border-color: #ef4444; }
 
+/* Buscador */
 .buscador {
     margin-bottom: 10px;
 }
@@ -160,7 +180,40 @@ body {
     color: #64748b;
 }
 
-/* LISTA - MÁS ESPACIO */
+/* Seleccionar todos */
+.seleccionar-todos-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: rgba(30, 41, 59, 0.8);
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: #cbd5e1;
+    font-size: 0.8rem;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #10b981;
+}
+
+.cantidad-seleccionados {
+    color: #10b981;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Lista de cartones */
 .lista-container {
     flex: 1;
     overflow-y: auto;
@@ -169,7 +222,7 @@ body {
     padding: 10px;
     border: 1px solid #1e293b;
     margin-bottom: 8px;
-    min-height: 350px;
+    min-height: 300px;
 }
 
 .lista-container::-webkit-scrollbar {
@@ -181,6 +234,11 @@ body {
     border-radius: 3px;
 }
 
+.lista-container::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+
+/* Card de cartón */
 .card-carton {
     background: white;
     color: #1e293b;
@@ -190,10 +248,12 @@ body {
     border-left: 5px solid #3b82f6;
     cursor: pointer;
     animation: fadeIn 0.3s;
+    transition: all 0.2s;
 }
 
 .card-carton:hover {
     transform: translateX(3px);
+    box-shadow: 0 4px 12px rgba(59,130,246,0.2);
 }
 
 .card-carton.seleccionado {
@@ -206,6 +266,20 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 4px;
+}
+
+.checkbox-card {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.checkbox-card input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: #10b981;
 }
 
 .carton-id {
@@ -229,6 +303,7 @@ body {
     font-size: 0.7rem;
     color: #10b981;
     margin-bottom: 3px;
+    font-weight: 500;
 }
 
 .input-nombre-carton {
@@ -254,14 +329,15 @@ body {
     cursor: pointer;
     font-size: 0.65rem;
     flex: 1;
+    transition: all 0.2s;
 }
 
-.btn-accion-pequeno.seleccionar { background: #6b7280; }
-.btn-accion-pequeno.seleccionar.activo { background: #10b981; }
+.btn-accion-pequeno:hover { opacity: 0.9; transform: scale(1.05); }
 .btn-accion-pequeno.link { background: #10b981; }
 .btn-accion-pequeno.estado-btn { background: #f59e0b; }
 .btn-accion-pequeno.eliminar { background: #ef4444; }
 
+/* Botón ir al juego */
 .btn-ir-juego {
     background: linear-gradient(135deg, #ff4d4d, #dc2626);
     color: white;
@@ -273,13 +349,15 @@ body {
     cursor: pointer;
     font-size: 0.9rem;
     margin-top: auto;
+    transition: all 0.3s;
 }
 
 .btn-ir-juego:hover {
     transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255,77,77,0.4);
 }
 
-/* CONTENIDO PRINCIPAL - MÁS COMPACTO */
+/* CONTENIDO PRINCIPAL */
 .main-content {
     flex: 1;
     background: linear-gradient(135deg, #f8fafc, #e2e8f0);
@@ -296,7 +374,7 @@ body {
     border-radius: 12px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.1);
     color: #1e293b;
-    max-width: 650px;
+    max-width: 700px;
     width: 100%;
     max-height: 85vh;
     overflow-y: auto;
@@ -324,9 +402,85 @@ body {
     margin-top: 8px;
 }
 
+/* Tags de cartones clickeables en vista jugadores */
+.carton-tag {
+    display: inline-block;
+    background: #e2e8f0;
+    color: #1e293b;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+    margin: 2px;
+}
+
+.carton-tag:hover {
+    background: #3b82f6;
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Botones en vista previa */
+.btn-preview {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+
+.btn-preview:hover {
+    transform: translateY(-1px);
+    opacity: 0.9;
+}
+
+.btn-preview.verde { background: #10b981; }
+.btn-preview.morado { background: #8b5cf6; }
+.btn-preview.gris { background: #64748b; }
+.btn-preview.naranja { background: #f59e0b; }
+
+/* Toast */
 .toast {
     position: fixed;
     bottom: 20px;
     right: 20px;
     background: #10b981;
     color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    z-index: 9999;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    body { flex-direction: column; }
+    .sidebar {
+        width: 100%;
+        min-width: 100%;
+        max-height: 45vh;
+        border-right: none;
+        border-bottom: 2px solid #2d3436;
+    }
+    .main-content { padding: 10px; }
+    .preview-box { padding: 15px; }
+    .grid-tools { grid-template-columns: 1fr 1fr 1fr; }
+}
