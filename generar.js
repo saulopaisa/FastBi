@@ -1,21 +1,23 @@
-// generar.js - Versión final
+// generar.js - Versión final corregida
 
-var SALA_ID = localStorage.getItem('salaActiva') || 'sala-' + Date.now().toString(36);
+const SALA_ID = localStorage.getItem('salaActiva') || 'sala-' + Date.now().toString(36);
 localStorage.setItem('salaActiva', SALA_ID);
 
-var seleccionados = new Set();
+let seleccionados = new Set();
 
+// ============ GENERAR COLUMNA ============
 function generarColumna(min, max) {
-    var nums = [];
+    const nums = [];
     while (nums.length < 5) {
-        var n = Math.floor(Math.random() * (max - min + 1)) + min;
-        if (nums.indexOf(n) === -1) nums.push(n);
+        const n = Math.floor(Math.random() * (max - min + 1)) + min;
+        if (!nums.includes(n)) nums.push(n);
     }
-    return nums.sort(function(a, b) { return a - b; });
+    return nums.sort((a, b) => a - b);
 }
 
+// ============ GENERAR CARTÓN ============
 function generarCarton() {
-    var c = {
+    const c = {
         B: generarColumna(1, 15),
         I: generarColumna(16, 30),
         N: generarColumna(31, 45),
@@ -26,8 +28,9 @@ function generarCarton() {
     return c;
 }
 
+// ============ ACTUALIZAR BOTÓN ASIGNAR ============
 function actualizarBtnAsignar() {
-    var btn = document.getElementById('btnAsignar');
+    const btn = document.getElementById('btnAsignar');
     if (btn) {
         if (seleccionados.size > 0) {
             btn.textContent = '👤 ASIGNAR (' + seleccionados.size + ')';
@@ -36,40 +39,23 @@ function actualizarBtnAsignar() {
             btn.style.display = 'none';
         }
     }
-    actualizarContadorSeleccion();
 }
 
-function actualizarContadorSeleccion() {
-    var contador = document.getElementById('cantidadSeleccionados');
-    if (contador) {
-        contador.textContent = seleccionados.size + ' seleccionados';
-    }
-}
-
-function actualizarCheckTodos() {
-    var checkTodos = document.getElementById('checkTodos');
-    if (checkTodos) {
-        var cards = document.querySelectorAll('.card-carton');
-        checkTodos.checked = cards.length > 0 && seleccionados.size === cards.length;
-        checkTodos.indeterminate = seleccionados.size > 0 && seleccionados.size < cards.length;
-    }
-}
-
+// ============ MOSTRAR LISTA ============
 function mostrarLista() {
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
-        var total = snap.numChildren() || 0;
+        const total = snap.numChildren() || 0;
         document.getElementById('contadorRegistrados').innerHTML = '🎫 CARTONES: ' + total;
         
-        var contenedor = document.getElementById('listaCartones');
+        const contenedor = document.getElementById('listaCartones');
         contenedor.innerHTML = '';
         
         if (total === 0) {
             contenedor.innerHTML = '<p style="color:#94a3b8; text-align:center; padding:20px;">No hay cartones generados aún</p>';
-            actualizarContadorSeleccion();
             return;
         }
         
-        var cartones = [];
+        const cartones = [];
         snap.forEach(function(child) {
             cartones.push({ key: child.key, data: child.val() });
         });
@@ -79,94 +65,57 @@ function mostrarLista() {
         });
         
         cartones.forEach(function(item) {
-            var c = item.data;
-            var id = item.key;
-            var estaSeleccionado = seleccionados.has(id);
+            const c = item.data;
+            const id = item.key;
+            const estaSeleccionado = seleccionados.has(id);
             
-            var div = document.createElement('div');
+            const div = document.createElement('div');
             div.className = 'card-carton';
             div.setAttribute('data-id', id);
             if (estaSeleccionado) div.classList.add('seleccionado');
-            
-            div.innerHTML = 
-                '<div class="carton-header">' +
-                '<label class="checkbox-card" onclick="event.stopPropagation()">' +
-                '<input type="checkbox" ' + (estaSeleccionado ? 'checked' : '') + ' onchange="toggleSeleccionCheck(\'' + id + '\', this.checked)">' +
-                '<span class="carton-id"># ' + (c.numero || '?') + '</span>' +
-                '</label>' +
-                '<span class="carton-estado estado-' + (c.estado || 'disponible') + '">' + (c.estado || 'disponible') + '</span>' +
-                '</div>' +
-                (c.asignadoA ? '<div class="carton-asignado">👤 ' + c.asignadoA + '</div>' : '') +
-                '<input type="text" class="input-nombre-carton" value="' + (c.nombre || '') + '" ' +
-                'onchange="renombrarCarton(\'' + id + '\', this.value)" onclick="event.stopPropagation()" placeholder="Nombre...">' +
-                '<div class="carton-acciones">' +
-                '<button class="btn-accion-pequeno link" onclick="event.stopPropagation(); copiarLink(\'' + id + '\')">🔗</button>' +
-                '<button class="btn-accion-pequeno estado-btn" onclick="event.stopPropagation(); cambiarEstado(\'' + id + '\')">🔄</button>' +
-                '<button class="btn-accion-pequeno eliminar" onclick="event.stopPropagation(); eliminarCarton(\'' + id + '\')">🗑️</button>' +
-                '</div>';
             
             div.onclick = function(e) {
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
                 verPreview(id);
             };
             
+            div.innerHTML = 
+                '<div class="carton-header">' +
+                '<span class="carton-id"># ' + (c.numero || '?') + '</span>' +
+                '<span class="carton-estado estado-' + (c.estado || 'disponible') + '">' + (c.estado || 'disponible') + '</span>' +
+                '</div>' +
+                (c.asignadoA ? '<div class="carton-asignado">👤 ' + c.asignadoA + '</div>' : '') +
+                '<input type="text" class="input-nombre-carton" value="' + (c.nombre || '') + '" ' +
+                'onchange="renombrarCarton(\'' + id + '\', this.value)" onclick="event.stopPropagation()" placeholder="Nombre...">' +
+                '<div class="carton-acciones">' +
+                '<button class="btn-accion-pequeno seleccionar' + (estaSeleccionado ? ' activo' : '') + '" ' +
+                'onclick="event.stopPropagation(); toggleSeleccion(\'' + id + '\')">' + (estaSeleccionado ? '✓' : '○') + '</button>' +
+                '<button class="btn-accion-pequeno link" onclick="event.stopPropagation(); copiarLink(\'' + id + '\')">🔗</button>' +
+                '<button class="btn-accion-pequeno estado-btn" onclick="event.stopPropagation(); cambiarEstado(\'' + id + '\')">🔄</button>' +
+                '<button class="btn-accion-pequeno eliminar" onclick="event.stopPropagation(); eliminarCarton(\'' + id + '\')">🗑️</button>' +
+                '</div>';
+            
             contenedor.appendChild(div);
         });
         
         actualizarBtnAsignar();
-        actualizarCheckTodos();
-        actualizarContadorSeleccion();
     });
 }
 
-function toggleSeleccionCheck(id, checked) {
-    if (checked) {
-        seleccionados.add(id);
-    } else {
+// ============ TOGGLE SELECCIÓN ============
+function toggleSeleccion(id) {
+    if (seleccionados.has(id)) {
         seleccionados.delete(id);
-    }
-    actualizarBtnAsignar();
-    actualizarCheckTodos();
-    actualizarContadorSeleccion();
-    
-    var card = document.querySelector('[data-id="' + id + '"]');
-    if (card) {
-        if (checked) {
-            card.classList.add('seleccionado');
-        } else {
-            card.classList.remove('seleccionado');
-        }
-    }
-}
-
-function seleccionarTodosCheckbox() {
-    var checkTodos = document.getElementById('checkTodos');
-    var cards = document.querySelectorAll('.card-carton');
-    
-    if (checkTodos.checked) {
-        cards.forEach(function(card) {
-            var id = card.getAttribute('data-id');
-            seleccionados.add(id);
-            card.classList.add('seleccionado');
-            var input = card.querySelector('input[type="checkbox"]');
-            if (input) input.checked = true;
-        });
     } else {
-        seleccionados.clear();
-        cards.forEach(function(card) {
-            card.classList.remove('seleccionado');
-            var input = card.querySelector('input[type="checkbox"]');
-            if (input) input.checked = false;
-        });
+        seleccionados.add(id);
     }
-    
-    actualizarBtnAsignar();
-    actualizarContadorSeleccion();
+    mostrarLista();
 }
 
+// ============ GENERAR LOTE ============
 function generarLote() {
-    var input = document.getElementById('cantidadGenerar');
-    var cantidad = parseInt(input.value) || 1;
+    const input = document.getElementById('cantidadGenerar');
+    const cantidad = parseInt(input.value) || 1;
     
     if (cantidad < 1 || cantidad > 100) {
         alert('Ingresa un número entre 1 y 100');
@@ -174,18 +123,18 @@ function generarLote() {
     }
     
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
-        var maxNum = 0;
+        let maxNum = 0;
         snap.forEach(function(child) {
-            var num = child.val().numero || 0;
+            const num = child.val().numero || 0;
             if (num > maxNum) maxNum = num;
         });
         
-        var creados = 0;
+        let creados = 0;
         
-        for (var i = 0; i < cantidad; i++) {
-            var nuevoNum = maxNum + i + 1;
-            var id = 'c-' + Date.now() + '-' + i + '-' + Math.random().toString(36).substr(2, 5);
-            var carton = generarCarton();
+        for (let i = 0; i < cantidad; i++) {
+            const nuevoNum = maxNum + i + 1;
+            const id = 'c-' + Date.now() + '-' + i + '-' + Math.random().toString(36).substr(2, 5);
+            const carton = generarCarton();
             
             db.ref('salas/' + SALA_ID + '/cartones/' + id).set({
                 id: id,
@@ -201,7 +150,6 @@ function generarLote() {
                     if (creados === cantidad) {
                         mostrarLista();
                         input.value = '';
-                        mostrarToast('✅ ' + cantidad + ' cartones generados');
                     }
                 }
             });
@@ -209,18 +157,19 @@ function generarLote() {
     });
 }
 
+// ============ ASIGNAR A JUGADOR ============
 function asignarAJugador() {
     if (seleccionados.size === 0) {
         alert('Selecciona al menos un cartón');
         return;
     }
     
-    var nombre = prompt('👤 Nombre del jugador:');
+    const nombre = prompt('👤 Nombre del jugador:');
     if (!nombre || !nombre.trim()) return;
     
-    var nombreJugador = nombre.trim();
-    var ids = Array.from(seleccionados);
-    var completados = 0;
+    const nombreJugador = nombre.trim();
+    const ids = Array.from(seleccionados);
+    let completados = 0;
     
     ids.forEach(function(id) {
         db.ref('salas/' + SALA_ID + '/cartones/' + id).update({
@@ -233,7 +182,7 @@ function asignarAJugador() {
                     seleccionados.clear();
                     mostrarLista();
                     
-                    var link = generarLinkJugador(nombreJugador, ids);
+                    const link = generarLinkJugador(nombreJugador, ids);
                     mostrarAsignacionExitosa(nombreJugador, ids, link);
                 }
             }
@@ -242,29 +191,33 @@ function asignarAJugador() {
 }
 
 function generarLinkJugador(nombre, ids) {
-    var base = location.origin + location.pathname.replace('generar.html', '');
+    const base = location.origin + location.pathname.replace('generar.html', '');
     return base + 'jugador.html?nombre=' + encodeURIComponent(nombre) + '&cartones=' + ids.join(',') + '&sala=' + SALA_ID;
 }
 
 function mostrarAsignacionExitosa(nombre, ids, link) {
-    var preview = document.getElementById('vista-previa-contenido');
+    const preview = document.getElementById('vista-previa-contenido');
     
-    var html = '<div style="padding:15px;">';
-    html += '<h3 style="color:#10b981;">✅ Asignado</h3>';
-    html += '<p><strong>👤 ' + nombre + '</strong></p>';
-    html += '<p style="color:#64748b; font-size:0.85rem;">' + ids.length + ' cartón(es)</p>';
+    let html = '<div style="padding:15px;">';
+    html += '<h3 style="color:#10b981; margin-bottom:5px;">✅ Cartones Asignados</h3>';
+    html += '<p style="font-size:1.1rem; color:#1e293b;"><strong>👤 ' + nombre + '</strong></p>';
+    html += '<p style="color:#64748b; font-size:0.85rem;">' + ids.length + ' cartón(es) asignado(s)</p>';
+    
     html += '<div style="background:#f1f5f9; padding:10px; border-radius:8px; margin:10px 0;">';
-    html += '<input id="linkJugadorInput" value="' + link + '" readonly style="width:100%; padding:8px; border:2px solid #3b82f6; border-radius:6px; font-size:0.8rem;" onclick="this.select()">';
-    html += '<button onclick="copiarLinkJugador()" class="btn-preview" style="margin-top:5px; width:100%;">📋 Copiar Link</button>';
-    html += '</div>';
-    html += '<button onclick="verCartonesJugador(\'' + nombre + '\', ' + JSON.stringify(ids) + ')" class="btn-preview morado" style="width:100%;">📄 Ver Cartones</button>';
+    html += '<p style="color:#64748b; font-size:0.75rem; margin-bottom:5px;">🔗 Link del jugador:</p>';
+    html += '<div style="display:flex; gap:8px;">';
+    html += '<input id="linkJugadorInput" value="' + link + '" readonly style="flex:1; padding:8px; border:2px solid #3b82f6; border-radius:6px; font-size:0.8rem;" onclick="this.select()">';
+    html += '<button onclick="copiarLinkJugador()" style="background:#3b82f6; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem;">📋</button>';
+    html += '</div></div>';
+    
+    html += '<button onclick="verCartonesJugador(\'' + nombre + '\', ' + JSON.stringify(ids) + ')" style="background:#8b5cf6; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size:0.85rem;">📄 Ver Cartones</button>';
     html += '</div>';
     
     preview.innerHTML = html;
 }
 
 function copiarLinkJugador() {
-    var input = document.getElementById('linkJugadorInput');
+    const input = document.getElementById('linkJugadorInput');
     if (input) {
         navigator.clipboard.writeText(input.value).then(function() {
             mostrarToast('✅ Link copiado');
@@ -272,190 +225,124 @@ function copiarLinkJugador() {
     }
 }
 
+// ============ BUSCAR JUGADOR Y SELECCIONAR SUS CARTONES ============
 function buscarJugador() {
-    var nombre = prompt('🔍 Nombre del jugador a buscar:');
+    const nombre = prompt('🔍 Nombre del jugador a buscar:');
     if (!nombre || !nombre.trim()) return;
     
-    var nombreBuscado = nombre.trim().toLowerCase();
+    const nombreBuscado = nombre.trim().toLowerCase();
     
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
         seleccionados.clear();
-        var encontrados = 0;
-        var idsEncontrados = [];
+        let encontrados = 0;
         
         snap.forEach(function(child) {
-            var c = child.val();
+            const c = child.val();
             if (c.asignadoA && c.asignadoA.toLowerCase() === nombreBuscado) {
                 seleccionados.add(c.id);
-                idsEncontrados.push(c.id);
                 encontrados++;
             }
         });
         
         if (encontrados > 0) {
             mostrarLista();
-            var link = generarLinkJugador(nombre.trim(), idsEncontrados);
             
-            var preview = document.getElementById('vista-previa-contenido');
+            // Generar link con todos los cartones del jugador
+            const ids = Array.from(seleccionados);
+            const link = generarLinkJugador(nombre.trim(), ids);
+            
+            const preview = document.getElementById('vista-previa-contenido');
             preview.innerHTML = 
                 '<div style="padding:15px;">' +
-                '<h3 style="color:#3b82f6;">🔍 ' + nombre.trim() + '</h3>' +
-                '<p style="color:#64748b;">' + encontrados + ' cartones</p>' +
+                '<h3 style="color:#3b82f6;">🔍 Jugador encontrado</h3>' +
+                '<p style="font-size:1.1rem;"><strong>👤 ' + nombre.trim() + '</strong></p>' +
+                '<p style="color:#64748b;">' + encontrados + ' cartón(es) seleccionado(s)</p>' +
                 '<div style="background:#f1f5f9; padding:10px; border-radius:8px; margin:10px 0;">' +
-                '<input id="linkJugadorInput" value="' + link + '" readonly style="width:100%; padding:8px; border:2px solid #3b82f6; border-radius:6px; font-size:0.8rem;" onclick="this.select()">' +
-                '<button onclick="copiarLinkJugador()" class="btn-preview" style="margin-top:5px; width:100%;">📋 Copiar Link</button>' +
-                '</div>' +
-                '<button onclick="verCartonesJugador(\'' + nombre.trim() + '\', ' + JSON.stringify(idsEncontrados) + ')" class="btn-preview morado" style="width:100%;">📄 Ver Cartones</button>' +
+                '<p style="color:#64748b; font-size:0.75rem; margin-bottom:5px;">🔗 Link del jugador:</p>' +
+                '<div style="display:flex; gap:8px;">' +
+                '<input id="linkJugadorInput" value="' + link + '" readonly style="flex:1; padding:8px; border:2px solid #3b82f6; border-radius:6px; font-size:0.8rem;" onclick="this.select()">' +
+                '<button onclick="copiarLinkJugador()" style="background:#3b82f6; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem;">📋</button>' +
+                '</div></div>' +
+                '<button onclick="verCartonesJugador(\'' + nombre.trim() + '\', ' + JSON.stringify(ids) + ')" style="background:#8b5cf6; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size:0.85rem;">📄 Ver Cartones</button>' +
                 '</div>';
         } else {
-            alert('❌ Jugador no encontrado');
+            alert('❌ No se encontraron cartones para: ' + nombre.trim());
         }
     });
 }
 
-function verJugadores() {
-    var preview = document.getElementById('vista-previa-contenido');
-    
-    db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
-        var jugadores = {};
-        
-        snap.forEach(function(child) {
-            var c = child.val();
-            if (c.asignadoA) {
-                if (!jugadores[c.asignadoA]) {
-                    jugadores[c.asignadoA] = [];
-                }
-                jugadores[c.asignadoA].push(c);
-            }
-        });
-        
-        var nombres = Object.keys(jugadores);
-        
-        if (nombres.length === 0) {
-            preview.innerHTML = '<div class="preview-empty"><h3>👥 Sin jugadores</h3><p>No hay cartones asignados aún</p></div>';
-            return;
-        }
-        
-        var html = '<h3 style="color:#ff4d4d; margin-bottom:15px;">👥 JUGADORES (' + nombres.length + ')</h3>';
-        html += '<div style="max-height:65vh; overflow-y:auto;">';
-        
-        nombres.forEach(function(nombre) {
-            var cartones = jugadores[nombre];
-            var ids = cartones.map(function(c) { return c.id; });
-            var link = generarLinkJugador(nombre, ids);
-            
-            html += '<div style="background:#f8fafc; padding:12px; margin:8px 0; border-radius:8px; border-left:4px solid #3b82f6;">';
-            html += '<div style="display:flex; justify-content:space-between; align-items:flex-start;">';
-            html += '<div style="flex:1;">';
-            html += '<h4 style="margin:0; color:#1e293b;">👤 ' + nombre + '</h4>';
-            html += '<p style="color:#64748b; font-size:0.8rem; margin:3px 0;">' + cartones.length + ' cartón(es)</p>';
-            
-            html += '<div style="display:flex; gap:5px; flex-wrap:wrap; margin-top:8px;">';
-            cartones.forEach(function(c) {
-                html += '<span onclick="verPreview(\'' + c.id + '\')" class="carton-tag">#' + c.numero + '</span>';
-            });
-            html += '</div></div>';
-            
-            html += '<div style="display:flex; flex-direction:column; gap:5px; margin-left:10px;">';
-            html += '<button onclick="seleccionarJugador(\'' + nombre + '\', ' + JSON.stringify(ids) + ')" class="btn-preview verde" style="font-size:0.75rem; padding:6px 10px;">✅</button>';
-            html += '<button onclick="copiarLinkJugadorDirecto(\'' + link + '\')" class="btn-preview" style="font-size:0.75rem; padding:6px 10px;">📋</button>';
-            html += '<button onclick="verCartonesJugador(\'' + nombre + '\', ' + JSON.stringify(ids) + ')" class="btn-preview morado" style="font-size:0.75rem; padding:6px 10px;">📄</button>';
-            html += '</div></div></div>';
-        });
-        
-        html += '</div>';
-        preview.innerHTML = html;
-    });
-}
-
-function seleccionarJugador(nombre, ids) {
-    seleccionados.clear();
-    ids.forEach(function(id) {
-        seleccionados.add(id);
-    });
-    mostrarLista();
-    mostrarToast('✅ ' + ids.length + ' cartones de ' + nombre);
-}
-
-function copiarLinkJugadorDirecto(link) {
-    navigator.clipboard.writeText(link).then(function() {
-        mostrarToast('✅ Link copiado');
-    });
-}
-
+// ============ VER CARTONES DEL JUGADOR ============
 function verCartonesJugador(nombre, ids) {
-    var preview = document.getElementById('vista-previa-contenido');
-    preview.innerHTML = '<p style="color:#94a3b8;">Cargando cartones...</p>';
+    const preview = document.getElementById('vista-previa-contenido');
     
-    var html = '<div style="padding:15px;">';
+    let html = '<div style="padding:15px;">';
     html += '<h3 style="color:#1e293b; margin-bottom:5px;">👤 ' + nombre + '</h3>';
     html += '<p style="color:#64748b; font-size:0.85rem;">' + ids.length + ' cartón(es)</p>';
-    html += '<button onclick="verJugadores()" class="btn-preview gris" style="margin-bottom:10px;">← Volver a Jugadores</button>';
-    html += '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:8px; max-height:55vh; overflow-y:auto;">';
+    html += '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-top:10px; max-height:60vh; overflow-y:auto;">';
     
-    var cargados = 0;
-    var htmlCartones = '';
+    let cargados = 0;
     
     ids.forEach(function(id) {
         db.ref('salas/' + SALA_ID + '/cartones/' + id).once('value', function(snap) {
-            var d = snap.val();
+            const d = snap.val();
             if (d && d.carton) {
-                htmlCartones += '<div style="border:2px solid #e2e8f0; border-radius:8px; padding:8px; cursor:pointer;" onclick="verPreview(\'' + id + '\')">';
-                htmlCartones += '<h4 style="text-align:center; color:#ff4d4d; margin-bottom:5px; font-size:0.8rem;">Cartón #' + d.numero + '</h4>';
-                htmlCartones += '<table style="width:100%; border-collapse:collapse; font-size:0.65rem;">';
-                htmlCartones += '<tr style="background:#ff4d4d; color:white;"><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
+                html += '<div style="border:2px solid #e2e8f0; border-radius:8px; padding:8px;">';
+                html += '<h4 style="text-align:center; color:#ff4d4d; margin-bottom:5px; font-size:0.85rem;">Cartón #' + d.numero + '</h4>';
+                html += '<table style="width:100%; border-collapse:collapse; font-size:0.7rem;">';
+                html += '<tr style="background:#ff4d4d; color:white;"><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
                 
-                for (var f = 0; f < 5; f++) {
-                    htmlCartones += '<tr>';
+                for (let f = 0; f < 5; f++) {
+                    html += '<tr>';
                     ['B','I','N','G','O'].forEach(function(l) {
-                        var v = d.carton[l][f];
-                        var centro = (l === 'N' && f === 2);
-                        htmlCartones += '<td style="padding:4px; border:1px solid #e2e8f0; text-align:center;';
-                        if (centro) htmlCartones += 'background:#fef3c7;';
-                        htmlCartones += '">' + (centro ? '⭐' : v) + '</td>';
+                        const v = d.carton[l][f];
+                        const centro = (l === 'N' && f === 2);
+                        html += '<td style="padding:4px; border:1px solid #e2e8f0; text-align:center;';
+                        if (centro) html += 'background:#fef3c7;';
+                        html += '">' + (centro ? '⭐' : v) + '</td>';
                     });
-                    htmlCartones += '</tr>';
+                    html += '</tr>';
                 }
-                htmlCartones += '</table></div>';
+                html += '</table></div>';
             }
             
             cargados++;
             if (cargados === ids.length) {
-                preview.innerHTML = html + htmlCartones + '</div></div>';
+                html += '</div></div>';
+                preview.innerHTML = html;
             }
         });
     });
 }
 
+// ============ VISTA PREVIA INDIVIDUAL ============
 function verPreview(id) {
-    var preview = document.getElementById('vista-previa-contenido');
+    const preview = document.getElementById('vista-previa-contenido');
     
     db.ref('salas/' + SALA_ID + '/cartones/' + id).once('value', function(snap) {
-        var d = snap.val();
+        const d = snap.val();
         if (!d || !d.carton) {
-            preview.innerHTML = '<p style="color:red;">❌ Cartón no encontrado</p>';
+            preview.innerHTML = '<p>No encontrado</p>';
             return;
         }
         
-        var html = '<div style="padding:15px;">';
-        html += '<button onclick="verJugadores()" class="btn-preview gris" style="margin-bottom:10px;">← Volver</button>';
+        let html = '<div style="padding:15px;">';
         html += '<h3 style="color:#1e293b; margin-bottom:5px;">Cartón #' + d.numero + '</h3>';
         if (d.nombre && d.nombre !== 'Cartón ' + d.numero) {
             html += '<p style="color:#64748b; font-size:0.85rem;">' + d.nombre + '</p>';
         }
-        html += '<p style="font-size:0.8rem;">Estado: <strong>' + (d.estado || 'disponible') + '</strong></p>';
+        html += '<p style="color:#64748b; font-size:0.8rem;">Estado: <strong>' + (d.estado || 'disponible') + '</strong></p>';
         if (d.asignadoA) {
             html += '<p style="color:#10b981; font-size:0.85rem;">👤 <strong>' + d.asignadoA + '</strong></p>';
         }
         
-        html += '<table style="width:100%; border-collapse:collapse; max-width:280px; margin:10px auto;">';
+        html += '<table style="width:100%; border-collapse:collapse; max-width:300px; margin:10px auto;">';
         html += '<tr style="background:#ff4d4d; color:white;"><th style="padding:8px;">B</th><th style="padding:8px;">I</th><th style="padding:8px;">N</th><th style="padding:8px;">G</th><th style="padding:8px;">O</th></tr>';
         
-        for (var f = 0; f < 5; f++) {
+        for (let f = 0; f < 5; f++) {
             html += '<tr>';
             ['B','I','N','G','O'].forEach(function(l) {
-                var v = d.carton[l][f];
-                var centro = (l === 'N' && f === 2);
+                const v = d.carton[l][f];
+                const centro = (l === 'N' && f === 2);
                 html += '<td style="padding:8px; border:2px solid #e2e8f0; text-align:center; font-weight:bold;';
                 if (centro) html += 'background:#fef3c7;';
                 html += '">' + (centro ? '⭐' : v) + '</td>';
@@ -465,89 +352,16 @@ function verPreview(id) {
         html += '</table>';
         
         html += '<div style="margin-top:10px; display:flex; gap:6px; justify-content:center;">';
-        html += '<button onclick="copiarLink(\'' + id + '\')" class="btn-preview">🔗 Link</button>';
-        html += '<button onclick="cambiarEstado(\'' + id + '\')" class="btn-preview naranja">🔄 Estado</button>';
-        html += '</div>';
+        html += '<button onclick="copiarLink(\'' + id + '\')" style="background:#3b82f6; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem;">🔗 Link</button>';
+        html += '<button onclick="cambiarEstado(\'' + id + '\')" style="background:#f59e0b; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem;">🔄 Estado</button>';
         html += '</div>';
         
+        html += '</div>';
         preview.innerHTML = html;
     });
 }
 
-function exportarPDF() {
-    if (typeof html2pdf === 'undefined') {
-        var script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-        script.onload = function() { generarPDF(); };
-        document.head.appendChild(script);
-    } else {
-        generarPDF();
-    }
-}
-
-function generarPDF() {
-    var ids = seleccionados.size > 0 ? Array.from(seleccionados) : null;
-    
-    db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
-        if (!snap.exists()) {
-            alert('No hay cartones para exportar');
-            return;
-        }
-        
-        var pdfContent = document.createElement('div');
-        pdfContent.style.cssText = 'padding:20px; background:white; font-family:Arial;';
-        
-        var html = '<h1 style="text-align:center; color:#ff4d4d; margin-bottom:10px;">BINGO PRO</h1>';
-        
-        if (ids) {
-            html += '<p style="text-align:center; color:#64748b;">Cartones Seleccionados: ' + ids.length + '</p>';
-        } else {
-            html += '<p style="text-align:center; color:#64748b;">Todos los Cartones: ' + snap.numChildren() + '</p>';
-        }
-        
-        html += '<div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; margin-top:10px;">';
-        
-        snap.forEach(function(child) {
-            var c = child.val();
-            if (ids && ids.indexOf(c.id) === -1) return;
-            
-            html += '<div style="border:2px solid #000; padding:8px;">';
-            html += '<h3 style="text-align:center; color:#ff4d4d; font-size:0.9rem;">Cartón #' + c.numero + '</h3>';
-            if (c.asignadoA) {
-                html += '<p style="text-align:center; font-size:0.8rem;">👤 ' + c.asignadoA + '</p>';
-            }
-            html += '<table style="width:100%; border-collapse:collapse; font-size:0.7rem;">';
-            html += '<tr style="background:#000; color:white;"><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
-            
-            for (var f = 0; f < 5; f++) {
-                html += '<tr>';
-                ['B','I','N','G','O'].forEach(function(l) {
-                    var v = c.carton[l][f];
-                    var centro = (l === 'N' && f === 2);
-                    html += '<td style="border:1px solid #000; padding:6px; text-align:center;';
-                    if (centro) html += 'background:#ffd700;';
-                    html += '">' + (centro ? '⭐' : v) + '</td>';
-                });
-                html += '</tr>';
-            }
-            html += '</table></div>';
-        });
-        
-        html += '</div>';
-        pdfContent.innerHTML = html;
-        
-        html2pdf().set({
-            margin: 8,
-            filename: ids ? 'cartones-seleccionados.pdf' : 'todos-cartones.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        }).from(pdfContent).save();
-        
-        mostrarToast('📄 PDF generado');
-    });
-}
-
+// ============ FUNCIONES AUXILIARES ============
 function renombrarCarton(id, nombre) {
     if (nombre && nombre.trim()) {
         db.ref('salas/' + SALA_ID + '/cartones/' + id).update({ nombre: nombre.trim() });
@@ -556,9 +370,9 @@ function renombrarCarton(id, nombre) {
 
 function cambiarEstado(id) {
     db.ref('salas/' + SALA_ID + '/cartones/' + id).once('value', function(snap) {
-        var estados = ['disponible', 'asignado', 'usado'];
-        var actual = estados.indexOf(snap.val().estado || 'disponible');
-        var nuevo = estados[(actual + 1) % 3];
+        const estados = ['disponible', 'asignado', 'usado'];
+        const actual = estados.indexOf(snap.val().estado || 'disponible');
+        const nuevo = estados[(actual + 1) % 3];
         db.ref('salas/' + SALA_ID + '/cartones/' + id).update({ estado: nuevo }, function() {
             mostrarLista();
             verPreview(id);
@@ -567,7 +381,7 @@ function cambiarEstado(id) {
 }
 
 function copiarLink(id) {
-    var link = location.origin + location.pathname.replace('generar.html', '') + 'carton.html?carton=' + id + '&sala=' + SALA_ID;
+    const link = location.origin + location.pathname.replace('generar.html', '') + 'carton.html?carton=' + id + '&sala=' + SALA_ID;
     navigator.clipboard.writeText(link).then(function() {
         mostrarToast('✅ Link copiado');
     });
@@ -594,9 +408,9 @@ function borrarTodo() {
 
 function exportarJSON() {
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
-        var data = { sala: SALA_ID, cartones: snap.val() || {} };
-        var blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-        var a = document.createElement('a');
+        const data = { sala: SALA_ID, cartones: snap.val() || {} };
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = 'cartones-' + SALA_ID + '.json';
         a.click();
@@ -604,11 +418,11 @@ function exportarJSON() {
 }
 
 function importarJSON(e) {
-    var file = e.target.files[0];
+    const file = e.target.files[0];
     if (!file) return;
-    var reader = new FileReader();
+    const reader = new FileReader();
     reader.onload = function(ev) {
-        var data = JSON.parse(ev.target.result);
+        const data = JSON.parse(ev.target.result);
         if (data.cartones) {
             db.ref('salas/' + SALA_ID + '/cartones').set(data.cartones, function() {
                 mostrarLista();
@@ -619,15 +433,15 @@ function importarJSON(e) {
 }
 
 function verLinks() {
-    var preview = document.getElementById('vista-previa-contenido');
+    const preview = document.getElementById('vista-previa-contenido');
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
-        var html = '<h3 style="color:#ff4d4d;">🔗 LINKS</h3><div style="max-height:60vh; overflow-y:auto; text-align:left;">';
-        var base = location.origin + location.pathname.replace('generar.html', '');
+        let html = '<h3 style="color:#ff4d4d; margin-bottom:10px;">🔗 LINKS</h3><div style="max-height:60vh; overflow-y:auto; text-align:left;">';
+        const base = location.origin + location.pathname.replace('generar.html', '');
         snap.forEach(function(child) {
-            var c = child.val();
-            var link = base + 'carton.html?carton=' + c.id + '&sala=' + SALA_ID;
+            const c = child.val();
+            const link = base + 'carton.html?carton=' + c.id + '&sala=' + SALA_ID;
             html += '<div style="background:#f1f5f9; padding:8px; margin:4px 0; border-radius:6px;">';
-            html += '<strong>#' + c.numero + '</strong>' + (c.asignadoA ? ' (' + c.asignadoA + ')' : '');
+            html += '<strong>#' + c.numero + '</strong> - ' + (c.nombre || '') + (c.asignadoA ? ' <span style="color:#10b981;">(' + c.asignadoA + ')</span>' : '');
             html += '<input value="' + link + '" readonly style="width:100%; padding:4px; margin-top:4px; font-size:0.75rem;" onclick="this.select()">';
             html += '</div>';
         });
@@ -636,17 +450,35 @@ function verLinks() {
     });
 }
 
+function seleccionarTodos() {
+    const cards = document.querySelectorAll('.card-carton');
+    const todasSeleccionadas = Array.from(cards).every(function(c) {
+        return c.classList.contains('seleccionado');
+    });
+    
+    cards.forEach(function(card) {
+        const id = card.getAttribute('data-id');
+        if (todasSeleccionadas) {
+            seleccionados.delete(id);
+        } else {
+            seleccionados.add(id);
+        }
+    });
+    
+    mostrarLista();
+}
+
 function filtrarCartones(t) {
-    var f = t.toLowerCase();
+    const f = t.toLowerCase();
     document.querySelectorAll('.card-carton').forEach(function(c) {
-        c.style.display = c.textContent.toLowerCase().indexOf(f) !== -1 ? '' : 'none';
+        c.style.display = c.textContent.toLowerCase().includes(f) ? '' : 'none';
     });
 }
 
 function mostrarToast(mensaje) {
-    var t = document.querySelector('.toast');
+    const t = document.querySelector('.toast');
     if (t) t.remove();
-    var toast = document.createElement('div');
+    const toast = document.createElement('div');
     toast.className = 'toast';
     toast.textContent = mensaje;
     document.body.appendChild(toast);
@@ -663,15 +495,15 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('btnAbrir').addEventListener('click', function() {
         document.getElementById('fileIn').click();
     });
-    document.getElementById('btnPDF').addEventListener('click', exportarPDF);
+    document.getElementById('btnPDF').addEventListener('click', function() {
+        alert('📄 Función PDF en desarrollo');
+    });
     document.getElementById('btnLinks').addEventListener('click', verLinks);
-    document.getElementById('btnJugadores').addEventListener('click', verJugadores);
+    document.getElementById('btnSelTodos').addEventListener('click', seleccionarTodos);
     document.getElementById('btnBorrar').addEventListener('click', borrarTodo);
-    document.getElementById('btnBuscarJugador').addEventListener('click', buscarJugador);
     document.getElementById('btnIrJuego').addEventListener('click', function() {
         location.href = 'ruleta.html';
     });
-    document.getElementById('btnAsignar').addEventListener('click', asignarAJugador);
     document.getElementById('fileIn').addEventListener('change', importarJSON);
     document.getElementById('buscadorCartones').addEventListener('input', function(e) {
         filtrarCartones(e.target.value);
@@ -679,7 +511,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('cantidadGenerar').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') generarLote();
     });
-    document.getElementById('checkTodos').addEventListener('change', seleccionarTodosCheckbox);
+    
+    window.asignarAJugador = asignarAJugador;
+    window.buscarJugador = buscarJugador;
     
     mostrarLista();
 });
