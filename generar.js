@@ -1,6 +1,5 @@
 // generar.js - Versión final corregida
 
-// CADA VEZ QUE CARGA, CREA UNA NUEVA SALA (así no aparecen cartones viejos)
 const SALA_ID = 'sala-' + Date.now();
 localStorage.setItem('salaActiva', SALA_ID);
 
@@ -44,11 +43,14 @@ function actualizarBtnAsignar() {
 
 // ============ MOSTRAR LISTA ============
 function mostrarLista() {
-    db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
+    const ref = db.ref('salas/' + SALA_ID + '/cartones');
+    ref.once('value', function(snap) {
         const total = snap.numChildren() || 0;
-        document.getElementById('contadorRegistrados').innerHTML = '🎫 CARTONES: ' + total;
+        const contador = document.getElementById('contadorRegistrados');
+        if (contador) contador.innerHTML = '🎫 CARTONES: ' + total;
         
         const contenedor = document.getElementById('listaCartones');
+        if (!contenedor) return;
         contenedor.innerHTML = '';
         
         if (total === 0) {
@@ -117,6 +119,7 @@ function toggleSeleccion(id) {
 // ============ GENERAR LOTE ============
 function generarLote() {
     const input = document.getElementById('cantidadGenerar');
+    if (!input) return;
     const cantidad = parseInt(input.value) || 1;
     
     if (cantidad < 1 || cantidad > 100) {
@@ -159,7 +162,7 @@ function generarLote() {
     });
 }
 
-// ============ ASIGNAR A JUGADOR (MÁXIMO 4 CARTONES) ============
+// ============ ASIGNAR A JUGADOR ============
 function asignarAJugador() {
     if (seleccionados.size === 0) {
         alert('Selecciona al menos un cartón');
@@ -167,7 +170,7 @@ function asignarAJugador() {
     }
     
     if (seleccionados.size > 4) {
-        alert('⚠️ Máximo 4 cartones por jugador. Tienes ' + seleccionados.size + ' seleccionados.');
+        alert('⚠️ Máximo 4 cartones por jugador');
         return;
     }
     
@@ -188,7 +191,6 @@ function asignarAJugador() {
                 if (completados === ids.length) {
                     seleccionados.clear();
                     mostrarLista();
-                    
                     const link = generarLinkJugador(nombreJugador, ids);
                     mostrarAsignacionExitosa(nombreJugador, ids, link);
                 }
@@ -204,20 +206,16 @@ function generarLinkJugador(nombre, ids) {
 
 function mostrarAsignacionExitosa(nombre, ids, link) {
     const preview = document.getElementById('vista-previa-contenido');
+    if (!preview) return;
     
     let html = '<div style="padding:15px;">';
-    html += '<h3 style="color:#10b981;">✅ Cartones Asignados</h3>';
-    html += '<p style="font-size:1.1rem;"><strong>👤 ' + nombre + '</strong></p>';
+    html += '<h3 style="color:#10b981;">✅ Asignado</h3>';
+    html += '<p><strong>👤 ' + nombre + '</strong></p>';
     html += '<p style="color:#64748b;">' + ids.length + ' cartón(es)</p>';
-    
-    html += '<div style="background:#f1f5f9; padding:10px; border-radius:8px; margin:10px 0;">';
-    html += '<p style="font-size:0.75rem; color:#64748b;">🔗 Link del jugador:</p>';
-    html += '<div style="display:flex; gap:8px;">';
-    html += '<input id="linkJugadorInput" value="' + link + '" readonly style="flex:1; padding:8px; border:2px solid #3b82f6; border-radius:6px; font-size:0.8rem;" onclick="this.select()">';
-    html += '<button onclick="copiarLinkJugador()" style="background:#3b82f6; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">📋</button>';
+    html += '<div style="background:#f1f5f9; padding:10px; border-radius:8px;">';
+    html += '<input id="linkJugadorInput" value="' + link + '" readonly style="width:100%; padding:8px; border:2px solid #3b82f6; border-radius:6px;" onclick="this.select()">';
+    html += '<button onclick="copiarLinkJugador()" style="margin-top:8px; background:#3b82f6; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">📋 Copiar</button>';
     html += '</div></div>';
-    html += '</div>';
-    
     preview.innerHTML = html;
 }
 
@@ -230,9 +228,10 @@ function copiarLinkJugador() {
     }
 }
 
-// ============ VER JUGADORES Y SUS LINKS ============
+// ============ VER JUGADORES ============
 function verJugadores() {
     const preview = document.getElementById('vista-previa-contenido');
+    if (!preview) return;
     
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
         if (!snap.exists()) {
@@ -240,50 +239,30 @@ function verJugadores() {
             return;
         }
         
-        // Agrupar por jugador
         const jugadores = {};
-        
         snap.forEach(function(child) {
             const c = child.val();
             if (c.asignadoA) {
-                if (!jugadores[c.asignadoA]) {
-                    jugadores[c.asignadoA] = [];
-                }
+                if (!jugadores[c.asignadoA]) jugadores[c.asignadoA] = [];
                 jugadores[c.asignadoA].push({ id: c.id, numero: c.numero });
             }
         });
         
         if (Object.keys(jugadores).length === 0) {
-            preview.innerHTML = '<div class="preview-empty"><h3>👥 No hay jugadores</h3><p>Asigna cartones a jugadores primero</p></div>';
+            preview.innerHTML = '<div class="preview-empty"><h3>👥 No hay jugadores</h3><p>Asigna cartones primero</p></div>';
             return;
         }
         
-        let html = '<h3 style="color:#ff4d4d; margin-bottom:15px;">👥 JUGADORES</h3>';
-        html += '<div style="max-height:60vh; overflow-y:auto;">';
+        let html = '<h3 style="color:#ff4d4d;">👥 JUGADORES</h3><div style="max-height:60vh; overflow-y:auto;">';
         
         Object.keys(jugadores).forEach(function(nombre) {
             const cartones = jugadores[nombre];
             const ids = cartones.map(function(c) { return c.id; });
             const link = generarLinkJugador(nombre, ids);
             
-            html += '<div style="background:#f1f5f9; padding:12px; margin:8px 0; border-radius:8px; text-align:left;">';
-            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">';
-            html += '<strong>👤 ' + nombre + '</strong>';
-            html += '<span style="background:#3b82f6; color:white; padding:3px 8px; border-radius:12px; font-size:0.75rem;">' + cartones.length + ' cart.</span>';
-            html += '</div>';
-            
-            // Mostrar números de cartones
-            html += '<div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:8px;">';
-            cartones.forEach(function(c) {
-                html += '<span style="background:#e2e8f0; color:#1e293b; padding:3px 8px; border-radius:12px; font-size:0.7rem;">#' + c.numero + '</span>';
-            });
-            html += '</div>';
-            
-            // Link
-            html += '<div style="display:flex; gap:5px;">';
-            html += '<input value="' + link + '" readonly style="flex:1; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-size:0.75rem;" onclick="this.select()">';
-            html += '<button onclick="navigator.clipboard.writeText(\'' + link + '\'); mostrarToast(\'✅ Link copiado\')" style="background:#3b82f6; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-size:0.75rem;">📋</button>';
-            html += '</div>';
+            html += '<div style="background:#f1f5f9; padding:10px; margin:8px 0; border-radius:8px; text-align:left;">';
+            html += '<strong>👤 ' + nombre + '</strong> - <span style="color:#3b82f6;">' + cartones.length + ' cart.</span><br>';
+            html += '<input value="' + link + '" readonly style="width:100%; padding:6px; margin-top:5px; font-size:0.75rem;" onclick="this.select()">';
             html += '</div>';
         });
         
@@ -295,41 +274,31 @@ function verJugadores() {
 // ============ VISTA PREVIA ============
 function verPreview(id) {
     const preview = document.getElementById('vista-previa-contenido');
+    if (!preview) return;
     
     db.ref('salas/' + SALA_ID + '/cartones/' + id).once('value', function(snap) {
         const d = snap.val();
-        if (!d || !d.carton) {
-            preview.innerHTML = '<p>No encontrado</p>';
-            return;
-        }
+        if (!d || !d.carton) return;
         
         let html = '<div style="padding:15px;">';
-        html += '<h3 style="color:#1e293b;">Cartón #' + d.numero + '</h3>';
-        if (d.nombre && d.nombre !== 'Cartón ' + d.numero) {
-            html += '<p style="color:#64748b; font-size:0.85rem;">' + d.nombre + '</p>';
-        }
-        html += '<p style="color:#64748b; font-size:0.8rem;">Estado: <strong>' + (d.estado || 'disponible') + '</strong></p>';
-        if (d.asignadoA) {
-            html += '<p style="color:#10b981;">👤 <strong>' + d.asignadoA + '</strong></p>';
-        }
+        html += '<h3>Cartón #' + d.numero + '</h3>';
+        if (d.asignadoA) html += '<p style="color:#10b981;">👤 ' + d.asignadoA + '</p>';
         
         html += '<table style="width:100%; border-collapse:collapse; max-width:300px; margin:10px auto;">';
-        html += '<tr style="background:#ff4d4d; color:white;"><th style="padding:8px;">B</th><th style="padding:8px;">I</th><th style="padding:8px;">N</th><th style="padding:8px;">G</th><th style="padding:8px;">O</th></tr>';
+        html += '<tr style="background:#ff4d4d; color:white;"><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
         
         for (let f = 0; f < 5; f++) {
             html += '<tr>';
             ['B','I','N','G','O'].forEach(function(l) {
                 const v = d.carton[l][f];
                 const centro = (l === 'N' && f === 2);
-                html += '<td style="padding:8px; border:2px solid #e2e8f0; text-align:center; font-weight:bold;';
+                html += '<td style="padding:8px; border:2px solid #e2e8f0; text-align:center;';
                 if (centro) html += 'background:#fef3c7;';
                 html += '">' + (centro ? '⭐' : v) + '</td>';
             });
             html += '</tr>';
         }
-        html += '</table>';
-        html += '</div>';
-        
+        html += '</table></div>';
         preview.innerHTML = html;
     });
 }
@@ -373,7 +342,8 @@ function borrarTodo() {
     if (confirm('⚠️ ¿Eliminar TODOS los cartones?')) {
         seleccionados.clear();
         db.ref('salas/' + SALA_ID + '/cartones').remove(function() {
-            document.getElementById('vista-previa-contenido').innerHTML = '<div class="preview-empty"><h2>✅ Eliminados</h2></div>';
+            const preview = document.getElementById('vista-previa-contenido');
+            if (preview) preview.innerHTML = '<div class="preview-empty"><h2>✅ Eliminados</h2></div>';
             mostrarLista();
         });
     }
@@ -382,7 +352,7 @@ function borrarTodo() {
 function exportarJSON() {
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
         const data = { sala: SALA_ID, cartones: snap.val() || {} };
-        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = 'cartones-' + SALA_ID + '.json';
@@ -407,18 +377,20 @@ function importarJSON(e) {
 
 function verLinks() {
     const preview = document.getElementById('vista-previa-contenido');
+    if (!preview) return;
+    
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
         if (!snap.exists()) {
             preview.innerHTML = '<div class="preview-empty"><h3>📋 Sin cartones</h3></div>';
             return;
         }
-        let html = '<h3 style="color:#ff4d4d; margin-bottom:10px;">🔗 LINKS INDIVIDUALES</h3><div style="max-height:60vh; overflow-y:auto; text-align:left;">';
+        let html = '<h3 style="color:#ff4d4d;">🔗 LINKS</h3><div style="max-height:60vh; overflow-y:auto; text-align:left;">';
         const base = location.origin + location.pathname.replace('generar.html', '');
         snap.forEach(function(child) {
             const c = child.val();
             const link = base + 'carton.html?carton=' + c.id + '&sala=' + SALA_ID;
             html += '<div style="background:#f1f5f9; padding:8px; margin:4px 0; border-radius:6px;">';
-            html += '<strong>#' + c.numero + '</strong>' + (c.asignadoA ? ' <span style="color:#10b981;">(' + c.asignadoA + ')</span>' : '');
+            html += '<strong>#' + c.numero + '</strong>' + (c.asignadoA ? ' (' + c.asignadoA + ')' : '');
             html += '<input value="' + link + '" readonly style="width:100%; padding:4px; margin-top:4px; font-size:0.75rem;" onclick="this.select()">';
             html += '</div>';
         });
@@ -429,26 +401,19 @@ function verLinks() {
 
 function seleccionarTodos() {
     const cards = document.querySelectorAll('.card-carton');
-    const todasSeleccionadas = Array.from(cards).every(function(c) {
-        return c.classList.contains('seleccionado');
-    });
+    const todas = Array.from(cards).every(function(c) { return c.classList.contains('seleccionado'); });
     
     cards.forEach(function(card) {
         const id = card.getAttribute('data-id');
-        if (todasSeleccionadas) {
-            seleccionados.delete(id);
-        } else {
-            seleccionados.add(id);
-        }
+        if (todas) { seleccionados.delete(id); }
+        else { seleccionados.add(id); }
     });
-    
     mostrarLista();
 }
 
 function filtrarCartones(t) {
-    const f = t.toLowerCase();
     document.querySelectorAll('.card-carton').forEach(function(c) {
-        c.style.display = c.textContent.toLowerCase().includes(f) ? '' : 'none';
+        c.style.display = c.textContent.toLowerCase().includes(t.toLowerCase()) ? '' : 'none';
     });
 }
 
@@ -464,32 +429,28 @@ function mostrarToast(mensaje) {
 
 // ============ INICIAR ============
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Bingo Pro Admin - Nueva Sala');
+    console.log('🚀 Bingo Pro Admin');
     console.log('📁 Sala: ' + SALA_ID);
     
-    document.getElementById('btnGenerar').addEventListener('click', generarLote);
-    document.getElementById('btnGuardar').addEventListener('click', exportarJSON);
-    document.getElementById('btnAbrir').addEventListener('click', function() {
-        document.getElementById('fileIn').click();
-    });
-    document.getElementById('btnPDF').addEventListener('click', function() {
-        alert('📄 Función PDF en desarrollo');
-    });
-    document.getElementById('btnLinks').addEventListener('click', verLinks);
-    document.getElementById('btnJugadores').addEventListener('click', verJugadores);
-    document.getElementById('btnBorrar').addEventListener('click', borrarTodo);
-    document.getElementById('btnIrJuego').addEventListener('click', function() {
-        location.href = 'ruleta.html';
-    });
-    document.getElementById('fileIn').addEventListener('change', importarJSON);
-    document.getElementById('buscadorCartones').addEventListener('input', function(e) {
-        filtrarCartones(e.target.value);
-    });
-    document.getElementById('cantidadGenerar').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') generarLote();
-    });
+    // Verificar que todos los elementos existen antes de agregar eventos
+    function addEvent(id, event, fn) {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener(event, fn);
+        else console.warn('⚠️ Elemento no encontrado: ' + id);
+    }
     
-    // Exponer funciones globales
+    addEvent('btnGenerar', 'click', generarLote);
+    addEvent('btnGuardar', 'click', exportarJSON);
+    addEvent('btnAbrir', 'click', function() { document.getElementById('fileIn').click(); });
+    addEvent('btnPDF', 'click', function() { alert('📄 PDF en desarrollo'); });
+    addEvent('btnLinks', 'click', verLinks);
+    addEvent('btnJugadores', 'click', verJugadores);
+    addEvent('btnBorrar', 'click', borrarTodo);
+    addEvent('btnIrJuego', 'click', function() { location.href = 'ruleta.html'; });
+    addEvent('fileIn', 'change', importarJSON);
+    addEvent('buscadorCartones', 'input', function(e) { filtrarCartones(e.target.value); });
+    addEvent('cantidadGenerar', 'keypress', function(e) { if (e.key === 'Enter') generarLote(); });
+    
     window.asignarAJugador = asignarAJugador;
     
     mostrarLista();
