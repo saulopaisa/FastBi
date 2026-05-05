@@ -696,4 +696,8 @@ document.addEventListener('DOMContentLoaded', function() {
         filtrarCartones(e.target.value);
     });
     document.getElementById('cantidadGenerar').addEventListener('keypress', function(e) {
-       
+        if (e.key === 'Enter') generarLote();
+    });
+    
+    mostrarLista();
+});
