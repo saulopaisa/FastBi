@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bingo Pro Admin - Generador de Cartones</title>
     <link rel="stylesheet" href="generar.css">
+    <!-- Librería para PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
     <div class="sidebar">
@@ -27,7 +29,6 @@
             <button class="btn-tool danger" id="btnBorrar">🗑️ Borrar</button>
         </div>
         
-        <!-- Botón ASIGNAR - sin onclick, lo manejamos en JS -->
         <button class="btn-asignar" id="btnAsignar" style="display:none;">👤 ASIGNAR A JUGADOR</button>
         
         <input type="file" id="fileIn" style="display:none" accept=".json">
