@@ -1,4 +1,4 @@
-// generar.js - Versión Final Completa con PDF
+// generar.js - Versión Final Completa con PDF Funcional
 
 const SALA_ID = localStorage.getItem('salaActiva') || ('sala-' + Date.now());
 localStorage.setItem('salaActiva', SALA_ID);
@@ -456,12 +456,11 @@ function exportarPDFTodos() {
         
         console.log('Cartones encontrados:', cartones.length);
         
-        // Crear ventana emergente
         const ventana = window.open('', '_blank', 'width=900,height=700');
         ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PDF Cartones</title>');
         ventana.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>');
         ventana.document.write('</head><body style="margin:0;">');
-        ventana.document.write('<div id="contenido-pdf" style="font-family:Arial;padding:20px;background:white;">');
+        ventana.document.write('<div id="contenido-pdf" style="font-family:Arial;padding:20px;background:white;width:850px;">');
         ventana.document.write('<h1 style="text-align:center;color:#ff4d4d;margin-bottom:5px;">🎯 BINGO PRO</h1>');
         ventana.document.write('<h2 style="text-align:center;color:#1e293b;margin-bottom:5px;">Todos los Cartones</h2>');
         ventana.document.write('<p style="text-align:center;color:#64748b;font-size:12px;margin-bottom:20px;">Total: ' + cartones.length + ' cartones | ' + new Date().toLocaleDateString() + '</p>');
@@ -475,12 +474,11 @@ function exportarPDFTodos() {
         ventana.document.write('</body></html>');
         ventana.document.close();
         
-        // Generar PDF después de que cargue
         setTimeout(function() {
             const element = ventana.document.getElementById('contenido-pdf');
             
             const opt = {
-                margin: [5, 5, 5, 5],
+                margin: 5,
                 filename: 'todos-cartones-bingo.pdf',
                 image: { type: 'jpeg', quality: 1 },
                 html2canvas: { scale: 2, useCORS: true, logging: false },
@@ -522,12 +520,11 @@ function exportarPDFPorJugador(nombreJugador) {
         cartonesJugador.sort((a, b) => (a.numero || 0) - (b.numero || 0));
         console.log('Cartones de ' + nombreJugador + ':', cartonesJugador.length);
         
-        // Crear ventana emergente
         const ventana = window.open('', '_blank', 'width=900,height=700');
         ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PDF ' + nombreJugador + '</title>');
         ventana.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>');
         ventana.document.write('</head><body style="margin:0;">');
-        ventana.document.write('<div id="contenido-pdf" style="font-family:Arial;padding:20px;background:white;">');
+        ventana.document.write('<div id="contenido-pdf" style="font-family:Arial;padding:20px;background:white;width:850px;">');
         ventana.document.write('<h1 style="text-align:center;color:#ff4d4d;margin-bottom:5px;">🎯 BINGO PRO</h1>');
         ventana.document.write('<h2 style="text-align:center;color:#1e293b;margin-bottom:5px;">👤 ' + nombreJugador + '</h2>');
         ventana.document.write('<p style="text-align:center;color:#64748b;font-size:12px;margin-bottom:20px;">' + cartonesJugador.length + ' cartón(es) | ' + new Date().toLocaleDateString() + '</p>');
@@ -541,12 +538,11 @@ function exportarPDFPorJugador(nombreJugador) {
         ventana.document.write('</body></html>');
         ventana.document.close();
         
-        // Generar PDF
         setTimeout(function() {
             const element = ventana.document.getElementById('contenido-pdf');
             
             const opt = {
-                margin: [5, 5, 5, 5],
+                margin: 5,
                 filename: 'cartones-' + nombreJugador.replace(/\s+/g, '-') + '.pdf',
                 image: { type: 'jpeg', quality: 1 },
                 html2canvas: { scale: 2, useCORS: true, logging: false },
@@ -578,8 +574,6 @@ function generarHTMLCartonPDF(c) {
     
     let html = '';
     html += '<div style="border:3px solid #000;border-radius:12px;padding:12px;background:white;page-break-inside:avoid;">';
-    
-    // Encabezado
     html += '<div style="text-align:center;margin-bottom:8px;">';
     html += '<span style="background:#ff4d4d;color:white;padding:5px 15px;border-radius:20px;font-size:14px;font-weight:bold;">Cartón #' + numero + '</span>';
     html += '</div>';
@@ -588,7 +582,6 @@ function generarHTMLCartonPDF(c) {
         html += '<p style="text-align:center;color:#10b981;margin:5px 0;font-size:13px;font-weight:bold;">👤 ' + asignadoA + '</p>';
     }
     
-    // Tabla
     html += '<table style="width:100%;border-collapse:collapse;margin-top:5px;">';
     html += '<tr style="background:#ff4d4d;color:white;">';
     html += '<th style="padding:10px;font-size:14px;border:2px solid #000;">B</th>';
@@ -634,12 +627,10 @@ function abrirMenuPDF() {
         let html = '<div style="padding:20px;">';
         html += '<h2 style="color:#ff4d4d;margin-bottom:20px;text-align:center;">📄 EXPORTAR PDF</h2>';
         
-        // Botón TODOS
         html += '<button onclick="exportarPDFTodos()" style="width:100%;padding:15px;background:#ff4d4d;color:white;border:none;border-radius:10px;cursor:pointer;font-size:1.1rem;font-weight:bold;margin-bottom:25px;">';
         html += '📄 EXPORTAR TODOS LOS CARTONES (' + total + ')';
         html += '</button>';
         
-        // Jugadores
         if (jugadores.size > 0) {
             html += '<h3 style="color:#1e293b;margin-bottom:15px;">👤 Por Jugador</h3>';
             html += '<div style="max-height:50vh;overflow-y:auto;">';
