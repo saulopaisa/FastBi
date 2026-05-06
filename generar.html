@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bingo Pro Admin - Generador de Cartones</title>
     <link rel="stylesheet" href="generar.css">
-    <!-- Librería para PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
     <div class="sidebar">
@@ -36,13 +34,14 @@
         <div class="buscador">
             <input type="text" id="buscadorCartones" placeholder="🔍 Buscar cartón...">
         </div>
-         <button class="btn-ir-juego" id="btnIrJuego">🎮 IR AL JUEGO →</button>
 
+        <!-- BOTÓN IR AL JUEGO AQUÍ, DESPUÉS DEL BUSCADOR -->
+        <button class="btn-ir-juego" id="btnIrJuego">🎮 IR AL JUEGO →</button>
+
+        <!-- LISTA DE CARTONES AL FINAL, PARA QUE CREZCA -->
         <div class="lista-container" id="listaCartones">
             <p style="color:#94a3b8; text-align:center; padding:20px;">No hay cartones generados aún</p>
         </div>
-
-       
     </div>
 
     <div class="main-content">
