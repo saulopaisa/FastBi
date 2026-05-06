@@ -215,7 +215,23 @@ function exportarPDFTodos() {
         const w = window.open('', '_blank', 'width=800,height=1050');
         w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PDF</title>');
         w.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>');
-        w.document.write('<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial;background:white}.pagina{width:720px;padding:10px 15px;background:white;page-break-after:always;height:970px;overflow:hidden}.pagina:last-child{page-break-after:avoid}h1{text-align:center;color:#ff4d4d;font-size:16px;margin:0 0 2px}h2{text-align:center;color:#1e293b;font-size:14px;margin:0 0 2px}.info{text-align:center;color:#64748b;font-size:10px;margin-bottom:8px}.carton{border:2px solid #000;border-radius:8px;padding:8px 10px;background:white;margin-bottom:12px}table{width:100%;border-collapse:collapse}th{background:#ff4d4d;color:white;padding:6px;font-size:12px;border:1px solid #000}td{padding:6px;border:1px solid #000;text-align:center;font-weight:bold;font-size:13px}.free{background:#fef3c7;font-size:15px}.num-carton{text-align:center;margin-bottom:4px}.num-carton span{background:#ff4d4d;color:white;padding:2px 12px;border-radius:10px;font-size:11px;font-weight:bold}.jugador{text-align:center;color:#10b981;margin:2px 0;font-size:11px;font-weight:bold}</style></head><body>');
+        w.document.write('<style>');
+        w.document.write('*{margin:0;padding:0;box-sizing:border-box}');
+        w.document.write('body{font-family:Arial;background:white}');
+        w.document.write('.pagina{width:750px;padding:15px 20px;background:white;page-break-after:always;height:1000px;overflow:hidden}');
+        w.document.write('.pagina:last-child{page-break-after:avoid}');
+        w.document.write('h1{text-align:center;color:#ff4d4d;font-size:18px;margin:0 0 3px}');
+        w.document.write('h2{text-align:center;color:#1e293b;font-size:15px;margin:0 0 3px}');
+        w.document.write('.info{text-align:center;color:#64748b;font-size:11px;margin-bottom:10px}');
+        w.document.write('.carton{border:3px solid #000;border-radius:10px;padding:12px 15px;background:white;margin-bottom:15px}');
+        w.document.write('table{width:100%;border-collapse:collapse}');
+        w.document.write('th{background:#ff4d4d;color:white;padding:12px;font-size:18px;border:2px solid #000}');
+        w.document.write('td{padding:14px;border:2px solid #000;text-align:center;font-weight:bold;font-size:22px}');
+        w.document.write('.free{background:#fef3c7;font-size:26px}');
+        w.document.write('.num-carton{text-align:center;margin-bottom:6px}');
+        w.document.write('.num-carton span{background:#ff4d4d;color:white;padding:4px 18px;border-radius:12px;font-size:14px;font-weight:bold}');
+        w.document.write('.jugador{text-align:center;color:#10b981;margin:4px 0;font-size:14px;font-weight:bold}');
+        w.document.write('</style></head><body>');
         
         for (let i=0;i<cartones.length;i+=2) {
             w.document.write('<div class="pagina"><h1>🎯 BINGO PRO</h1><h2>Todos los Cartones</h2><p class="info">Pág. '+(Math.floor(i/2)+1)+' | '+cartones.length+' cartones</p>');
@@ -257,7 +273,22 @@ function exportarPDFPorJugador(nombreJugador) {
         const w = window.open('', '_blank', 'width=800,height=1050');
         w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PDF</title>');
         w.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>');
-        w.document.write('<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial;background:white}.pagina{width:720px;padding:10px 15px;background:white;page-break-after:always;height:970px;overflow:hidden}.pagina:last-child{page-break-after:avoid}h1{text-align:center;color:#ff4d4d;font-size:16px;margin:0 0 2px}h2{text-align:center;color:#1e293b;font-size:14px;margin:0 0 2px}.info{text-align:center;color:#64748b;font-size:10px;margin-bottom:8px}.carton{border:2px solid #000;border-radius:8px;padding:8px 10px;background:white;margin-bottom:12px}table{width:100%;border-collapse:collapse}th{background:#ff4d4d;color:white;padding:6px;font-size:12px;border:1px solid #000}td{padding:6px;border:1px solid #000;text-align:center;font-weight:bold;font-size:13px}.free{background:#fef3c7;font-size:15px}.num-carton{text-align:center;margin-bottom:4px}.num-carton span{background:#ff4d4d;color:white;padding:2px 12px;border-radius:10px;font-size:11px;font-weight:bold}</style></head><body>');
+        w.document.write('<style>');
+        w.document.write('*{margin:0;padding:0;box-sizing:border-box}');
+        w.document.write('body{font-family:Arial;background:white}');
+        w.document.write('.pagina{width:750px;padding:15px 20px;background:white;page-break-after:always;height:1000px;overflow:hidden}');
+        w.document.write('.pagina:last-child{page-break-after:avoid}');
+        w.document.write('h1{text-align:center;color:#ff4d4d;font-size:18px;margin:0 0 3px}');
+        w.document.write('h2{text-align:center;color:#1e293b;font-size:15px;margin:0 0 3px}');
+        w.document.write('.info{text-align:center;color:#64748b;font-size:11px;margin-bottom:10px}');
+        w.document.write('.carton{border:3px solid #000;border-radius:10px;padding:12px 15px;background:white;margin-bottom:15px}');
+        w.document.write('table{width:100%;border-collapse:collapse}');
+        w.document.write('th{background:#ff4d4d;color:white;padding:12px;font-size:18px;border:2px solid #000}');
+        w.document.write('td{padding:14px;border:2px solid #000;text-align:center;font-weight:bold;font-size:22px}');
+        w.document.write('.free{background:#fef3c7;font-size:26px}');
+        w.document.write('.num-carton{text-align:center;margin-bottom:6px}');
+        w.document.write('.num-carton span{background:#ff4d4d;color:white;padding:4px 18px;border-radius:12px;font-size:14px;font-weight:bold}');
+        w.document.write('</style></head><body>');
         
         for (let i=0;i<cartonesJ.length;i+=2) {
             w.document.write('<div class="pagina"><h1>🎯 BINGO PRO</h1><h2>👤 '+nombreJugador+'</h2><p class="info">Pág. '+(Math.floor(i/2)+1)+' | '+cartonesJ.length+' cartones</p>');
