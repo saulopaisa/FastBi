@@ -1,4 +1,4 @@
-// generar.js - Versión Final Completa
+// generar.js - Versión Final con PDF tamaño carta
 
 const SALA_ID = localStorage.getItem('salaActiva') || ('sala-' + Date.now());
 localStorage.setItem('salaActiva', SALA_ID);
@@ -519,7 +519,7 @@ function exportarPDFTodos() {
         
         setTimeout(function() {
             const opt = {
-                margin: 10,
+                margin: { top: 10, bottom: 10, left: 10, right: 10 },
                 filename: 'todos-cartones-bingo.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, logging: false },
@@ -602,7 +602,7 @@ function exportarPDFPorJugador(nombreJugador) {
         
         setTimeout(function() {
             const opt = {
-                margin: 10,
+                margin: { top: 10, bottom: 10, left: 10, right: 10 },
                 filename: 'cartones-' + nombreJugador.replace(/\s+/g, '-') + '.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, logging: false },
