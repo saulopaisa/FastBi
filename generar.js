@@ -1,4 +1,4 @@
-// generar.js - Versión Final con PDF de 2 cartones por página
+// generar.js - Versión Final Completa
 
 const SALA_ID = localStorage.getItem('salaActiva') || ('sala-' + Date.now());
 localStorage.setItem('salaActiva', SALA_ID);
@@ -427,8 +427,8 @@ function mostrarToast(mensaje) {
     setTimeout(function() { if (toast.parentNode) toast.remove(); }, 2000);
 }
 
-// ============ GENERAR HTML SIMPLE DE CARTÓN PARA PDF ============
-function generarHTMLCartonPDFSimple(c) {
+// ============ HTML DE CARTÓN GRANDE PARA PDF ============
+function generarHTMLCartonPDFGrande(c) {
     if (!c || !c.carton) {
         return '<div class="carton"><p>Error: Sin datos</p></div>';
     }
@@ -477,26 +477,25 @@ function exportarPDFTodos() {
         
         console.log('Cartones encontrados:', cartones.length);
         
-        const ventana = window.open('', '_blank', 'width=900,height=700');
+        const ventana = window.open('', '_blank', 'width=850,height=1100');
         ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PDF Cartones</title>');
         ventana.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>');
         ventana.document.write('<style>');
-        ventana.document.write('* { margin: 0; padding: 0; box-sizing: border-box; }');
-        ventana.document.write('body { font-family: Arial, sans-serif; }');
-        ventana.document.write('.pagina { width: 750px; padding: 20px; background: white; page-break-after: always; }');
-        ventana.document.write('.pagina:last-child { page-break-after: avoid; }');
-        ventana.document.write('.cartones-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }');
-        ventana.document.write('.carton { border: 3px solid #000; border-radius: 10px; padding: 12px; background: white; }');
-        ventana.document.write('table { width: 100%; border-collapse: collapse; }');
-        ventana.document.write('th { background: #ff4d4d; color: white; padding: 8px; font-size: 14px; border: 2px solid #000; }');
-        ventana.document.write('td { padding: 8px; border: 2px solid #000; text-align: center; font-weight: bold; font-size: 15px; }');
-        ventana.document.write('.free { background: #fef3c7; font-size: 17px; }');
-        ventana.document.write('h1 { text-align: center; color: #ff4d4d; margin-bottom: 5px; font-size: 20px; }');
-        ventana.document.write('h2 { text-align: center; color: #1e293b; margin-bottom: 3px; font-size: 16px; }');
-        ventana.document.write('.info { text-align: center; color: #64748b; font-size: 11px; margin-bottom: 12px; }');
-        ventana.document.write('.num-carton { text-align: center; margin-bottom: 6px; }');
-        ventana.document.write('.num-carton span { background: #ff4d4d; color: white; padding: 3px 12px; border-radius: 15px; font-size: 13px; font-weight: bold; }');
-        ventana.document.write('.jugador { text-align: center; color: #10b981; margin: 4px 0; font-size: 12px; font-weight: bold; }');
+        ventana.document.write('*{margin:0;padding:0;box-sizing:border-box;}');
+        ventana.document.write('body{font-family:Arial,sans-serif;background:white;}');
+        ventana.document.write('.pagina{width:750px;padding:25px;background:white;page-break-after:always;min-height:1000px;}');
+        ventana.document.write('.pagina:last-child{page-break-after:avoid;}');
+        ventana.document.write('h1{text-align:center;color:#ff4d4d;margin-bottom:5px;font-size:22px;}');
+        ventana.document.write('h2{text-align:center;color:#1e293b;margin-bottom:3px;font-size:18px;}');
+        ventana.document.write('.info{text-align:center;color:#64748b;font-size:12px;margin-bottom:20px;}');
+        ventana.document.write('.carton{border:3px solid #000;border-radius:12px;padding:20px;background:white;margin-bottom:30px;width:100%;}');
+        ventana.document.write('table{width:100%;border-collapse:collapse;}');
+        ventana.document.write('th{background:#ff4d4d;color:white;padding:14px;font-size:18px;border:2px solid #000;}');
+        ventana.document.write('td{padding:16px;border:2px solid #000;text-align:center;font-weight:bold;font-size:20px;}');
+        ventana.document.write('.free{background:#fef3c7;font-size:24px;}');
+        ventana.document.write('.num-carton{text-align:center;margin-bottom:10px;}');
+        ventana.document.write('.num-carton span{background:#ff4d4d;color:white;padding:6px 20px;border-radius:20px;font-size:16px;font-weight:bold;}');
+        ventana.document.write('.jugador{text-align:center;color:#10b981;margin:8px 0;font-size:16px;font-weight:bold;}');
         ventana.document.write('</style>');
         ventana.document.write('</head><body>');
         
@@ -505,15 +504,14 @@ function exportarPDFTodos() {
             ventana.document.write('<h1>🎯 BINGO PRO</h1>');
             ventana.document.write('<h2>Todos los Cartones</h2>');
             ventana.document.write('<p class="info">Página ' + (Math.floor(i/2) + 1) + ' | Total: ' + cartones.length + ' cartones</p>');
-            ventana.document.write('<div class="cartones-grid">');
             
-            ventana.document.write(generarHTMLCartonPDFSimple(cartones[i]));
+            ventana.document.write(generarHTMLCartonPDFGrande(cartones[i]));
             
             if (i + 1 < cartones.length) {
-                ventana.document.write(generarHTMLCartonPDFSimple(cartones[i + 1]));
+                ventana.document.write(generarHTMLCartonPDFGrande(cartones[i + 1]));
             }
             
-            ventana.document.write('</div></div>');
+            ventana.document.write('</div>');
         }
         
         ventana.document.write('</body></html>');
@@ -521,11 +519,11 @@ function exportarPDFTodos() {
         
         setTimeout(function() {
             const opt = {
-                margin: [10, 10, 10, 10],
+                margin: 10,
                 filename: 'todos-cartones-bingo.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, logging: false },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
                 pagebreak: { mode: ['css', 'legacy'] }
             };
             
@@ -563,26 +561,24 @@ function exportarPDFPorJugador(nombreJugador) {
         
         cartonesJugador.sort((a, b) => (a.numero || 0) - (b.numero || 0));
         
-        const ventana = window.open('', '_blank', 'width=900,height=700');
+        const ventana = window.open('', '_blank', 'width=850,height=1100');
         ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PDF ' + nombreJugador + '</title>');
         ventana.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>');
         ventana.document.write('<style>');
-        ventana.document.write('* { margin: 0; padding: 0; box-sizing: border-box; }');
-        ventana.document.write('body { font-family: Arial, sans-serif; }');
-        ventana.document.write('.pagina { width: 750px; padding: 20px; background: white; page-break-after: always; }');
-        ventana.document.write('.pagina:last-child { page-break-after: avoid; }');
-        ventana.document.write('.cartones-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }');
-        ventana.document.write('.carton { border: 3px solid #000; border-radius: 10px; padding: 12px; background: white; }');
-        ventana.document.write('table { width: 100%; border-collapse: collapse; }');
-        ventana.document.write('th { background: #ff4d4d; color: white; padding: 8px; font-size: 14px; border: 2px solid #000; }');
-        ventana.document.write('td { padding: 8px; border: 2px solid #000; text-align: center; font-weight: bold; font-size: 15px; }');
-        ventana.document.write('.free { background: #fef3c7; font-size: 17px; }');
-        ventana.document.write('h1 { text-align: center; color: #ff4d4d; margin-bottom: 5px; font-size: 20px; }');
-        ventana.document.write('h2 { text-align: center; color: #1e293b; margin-bottom: 3px; font-size: 16px; }');
-        ventana.document.write('.info { text-align: center; color: #64748b; font-size: 11px; margin-bottom: 12px; }');
-        ventana.document.write('.num-carton { text-align: center; margin-bottom: 6px; }');
-        ventana.document.write('.num-carton span { background: #ff4d4d; color: white; padding: 3px 12px; border-radius: 15px; font-size: 13px; font-weight: bold; }');
-        ventana.document.write('.jugador { text-align: center; color: #10b981; margin: 4px 0; font-size: 12px; font-weight: bold; }');
+        ventana.document.write('*{margin:0;padding:0;box-sizing:border-box;}');
+        ventana.document.write('body{font-family:Arial,sans-serif;background:white;}');
+        ventana.document.write('.pagina{width:750px;padding:25px;background:white;page-break-after:always;min-height:1000px;}');
+        ventana.document.write('.pagina:last-child{page-break-after:avoid;}');
+        ventana.document.write('h1{text-align:center;color:#ff4d4d;margin-bottom:5px;font-size:22px;}');
+        ventana.document.write('h2{text-align:center;color:#1e293b;margin-bottom:3px;font-size:18px;}');
+        ventana.document.write('.info{text-align:center;color:#64748b;font-size:12px;margin-bottom:20px;}');
+        ventana.document.write('.carton{border:3px solid #000;border-radius:12px;padding:20px;background:white;margin-bottom:30px;width:100%;}');
+        ventana.document.write('table{width:100%;border-collapse:collapse;}');
+        ventana.document.write('th{background:#ff4d4d;color:white;padding:14px;font-size:18px;border:2px solid #000;}');
+        ventana.document.write('td{padding:16px;border:2px solid #000;text-align:center;font-weight:bold;font-size:20px;}');
+        ventana.document.write('.free{background:#fef3c7;font-size:24px;}');
+        ventana.document.write('.num-carton{text-align:center;margin-bottom:10px;}');
+        ventana.document.write('.num-carton span{background:#ff4d4d;color:white;padding:6px 20px;border-radius:20px;font-size:16px;font-weight:bold;}');
         ventana.document.write('</style>');
         ventana.document.write('</head><body>');
         
@@ -591,15 +587,14 @@ function exportarPDFPorJugador(nombreJugador) {
             ventana.document.write('<h1>🎯 BINGO PRO</h1>');
             ventana.document.write('<h2>👤 ' + nombreJugador + '</h2>');
             ventana.document.write('<p class="info">Página ' + (Math.floor(i/2) + 1) + ' | ' + cartonesJugador.length + ' cartón(es)</p>');
-            ventana.document.write('<div class="cartones-grid">');
             
-            ventana.document.write(generarHTMLCartonPDFSimple(cartonesJugador[i]));
+            ventana.document.write(generarHTMLCartonPDFGrande(cartonesJugador[i]));
             
             if (i + 1 < cartonesJugador.length) {
-                ventana.document.write(generarHTMLCartonPDFSimple(cartonesJugador[i + 1]));
+                ventana.document.write(generarHTMLCartonPDFGrande(cartonesJugador[i + 1]));
             }
             
-            ventana.document.write('</div></div>');
+            ventana.document.write('</div>');
         }
         
         ventana.document.write('</body></html>');
@@ -607,11 +602,11 @@ function exportarPDFPorJugador(nombreJugador) {
         
         setTimeout(function() {
             const opt = {
-                margin: [10, 10, 10, 10],
+                margin: 10,
                 filename: 'cartones-' + nombreJugador.replace(/\s+/g, '-') + '.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, logging: false },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
                 pagebreak: { mode: ['css', 'legacy'] }
             };
             
