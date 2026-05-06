@@ -1,4 +1,4 @@
-// generar.js - Versión Final Completa con PDF Funcional
+// generar.js - Versión Final con PDF de 2 cartones por página
 
 const SALA_ID = localStorage.getItem('salaActiva') || ('sala-' + Date.now());
 localStorage.setItem('salaActiva', SALA_ID);
@@ -353,33 +353,24 @@ function verJugadores() {
         });
         
         if (Object.keys(jugadores).length === 0) {
-            preview.innerHTML = '<div class="preview-empty"><h3>👥 No hay jugadores</h3><p>Asigna cartones primero</p></div>';
+            preview.innerHTML = '<div class="preview-empty"><h3>👥 No hay jugadores</h3></div>';
             return;
         }
         
-        let html = '<h3 style="color:#ff4d4d; margin-bottom:15px;">👥 JUGADORES</h3><div style="max-height:60vh; overflow-y:auto;">';
+        let html = '<h3 style="color:#ff4d4d;">👥 JUGADORES</h3><div style="max-height:60vh;overflow-y:auto;">';
         
         Object.keys(jugadores).forEach(function(nombre) {
             const cartones = jugadores[nombre];
             const ids = cartones.map(function(c) { return c.id; });
             const link = generarLinkJugador(nombre, ids);
             
-            html += '<div style="background:#f1f5f9; padding:12px; margin:8px 0; border-radius:8px; text-align:left;">';
-            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">';
-            html += '<strong>👤 ' + nombre + '</strong>';
-            html += '<span style="background:#3b82f6; color:white; padding:3px 10px; border-radius:12px; font-size:0.75rem;">' + cartones.length + ' cart.</span>';
-            html += '</div>';
-            html += '<div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:8px;">';
-            cartones.forEach(function(c) {
-                html += '<span style="background:#e2e8f0; color:#1e293b; padding:3px 8px; border-radius:10px; font-size:0.7rem;">#' + c.numero + '</span>';
-            });
-            html += '</div>';
-            html += '<div style="display:flex; gap:5px;">';
-            html += '<input value="' + link + '" readonly style="flex:1; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-size:0.75rem;" onclick="this.select()">';
-            html += '<button onclick="navigator.clipboard.writeText(\'' + link + '\'); mostrarToast(\'✅ Link copiado\')" style="background:#3b82f6; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">📋</button>';
-            html += '<button onclick="exportarPDFPorJugador(\'' + nombre.replace(/'/g, "\\'") + '\')" style="background:#8b5cf6; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">📄</button>';
-            html += '</div>';
-            html += '</div>';
+            html += '<div style="background:#f1f5f9;padding:10px;margin:5px 0;border-radius:8px;text-align:left;">';
+            html += '<strong>👤 ' + nombre + '</strong> - ' + cartones.length + ' cart.';
+            html += '<div style="display:flex;gap:5px;margin-top:5px;">';
+            html += '<input value="' + link + '" readonly style="flex:1;padding:5px;font-size:0.75rem;" onclick="this.select()">';
+            html += '<button onclick="navigator.clipboard.writeText(\'' + link + '\');mostrarToast(\'✅ Copiado\')" style="background:#3b82f6;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">📋</button>';
+            html += '<button onclick="exportarPDFPorJugador(\'' + nombre.replace(/'/g, "\\'") + '\')" style="background:#8b5cf6;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">📄</button>';
+            html += '</div></div>';
         });
         
         html += '</div>';
@@ -394,14 +385,14 @@ function verLinks() {
             preview.innerHTML = '<div class="preview-empty"><h3>📋 Sin cartones</h3></div>';
             return;
         }
-        let html = '<h3 style="color:#ff4d4d;">🔗 LINKS</h3><div style="max-height:60vh; overflow-y:auto; text-align:left;">';
+        let html = '<h3 style="color:#ff4d4d;">🔗 LINKS</h3><div style="max-height:60vh;overflow-y:auto;text-align:left;">';
         const base = location.origin + location.pathname.replace('generar.html', '');
         snap.forEach(function(child) {
             const c = child.val();
             const link = base + 'carton.html?carton=' + c.id + '&sala=' + SALA_ID;
-            html += '<div style="background:#f1f5f9; padding:8px; margin:4px 0; border-radius:6px;">';
+            html += '<div style="background:#f1f5f9;padding:8px;margin:4px 0;border-radius:6px;">';
             html += '<strong>#' + c.numero + '</strong>' + (c.asignadoA ? ' (' + c.asignadoA + ')' : '');
-            html += '<input value="' + link + '" readonly style="width:100%; padding:4px; margin-top:4px; font-size:0.75rem;" onclick="this.select()">';
+            html += '<input value="' + link + '" readonly style="width:100%;padding:4px;margin-top:4px;font-size:0.75rem;" onclick="this.select()">';
             html += '</div>';
         });
         html += '</div>';
@@ -412,7 +403,6 @@ function verLinks() {
 function seleccionarTodos() {
     const cards = document.querySelectorAll('.card-carton');
     const todas = Array.from(cards).every(function(c) { return c.classList.contains('seleccionado'); });
-    
     cards.forEach(function(card) {
         const id = card.getAttribute('data-id');
         if (todas) { seleccionados.delete(id); }
@@ -427,15 +417,46 @@ function filtrarCartones(t) {
     });
 }
 
-function mostrarToast(mensaje, tipo) {
+function mostrarToast(mensaje) {
     const t = document.querySelector('.toast');
     if (t) t.remove();
     const toast = document.createElement('div');
     toast.className = 'toast';
     toast.textContent = mensaje;
-    if (tipo === 'error') toast.style.background = '#ef4444';
     document.body.appendChild(toast);
     setTimeout(function() { if (toast.parentNode) toast.remove(); }, 2000);
+}
+
+// ============ GENERAR HTML SIMPLE DE CARTÓN PARA PDF ============
+function generarHTMLCartonPDFSimple(c) {
+    if (!c || !c.carton) {
+        return '<div class="carton"><p>Error: Sin datos</p></div>';
+    }
+    
+    const carton = c.carton;
+    const numero = c.numero || '?';
+    const asignadoA = c.asignadoA || '';
+    
+    let html = '<div class="carton">';
+    html += '<div class="num-carton"><span>Cartón #' + numero + '</span></div>';
+    if (asignadoA) {
+        html += '<p class="jugador">👤 ' + asignadoA + '</p>';
+    }
+    html += '<table>';
+    html += '<tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
+    
+    for (let f = 0; f < 5; f++) {
+        html += '<tr>';
+        ['B', 'I', 'N', 'G', 'O'].forEach(function(l) {
+            const valor = carton[l] ? carton[l][f] : '?';
+            const esCentro = (l === 'N' && f === 2);
+            html += '<td class="' + (esCentro ? 'free' : '') + '">' + (esCentro ? '⭐' : valor) + '</td>';
+        });
+        html += '</tr>';
+    }
+    
+    html += '</table></div>';
+    return html;
 }
 
 // ============ EXPORTAR PDF - TODOS ============
@@ -459,42 +480,65 @@ function exportarPDFTodos() {
         const ventana = window.open('', '_blank', 'width=900,height=700');
         ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PDF Cartones</title>');
         ventana.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>');
-        ventana.document.write('</head><body style="margin:0;">');
-        ventana.document.write('<div id="contenido-pdf" style="font-family:Arial;padding:20px;background:white;width:850px;">');
-        ventana.document.write('<h1 style="text-align:center;color:#ff4d4d;margin-bottom:5px;">🎯 BINGO PRO</h1>');
-        ventana.document.write('<h2 style="text-align:center;color:#1e293b;margin-bottom:5px;">Todos los Cartones</h2>');
-        ventana.document.write('<p style="text-align:center;color:#64748b;font-size:12px;margin-bottom:20px;">Total: ' + cartones.length + ' cartones | ' + new Date().toLocaleDateString() + '</p>');
-        ventana.document.write('<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">');
+        ventana.document.write('<style>');
+        ventana.document.write('* { margin: 0; padding: 0; box-sizing: border-box; }');
+        ventana.document.write('body { font-family: Arial, sans-serif; }');
+        ventana.document.write('.pagina { width: 750px; padding: 20px; background: white; page-break-after: always; }');
+        ventana.document.write('.pagina:last-child { page-break-after: avoid; }');
+        ventana.document.write('.cartones-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }');
+        ventana.document.write('.carton { border: 3px solid #000; border-radius: 10px; padding: 12px; background: white; }');
+        ventana.document.write('table { width: 100%; border-collapse: collapse; }');
+        ventana.document.write('th { background: #ff4d4d; color: white; padding: 8px; font-size: 14px; border: 2px solid #000; }');
+        ventana.document.write('td { padding: 8px; border: 2px solid #000; text-align: center; font-weight: bold; font-size: 15px; }');
+        ventana.document.write('.free { background: #fef3c7; font-size: 17px; }');
+        ventana.document.write('h1 { text-align: center; color: #ff4d4d; margin-bottom: 5px; font-size: 20px; }');
+        ventana.document.write('h2 { text-align: center; color: #1e293b; margin-bottom: 3px; font-size: 16px; }');
+        ventana.document.write('.info { text-align: center; color: #64748b; font-size: 11px; margin-bottom: 12px; }');
+        ventana.document.write('.num-carton { text-align: center; margin-bottom: 6px; }');
+        ventana.document.write('.num-carton span { background: #ff4d4d; color: white; padding: 3px 12px; border-radius: 15px; font-size: 13px; font-weight: bold; }');
+        ventana.document.write('.jugador { text-align: center; color: #10b981; margin: 4px 0; font-size: 12px; font-weight: bold; }');
+        ventana.document.write('</style>');
+        ventana.document.write('</head><body>');
         
-        cartones.forEach(function(c) {
-            ventana.document.write(generarHTMLCartonPDF(c));
-        });
+        for (let i = 0; i < cartones.length; i += 2) {
+            ventana.document.write('<div class="pagina">');
+            ventana.document.write('<h1>🎯 BINGO PRO</h1>');
+            ventana.document.write('<h2>Todos los Cartones</h2>');
+            ventana.document.write('<p class="info">Página ' + (Math.floor(i/2) + 1) + ' | Total: ' + cartones.length + ' cartones</p>');
+            ventana.document.write('<div class="cartones-grid">');
+            
+            ventana.document.write(generarHTMLCartonPDFSimple(cartones[i]));
+            
+            if (i + 1 < cartones.length) {
+                ventana.document.write(generarHTMLCartonPDFSimple(cartones[i + 1]));
+            }
+            
+            ventana.document.write('</div></div>');
+        }
         
-        ventana.document.write('</div></div>');
         ventana.document.write('</body></html>');
         ventana.document.close();
         
         setTimeout(function() {
-            const element = ventana.document.getElementById('contenido-pdf');
-            
             const opt = {
-                margin: 5,
+                margin: [10, 10, 10, 10],
                 filename: 'todos-cartones-bingo.pdf',
-                image: { type: 'jpeg', quality: 1 },
+                image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, logging: false },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['css', 'legacy'] }
             };
             
-            ventana.html2pdf().set(opt).from(element).save().then(function() {
+            ventana.html2pdf().set(opt).from(ventana.document.body).save().then(function() {
                 console.log('✅ PDF generado');
                 mostrarToast('✅ PDF generado correctamente');
                 setTimeout(function() { ventana.close(); }, 1000);
             }).catch(function(error) {
                 console.error('❌ Error:', error);
-                mostrarToast('❌ Error al generar PDF', 'error');
+                alert('Error al generar PDF');
                 ventana.close();
             });
-        }, 1500);
+        }, 2000);
     });
 }
 
@@ -518,96 +562,70 @@ function exportarPDFPorJugador(nombreJugador) {
         }
         
         cartonesJugador.sort((a, b) => (a.numero || 0) - (b.numero || 0));
-        console.log('Cartones de ' + nombreJugador + ':', cartonesJugador.length);
         
         const ventana = window.open('', '_blank', 'width=900,height=700');
         ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PDF ' + nombreJugador + '</title>');
         ventana.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>');
-        ventana.document.write('</head><body style="margin:0;">');
-        ventana.document.write('<div id="contenido-pdf" style="font-family:Arial;padding:20px;background:white;width:850px;">');
-        ventana.document.write('<h1 style="text-align:center;color:#ff4d4d;margin-bottom:5px;">🎯 BINGO PRO</h1>');
-        ventana.document.write('<h2 style="text-align:center;color:#1e293b;margin-bottom:5px;">👤 ' + nombreJugador + '</h2>');
-        ventana.document.write('<p style="text-align:center;color:#64748b;font-size:12px;margin-bottom:20px;">' + cartonesJugador.length + ' cartón(es) | ' + new Date().toLocaleDateString() + '</p>');
-        ventana.document.write('<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">');
+        ventana.document.write('<style>');
+        ventana.document.write('* { margin: 0; padding: 0; box-sizing: border-box; }');
+        ventana.document.write('body { font-family: Arial, sans-serif; }');
+        ventana.document.write('.pagina { width: 750px; padding: 20px; background: white; page-break-after: always; }');
+        ventana.document.write('.pagina:last-child { page-break-after: avoid; }');
+        ventana.document.write('.cartones-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }');
+        ventana.document.write('.carton { border: 3px solid #000; border-radius: 10px; padding: 12px; background: white; }');
+        ventana.document.write('table { width: 100%; border-collapse: collapse; }');
+        ventana.document.write('th { background: #ff4d4d; color: white; padding: 8px; font-size: 14px; border: 2px solid #000; }');
+        ventana.document.write('td { padding: 8px; border: 2px solid #000; text-align: center; font-weight: bold; font-size: 15px; }');
+        ventana.document.write('.free { background: #fef3c7; font-size: 17px; }');
+        ventana.document.write('h1 { text-align: center; color: #ff4d4d; margin-bottom: 5px; font-size: 20px; }');
+        ventana.document.write('h2 { text-align: center; color: #1e293b; margin-bottom: 3px; font-size: 16px; }');
+        ventana.document.write('.info { text-align: center; color: #64748b; font-size: 11px; margin-bottom: 12px; }');
+        ventana.document.write('.num-carton { text-align: center; margin-bottom: 6px; }');
+        ventana.document.write('.num-carton span { background: #ff4d4d; color: white; padding: 3px 12px; border-radius: 15px; font-size: 13px; font-weight: bold; }');
+        ventana.document.write('.jugador { text-align: center; color: #10b981; margin: 4px 0; font-size: 12px; font-weight: bold; }');
+        ventana.document.write('</style>');
+        ventana.document.write('</head><body>');
         
-        cartonesJugador.forEach(function(c) {
-            ventana.document.write(generarHTMLCartonPDF(c));
-        });
+        for (let i = 0; i < cartonesJugador.length; i += 2) {
+            ventana.document.write('<div class="pagina">');
+            ventana.document.write('<h1>🎯 BINGO PRO</h1>');
+            ventana.document.write('<h2>👤 ' + nombreJugador + '</h2>');
+            ventana.document.write('<p class="info">Página ' + (Math.floor(i/2) + 1) + ' | ' + cartonesJugador.length + ' cartón(es)</p>');
+            ventana.document.write('<div class="cartones-grid">');
+            
+            ventana.document.write(generarHTMLCartonPDFSimple(cartonesJugador[i]));
+            
+            if (i + 1 < cartonesJugador.length) {
+                ventana.document.write(generarHTMLCartonPDFSimple(cartonesJugador[i + 1]));
+            }
+            
+            ventana.document.write('</div></div>');
+        }
         
-        ventana.document.write('</div></div>');
         ventana.document.write('</body></html>');
         ventana.document.close();
         
         setTimeout(function() {
-            const element = ventana.document.getElementById('contenido-pdf');
-            
             const opt = {
-                margin: 5,
+                margin: [10, 10, 10, 10],
                 filename: 'cartones-' + nombreJugador.replace(/\s+/g, '-') + '.pdf',
-                image: { type: 'jpeg', quality: 1 },
+                image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, logging: false },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['css', 'legacy'] }
             };
             
-            ventana.html2pdf().set(opt).from(element).save().then(function() {
-                console.log('✅ PDF de ' + nombreJugador + ' generado');
-                mostrarToast('✅ PDF de ' + nombreJugador + ' generado');
+            ventana.html2pdf().set(opt).from(ventana.document.body).save().then(function() {
+                console.log('✅ PDF generado');
+                mostrarToast('✅ PDF generado');
                 setTimeout(function() { ventana.close(); }, 1000);
             }).catch(function(error) {
                 console.error('❌ Error:', error);
-                mostrarToast('❌ Error al generar PDF', 'error');
+                alert('Error al generar PDF');
                 ventana.close();
             });
-        }, 1500);
+        }, 2000);
     });
-}
-
-// ============ GENERAR HTML DE CARTÓN PARA PDF ============
-function generarHTMLCartonPDF(c) {
-    if (!c.carton) {
-        return '<div style="border:2px solid red;padding:10px;">Error: Sin datos</div>';
-    }
-    
-    const carton = c.carton;
-    const numero = c.numero || '?';
-    const asignadoA = c.asignadoA || '';
-    
-    let html = '';
-    html += '<div style="border:3px solid #000;border-radius:12px;padding:12px;background:white;page-break-inside:avoid;">';
-    html += '<div style="text-align:center;margin-bottom:8px;">';
-    html += '<span style="background:#ff4d4d;color:white;padding:5px 15px;border-radius:20px;font-size:14px;font-weight:bold;">Cartón #' + numero + '</span>';
-    html += '</div>';
-    
-    if (asignadoA) {
-        html += '<p style="text-align:center;color:#10b981;margin:5px 0;font-size:13px;font-weight:bold;">👤 ' + asignadoA + '</p>';
-    }
-    
-    html += '<table style="width:100%;border-collapse:collapse;margin-top:5px;">';
-    html += '<tr style="background:#ff4d4d;color:white;">';
-    html += '<th style="padding:10px;font-size:14px;border:2px solid #000;">B</th>';
-    html += '<th style="padding:10px;font-size:14px;border:2px solid #000;">I</th>';
-    html += '<th style="padding:10px;font-size:14px;border:2px solid #000;">N</th>';
-    html += '<th style="padding:10px;font-size:14px;border:2px solid #000;">G</th>';
-    html += '<th style="padding:10px;font-size:14px;border:2px solid #000;">O</th>';
-    html += '</tr>';
-    
-    for (let f = 0; f < 5; f++) {
-        html += '<tr>';
-        ['B', 'I', 'N', 'G', 'O'].forEach(function(l) {
-            const valor = carton[l] ? carton[l][f] : '?';
-            const esCentro = (l === 'N' && f === 2);
-            
-            html += '<td style="padding:10px;border:2px solid #000;text-align:center;font-weight:bold;font-size:15px;';
-            if (esCentro) {
-                html += 'background:#fef3c7;font-size:18px;';
-            }
-            html += '">' + (esCentro ? '⭐' : valor) + '</td>';
-        });
-        html += '</tr>';
-    }
-    
-    html += '</table></div>';
-    return html;
 }
 
 // ============ MENÚ PDF ============
@@ -642,17 +660,13 @@ function abrirMenuPDF() {
                 });
                 
                 html += '<div style="background:#f1f5f9;padding:15px;margin:10px 0;border-radius:10px;display:flex;justify-content:space-between;align-items:center;">';
-                html += '<div>';
-                html += '<strong style="font-size:1rem;">👤 ' + jugador + '</strong><br>';
-                html += '<span style="color:#64748b;font-size:0.85rem;">' + count + ' cartón(es)</span>';
-                html += '</div>';
+                html += '<div><strong>👤 ' + jugador + '</strong><br><span style="color:#64748b;font-size:0.85rem;">' + count + ' cartón(es)</span></div>';
                 html += '<button onclick="exportarPDFPorJugador(\'' + jugador.replace(/'/g, "\\'") + '\')" style="background:#8b5cf6;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:bold;">📄 PDF</button>';
                 html += '</div>';
             });
-            
             html += '</div>';
         } else {
-            html += '<p style="color:#94a3b8;text-align:center;padding:20px;">No hay jugadores asignados aún</p>';
+            html += '<p style="color:#94a3b8;text-align:center;">No hay jugadores asignados aún</p>';
         }
         
         html += '</div>';
@@ -662,7 +676,7 @@ function abrirMenuPDF() {
 
 // ============ INICIAR ============
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Bingo Pro Admin - Completo');
+    console.log('🚀 Bingo Pro Admin');
     
     document.getElementById('btnGenerar').addEventListener('click', generarLote);
     document.getElementById('btnGuardar').addEventListener('click', exportarJSON);
