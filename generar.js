@@ -1,4 +1,4 @@
-// generar.js - Versión Final con PDF tamaño carta
+// generar.js - Versión Final con PDF ajustado
 
 const SALA_ID = localStorage.getItem('salaActiva') || ('sala-' + Date.now());
 localStorage.setItem('salaActiva', SALA_ID);
@@ -427,11 +427,9 @@ function mostrarToast(mensaje) {
     setTimeout(function() { if (toast.parentNode) toast.remove(); }, 2000);
 }
 
-// ============ HTML DE CARTÓN GRANDE PARA PDF ============
-function generarHTMLCartonPDFGrande(c) {
-    if (!c || !c.carton) {
-        return '<div class="carton"><p>Error: Sin datos</p></div>';
-    }
+// ============ HTML DE CARTÓN PARA PDF ============
+function generarHTMLCartonPDF(c) {
+    if (!c || !c.carton) return '<div class="carton"><p>Error</p></div>';
     
     const carton = c.carton;
     const numero = c.numero || '?';
@@ -439,78 +437,59 @@ function generarHTMLCartonPDFGrande(c) {
     
     let html = '<div class="carton">';
     html += '<div class="num-carton"><span>Cartón #' + numero + '</span></div>';
-    if (asignadoA) {
-        html += '<p class="jugador">👤 ' + asignadoA + '</p>';
-    }
-    html += '<table>';
-    html += '<tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
+    if (asignadoA) html += '<p class="jugador">👤 ' + asignadoA + '</p>';
+    html += '<table><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
     
     for (let f = 0; f < 5; f++) {
         html += '<tr>';
-        ['B', 'I', 'N', 'G', 'O'].forEach(function(l) {
-            const valor = carton[l] ? carton[l][f] : '?';
-            const esCentro = (l === 'N' && f === 2);
-            html += '<td class="' + (esCentro ? 'free' : '') + '">' + (esCentro ? '⭐' : valor) + '</td>';
+        ['B','I','N','G','O'].forEach(function(l) {
+            const v = carton[l] ? carton[l][f] : '?';
+            const centro = (l === 'N' && f === 2);
+            html += '<td class="' + (centro ? 'free' : '') + '">' + (centro ? '⭐' : v) + '</td>';
         });
         html += '</tr>';
     }
-    
     html += '</table></div>';
     return html;
 }
 
 // ============ EXPORTAR PDF - TODOS ============
 function exportarPDFTodos() {
-    console.log('📄 Exportando TODOS los cartones...');
-    
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
-        if (!snap.exists()) {
-            alert('No hay cartones para exportar');
-            return;
-        }
+        if (!snap.exists()) { alert('No hay cartones'); return; }
         
         const cartones = [];
-        snap.forEach(function(child) {
-            cartones.push(child.val());
-        });
+        snap.forEach(function(child) { cartones.push(child.val()); });
         cartones.sort((a, b) => (a.numero || 0) - (b.numero || 0));
         
-        console.log('Cartones encontrados:', cartones.length);
-        
-        const ventana = window.open('', '_blank', 'width=850,height=1100');
-        ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PDF Cartones</title>');
+        const ventana = window.open('', '_blank', 'width=800,height=1050');
+        ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PDF</title>');
         ventana.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>');
         ventana.document.write('<style>');
         ventana.document.write('*{margin:0;padding:0;box-sizing:border-box;}');
-        ventana.document.write('body{font-family:Arial,sans-serif;background:white;}');
-        ventana.document.write('.pagina{width:750px;padding:25px;background:white;page-break-after:always;min-height:1000px;}');
+        ventana.document.write('body{font-family:Arial;background:white;}');
+        ventana.document.write('.pagina{width:720px;padding:10px 15px;background:white;page-break-after:always;height:970px;overflow:hidden;}');
         ventana.document.write('.pagina:last-child{page-break-after:avoid;}');
-        ventana.document.write('h1{text-align:center;color:#ff4d4d;margin-bottom:5px;font-size:22px;}');
-        ventana.document.write('h2{text-align:center;color:#1e293b;margin-bottom:3px;font-size:18px;}');
-        ventana.document.write('.info{text-align:center;color:#64748b;font-size:12px;margin-bottom:20px;}');
-        ventana.document.write('.carton{border:3px solid #000;border-radius:12px;padding:20px;background:white;margin-bottom:30px;width:100%;}');
+        ventana.document.write('h1{text-align:center;color:#ff4d4d;font-size:16px;margin:0 0 2px 0;}');
+        ventana.document.write('h2{text-align:center;color:#1e293b;font-size:14px;margin:0 0 2px 0;}');
+        ventana.document.write('.info{text-align:center;color:#64748b;font-size:10px;margin-bottom:8px;}');
+        ventana.document.write('.carton{border:2px solid #000;border-radius:8px;padding:8px 10px;background:white;margin-bottom:12px;}');
         ventana.document.write('table{width:100%;border-collapse:collapse;}');
-        ventana.document.write('th{background:#ff4d4d;color:white;padding:14px;font-size:18px;border:2px solid #000;}');
-        ventana.document.write('td{padding:16px;border:2px solid #000;text-align:center;font-weight:bold;font-size:20px;}');
-        ventana.document.write('.free{background:#fef3c7;font-size:24px;}');
-        ventana.document.write('.num-carton{text-align:center;margin-bottom:10px;}');
-        ventana.document.write('.num-carton span{background:#ff4d4d;color:white;padding:6px 20px;border-radius:20px;font-size:16px;font-weight:bold;}');
-        ventana.document.write('.jugador{text-align:center;color:#10b981;margin:8px 0;font-size:16px;font-weight:bold;}');
-        ventana.document.write('</style>');
-        ventana.document.write('</head><body>');
+        ventana.document.write('th{background:#ff4d4d;color:white;padding:6px;font-size:12px;border:1px solid #000;}');
+        ventana.document.write('td{padding:6px;border:1px solid #000;text-align:center;font-weight:bold;font-size:13px;}');
+        ventana.document.write('.free{background:#fef3c7;font-size:15px;}');
+        ventana.document.write('.num-carton{text-align:center;margin-bottom:4px;}');
+        ventana.document.write('.num-carton span{background:#ff4d4d;color:white;padding:2px 12px;border-radius:10px;font-size:11px;font-weight:bold;}');
+        ventana.document.write('.jugador{text-align:center;color:#10b981;margin:2px 0;font-size:11px;font-weight:bold;}');
+        ventana.document.write('</style></head><body>');
         
         for (let i = 0; i < cartones.length; i += 2) {
             ventana.document.write('<div class="pagina">');
             ventana.document.write('<h1>🎯 BINGO PRO</h1>');
             ventana.document.write('<h2>Todos los Cartones</h2>');
-            ventana.document.write('<p class="info">Página ' + (Math.floor(i/2) + 1) + ' | Total: ' + cartones.length + ' cartones</p>');
-            
-            ventana.document.write(generarHTMLCartonPDFGrande(cartones[i]));
-            
-            if (i + 1 < cartones.length) {
-                ventana.document.write(generarHTMLCartonPDFGrande(cartones[i + 1]));
-            }
-            
+            ventana.document.write('<p class="info">Pág. ' + (Math.floor(i/2)+1) + ' | ' + cartones.length + ' cartones</p>');
+            ventana.document.write(generarHTMLCartonPDF(cartones[i]));
+            if (i+1 < cartones.length) ventana.document.write(generarHTMLCartonPDF(cartones[i+1]));
             ventana.document.write('</div>');
         }
         
@@ -518,21 +497,18 @@ function exportarPDFTodos() {
         ventana.document.close();
         
         setTimeout(function() {
-            const opt = {
-                margin: { top: 10, bottom: 10, left: 10, right: 10 },
+            ventana.html2pdf().set({
+                margin: {top:8,bottom:8,left:8,right:8},
                 filename: 'todos-cartones-bingo.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: false },
-                jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
-                pagebreak: { mode: ['css', 'legacy'] }
-            };
-            
-            ventana.html2pdf().set(opt).from(ventana.document.body).save().then(function() {
-                console.log('✅ PDF generado');
-                mostrarToast('✅ PDF generado correctamente');
-                setTimeout(function() { ventana.close(); }, 1000);
-            }).catch(function(error) {
-                console.error('❌ Error:', error);
+                image: {type:'jpeg',quality:0.98},
+                html2canvas: {scale:2,useCORS:true,logging:false},
+                jsPDF: {unit:'mm',format:'letter',orientation:'portrait'},
+                pagebreak: {mode:['css','legacy']}
+            }).from(ventana.document.body).save().then(function() {
+                mostrarToast('✅ PDF generado');
+                setTimeout(function(){ventana.close();},1000);
+            }).catch(function(err) {
+                console.error(err);
                 alert('Error al generar PDF');
                 ventana.close();
             });
@@ -542,58 +518,43 @@ function exportarPDFTodos() {
 
 // ============ EXPORTAR PDF POR JUGADOR ============
 function exportarPDFPorJugador(nombreJugador) {
-    console.log('📄 Exportando cartones de:', nombreJugador);
-    
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
         const cartonesJugador = [];
-        
         snap.forEach(function(child) {
             const c = child.val();
-            if (c.asignadoA === nombreJugador) {
-                cartonesJugador.push(c);
-            }
+            if (c.asignadoA === nombreJugador) cartonesJugador.push(c);
         });
         
-        if (cartonesJugador.length === 0) {
-            alert('No se encontraron cartones para: ' + nombreJugador);
-            return;
-        }
+        if (cartonesJugador.length === 0) { alert('No hay cartones para: ' + nombreJugador); return; }
+        cartonesJugador.sort((a,b) => (a.numero||0)-(b.numero||0));
         
-        cartonesJugador.sort((a, b) => (a.numero || 0) - (b.numero || 0));
-        
-        const ventana = window.open('', '_blank', 'width=850,height=1100');
-        ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PDF ' + nombreJugador + '</title>');
+        const ventana = window.open('', '_blank', 'width=800,height=1050');
+        ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PDF</title>');
         ventana.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>');
         ventana.document.write('<style>');
         ventana.document.write('*{margin:0;padding:0;box-sizing:border-box;}');
-        ventana.document.write('body{font-family:Arial,sans-serif;background:white;}');
-        ventana.document.write('.pagina{width:750px;padding:25px;background:white;page-break-after:always;min-height:1000px;}');
+        ventana.document.write('body{font-family:Arial;background:white;}');
+        ventana.document.write('.pagina{width:720px;padding:10px 15px;background:white;page-break-after:always;height:970px;overflow:hidden;}');
         ventana.document.write('.pagina:last-child{page-break-after:avoid;}');
-        ventana.document.write('h1{text-align:center;color:#ff4d4d;margin-bottom:5px;font-size:22px;}');
-        ventana.document.write('h2{text-align:center;color:#1e293b;margin-bottom:3px;font-size:18px;}');
-        ventana.document.write('.info{text-align:center;color:#64748b;font-size:12px;margin-bottom:20px;}');
-        ventana.document.write('.carton{border:3px solid #000;border-radius:12px;padding:20px;background:white;margin-bottom:30px;width:100%;}');
+        ventana.document.write('h1{text-align:center;color:#ff4d4d;font-size:16px;margin:0 0 2px 0;}');
+        ventana.document.write('h2{text-align:center;color:#1e293b;font-size:14px;margin:0 0 2px 0;}');
+        ventana.document.write('.info{text-align:center;color:#64748b;font-size:10px;margin-bottom:8px;}');
+        ventana.document.write('.carton{border:2px solid #000;border-radius:8px;padding:8px 10px;background:white;margin-bottom:12px;}');
         ventana.document.write('table{width:100%;border-collapse:collapse;}');
-        ventana.document.write('th{background:#ff4d4d;color:white;padding:14px;font-size:18px;border:2px solid #000;}');
-        ventana.document.write('td{padding:16px;border:2px solid #000;text-align:center;font-weight:bold;font-size:20px;}');
-        ventana.document.write('.free{background:#fef3c7;font-size:24px;}');
-        ventana.document.write('.num-carton{text-align:center;margin-bottom:10px;}');
-        ventana.document.write('.num-carton span{background:#ff4d4d;color:white;padding:6px 20px;border-radius:20px;font-size:16px;font-weight:bold;}');
-        ventana.document.write('</style>');
-        ventana.document.write('</head><body>');
+        ventana.document.write('th{background:#ff4d4d;color:white;padding:6px;font-size:12px;border:1px solid #000;}');
+        ventana.document.write('td{padding:6px;border:1px solid #000;text-align:center;font-weight:bold;font-size:13px;}');
+        ventana.document.write('.free{background:#fef3c7;font-size:15px;}');
+        ventana.document.write('.num-carton{text-align:center;margin-bottom:4px;}');
+        ventana.document.write('.num-carton span{background:#ff4d4d;color:white;padding:2px 12px;border-radius:10px;font-size:11px;font-weight:bold;}');
+        ventana.document.write('</style></head><body>');
         
         for (let i = 0; i < cartonesJugador.length; i += 2) {
             ventana.document.write('<div class="pagina">');
             ventana.document.write('<h1>🎯 BINGO PRO</h1>');
             ventana.document.write('<h2>👤 ' + nombreJugador + '</h2>');
-            ventana.document.write('<p class="info">Página ' + (Math.floor(i/2) + 1) + ' | ' + cartonesJugador.length + ' cartón(es)</p>');
-            
-            ventana.document.write(generarHTMLCartonPDFGrande(cartonesJugador[i]));
-            
-            if (i + 1 < cartonesJugador.length) {
-                ventana.document.write(generarHTMLCartonPDFGrande(cartonesJugador[i + 1]));
-            }
-            
+            ventana.document.write('<p class="info">Pág. ' + (Math.floor(i/2)+1) + ' | ' + cartonesJugador.length + ' cartones</p>');
+            ventana.document.write(generarHTMLCartonPDF(cartonesJugador[i]));
+            if (i+1 < cartonesJugador.length) ventana.document.write(generarHTMLCartonPDF(cartonesJugador[i+1]));
             ventana.document.write('</div>');
         }
         
@@ -601,21 +562,18 @@ function exportarPDFPorJugador(nombreJugador) {
         ventana.document.close();
         
         setTimeout(function() {
-            const opt = {
-                margin: { top: 10, bottom: 10, left: 10, right: 10 },
-                filename: 'cartones-' + nombreJugador.replace(/\s+/g, '-') + '.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: false },
-                jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
-                pagebreak: { mode: ['css', 'legacy'] }
-            };
-            
-            ventana.html2pdf().set(opt).from(ventana.document.body).save().then(function() {
-                console.log('✅ PDF generado');
+            ventana.html2pdf().set({
+                margin: {top:8,bottom:8,left:8,right:8},
+                filename: 'cartones-'+nombreJugador.replace(/\s+/g,'-')+'.pdf',
+                image: {type:'jpeg',quality:0.98},
+                html2canvas: {scale:2,useCORS:true,logging:false},
+                jsPDF: {unit:'mm',format:'letter',orientation:'portrait'},
+                pagebreak: {mode:['css','legacy']}
+            }).from(ventana.document.body).save().then(function() {
                 mostrarToast('✅ PDF generado');
-                setTimeout(function() { ventana.close(); }, 1000);
-            }).catch(function(error) {
-                console.error('❌ Error:', error);
+                setTimeout(function(){ventana.close();},1000);
+            }).catch(function(err) {
+                console.error(err);
                 alert('Error al generar PDF');
                 ventana.close();
             });
@@ -631,39 +589,24 @@ function abrirMenuPDF() {
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
         const total = snap.numChildren() || 0;
         const jugadores = new Set();
-        
-        snap.forEach(function(child) {
-            const c = child.val();
-            if (c.asignadoA) jugadores.add(c.asignadoA);
-        });
+        snap.forEach(function(child) { if (child.val().asignadoA) jugadores.add(child.val().asignadoA); });
         
         let html = '<div style="padding:20px;">';
-        html += '<h2 style="color:#ff4d4d;margin-bottom:20px;text-align:center;">📄 EXPORTAR PDF</h2>';
-        
-        html += '<button onclick="exportarPDFTodos()" style="width:100%;padding:15px;background:#ff4d4d;color:white;border:none;border-radius:10px;cursor:pointer;font-size:1.1rem;font-weight:bold;margin-bottom:25px;">';
-        html += '📄 EXPORTAR TODOS LOS CARTONES (' + total + ')';
-        html += '</button>';
+        html += '<h2 style="color:#ff4d4d;text-align:center;">📄 EXPORTAR PDF</h2>';
+        html += '<button onclick="exportarPDFTodos()" style="width:100%;padding:15px;background:#ff4d4d;color:white;border:none;border-radius:10px;cursor:pointer;font-size:1.1rem;font-weight:bold;margin:20px 0;">📄 TODOS ('+total+')</button>';
         
         if (jugadores.size > 0) {
-            html += '<h3 style="color:#1e293b;margin-bottom:15px;">👤 Por Jugador</h3>';
-            html += '<div style="max-height:50vh;overflow-y:auto;">';
-            
-            jugadores.forEach(function(jugador) {
-                let count = 0;
-                snap.forEach(function(child) {
-                    if (child.val().asignadoA === jugador) count++;
-                });
-                
-                html += '<div style="background:#f1f5f9;padding:15px;margin:10px 0;border-radius:10px;display:flex;justify-content:space-between;align-items:center;">';
-                html += '<div><strong>👤 ' + jugador + '</strong><br><span style="color:#64748b;font-size:0.85rem;">' + count + ' cartón(es)</span></div>';
-                html += '<button onclick="exportarPDFPorJugador(\'' + jugador.replace(/'/g, "\\'") + '\')" style="background:#8b5cf6;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:bold;">📄 PDF</button>';
+            html += '<h3>👤 Por Jugador</h3><div style="max-height:50vh;overflow-y:auto;">';
+            jugadores.forEach(function(j) {
+                let c = 0;
+                snap.forEach(function(ch) { if (ch.val().asignadoA === j) c++; });
+                html += '<div style="background:#f1f5f9;padding:12px;margin:8px 0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">';
+                html += '<div><strong>👤 '+j+'</strong><br><span style="font-size:0.8rem;">'+c+' cart.</span></div>';
+                html += '<button onclick="exportarPDFPorJugador(\''+j.replace(/'/g,"\\'")+'\')" style="background:#8b5cf6;color:white;border:none;padding:8px 15px;border-radius:6px;cursor:pointer;">📄 PDF</button>';
                 html += '</div>';
             });
             html += '</div>';
-        } else {
-            html += '<p style="color:#94a3b8;text-align:center;">No hay jugadores asignados aún</p>';
         }
-        
         html += '</div>';
         preview.innerHTML = html;
     });
@@ -675,29 +618,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.getElementById('btnGenerar').addEventListener('click', generarLote);
     document.getElementById('btnGuardar').addEventListener('click', exportarJSON);
-    document.getElementById('btnAbrir').addEventListener('click', function() {
-        document.getElementById('fileIn').click();
-    });
+    document.getElementById('btnAbrir').addEventListener('click', function() { document.getElementById('fileIn').click(); });
     document.getElementById('btnPDF').addEventListener('click', abrirMenuPDF);
     document.getElementById('btnLinks').addEventListener('click', verLinks);
     document.getElementById('btnJugadores').addEventListener('click', verJugadores);
     document.getElementById('btnBorrar').addEventListener('click', borrarTodo);
-    document.getElementById('btnIrJuego').addEventListener('click', function() {
-        location.href = 'ruleta.html';
-    });
+    document.getElementById('btnIrJuego').addEventListener('click', function() { location.href = 'ruleta.html'; });
     
     const btnAsignar = document.getElementById('btnAsignar');
-    if (btnAsignar) {
-        btnAsignar.addEventListener('click', asignarAJugador);
-    }
+    if (btnAsignar) btnAsignar.addEventListener('click', asignarAJugador);
     
     document.getElementById('fileIn').addEventListener('change', importarJSON);
-    document.getElementById('buscadorCartones').addEventListener('input', function(e) {
-        filtrarCartones(e.target.value);
-    });
-    document.getElementById('cantidadGenerar').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') generarLote();
-    });
+    document.getElementById('buscadorCartones').addEventListener('input', function(e) { filtrarCartones(e.target.value); });
+    document.getElementById('cantidadGenerar').addEventListener('keypress', function(e) { if (e.key === 'Enter') generarLote(); });
     
     mostrarLista();
 });
