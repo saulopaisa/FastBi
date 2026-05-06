@@ -515,3 +515,67 @@ body {
     .history-grid { gap: 2px; padding: 8px; }
     .celda-seguimiento { font-size: 0.7rem; border-radius: 4px; }
 }
+
+
+/* ============ CELDA FALTANTE EN PATRÓN ============ */
+td.faltante-patron {
+    border: 2px dashed #f59e0b !important;
+    background: #fef3c7 !important;
+}
+
+/* ============ MINICARTÓN MEJORADO ============ */
+.minicarton-container {
+    background: white;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 8px 0;
+    min-height: 130px;
+    color: #1e293b;
+    border: 2px solid #e2e8f0;
+    transition: all 0.3s;
+}
+
+/* Ajuste para que el tablero no se salga */
+.history-grid {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    gap: 3px;
+    padding: 8px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    flex: 1;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+}
+
+.celda-seguimiento {
+    background: #e2e8f0;
+    border: 2px solid #cbd5e1;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #475569;
+    border-radius: 6px;
+    transition: all 0.3s;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* Para pantallas pequeñas, reducir tamaño de fuente */
+@media (max-height: 800px) {
+    .celda-seguimiento {
+        font-size: 0.65rem;
+        border-radius: 4px;
+        border-width: 1px;
+    }
+    .history-grid {
+        gap: 2px;
+        padding: 6px;
+    }
+}
