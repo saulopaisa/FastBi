@@ -67,6 +67,25 @@
     <!-- PANEL DERECHO -->
     <div class="main-content">
         <h3>📊 TABLERO DE SEGUIMIENTO (1-75)</h3>
+        
+        <!-- Indicador de última bola -->
+        <div class="ultima-bola-container">
+            <div class="ultima-bola" id="ultimaBola">
+                <span class="letra">-</span>
+                <span class="numero">--</span>
+            </div>
+        </div>
+        
+        <!-- Últimos 5 cantados -->
+        <div class="ultimos-container" id="ultimosCantados">
+            <div class="ultimo-item vacio"><div class="letra-peq">-</div><div class="num-peq">--</div></div>
+            <div class="ultimo-item vacio"><div class="letra-peq">-</div><div class="num-peq">--</div></div>
+            <div class="ultimo-item vacio"><div class="letra-peq">-</div><div class="num-peq">--</div></div>
+            <div class="ultimo-item vacio"><div class="letra-peq">-</div><div class="num-peq">--</div></div>
+            <div class="ultimo-item vacio"><div class="letra-peq">-</div><div class="num-peq">--</div></div>
+        </div>
+        
+        <!-- Tablero completo sin scroll -->
         <div id="historyGrid" class="history-grid"></div>
     </div>
 
