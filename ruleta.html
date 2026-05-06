@@ -57,17 +57,14 @@
             </div>
             
             <div class="btn-group">
-                <button onclick="window.cambiarEstado('jugando', 'BINGO ERRADO')" class="btn-bingo-errado">
+                <button onclick="window.bingoErrado()" class="btn-bingo-errado">
                     ❌ BINGO ERRADO
                 </button>
-                <button onclick="window.anunciarGanador()" class="btn-bingo-valido">
+                <button onclick="window.bingoValido()" class="btn-bingo-valido">
                     ✅ BINGO VÁLIDO
                 </button>
             </div>
         </div>
-        
-        <!-- Notificaciones de BINGO -->
-        <div id="notificacionesBingo" class="notificaciones-container"></div>
         
         <button id="resetBtn" class="btn-reiniciar">
             🔄 Reiniciar Todo
@@ -77,6 +74,23 @@
     <!-- PANEL DERECHO -->
     <div class="main-content">
         <h3>📊 TABLERO DE SEGUIMIENTO (1-75)</h3>
+        
+        <!-- ALERTA DE BINGO - aparece cuando hay bingo -->
+        <div id="alertaBingo" class="alerta-bingo" style="display:none;">
+            <div class="alerta-bingo-contenido">
+                <span class="alerta-icono">🚨</span>
+                <div class="alerta-texto">
+                    <div class="alerta-titulo">¡BINGO CANTADO!</div>
+                    <div class="alerta-jugador" id="alertaJugador">-</div>
+                    <div class="alerta-carton" id="alertaCarton">-</div>
+                </div>
+                <div class="alerta-acciones">
+                    <button onclick="window.bingoValido()" class="alerta-btn-valido">✅ VÁLIDO</button>
+                    <button onclick="window.bingoErrado()" class="alerta-btn-errado">❌ ERRADO</button>
+                    <button onclick="window.cerrarAlerta()" class="alerta-btn-cerrar">✕</button>
+                </div>
+            </div>
+        </div>
         
         <!-- Indicador de última bola -->
         <div class="ultima-bola-container">
