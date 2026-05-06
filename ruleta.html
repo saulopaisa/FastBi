@@ -41,12 +41,19 @@
             </button>
         </div>
 
+        <!-- VERIFICADOR DE CARTÓN -->
         <div class="verifier-area">
-            <div style="display: flex; gap: 5px;">
-                <input type="number" id="idABuscar" placeholder="🔍 ID Cartón">
+            <div class="verifier-title">🔍 VERIFICAR CARTÓN</div>
+            <div style="display: flex; gap: 5px; margin-bottom: 8px;">
+                <input type="text" id="idABuscar" placeholder="ID o # Cartón" style="flex:1;">
                 <button onclick="window.revisarCartonManual()" class="btn-programar" style="padding: 8px 15px;">
-                    REVISAR
+                    BUSCAR
                 </button>
+            </div>
+            
+            <!-- Minicartón verificador -->
+            <div id="minicartonVerificador" class="minicarton-container">
+                <p style="color:#64748b; text-align:center; font-size:0.8rem;">Busca un cartón para verificar</p>
             </div>
             
             <div class="btn-group">
@@ -58,6 +65,9 @@
                 </button>
             </div>
         </div>
+        
+        <!-- Notificaciones de BINGO -->
+        <div id="notificacionesBingo" class="notificaciones-container"></div>
         
         <button id="resetBtn" class="btn-reiniciar">
             🔄 Reiniciar Todo
@@ -85,7 +95,7 @@
             <div class="ultimo-item vacio"><div class="letra-peq">-</div><div class="num-peq">--</div></div>
         </div>
         
-        <!-- Tablero completo sin scroll -->
+        <!-- Tablero completo -->
         <div id="historyGrid" class="history-grid"></div>
     </div>
 
