@@ -114,32 +114,31 @@
         <div id="historyGrid" class="history-grid"></div>
     </div>
 
-    <!-- MODAL CARTONES -->
-    <div id="modalCartones" class="modal-overlay">
-        <div class="modal-content">
-            <h3>📋 PASO 1: ¿QUIÉN JUEGA?</h3>
-            <div id="listaCheckCartones" class="grid-seleccion-cartones"></div>
-            <button onclick="window.confirmarJugadores()" class="btn-accion btn-empezar">
-                ✅ CONFIRMAR Y PASAR AL PATRÓN
-            </button>
+   <!-- MODAL CARTONES -->
+<div id="modalCartones" class="modal-overlay">
+    <div class="modal-content">
+        <h3>📋 PASO 1: ¿QUIÉN JUEGA?</h3>
+        
+        <!-- Buscador -->
+        <div style="margin-bottom:10px;">
+            <input type="text" placeholder="🔍 Buscar jugador..." 
+                oninput="window.buscarJugadorModal(this.value)"
+                style="width:100%;padding:8px;border-radius:6px;border:2px solid #2d3748;background:#1e293b;color:white;">
         </div>
+        
+        <!-- Botón Seleccionar Todos -->
+        <button onclick="window.seleccionarTodosJugadores()" 
+            style="width:100%;padding:8px;background:#3b82f6;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:bold;margin-bottom:10px;">
+            ✅ SELECCIONAR TODOS
+        </button>
+        
+        <div id="listaCheckCartones" class="grid-seleccion-cartones"></div>
+        
+        <button onclick="window.confirmarJugadores()" class="btn-accion btn-empezar">
+            ✅ CONFIRMAR Y PASAR AL PATRÓN
+        </button>
     </div>
-
-    <!-- MODAL PATRÓN -->
-    <div id="modalPatron" class="modal-overlay">
-        <div class="modal-content">
-            <h3>🎯 PASO 2: ELIGE EL PATRÓN</h3>
-            <div class="grid-predefinidos">
-                <button onclick="window.aplicarPredefinido('lleno')" class="btn-predefinido">⬛ LLENO</button>
-                <button onclick="window.aplicarPredefinido('equis')" class="btn-predefinido">❌ LA X</button>
-                <button onclick="window.aplicarPredefinido('limpiar')" class="btn-predefinido">🔄 BORRAR</button>
-            </div>
-            <div id="gridDibujoPatron" class="grid-patron-admin"></div>
-            <button onclick="window.confirmarPatron()" class="btn-accion btn-empezar" style="margin-top: 15px;">
-                ✅ CONFIRMAR Y ACTIVAR JUEGO
-            </button>
-        </div>
-    </div>
+</div>
 
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
