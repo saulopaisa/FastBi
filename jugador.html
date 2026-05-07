@@ -14,15 +14,9 @@
             --red: #ff4d4d;
             --gold: #ffb703;
             --success: #10b981;
-            --blue: #3b82f6;
-            --purple: #8b5cf6;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -32,12 +26,8 @@
             padding: 10px;
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
+        .container { max-width: 900px; margin: 0 auto; }
 
-        /* ============ HEADER ============ */
         .header {
             text-align: center;
             padding: 15px;
@@ -47,26 +37,9 @@
             border: 2px solid #2d3436;
         }
 
-        .header h1 {
-            color: var(--red);
-            font-size: 1.5rem;
-            font-weight: 900;
-            margin-bottom: 5px;
-        }
+        .header h1 { color: var(--red); font-size: 1.5rem; font-weight: 900; margin-bottom: 5px; }
+        .header .jugador-nombre { color: var(--success); font-size: 1.2rem; font-weight: bold; }
 
-        .header .jugador-nombre {
-            color: var(--success);
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-
-        .header .sala-info {
-            color: var(--text-gray);
-            font-size: 0.7rem;
-            margin-top: 3px;
-        }
-
-        /* ============ ÚLTIMOS NÚMEROS CANTADOS ============ */
         .numeros-section {
             background: var(--sidebar-bg);
             border-radius: 12px;
@@ -75,12 +48,7 @@
             border: 1px solid #2d3436;
         }
 
-        .numeros-section h3 {
-            color: var(--gold);
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-            text-align: center;
-        }
+        .numeros-section h3 { color: var(--gold); font-size: 0.9rem; margin-bottom: 10px; text-align: center; }
 
         .ultima-bola-jugador {
             display: flex;
@@ -104,29 +72,12 @@
             animation: pulse 1s infinite;
         }
 
-        .bola-grande .letra {
-            font-size: 1.3rem;
-            font-weight: 900;
-            line-height: 1;
-        }
+        .bola-grande .letra { font-size: 1.3rem; font-weight: 900; line-height: 1; }
+        .bola-grande .numero { font-size: 2rem; font-weight: 900; line-height: 1; }
 
-        .bola-grande .numero {
-            font-size: 2rem;
-            font-weight: 900;
-            line-height: 1;
-        }
+        @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.05);} }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .ultimos-numeros {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
+        .ultimos-numeros { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
 
         .num-chico {
             background: white;
@@ -150,7 +101,6 @@
             color: #cbd5e1;
         }
 
-        /* ============ CARTONES ============ */
         .cartones-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -169,14 +119,11 @@
             position: relative;
         }
 
-        .carton-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-        }
+        .carton-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
 
         .carton-card.seleccionado {
             border-color: var(--success);
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+            box-shadow: 0 0 15px rgba(16,185,129,0.4);
             background: #f0fdf4;
         }
 
@@ -192,60 +139,19 @@
             align-items: center;
             justify-content: center;
             font-size: 0.7rem;
-            transition: all 0.3s;
         }
 
-        .carton-card.seleccionado .carton-check {
-            background: var(--success);
-            color: white;
-        }
+        .carton-card.seleccionado .carton-check { background: var(--success); color: white; }
 
-        .carton-numero {
-            text-align: center;
-            font-size: 0.9rem;
-            font-weight: 900;
-            color: var(--red);
-            margin-bottom: 8px;
-        }
+        .carton-numero { text-align: center; font-size: 0.9rem; font-weight: 900; color: var(--red); margin-bottom: 8px; }
 
-        .carton-tabla {
-            width: 100%;
-            border-collapse: collapse;
-        }
+        .carton-tabla { width: 100%; border-collapse: collapse; }
+        .carton-tabla th { background: #ff4d4d; color: white; padding: 5px; font-size: 0.65rem; border: 1px solid #e2e8f0; }
+        .carton-tabla td { padding: 5px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold; font-size: 0.7rem; }
+        .carton-tabla td.free { background: #fef3c7; font-size: 0.8rem; }
+        .carton-tabla td.marcado { background: #10b981 !important; color: white !important; }
 
-        .carton-tabla th {
-            background: #ff4d4d;
-            color: white;
-            padding: 5px;
-            font-size: 0.65rem;
-            border: 1px solid #e2e8f0;
-        }
-
-        .carton-tabla td {
-            padding: 5px;
-            border: 1px solid #e2e8f0;
-            text-align: center;
-            font-weight: bold;
-            font-size: 0.7rem;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-
-        .carton-tabla td.free {
-            background: #fef3c7;
-            font-size: 0.8rem;
-        }
-
-        .carton-tabla td.marcado {
-            background: #10b981 !important;
-            color: white !important;
-        }
-
-        /* ============ BOTÓN BINGO ============ */
-        .btn-bingo-container {
-            text-align: center;
-            margin-bottom: 15px;
-        }
+        .btn-bingo-container { text-align: center; margin-bottom: 15px; }
 
         .btn-bingo {
             background: linear-gradient(135deg, #ef4444, #dc2626);
@@ -257,97 +163,39 @@
             cursor: pointer;
             font-size: 1.2rem;
             transition: all 0.3s;
-            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+            box-shadow: 0 4px 20px rgba(239,68,68,0.4);
             animation: glowBingo 2s infinite;
         }
 
-        .btn-bingo:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 30px rgba(239, 68, 68, 0.6);
-        }
+        .btn-bingo:hover { transform: scale(1.05); }
+        .btn-bingo:disabled { background: #6b7280 !important; opacity: 0.5; cursor: not-allowed; animation: none; }
 
-        .btn-bingo:disabled {
-            background: #6b7280 !important;
-            opacity: 0.5;
-            cursor: not-allowed;
-            animation: none;
-            box-shadow: none;
-        }
+        @keyframes glowBingo { 0%,100%{box-shadow:0 4px 20px rgba(239,68,68,0.4);} 50%{box-shadow:0 4px 35px rgba(239,68,68,0.8);} }
 
-        @keyframes glowBingo {
-            0%, 100% { box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4); }
-            50% { box-shadow: 0 4px 35px rgba(239, 68, 68, 0.8); }
-        }
+        .bingo-info { text-align: center; color: var(--text-gray); font-size: 0.8rem; margin-top: 8px; }
 
-        .bingo-info {
-            text-align: center;
-            color: var(--text-gray);
-            font-size: 0.8rem;
-            margin-top: 8px;
-        }
+        .estado-juego { text-align: center; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; }
+        .estado-juego.esperando { background: #334155; color: #94a3b8; }
+        .estado-juego.jugando { background: #10b981; color: white; }
+        .estado-juego.terminado { background: #ef4444; color: white; }
 
-        /* ============ MENSAJE DE ESTADO ============ */
-        .estado-juego {
-            text-align: center;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
-
-        .estado-juego.esperando {
-            background: #334155;
-            color: #94a3b8;
-        }
-
-        .estado-juego.jugando {
-            background: #10b981;
-            color: white;
-            animation: pulse 1s infinite;
-        }
-
-        .estado-juego.terminado {
-            background: #ef4444;
-            color: white;
-        }
-
-        /* ============ RESPONSIVE ============ */
         @media (max-width: 600px) {
-            .cartones-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .bola-grande {
-                width: 60px;
-                height: 60px;
-            }
-            
-            .bola-grande .numero {
-                font-size: 1.5rem;
-            }
-            
-            .btn-bingo {
-                padding: 14px 30px;
-                font-size: 1rem;
-            }
+            .cartones-grid { grid-template-columns: repeat(2, 1fr); }
+            .bola-grande { width: 60px; height: 60px; }
+            .bola-grande .numero { font-size: 1.5rem; }
+            .btn-bingo { padding: 14px 30px; font-size: 1rem; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- ============ HEADER ============ -->
         <div class="header">
             <h1>🎯 BINGO PRO</h1>
             <div class="jugador-nombre" id="jugadorNombre">Cargando...</div>
-            <div class="sala-info" id="salaInfo">Sala: -</div>
         </div>
 
-        <!-- ============ ESTADO DEL JUEGO ============ -->
-        <div class="estado-juego esperando" id="estadoJuego">
-            ⏳ Esperando que inicie el juego...
-        </div>
+        <div class="estado-juego esperando" id="estadoJuego">⏳ Esperando que inicie el juego...</div>
 
-        <!-- ============ ÚLTIMOS NÚMEROS ============ -->
         <div class="numeros-section">
             <h3>📊 NÚMEROS CANTADOS</h3>
             <div class="ultima-bola-jugador">
@@ -356,40 +204,30 @@
                     <span class="numero">--</span>
                 </div>
                 <div style="text-align:center;">
-                    <div style="color:#94a3b8;font-size:0.75rem;">Total cantados</div>
+                    <div style="color:#94a3b8;font-size:0.75rem;">Total</div>
                     <div style="font-size:1.5rem;font-weight:900;color:#ffca28;" id="totalCantados">0/75</div>
                 </div>
             </div>
             <div class="ultimos-numeros" id="ultimosNumeros">
-                <span class="num-chico vacio">--</span>
-                <span class="num-chico vacio">--</span>
-                <span class="num-chico vacio">--</span>
-                <span class="num-chico vacio">--</span>
+                <span class="num-chico vacio">--</span><span class="num-chico vacio">--</span>
+                <span class="num-chico vacio">--</span><span class="num-chico vacio">--</span>
                 <span class="num-chico vacio">--</span>
             </div>
         </div>
 
-        <!-- ============ CARTONES ============ -->
         <div class="cartones-grid" id="cartonesGrid">
             <p style="color:#94a3b8;text-align:center;grid-column:1/-1;padding:40px;">Cargando cartones...</p>
         </div>
 
-        <!-- ============ BOTÓN BINGO ============ -->
         <div class="btn-bingo-container">
-            <button class="btn-bingo" id="btnBingo" disabled onclick="cantarBingo()">
-                🚨 ¡BINGO!
-            </button>
-            <div class="bingo-info" id="bingoInfo">
-                Selecciona un cartón para cantar BINGO
-            </div>
+            <button class="btn-bingo" id="btnBingo" disabled onclick="cantarBingo()">🚨 ¡BINGO!</button>
+            <div class="bingo-info" id="bingoInfo">Selecciona un cartón para cantar BINGO</div>
         </div>
     </div>
 
-    <!-- ============ SCRIPTS ============ -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script>
-        // Configuración Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
             authDomain: "bingofast.firebaseapp.com",
@@ -402,28 +240,45 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Obtener parámetros de la URL
+        // Leer datos cifrados de la URL
         const params = new URLSearchParams(window.location.search);
-        const NOMBRE_JUGADOR = params.get('nombre') || 'Jugador';
-        const CARTONES_IDS = params.get('cartones') ? params.get('cartones').split(',') : [];
-        const SALA_ID = params.get('sala') || localStorage.getItem('salaActiva') || 'sala-default';
+        let NOMBRE_JUGADOR = 'Jugador';
+        let CARTONES_IDS = [];
+        let SALA_ID = 'sala-default';
+
+        const datosCodificados = params.get('d');
+        if (datosCodificados) {
+            try {
+                const decoded = JSON.parse(decodeURIComponent(atob(datosCodificados)));
+                NOMBRE_JUGADOR = decoded.n || 'Jugador';
+                CARTONES_IDS = decoded.c || [];
+                SALA_ID = decoded.s || 'sala-default';
+                
+                // Verificar expiración (24 horas)
+                const tiempoLink = decoded.t || 0;
+                const horas = (Date.now() - tiempoLink) / (1000 * 60 * 60);
+                if (horas > 24) {
+                    document.body.innerHTML = '<div style="text-align:center;padding:50px;color:#ef4444;font-size:1.2rem;">❌ Este link ha expirado.<br>Pide un nuevo link al administrador.</div>';
+                    throw new Error('Link expirado');
+                }
+            } catch(e) {
+                console.error('Error al decodificar link');
+            }
+        }
 
         let cartonesJugador = [];
         let numerosCantados = [];
         let cartonSeleccionado = null;
 
-        console.log('🎮 Jugador:', NOMBRE_JUGADOR);
-        console.log('📁 Sala:', SALA_ID);
-        console.log('🎫 Cartones:', CARTONES_IDS);
+        console.log('👤 Jugador:', NOMBRE_JUGADOR);
+        console.log('🎫 Cartones:', CARTONES_IDS.length);
 
-        // ============ INICIALIZAR ============
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('jugadorNombre').textContent = '👤 ' + NOMBRE_JUGADOR;
-            document.getElementById('salaInfo').textContent = 'Sala: ' + SALA_ID;
             
             if (CARTONES_IDS.length === 0) {
                 document.getElementById('cartonesGrid').innerHTML = 
-                    '<p style="color:#ef4444;text-align:center;grid-column:1/-1;padding:40px;">❌ No se encontraron cartones. Verifica el link.</p>';
+                    '<p style="color:#ef4444;text-align:center;grid-column:1/-1;padding:40px;">❌ Link inválido. Contacta al administrador.</p>';
                 return;
             }
             
@@ -431,16 +286,12 @@
             escucharNumeros();
         });
 
-        // ============ CARGAR CARTONES ============
         function cargarCartones() {
             db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
                 cartonesJugador = [];
-                
                 CARTONES_IDS.forEach(function(id) {
                     const carton = snap.child(id).val();
-                    if (carton) {
-                        cartonesJugador.push(carton);
-                    }
+                    if (carton) cartonesJugador.push(carton);
                 });
                 
                 if (cartonesJugador.length === 0) {
@@ -453,7 +304,6 @@
             });
         }
 
-        // ============ MOSTRAR CARTONES ============
         function mostrarCartones() {
             const grid = document.getElementById('cartonesGrid');
             grid.innerHTML = '';
@@ -462,17 +312,10 @@
                 const card = document.createElement('div');
                 card.className = 'carton-card';
                 card.setAttribute('data-index', index);
-                
-                if (cartonSeleccionado === index) {
-                    card.classList.add('seleccionado');
-                }
-                
-                card.onclick = function() {
-                    seleccionarCarton(index);
-                };
+                if (cartonSeleccionado === index) card.classList.add('seleccionado');
+                card.onclick = function() { seleccionarCarton(index); };
                 
                 let tablaHTML = '<table class="carton-tabla"><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
-                
                 if (c.carton) {
                     for (let f = 0; f < 5; f++) {
                         tablaHTML += '<tr>';
@@ -485,39 +328,29 @@
                         tablaHTML += '</tr>';
                     }
                 }
-                
                 tablaHTML += '</table>';
                 
                 card.innerHTML = 
                     '<div class="carton-check">' + (cartonSeleccionado === index ? '✓' : '') + '</div>' +
-                    '<div class="carton-numero">Cartón #' + (c.numero || (index + 1)) + '</div>' +
-                    tablaHTML;
+                    '<div class="carton-numero">Cartón #' + (c.numero || (index+1)) + '</div>' + tablaHTML;
                 
                 grid.appendChild(card);
             });
             
-            actualizarBotonBingo();
+            actualizarBtnBingo();
         }
 
-        // ============ SELECCIONAR CARTÓN ============
         function seleccionarCarton(index) {
-            if (cartonSeleccionado === index) {
-                cartonSeleccionado = null;
-            } else {
-                cartonSeleccionado = index;
-            }
+            cartonSeleccionado = (cartonSeleccionado === index) ? null : index;
             mostrarCartones();
         }
 
-        // ============ ACTUALIZAR BOTÓN BINGO ============
-        function actualizarBotonBingo() {
+        function actualizarBtnBingo() {
             const btn = document.getElementById('btnBingo');
             const info = document.getElementById('bingoInfo');
-            
             if (cartonSeleccionado !== null) {
                 btn.disabled = false;
-                const c = cartonesJugador[cartonSeleccionado];
-                info.textContent = 'Cartón #' + (c.numero || (cartonSeleccionado + 1)) + ' seleccionado - ¡Listo para cantar BINGO!';
+                info.textContent = 'Cartón #' + (cartonesJugador[cartonSeleccionado]?.numero || '?') + ' seleccionado';
                 info.style.color = '#10b981';
             } else {
                 btn.disabled = true;
@@ -526,40 +359,28 @@
             }
         }
 
-        // ============ CANTAR BINGO ============
         function cantarBingo() {
-            if (cartonSeleccionado === null) {
-                alert('Selecciona un cartón primero');
-                return;
-            }
-            
+            if (cartonSeleccionado === null) return;
             const carton = cartonesJugador[cartonSeleccionado];
-            
-            if (confirm('¿Estás seguro de cantar BINGO con el Cartón #' + (carton.numero || '?') + '?')) {
+            if (confirm('¿Cantar BINGO con Cartón #' + (carton.numero||'?') + '?')) {
                 db.ref('bingos/' + SALA_ID).push({
                     jugador: NOMBRE_JUGADOR,
                     cartonId: carton.id,
                     cartonNumero: carton.numero,
                     timestamp: Date.now()
                 }).then(function() {
-                    alert('✅ ¡BINGO cantado! Espera la verificación del administrador.');
+                    alert('✅ ¡BINGO cantado! Espera verificación.');
                     document.getElementById('btnBingo').disabled = true;
                     document.getElementById('btnBingo').textContent = '✅ BINGO CANTADO';
                     document.getElementById('btnBingo').style.background = '#10b981';
-                }).catch(function(error) {
-                    console.error('Error:', error);
-                    alert('❌ Error al cantar BINGO. Intenta de nuevo.');
                 });
             }
         }
 
-        // ============ ESCUCHAR NÚMEROS ============
         function escucharNumeros() {
             db.ref('partidas/' + SALA_ID).on('value', function(snap) {
                 const data = snap.val();
-                
                 if (data) {
-                    // Actualizar estado
                     const estadoEl = document.getElementById('estadoJuego');
                     if (data.estado === 'jugando' || data.estado === 'iniciando') {
                         estadoEl.className = 'estado-juego jugando';
@@ -569,33 +390,26 @@
                         estadoEl.textContent = '🏁 Juego terminado' + (data.ganador ? ' - Ganador: ' + data.ganador : '');
                     }
                     
-                    // Actualizar números cantados
                     if (data.cantados && data.cantados.length > 0) {
                         numerosCantados = data.cantados;
-                        actualizarDisplayNumeros(data);
+                        actualizarDisplay(data);
                         mostrarCartones();
                     }
                 }
             });
         }
 
-        // ============ ACTUALIZAR DISPLAY DE NÚMEROS ============
-        function actualizarDisplayNumeros(data) {
-            // Última bola
+        function actualizarDisplay(data) {
             if (data.ultimaBola) {
-                const contenedor = document.getElementById('ultimaBolaJugador');
-                contenedor.querySelector('.letra').textContent = obtenerLetra(data.ultimaBola);
-                contenedor.querySelector('.numero').textContent = data.ultimaBola;
+                const cont = document.getElementById('ultimaBolaJugador');
+                cont.querySelector('.letra').textContent = obtenerLetra(data.ultimaBola);
+                cont.querySelector('.numero').textContent = data.ultimaBola;
             }
-            
-            // Total cantados
             document.getElementById('totalCantados').textContent = numerosCantados.length + '/75';
             
-            // Últimos 5
-            const ultimosContainer = document.getElementById('ultimosNumeros');
-            ultimosContainer.innerHTML = '';
+            const ult = document.getElementById('ultimosNumeros');
+            ult.innerHTML = '';
             const ultimos = numerosCantados.slice(-5).reverse();
-            
             for (let i = 0; i < 5; i++) {
                 const span = document.createElement('span');
                 if (i < ultimos.length) {
@@ -605,15 +419,15 @@
                     span.className = 'num-chico vacio';
                     span.textContent = '--';
                 }
-                ultimosContainer.appendChild(span);
+                ult.appendChild(span);
             }
         }
 
-        function obtenerLetra(numero) {
-            if (numero <= 15) return 'B';
-            if (numero <= 30) return 'I';
-            if (numero <= 45) return 'N';
-            if (numero <= 60) return 'G';
+        function obtenerLetra(n) {
+            if (n <= 15) return 'B';
+            if (n <= 30) return 'I';
+            if (n <= 45) return 'N';
+            if (n <= 60) return 'G';
             return 'O';
         }
     </script>
