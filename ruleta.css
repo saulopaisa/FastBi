@@ -119,17 +119,9 @@ body {
     box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
 }
 
-.btn-etapa1:hover {
-    box-shadow: 0 6px 15px rgba(99, 102, 241, 0.5);
-}
-
 .btn-etapa2 {
     background: linear-gradient(135deg, var(--orange), #d97706);
     box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
-}
-
-.btn-etapa2:hover {
-    box-shadow: 0 6px 15px rgba(245, 158, 11, 0.5);
 }
 
 .btn-sortear {
@@ -140,17 +132,9 @@ body {
     box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
 }
 
-.btn-sortear:hover {
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
-}
-
 .btn-empezar {
     background: linear-gradient(135deg, var(--success), #059669);
     box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
-}
-
-.btn-empezar:hover {
-    box-shadow: 0 6px 15px rgba(16, 185, 129, 0.5);
 }
 
 .btn-programar {
@@ -438,7 +422,7 @@ body {
     border-radius: 4px;
 }
 
-/* ============ ALERTA DE BINGO (ARRIBA DEL TABLERO) ============ */
+/* ============ ALERTA DE BINGO ============ */
 .alerta-bingo {
     background: linear-gradient(135deg, #ef4444, #dc2626);
     border-radius: 12px;
@@ -709,7 +693,7 @@ body {
     padding: 20px;
     border-radius: 15px;
     width: 90%;
-    max-width: 450px;
+    max-width: 500px;
     color: var(--text-white);
     border: 2px solid var(--gold);
     max-height: 80vh;
@@ -732,14 +716,73 @@ body {
     font-size: 1rem;
 }
 
-/* ============ GRID DE SELECCIÓN DE CARTONES ============ */
+/* ============ BUSCADOR EN MODAL ============ */
+.modal-buscador {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 2px solid #2d3748;
+    background: #1e293b;
+    color: var(--text-white);
+    margin-bottom: 10px;
+}
+
+.modal-buscador:focus {
+    outline: none;
+    border-color: var(--blue);
+}
+
+.modal-buscador::placeholder {
+    color: #64748b;
+}
+
+.btn-seleccionar-todos {
+    width: 100%;
+    padding: 8px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+
+.btn-seleccionar-todos:hover {
+    background: #2563eb;
+}
+
+/* ============ ITEMS DE JUGADOR ============ */
 .grid-seleccion-cartones {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
-    max-height: 250px;
+    max-height: 300px;
     overflow-y: auto;
     margin: 10px 0;
+}
+
+.item-jugador {
+    background: #334155;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    border: 2px solid transparent;
+}
+
+.item-jugador:hover {
+    background: #475569;
+    border-color: var(--gold);
+}
+
+.item-jugador.seleccionado {
+    background: #10b981 !important;
+    border-color: #059669;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
 }
 
 /* ============ GRID DE PATRÓN ============ */
@@ -849,6 +892,10 @@ body {
         width: 100%;
         justify-content: center;
     }
+
+    .grid-seleccion-cartones {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 @media (max-height: 800px) {
@@ -882,21 +929,8 @@ body {
         grid-template-columns: repeat(10, 1fr);
         grid-template-rows: repeat(8, 1fr);
     }
-}
-.item-jugador {
-    background: #334155;
-    padding: 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: center;
-}
-
-.item-jugador:hover {
-    background: #475569;
-}
-
-.item-jugador.seleccionado {
-    background: #10b981 !important;
-    box-shadow: 0 0 10px rgba(16,185,129,0.3);
+    
+    .grid-seleccion-cartones {
+        grid-template-columns: 1fr 1fr;
+    }
 }
