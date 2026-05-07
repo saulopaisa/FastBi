@@ -1,4 +1,4 @@
-// generar.js - Versión Final con Link Cifrado
+// generar.js - Versión Final con Links Cifrados
 
 const SALA_ID = localStorage.getItem('salaActiva') || ('sala-' + Date.now());
 localStorage.setItem('salaActiva', SALA_ID);
@@ -33,6 +33,19 @@ function generarCarton() {
     };
     c.N[2] = 'FREE';
     return c;
+}
+
+// ============ GENERAR LINK CIFRADO ============
+function generarLinkCifrado(nombre, ids) {
+    const base = location.origin + location.pathname.replace('generar.html', '');
+    const datos = {
+        n: nombre,
+        c: ids,
+        s: SALA_ID,
+        t: Date.now()
+    };
+    const datosCodificados = btoa(encodeURIComponent(JSON.stringify(datos)));
+    return base + 'jugador.html?d=' + datosCodificados;
 }
 
 // ============ MOSTRAR LISTA ============
@@ -195,27 +208,12 @@ function asignarAJugador() {
                     seleccionados.clear();
                     mostrarLista();
                     
-                    const link = generarLinkJugador(nombreJugador, ids);
+                    const link = generarLinkCifrado(nombreJugador, ids);
                     mostrarAsignacionExitosa(nombreJugador, ids, link);
                 }
             }
         });
     });
-}
-
-// ============ GENERAR LINK CIFRADO ============
-function generarLinkJugador(nombre, ids) {
-    const base = location.origin + location.pathname.replace('generar.html', '');
-    // Crear objeto con los datos
-    const datos = {
-        n: nombre,
-        c: ids,
-        s: SALA_ID,
-        t: Date.now()
-    };
-    // Codificar en base64
-    const datosCodificados = btoa(encodeURIComponent(JSON.stringify(datos)));
-    return base + 'jugador.html?d=' + datosCodificados;
 }
 
 function mostrarAsignacionExitosa(nombre, ids, link) {
@@ -227,7 +225,7 @@ function mostrarAsignacionExitosa(nombre, ids, link) {
     html += '<p style="color:#64748b;">' + ids.length + ' cartón(es)</p>';
     
     html += '<div style="background:#f1f5f9; padding:15px; border-radius:8px; margin:15px 0;">';
-    html += '<p style="font-size:0.8rem; color:#64748b;">🔗 Link del jugador (cifrado):</p>';
+    html += '<p style="font-size:0.8rem; color:#64748b;">🔗 Link cifrado del jugador:</p>';
     html += '<input id="linkJugadorInput" value="' + link + '" readonly style="width:100%; padding:10px; border:2px solid #3b82f6; border-radius:6px; margin-bottom:10px;" onclick="this.select()">';
     html += '<button id="btnCopiarLink" style="background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold;">📋 COPIAR LINK</button>';
     html += '<p style="font-size:0.7rem; color:#94a3b8; margin-top:8px;">⚠️ Este link expira en 24 horas</p>';
@@ -303,9 +301,9 @@ function cambiarEstado(id) {
 }
 
 function copiarLink(id) {
-    const link = location.origin + location.pathname.replace('generar.html', '') + 'carton.html?carton=' + id + '&sala=' + SALA_ID;
+    const link = generarLinkCifrado('Cartón individual', [id]);
     navigator.clipboard.writeText(link).then(function() {
-        mostrarToast('✅ Link copiado');
+        mostrarToast('✅ Link cifrado copiado');
     });
 }
 
@@ -379,7 +377,7 @@ function verJugadores() {
         Object.keys(jugadores).forEach(function(nombre) {
             const cartones = jugadores[nombre];
             const ids = cartones.map(function(c) { return c.id; });
-            const link = generarLinkJugador(nombre, ids);
+            const link = generarLinkCifrado(nombre, ids);
             
             html += '<div style="background:#f1f5f9; padding:12px; margin:8px 0; border-radius:8px; text-align:left;">';
             html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">';
@@ -411,11 +409,12 @@ function verLinks() {
             preview.innerHTML = '<div class="preview-empty"><h3>📋 Sin cartones</h3></div>';
             return;
         }
-        let html = '<h3 style="color:#ff4d4d;">🔗 LINKS</h3><div style="max-height:60vh; overflow-y:auto; text-align:left;">';
-        const base = location.origin + location.pathname.replace('generar.html', '');
+        let html = '<h3 style="color:#ff4d4d;">🔗 LINKS CIFRADOS</h3><div style="max-height:60vh; overflow-y:auto; text-align:left;">';
+        
         snap.forEach(function(child) {
             const c = child.val();
-            const link = base + 'carton.html?carton=' + c.id + '&sala=' + SALA_ID;
+            const link = generarLinkCifrado(c.asignadoA || 'Cartón #' + c.numero, [c.id]);
+            
             html += '<div style="background:#f1f5f9; padding:8px; margin:4px 0; border-radius:6px;">';
             html += '<strong>#' + c.numero + '</strong>' + (c.asignadoA ? ' (' + c.asignadoA + ')' : '');
             html += '<input value="' + link + '" readonly style="width:100%; padding:4px; margin-top:4px; font-size:0.75rem;" onclick="this.select()">';
@@ -586,7 +585,7 @@ function abrirMenuPDF() {
 
 // ============ INICIAR ============
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Bingo Pro Admin - Link Cifrado');
+    console.log('🚀 Bingo Pro Admin - Links Cifrados');
     console.log('📁 Sala: ' + SALA_ID);
     
     document.getElementById('btnGenerar').addEventListener('click', generarLote);
