@@ -80,10 +80,18 @@
 
     <!-- ============ PANEL DERECHO ============ -->
     <div class="main-content">
-        <h3>📊 TABLERO DE SEGUIMIENTO (1-75)</h3>
-        <button class="btn-tool" id="btnVerCartones" onclick="location.href='ver_todo.html'">
-    👁️ Ver Cartones
-</button>
+        <!-- Header del panel derecho con botón -->
+        <div class="panel-header">
+            <h3>📊 TABLERO DE SEGUIMIENTO (1-75)</h3>
+            <div class="panel-header-botones">
+                <button class="btn-ver-cartones" onclick="location.href='ver_todo.html'">
+                    👁️ VER CARTONES
+                </button>
+                <button class="btn-ver-cartones btn-generar" onclick="location.href='generar.html'">
+                    📝 GENERAR
+                </button>
+            </div>
+        </div>
         
         <!-- ALERTA DE BINGO -->
         <div id="alertaBingo" class="alerta-bingo" style="display:none;">
@@ -128,11 +136,9 @@
         <div class="modal-content" onclick="event.stopPropagation()">
             <h3>📋 PASO 1: ¿QUIÉN JUEGA?</h3>
             
-            <!-- Buscador -->
             <input type="text" class="modal-buscador" placeholder="🔍 Buscar jugador..." 
                 oninput="window.buscarJugadorModal(this.value)">
             
-            <!-- Seleccionar todos -->
             <button onclick="window.seleccionarTodosJugadores()" class="btn-seleccionar-todos">
                 ✅ SELECCIONAR TODOS
             </button>
