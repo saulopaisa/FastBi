@@ -883,3 +883,20 @@ body {
         grid-template-rows: repeat(8, 1fr);
     }
 }
+.item-jugador {
+    background: #334155;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.item-jugador:hover {
+    background: #475569;
+}
+
+.item-jugador.seleccionado {
+    background: #10b981 !important;
+    box-shadow: 0 0 10px rgba(16,185,129,0.3);
+}
