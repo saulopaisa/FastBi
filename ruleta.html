@@ -7,38 +7,41 @@
     <link rel="stylesheet" href="ruleta.css">
 </head>
 <body>
-    <!-- PANEL IZQUIERDO -->
+    <!-- ============ PANEL IZQUIERDO ============ -->
     <div class="sidebar">
         <div class="titulo">🎯 BINGO PRO</div>
         <div class="subtitulo">Panel de Control</div>
         
-        <div id="onlineCount" class="online-count">👥 ONLINE: 0</div>
+        <div id="onlineCount" class="online-count">👥 JUGADORES EN RONDA: 0</div>
 
+        <!-- ETAPA 1 -->
         <button id="btnEtapa1" onclick="window.abrirModalCartones()" class="btn-accion btn-etapa1">
             📋 1. SELECCIONAR JUGADORES
         </button>
         
+        <!-- ETAPA 2 -->
         <button id="btnEtapa2" onclick="window.abrirModalPatron()" class="btn-accion btn-etapa2" disabled>
             🎯 2. CONFIGURAR PATRÓN
         </button>
 
+        <!-- ETAPA 3 - JUEGO -->
         <div id="panelJuego" class="panel-juego" style="opacity: 0.4; pointer-events: none;">
             <div id="cronometroBingo" class="cronometro">00:00</div>
             
             <div class="input-group">
-                <input type="number" id="minutosInicio" placeholder="Min">
-                <button id="btnProgramar" onclick="window.programarJuego()" class="btn-programar" style="flex:1;">
+                <input type="number" id="minutosInicio" placeholder="Min" min="1" max="60">
+                <button id="btnProgramar" onclick="window.programarJuego()" class="btn-programar" style="flex:1;" disabled>
                     ⏰ PROGRAMAR
                 </button>
             </div>
             
             <button id="btnAutoBingo" onclick="window.iniciarBingoAutomatico()" class="btn-accion" disabled 
                 style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
-                    🤖 BINGO AUTOMÁTICO
+                🤖 BINGO AUTOMÁTICO
             </button>
             
-            <button id="drawBtn" class="btn-accion btn-sortear">
-                🎲 SORTEAR BOLA
+            <button id="drawBtn" class="btn-accion btn-sortear" style="opacity: 0.4; pointer-events: none;">
+                🎲 SORTEAR BOLA (MANUAL)
             </button>
         </div>
 
@@ -67,16 +70,19 @@
             </div>
         </div>
         
+        <!-- Notificaciones -->
+        <div id="notificacionesBingo" class="notificaciones-container"></div>
+        
         <button id="resetBtn" class="btn-reiniciar">
             🔄 Reiniciar Todo
         </button>
     </div>
 
-    <!-- PANEL DERECHO -->
+    <!-- ============ PANEL DERECHO ============ -->
     <div class="main-content">
         <h3>📊 TABLERO DE SEGUIMIENTO (1-75)</h3>
         
-        <!-- ALERTA DE BINGO - aparece cuando hay bingo -->
+        <!-- ALERTA DE BINGO -->
         <div id="alertaBingo" class="alerta-bingo" style="display:none;">
             <div class="alerta-bingo-contenido">
                 <span class="alerta-icono">🚨</span>
@@ -114,32 +120,45 @@
         <div id="historyGrid" class="history-grid"></div>
     </div>
 
-   <!-- MODAL CARTONES -->
-<div id="modalCartones" class="modal-overlay">
-    <div class="modal-content">
-        <h3>📋 PASO 1: ¿QUIÉN JUEGA?</h3>
-        
-        <!-- Buscador -->
-        <div style="margin-bottom:10px;">
-            <input type="text" placeholder="🔍 Buscar jugador..." 
-                oninput="window.buscarJugadorModal(this.value)"
-                style="width:100%;padding:8px;border-radius:6px;border:2px solid #2d3748;background:#1e293b;color:white;">
+    <!-- ============ MODAL CARTONES ============ -->
+    <div id="modalCartones" class="modal-overlay">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3>📋 PASO 1: ¿QUIÉN JUEGA?</h3>
+            
+            <!-- Buscador -->
+            <input type="text" class="modal-buscador" placeholder="🔍 Buscar jugador..." 
+                oninput="window.buscarJugadorModal(this.value)">
+            
+            <!-- Seleccionar todos -->
+            <button onclick="window.seleccionarTodosJugadores()" class="btn-seleccionar-todos">
+                ✅ SELECCIONAR TODOS
+            </button>
+            
+            <div id="listaCheckCartones" class="grid-seleccion-cartones"></div>
+            
+            <button onclick="window.confirmarJugadores()" class="btn-accion btn-empezar">
+                ✅ CONFIRMAR Y PASAR AL PATRÓN
+            </button>
         </div>
-        
-        <!-- Botón Seleccionar Todos -->
-        <button onclick="window.seleccionarTodosJugadores()" 
-            style="width:100%;padding:8px;background:#3b82f6;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:bold;margin-bottom:10px;">
-            ✅ SELECCIONAR TODOS
-        </button>
-        
-        <div id="listaCheckCartones" class="grid-seleccion-cartones"></div>
-        
-        <button onclick="window.confirmarJugadores()" class="btn-accion btn-empezar">
-            ✅ CONFIRMAR Y PASAR AL PATRÓN
-        </button>
     </div>
-</div>
 
+    <!-- ============ MODAL PATRÓN ============ -->
+    <div id="modalPatron" class="modal-overlay">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3>🎯 PASO 2: ELIGE EL PATRÓN</h3>
+            <div class="grid-predefinidos">
+                <button onclick="window.aplicarPredefinido('lleno')" class="btn-predefinido">⬛ LLENO</button>
+                <button onclick="window.aplicarPredefinido('equis')" class="btn-predefinido">❌ LA X</button>
+                <button onclick="window.aplicarPredefinido('limpiar')" class="btn-predefinido">🔄 BORRAR</button>
+            </div>
+            <div id="gridDibujoPatron" class="grid-patron-admin"></div>
+            <button onclick="window.confirmarPatron()" class="btn-accion btn-empezar" style="margin-top: 15px;">
+                ✅ CONFIRMAR Y ACTIVAR JUEGO
+            </button>
+        </div>
+    </div>
+
+    <!-- ============ SCRIPTS ============ -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script>
@@ -154,6 +173,7 @@
         };
         firebase.initializeApp(firebaseConfig);
         var db = firebase.database();
+        console.log('🔥 Firebase listo');
     </script>
     <script src="ruleta.js"></script>
 </body>
