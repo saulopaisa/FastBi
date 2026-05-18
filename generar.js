@@ -1,4 +1,4 @@
-// generar.js - Versión Final con Impresión PDF
+// generar.js - Versión Final con Cartones Grandes
 
 const SALA_ID = localStorage.getItem('salaActiva') || ('sala-' + Date.now());
 localStorage.setItem('salaActiva', SALA_ID);
@@ -149,19 +149,48 @@ function seleccionarTodos() { const c=document.querySelectorAll('.card-carton');
 function filtrarCartones(t) { document.querySelectorAll('.card-carton').forEach(c => c.style.display = c.textContent.toLowerCase().includes(t.toLowerCase()) ? '' : 'none'); }
 function mostrarToast(m) { const t=document.querySelector('.toast');if(t)t.remove();const toast=document.createElement('div');toast.className='toast';toast.textContent=m;document.body.appendChild(toast);setTimeout(()=>{if(toast.parentNode)toast.remove();},2000); }
 
-// ============ ESTILOS PDF ============
+// ============ ESTILOS PDF - CARTONES GRANDES ============
 function getPDFStyles() {
-    return `*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;background:white;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.pagina{width:100%;max-width:750px;margin:0 auto;padding:15px;background:white;page-break-after:always;min-height:100vh}.pagina:last-child{page-break-after:avoid}h1{text-align:center;color:#ff4d4d;font-size:18px;margin-bottom:3px}h2{text-align:center;color:#1e293b;font-size:14px;margin-bottom:3px}.info{text-align:center;color:#64748b;font-size:10px;margin-bottom:12px}.carton{border:2px solid #000;border-radius:8px;padding:10px;margin-bottom:20px;background:white;width:100%}table{width:100%;border-collapse:collapse}th{background:#ff4d4d!important;color:white!important;padding:8px;font-size:14px;border:1px solid #000;-webkit-print-color-adjust:exact;print-color-adjust:exact}td{padding:8px;border:1px solid #000;text-align:center;font-weight:bold;font-size:16px}.free{background:#fef3c7!important;font-size:18px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.num-carton{text-align:center;margin-bottom:6px}.num-carton span{background:#ff4d4d!important;color:white!important;padding:3px 12px;border-radius:12px;font-size:12px;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact}.jugador{text-align:center;color:#10b981;margin:3px 0;font-size:12px;font-weight:bold}@media print{body{margin:0;padding:0}.pagina{page-break-after:always;min-height:auto}.pagina:last-child{page-break-after:avoid}}`;
+    return `
+        *{margin:0;padding:0;box-sizing:border-box}
+        @page{size:letter;margin:8mm}
+        body{font-family:Arial,sans-serif;background:white;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+        .pagina{width:100%;max-width:100%;margin:0 auto;padding:5px;background:white;page-break-after:always;min-height:100vh;display:flex;flex-direction:column;justify-content:space-evenly}
+        .pagina:last-child{page-break-after:avoid}
+        h1{text-align:center;color:#ff4d4d;font-size:22px;margin:0;padding:0}
+        h2{text-align:center;color:#1e293b;font-size:16px;margin:0;padding:0}
+        .info{text-align:center;color:#64748b;font-size:10px;margin-bottom:8px}
+        .carton{border:3px solid #000;border-radius:10px;padding:12px 15px;background:white;width:100%;flex:1;display:flex;flex-direction:column;justify-content:center}
+        table{width:100%;border-collapse:collapse}
+        th{background:#ff4d4d!important;color:white!important;padding:14px 8px;font-size:18px;border:2px solid #000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+        td{padding:16px 8px;border:2px solid #000;text-align:center;font-weight:bold;font-size:22px}
+        .free{background:#fef3c7!important;font-size:26px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+        .num-carton{text-align:center;margin-bottom:8px}
+        .num-carton span{background:#ff4d4d!important;color:white!important;padding:5px 18px;border-radius:15px;font-size:15px;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+        .jugador{text-align:center;color:#10b981;margin:5px 0;font-size:14px;font-weight:bold}
+        @media print{
+            body{margin:0;padding:0}
+            .pagina{page-break-after:always;min-height:auto;height:100vh}
+            .pagina:last-child{page-break-after:avoid}
+        }
+    `;
 }
 
-// ============ HTML CARTÓN PDF ============
+// ============ HTML CARTÓN PDF GRANDE ============
 function htmlCartonPDF(c) {
     if (!c || !c.carton) return '<div class="carton"><p style="text-align:center;color:red;">Error</p></div>';
     const carton = c.carton, num = c.numero || '?', asig = c.asignadoA || '';
     let h = '<div class="carton"><div class="num-carton"><span>Cartón #' + num + '</span></div>';
     if (asig) h += '<p class="jugador">👤 ' + asig + '</p>';
     h += '<table><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
-    for (let f=0;f<5;f++) { h+='<tr>'; ['B','I','N','G','O'].forEach(function(l){ const v=carton[l]?carton[l][f]:'?',c=(l==='N'&&f===2); h+='<td class="'+(c?'free':'')+'">'+(c?'⭐':v)+'</td>'; }); h+='</tr>'; }
+    for (let f=0;f<5;f++) { 
+        h+='<tr>'; 
+        ['B','I','N','G','O'].forEach(function(l){ 
+            const v=carton[l]?carton[l][f]:'?',c=(l==='N'&&f===2); 
+            h+='<td class="'+(c?'free':'')+'">'+(c?'⭐':v)+'</td>'; 
+        }); 
+        h+='</tr>'; 
+    }
     h += '</table></div>'; return h;
 }
 
@@ -197,7 +226,8 @@ function abrirVentanaImpresion(cartones, titulo) {
     
     for (let i = 0; i < cartones.length; i += 2) {
         ventana.document.write('<div class="pagina">');
-        ventana.document.write('<h1>🎯 BINGO PRO</h1><h2>' + titulo + '</h2>');
+        ventana.document.write('<h1>🎯 BINGO PRO</h1>');
+        ventana.document.write('<h2>' + titulo + '</h2>');
         ventana.document.write('<p class="info">Página ' + (Math.floor(i/2)+1) + ' | ' + cartones.length + ' cartones | ' + new Date().toLocaleDateString() + '</p>');
         ventana.document.write(htmlCartonPDF(cartones[i]));
         if (i + 1 < cartones.length) ventana.document.write(htmlCartonPDF(cartones[i + 1]));
