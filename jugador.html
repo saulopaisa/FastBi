@@ -107,16 +107,12 @@
         }
         .btn-vista.activo { background: #3b82f6; }
 
-        /* ============ CARTONES - HORIZONTAL (default) ============ */
+        /* ============ CARTONES ============ */
         .cartones-grid {
             display: grid; gap: 12px; margin-bottom: 12px;
         }
-        .cartones-grid.horizontal {
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        }
-        .cartones-grid.vertical {
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        }
+        .cartones-grid.horizontal { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+        .cartones-grid.vertical { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 
         .carton-card {
             background: white; color: var(--text-dark); border-radius: 12px;
@@ -203,13 +199,11 @@
             <div class="jugador-nombre" id="jugadorNombre">Cargando...</div>
         </div>
 
-        <!-- CRONÓMETRO -->
         <div class="cronometro-jugador" id="cronometroJugador">
             <div class="tiempo" id="tiempoCron">--:--</div>
             <div class="estado-cron" id="estadoCron">Esperando inicio...</div>
         </div>
 
-        <!-- PAUSA CADA 25 -->
         <div class="pausa-info" id="pausaInfo">⏸️ PAUSA - Verifica tus números cantados</div>
 
         <div class="estado-juego esperando" id="estadoJuego">⏳ Esperando que inicie el juego...</div>
@@ -236,7 +230,6 @@
             <div class="ultimos-numeros" id="ultimosNumeros"></div>
         </div>
 
-        <!-- CONTROLES DE VISTA -->
         <div class="controles-vista">
             <button class="btn-vista activo" id="btnHorizontal" onclick="cambiarVista('horizontal')">📱 HORIZONTAL</button>
             <button class="btn-vista" id="btnVertical" onclick="cambiarVista('vertical')">📱 VERTICAL</button>
@@ -294,7 +287,6 @@
         let bingosGanados = parseInt(sessionStorage.getItem('bingos_ganados_' + SALA_ID) || '0');
         let descalificado = sessionStorage.getItem('descalificado_' + SALA_ID) === 'true';
         let patronActual = Array(25).fill(false);
-        let cronometroActivo = false;
         let tiempoRestante = 0;
         let intervaloCron = null;
 
@@ -323,7 +315,6 @@
             });
         }
 
-        // PERMITIR MARCAR AUNQUE NO HAYA SALIDO (DAR DIFICULTAD)
         function toggleMarcar(cartonIndex, letra, fila, valor, evento) {
             evento.stopPropagation();
             if (letra === 'N' && fila === 2) return;
@@ -407,38 +398,88 @@
             }
         }
 
+        // ============ REINICIAR PARA NUEVA PARTIDA (LIMPIEZA TOTAL) ============
+        function reiniciarParaNuevaPartida() {
+            numerosCantados = [];
+            bingosErrados = 0;
+            bingosGanados = 0;
+            descalificado = false;
+            cartonSeleccionado = null;
+            patronActual = Array(25).fill(false);
+            
+            sessionStorage.removeItem('bingos_errados_' + SALA_ID);
+            sessionStorage.removeItem('bingos_ganados_' + SALA_ID);
+            sessionStorage.removeItem('descalificado_' + SALA_ID);
+            sessionStorage.removeItem('alerta_' + SALA_ID);
+            
+            for (let i = 0; i < 4; i++) {
+                localStorage.removeItem('marcas_' + SALA_ID + '_' + i);
+            }
+            
+            const btnBingo = document.getElementById('btnBingo');
+            btnBingo.disabled = false;
+            btnBingo.textContent = '🚨 ¡BINGO!';
+            btnBingo.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+            
+            document.getElementById('totalCantados').textContent = '0/75';
+            document.getElementById('estadoJuego').className = 'estado-juego esperando';
+            document.getElementById('estadoJuego').textContent = '⏳ Nueva partida iniciando...';
+            
+            const ultimaBola = document.getElementById('ultimaBolaJugador');
+            ultimaBola.querySelector('.letra').textContent = '-';
+            ultimaBola.querySelector('.numero').textContent = '--';
+            
+            document.getElementById('ultimosNumeros').innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const span = document.createElement('span');
+                span.className = 'num-chico'; span.style.opacity = '0.3'; span.textContent = '--';
+                document.getElementById('ultimosNumeros').appendChild(span);
+            }
+            
+            document.getElementById('notificacionContainer').innerHTML = '';
+            document.getElementById('tiempoCron').textContent = '--:--';
+            document.getElementById('estadoCron').textContent = 'Esperando inicio...';
+            document.getElementById('pausaInfo').style.display = 'none';
+            
+            actualizarInfo();
+            document.getElementById('bingoInfo').textContent = 'Selecciona un cartón para cantar BINGO';
+            document.getElementById('bingoInfo').style.color = '#94a3b8';
+            
+            cargarCartones();
+            mostrarNotificacion('🔄 ¡NUEVA PARTIDA! Todo limpio. Prepárate.', 'nueva-partida');
+        }
+
         // ============ ESCUCHAR TODO ============
         function escucharTodo() {
             db.ref('partidas/' + SALA_ID).on('value', function(snap) {
                 const data = snap.val();
                 if (!data) return;
                 
-                // Patrón
+                if (data.estado === 'nueva_partida') {
+                    reiniciarParaNuevaPartida();
+                    return;
+                }
+                
+                if (data.estado === 'terminado') {
+                    document.getElementById('estadoJuego').className = 'estado-juego terminado';
+                    document.getElementById('estadoJuego').textContent = '🏁 Terminado' + (data.ganador ? ' - Ganador: ' + data.ganador : '');
+                    setTimeout(function() { document.getElementById('notificacionContainer').innerHTML = ''; }, 3000);
+                    return;
+                }
+                
                 if (data.patron) patronActual = data.patron;
                 
-                // Estado del juego
                 const estadoEl = document.getElementById('estadoJuego');
                 if (data.estado === 'jugando') { estadoEl.className = 'estado-juego jugando'; estadoEl.textContent = '▶️ Juego en progreso'; }
-                else if (data.estado === 'terminado') { estadoEl.className = 'estado-juego terminado'; estadoEl.textContent = '🏁 Terminado' + (data.ganador ? ' - ' + data.ganador : ''); }
-                else if (data.estado === 'pausa') { estadoEl.className = 'estado-juego pausa'; estadoEl.textContent = '⏸️ PAUSA - Revisa tus números'; }
-                else if (data.estado === 'nueva_partida') { reiniciarParaNuevaPartida(); }
+                else if (data.estado === 'pausa') { estadoEl.className = 'estado-juego pausa'; estadoEl.textContent = '⏸️ PAUSA - Revisa tus números'; document.getElementById('pausaInfo').style.display = 'block'; }
                 else if (data.estado === 'iniciando') { estadoEl.className = 'estado-juego jugando'; estadoEl.textContent = '🔔 ¡Atención! El juego va a comenzar'; }
                 
-                // Pausa cada 25
-                if (data.pausa) {
-                    document.getElementById('pausaInfo').style.display = 'block';
-                } else {
-                    document.getElementById('pausaInfo').style.display = 'none';
+                if (!data.pausa) document.getElementById('pausaInfo').style.display = 'none';
+                
+                if (data.revisando && data.revisando.activo && data.revisando.jugador === NOMBRE_JUGADOR) {
+                    mostrarNotificacion('🔍 El admin está revisando TU bingo...', 'revisando');
                 }
                 
-                // Revisando
-                if (data.revisando && data.revisando.activo) {
-                    if (data.revisando.jugador === NOMBRE_JUGADOR) {
-                        mostrarNotificacion('🔍 El admin está revisando TU bingo...', 'revisando');
-                    }
-                }
-                
-                // Resultado revisión
                 if (data.resultadoRevision && data.resultadoRevision.jugador === NOMBRE_JUGADOR) {
                     if (data.resultadoRevision.resultado === 'errado') {
                         bingosErrados++;
@@ -446,6 +487,7 @@
                         actualizarInfo();
                         document.getElementById('btnBingo').disabled = false;
                         document.getElementById('btnBingo').textContent = '🚨 ¡BINGO!';
+                        document.getElementById('btnBingo').style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
                         if (bingosErrados >= 2) descalificarJugador();
                     } else if (data.resultadoRevision.resultado === 'valido') {
                         bingosGanados++;
@@ -459,7 +501,6 @@
                     }
                 }
                 
-                // Números cantados
                 if (data.cantados && data.cantados.length > 0) {
                     if (data.cantados.length > numerosCantados.length && data.ultimaBola && data.ultimaBola !== ultimoNumeroVoz) {
                         ultimoNumeroVoz = data.ultimaBola;
@@ -474,14 +515,12 @@
                     mostrarCartones();
                 }
                 
-                // Cronómetro
                 if (data.cronometro !== undefined) {
                     tiempoRestante = data.cronometro;
                     actualizarCronometro();
                     if (data.cronometro > 0 && !intervaloCron) iniciarCronometro();
                 }
                 
-                // Alerta de inicio
                 if (data.alertaInicio && data.alertaInicio !== sessionStorage.getItem('alerta_' + SALA_ID)) {
                     sessionStorage.setItem('alerta_' + SALA_ID, data.alertaInicio);
                     if ('speechSynthesis' in window) {
@@ -491,22 +530,6 @@
                     mostrarNotificacion('🔔 ¡El juego va a comenzar! Prepárate.', 'alerta');
                 }
             });
-        }
-
-        function reiniciarParaNuevaPartida() {
-            numerosCantados = []; bingosErrados = 0; bingosGanados = 0;
-            descalificado = false; cartonSeleccionado = null; patronActual = Array(25).fill(false);
-            sessionStorage.removeItem('bingos_errados_' + SALA_ID);
-            sessionStorage.removeItem('bingos_ganados_' + SALA_ID);
-            sessionStorage.removeItem('descalificado_' + SALA_ID);
-            for (let i=0;i<4;i++) localStorage.removeItem('marcas_'+SALA_ID+'_'+i);
-            document.getElementById('btnBingo').disabled = false;
-            document.getElementById('btnBingo').textContent = '🚨 ¡BINGO!';
-            document.getElementById('btnBingo').style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
-            document.getElementById('totalCantados').textContent = '0/75';
-            actualizarInfo();
-            mostrarCartones();
-            mostrarNotificacion('🔄 ¡NUEVA PARTIDA!', 'nueva-partida');
         }
 
         function iniciarCronometro() {
