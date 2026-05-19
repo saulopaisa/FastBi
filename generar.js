@@ -1,9 +1,12 @@
-// generar.js - Versión Final con Cartones Grandes
+// generar.js - Versión Final con Cartones Únicos
 
 const SALA_ID = localStorage.getItem('salaActiva') || ('sala-' + Date.now());
 localStorage.setItem('salaActiva', SALA_ID);
 
 let seleccionados = new Set();
+
+// Registro de posiciones para limitar a 2 cartones por número/posición
+const registroPosiciones = {};
 
 console.log('📁 Sala ID:', SALA_ID);
 
@@ -11,27 +14,97 @@ db.ref('.info/connected').on('value', function(snap) {
     console.log(snap.val() ? '🟢 Conectado a Firebase' : '🔴 Desconectado');
 });
 
-// ============ GENERAR COLUMNA ============
-function generarColumna(min, max) {
-    const nums = [];
-    while (nums.length < 5) {
-        const n = Math.floor(Math.random() * (max - min + 1)) + min;
-        if (!nums.includes(n)) nums.push(n);
+// ============ INICIALIZAR REGISTRO DE POSICIONES ============
+function inicializarRegistro() {
+    ['B','I','N','G','O'].forEach(function(letra) {
+        for (let f = 0; f < 5; f++) {
+            const key = letra + '-' + f;
+            if (!registroPosiciones[key]) registroPosiciones[key] = {};
+        }
+    });
+}
+
+function contarEnPosicion(letra, fila, valor) {
+    const key = letra + '-' + fila;
+    if (!registroPosiciones[key]) registroPosiciones[key] = {};
+    return registroPosiciones[key][valor] || 0;
+}
+
+function registrarPosicion(letra, fila, valor) {
+    const key = letra + '-' + fila;
+    if (!registroPosiciones[key]) registroPosiciones[key] = {};
+    registroPosiciones[key][valor] = (registroPosiciones[key][valor] || 0) + 1;
+}
+
+function cargarRegistroDesdeFirebase(callback) {
+    db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
+        inicializarRegistro();
+        snap.forEach(function(child) {
+            const c = child.val();
+            if (c.carton) {
+                ['B','I','N','G','O'].forEach(function(letra) {
+                    c.carton[letra].forEach(function(valor, fila) {
+                        if (!(letra === 'N' && fila === 2)) {
+                            registrarPosicion(letra, fila, valor);
+                        }
+                    });
+                });
+            }
+        });
+        if (callback) callback();
+    });
+}
+
+// ============ GENERAR COLUMNA (CON LÍMITE DE 2 POR POSICIÓN) ============
+function generarColumna(min, max, letra, fila) {
+    const disponibles = [];
+    for (let n = min; n <= max; n++) {
+        const count = contarEnPosicion(letra, fila, n);
+        if (count < 2) disponibles.push(n);
     }
-    return nums.sort((a, b) => a - b);
+    
+    // Si hay menos de 5 disponibles, liberar todos
+    if (disponibles.length < 5) {
+        disponibles.length = 0;
+        for (let n = min; n <= max; n++) disponibles.push(n);
+    }
+    
+    // Barajar y tomar 5
+    for (let i = disponibles.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [disponibles[i], disponibles[j]] = [disponibles[j], disponibles[i]];
+    }
+    
+    const seleccionados = disponibles.slice(0, 5).sort((a, b) => a - b);
+    
+    // Registrar posiciones (excepto centro)
+    seleccionados.forEach(function(valor, idx) {
+        if (!(letra === 'N' && idx === 2)) {
+            registrarPosicion(letra, idx, valor);
+        }
+    });
+    
+    return seleccionados;
 }
 
 // ============ GENERAR CARTÓN ============
 function generarCarton() {
-    const c = {
-        B: generarColumna(1, 15),
-        I: generarColumna(16, 30),
-        N: generarColumna(31, 45),
-        G: generarColumna(46, 60),
-        O: generarColumna(61, 75)
-    };
-    c.N[2] = 'FREE';
-    return c;
+    const columnas = {};
+    const letras = ['B','I','N','G','O'];
+    
+    letras.forEach(function(letra) {
+        let min, max;
+        if (letra === 'B') { min = 1; max = 15; }
+        else if (letra === 'I') { min = 16; max = 30; }
+        else if (letra === 'N') { min = 31; max = 45; }
+        else if (letra === 'G') { min = 46; max = 60; }
+        else { min = 61; max = 75; }
+        
+        columnas[letra] = generarColumna(min, max, letra, 0);
+    });
+    
+    columnas.N[2] = 'FREE';
+    return columnas;
 }
 
 // ============ GENERAR LINK CIFRADO ============
@@ -82,15 +155,35 @@ function toggleSeleccion(id) { if (seleccionados.has(id)) seleccionados.delete(i
 function generarLote() {
     const input = document.getElementById('cantidadGenerar'), cantidad = parseInt(input.value) || 1;
     if (cantidad < 1 || cantidad > 100) { alert('1-100'); return; }
-    db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
-        let maxNum = 0; snap.forEach(function(c) { const n = c.val().numero || 0; if (n > maxNum) maxNum = n; });
-        let creados = 0;
-        for (let i = 0; i < cantidad; i++) {
-            const nuevoNum = maxNum + i + 1, id = 'c-' + Date.now() + '-' + i + '-' + Math.random().toString(36).substr(2,5);
-            db.ref('salas/' + SALA_ID + '/cartones/' + id).set({
-                id, numero: nuevoNum, nombre: 'Cartón ' + nuevoNum, carton: generarCarton(), estado: 'disponible', asignadoA: '', creado: Date.now()
-            }, function(error) { if (!error) { creados++; if (creados === cantidad) { mostrarLista(); input.value = ''; } } });
-        }
+    
+    mostrarToast('⏳ Generando ' + cantidad + ' cartones...');
+    
+    cargarRegistroDesdeFirebase(function() {
+        db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
+            let maxNum = 0;
+            snap.forEach(function(c) { const n = c.val().numero || 0; if (n > maxNum) maxNum = n; });
+            
+            let creados = 0;
+            for (let i = 0; i < cantidad; i++) {
+                const nuevoNum = maxNum + i + 1;
+                const id = 'c-' + Date.now() + '-' + i + '-' + Math.random().toString(36).substr(2,5);
+                const carton = generarCarton();
+                
+                db.ref('salas/' + SALA_ID + '/cartones/' + id).set({
+                    id, numero: nuevoNum, nombre: 'Cartón ' + nuevoNum,
+                    carton: carton, estado: 'disponible', asignadoA: '', creado: Date.now()
+                }, function(error) {
+                    if (!error) {
+                        creados++;
+                        if (creados === cantidad) {
+                            mostrarLista();
+                            input.value = '';
+                            mostrarToast('✅ ' + cantidad + ' cartones generados');
+                        }
+                    }
+                });
+            }
+        });
     });
 }
 
@@ -149,124 +242,21 @@ function seleccionarTodos() { const c=document.querySelectorAll('.card-carton');
 function filtrarCartones(t) { document.querySelectorAll('.card-carton').forEach(c => c.style.display = c.textContent.toLowerCase().includes(t.toLowerCase()) ? '' : 'none'); }
 function mostrarToast(m) { const t=document.querySelector('.toast');if(t)t.remove();const toast=document.createElement('div');toast.className='toast';toast.textContent=m;document.body.appendChild(toast);setTimeout(()=>{if(toast.parentNode)toast.remove();},2000); }
 
-// ============ ESTILOS PDF - CARTONES GRANDES ============
+// ============ PDF ============
 function getPDFStyles() {
-    return `
-        *{margin:0;padding:0;box-sizing:border-box}
-        @page{size:letter;margin:8mm}
-        body{font-family:Arial,sans-serif;background:white;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-        .pagina{width:100%;max-width:100%;margin:0 auto;padding:5px;background:white;page-break-after:always;min-height:100vh;display:flex;flex-direction:column;justify-content:space-evenly}
-        .pagina:last-child{page-break-after:avoid}
-        h1{text-align:center;color:#ff4d4d;font-size:22px;margin:0;padding:0}
-        h2{text-align:center;color:#1e293b;font-size:16px;margin:0;padding:0}
-        .info{text-align:center;color:#64748b;font-size:10px;margin-bottom:8px}
-        .carton{border:3px solid #000;border-radius:10px;padding:12px 15px;background:white;width:100%;flex:1;display:flex;flex-direction:column;justify-content:center}
-        table{width:100%;border-collapse:collapse}
-        th{background:#ff4d4d!important;color:white!important;padding:14px 8px;font-size:18px;border:2px solid #000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-        td{padding:16px 8px;border:2px solid #000;text-align:center;font-weight:bold;font-size:22px}
-        .free{background:#fef3c7!important;font-size:26px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-        .num-carton{text-align:center;margin-bottom:8px}
-        .num-carton span{background:#ff4d4d!important;color:white!important;padding:5px 18px;border-radius:15px;font-size:15px;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-        .jugador{text-align:center;color:#10b981;margin:5px 0;font-size:14px;font-weight:bold}
-        @media print{
-            body{margin:0;padding:0}
-            .pagina{page-break-after:always;min-height:auto;height:100vh}
-            .pagina:last-child{page-break-after:avoid}
-        }
-    `;
+    return `*{margin:0;padding:0;box-sizing:border-box}@page{size:letter;margin:8mm}body{font-family:Arial,sans-serif;background:white;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.pagina{width:100%;max-width:100%;margin:0 auto;padding:5px;background:white;page-break-after:always;min-height:100vh;display:flex;flex-direction:column;justify-content:space-evenly}.pagina:last-child{page-break-after:avoid}h1{text-align:center;color:#ff4d4d;font-size:22px;margin:0;padding:0}h2{text-align:center;color:#1e293b;font-size:16px;margin:0;padding:0}.info{text-align:center;color:#64748b;font-size:10px;margin-bottom:8px}.carton{border:3px solid #000;border-radius:10px;padding:12px 15px;background:white;width:100%;flex:1;display:flex;flex-direction:column;justify-content:center}table{width:100%;border-collapse:collapse}th{background:#ff4d4d!important;color:white!important;padding:14px 8px;font-size:18px;border:2px solid #000}td{padding:16px 8px;border:2px solid #000;text-align:center;font-weight:bold;font-size:22px}.free{background:#fef3c7!important;font-size:26px}.num-carton{text-align:center;margin-bottom:8px}.num-carton span{background:#ff4d4d!important;color:white!important;padding:5px 18px;border-radius:15px;font-size:15px;font-weight:bold}.jugador{text-align:center;color:#10b981;margin:5px 0;font-size:14px;font-weight:bold}@media print{body{margin:0;padding:0}.pagina{page-break-after:always;min-height:auto;height:100vh}.pagina:last-child{page-break-after:avoid}}`;
 }
-
-// ============ HTML CARTÓN PDF GRANDE ============
-function htmlCartonPDF(c) {
-    if (!c || !c.carton) return '<div class="carton"><p style="text-align:center;color:red;">Error</p></div>';
-    const carton = c.carton, num = c.numero || '?', asig = c.asignadoA || '';
-    let h = '<div class="carton"><div class="num-carton"><span>Cartón #' + num + '</span></div>';
-    if (asig) h += '<p class="jugador">👤 ' + asig + '</p>';
-    h += '<table><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
-    for (let f=0;f<5;f++) { 
-        h+='<tr>'; 
-        ['B','I','N','G','O'].forEach(function(l){ 
-            const v=carton[l]?carton[l][f]:'?',c=(l==='N'&&f===2); 
-            h+='<td class="'+(c?'free':'')+'">'+(c?'⭐':v)+'</td>'; 
-        }); 
-        h+='</tr>'; 
-    }
-    h += '</table></div>'; return h;
-}
-
-// ============ EXPORTAR PDF - TODOS ============
-function exportarPDFTodos() {
-    db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
-        if (!snap.exists()) { alert('No hay cartones'); return; }
-        const cartones = [];
-        snap.forEach(function(c) { cartones.push(c.val()); });
-        cartones.sort((a, b) => (a.numero || 0) - (b.numero || 0));
-        mostrarToast('⏳ Abriendo impresión...');
-        abrirVentanaImpresion(cartones, 'Todos los Cartones');
-    });
-}
-
-// ============ EXPORTAR PDF POR JUGADOR ============
-function exportarPDFPorJugador(nombreJugador) {
-    db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
-        const cartones = [];
-        snap.forEach(function(c) { if (c.val().asignadoA === nombreJugador) cartones.push(c.val()); });
-        if (cartones.length === 0) { alert('No hay cartones para: ' + nombreJugador); return; }
-        cartones.sort((a, b) => (a.numero || 0) - (b.numero || 0));
-        mostrarToast('⏳ Abriendo impresión...');
-        abrirVentanaImpresion(cartones, '👤 ' + nombreJugador);
-    });
-}
-
-// ============ ABRIR VENTANA DE IMPRESIÓN ============
-function abrirVentanaImpresion(cartones, titulo) {
-    const ventana = window.open('', '_blank', 'width=800,height=600');
-    ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bingo - ' + titulo + '</title>');
-    ventana.document.write('<style>' + getPDFStyles() + '</style></head><body>');
-    
-    for (let i = 0; i < cartones.length; i += 2) {
-        ventana.document.write('<div class="pagina">');
-        ventana.document.write('<h1>🎯 BINGO PRO</h1>');
-        ventana.document.write('<h2>' + titulo + '</h2>');
-        ventana.document.write('<p class="info">Página ' + (Math.floor(i/2)+1) + ' | ' + cartones.length + ' cartones | ' + new Date().toLocaleDateString() + '</p>');
-        ventana.document.write(htmlCartonPDF(cartones[i]));
-        if (i + 1 < cartones.length) ventana.document.write(htmlCartonPDF(cartones[i + 1]));
-        ventana.document.write('</div>');
-    }
-    
-    ventana.document.write('<script>window.onload=function(){setTimeout(function(){window.print();},800)};<\/script>');
-    ventana.document.write('</body></html>');
-    ventana.document.close();
-    mostrarToast('✅ Selecciona "Guardar como PDF" en el diálogo de impresión');
-}
-
-// ============ MENÚ PDF ============
-function abrirMenuPDF() {
-    const preview = document.getElementById('vista-previa-contenido');
-    if (!preview) return;
-    db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
-        const total = snap.numChildren() || 0, jugadores = new Set();
-        snap.forEach(function(c) { if (c.val().asignadoA) jugadores.add(c.val().asignadoA); });
-        let h = '<div style="padding:20px;"><h2 style="color:#ff4d4d;text-align:center;margin-bottom:15px;">📄 EXPORTAR PDF</h2>';
-        h += '<p style="color:#64748b;text-align:center;font-size:0.8rem;margin-bottom:15px;">Se abrirá una ventana. Selecciona "Guardar como PDF"</p>';
-        h += '<button onclick="exportarPDFTodos()" style="width:100%;padding:15px;background:#ff4d4d;color:white;border:none;border-radius:10px;cursor:pointer;font-size:1.1rem;font-weight:bold;margin-bottom:20px;">📄 TODOS (' + total + ')</button>';
-        if (jugadores.size > 0) {
-            h += '<h3 style="color:#1e293b;">👤 Por Jugador</h3><div style="max-height:50vh;overflow-y:auto;">';
-            jugadores.forEach(function(j) {
-                let c = 0; snap.forEach(function(ch) { if (ch.val().asignadoA === j) c++; });
-                h += '<div style="background:#f1f5f9;padding:12px;margin:8px 0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">';
-                h += '<div><strong>👤 ' + j + '</strong><br><span style="font-size:0.8rem;">' + c + ' cart.</span></div>';
-                h += '<button onclick="exportarPDFPorJugador(\'' + j.replace(/'/g,"\\'") + '\')" style="background:#8b5cf6;color:white;border:none;padding:8px 15px;border-radius:6px;cursor:pointer;">📄 PDF</button>';
-                h += '</div>';
-            }); h += '</div>';
-        } else { h += '<p style="color:#94a3b8;text-align:center;">No hay jugadores asignados</p>'; }
-        h += '</div>'; preview.innerHTML = h;
-    });
-}
+function htmlCartonPDF(c) { if(!c||!c.carton)return'<div class="carton"><p>Error</p></div>';const ca=c.carton,n=c.numero||'?',a=c.asignadoA||'';let h='<div class="carton"><div class="num-carton"><span>Cartón #'+n+'</span></div>';if(a)h+='<p class="jugador">👤 '+a+'</p>';h+='<table><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';for(let f=0;f<5;f++){h+='<tr>';['B','I','N','G','O'].forEach(function(l){const v=ca[l]?ca[l][f]:'?',c=(l==='N'&&f===2);h+='<td class="'+(c?'free':'')+'">'+(c?'⭐':v)+'</td>';});h+='</tr>';}h+='</table></div>';return h;}
+function exportarPDFTodos(){db.ref('salas/'+SALA_ID+'/cartones').once('value',function(snap){if(!snap.exists()){alert('No hay cartones');return}const c=[];snap.forEach(function(ch){c.push(ch.val())});c.sort((a,b)=>(a.numero||0)-(b.numero||0));abrirVentanaImpresion(c,'Todos los Cartones')})}
+function exportarPDFPorJugador(nj){db.ref('salas/'+SALA_ID+'/cartones').once('value',function(snap){const c=[];snap.forEach(function(ch){if(ch.val().asignadoA===nj)c.push(ch.val())});if(c.length===0){alert('No hay cartones para: '+nj);return}c.sort((a,b)=>(a.numero||0)-(b.numero||0));abrirVentanaImpresion(c,'👤 '+nj)})}
+function abrirVentanaImpresion(cartones,titulo){const v=window.open('','_blank','width=800,height=600');v.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bingo - '+titulo+'</title><style>'+getPDFStyles()+'</style></head><body>');for(let i=0;i<cartones.length;i+=2){v.document.write('<div class="pagina"><h1>🎯 BINGO PRO</h1><h2>'+titulo+'</h2><p class="info">Página '+(Math.floor(i/2)+1)+' | '+cartones.length+' cartones | '+new Date().toLocaleDateString()+'</p>');v.document.write(htmlCartonPDF(cartones[i]));if(i+1<cartones.length)v.document.write(htmlCartonPDF(cartones[i+1]));v.document.write('</div>')}v.document.write('<script>window.onload=function(){setTimeout(function(){window.print()},800)};<\/script></body></html>');v.document.close();mostrarToast('✅ Selecciona "Guardar como PDF"')}
+function abrirMenuPDF(){const p=document.getElementById('vista-previa-contenido');if(!p)return;db.ref('salas/'+SALA_ID+'/cartones').once('value',function(snap){const t=snap.numChildren()||0,j=new Set();snap.forEach(function(c){if(c.val().asignadoA)j.add(c.val().asignadoA)});let h='<div style="padding:20px;"><h2 style="color:#ff4d4d;text-align:center;">📄 EXPORTAR PDF</h2><p style="color:#64748b;text-align:center;font-size:0.8rem;">Se abrirá una ventana. Selecciona "Guardar como PDF"</p>';h+='<button onclick="exportarPDFTodos()" style="width:100%;padding:15px;background:#ff4d4d;color:white;border:none;border-radius:10px;cursor:pointer;font-size:1.1rem;font-weight:bold;margin-bottom:20px;">📄 TODOS ('+t+')</button>';if(j.size>0){h+='<h3>👤 Por Jugador</h3><div style="max-height:50vh;overflow-y:auto;">';j.forEach(function(n){let c=0;snap.forEach(function(ch){if(ch.val().asignadoA===n)c++});h+='<div style="background:#f1f5f9;padding:12px;margin:8px 0;border-radius:8px;display:flex;justify-content:space-between;"><div><strong>👤 '+n+'</strong><br><span>'+c+' cart.</span></div><button onclick="exportarPDFPorJugador(\''+n.replace(/'/g,"\\'")+'\')" style="background:#8b5cf6;color:white;border:none;padding:8px 15px;border-radius:6px;cursor:pointer;">📄 PDF</button></div>'});h+='</div>'}else{h+='<p style="color:#94a3b8;text-align:center;">No hay jugadores asignados</p>'}h+='</div>';p.innerHTML=h})}
 
 // ============ INICIAR ============
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Bingo Pro Admin');
+    console.log('🚀 Bingo Pro Admin - Cartones Únicos');
+    inicializarRegistro();
+    cargarRegistroDesdeFirebase();
     document.getElementById('btnGenerar').addEventListener('click', generarLote);
     document.getElementById('btnGuardar').addEventListener('click', exportarJSON);
     document.getElementById('btnAbrir').addEventListener('click', () => document.getElementById('fileIn').click());
