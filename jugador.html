@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Bingo Pro - Jugador</title>
     <style>
         :root {
@@ -17,113 +17,157 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: var(--bg-dark); color: var(--text-white);
-            min-height: 100vh; padding: 10px;
+            min-height: 100vh; padding: 10px; user-select: none;
         }
 
-        .container { max-width: 900px; margin: 0 auto; }
+        .container { max-width: 1000px; margin: 0 auto; }
 
         .header {
-            text-align: center; padding: 15px;
+            text-align: center; padding: 12px;
             background: linear-gradient(180deg, var(--sidebar-bg), #0f172a);
-            border-radius: 12px; margin-bottom: 15px; border: 2px solid #2d3436;
+            border-radius: 12px; margin-bottom: 10px; border: 2px solid #2d3436;
         }
-        .header h1 { color: var(--red); font-size: 1.5rem; font-weight: 900; margin-bottom: 5px; }
-        .header .jugador-nombre { color: var(--success); font-size: 1.2rem; font-weight: bold; }
+        .header h1 { color: var(--red); font-size: 1.3rem; font-weight: 900; margin-bottom: 3px; }
+        .header .jugador-nombre { color: var(--success); font-size: 1rem; font-weight: bold; }
 
-        /* Notificaciones */
-        .notificacion {
-            padding: 12px 15px; border-radius: 10px; margin-bottom: 10px;
-            text-align: center; animation: slideDown 0.5s; font-weight: bold; font-size: 0.9rem;
+        /* ============ CRONÓMETRO ============ */
+        .cronometro-jugador {
+            text-align: center; padding: 8px; margin-bottom: 10px;
+            background: #000; border-radius: 10px; border: 1px solid #334155;
         }
-        .notificacion.bingo { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
-        .notificacion.errado { background: #f59e0b; color: #16213e; }
-        .notificacion.valido { background: #10b981; color: white; }
-        .notificacion.ganador { background: linear-gradient(135deg, #10b981, #059669); color: white; font-size: 1.1rem; }
-        .notificacion.nueva-partida { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; }
-        .notificacion.info { background: #334155; color: white; }
+        .cronometro-jugador .tiempo {
+            font-family: 'Courier New', monospace; font-size: 2rem;
+            color: var(--red); font-weight: bold;
+        }
+        .cronometro-jugador .estado-cron {
+            font-size: 0.7rem; color: var(--text-gray);
+        }
+
+        /* ============ PAUSA CADA 25 ============ */
+        .pausa-info {
+            text-align: center; padding: 10px; margin-bottom: 10px;
+            background: #f59e0b; color: #16213e; border-radius: 8px;
+            font-weight: bold; animation: pulse 1s infinite; display: none;
+        }
+        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.7;} }
+
+        /* ============ NOTIFICACIONES ============ */
+        .notificacion {
+            padding: 10px 15px; border-radius: 10px; margin-bottom: 8px;
+            text-align: center; animation: slideDown 0.5s; font-weight: bold; font-size: 0.85rem;
+        }
+        .notificacion.alerta { background: #ef4444; color: white; }
+        .notificacion.revisando { background: #f59e0b; color: #16213e; }
+        .notificacion.ganador { background: #10b981; color: white; }
+        .notificacion.nueva-partida { background: #8b5cf6; color: white; }
         @keyframes slideDown { from{transform:translateY(-100%);opacity:0;} to{transform:translateY(0);opacity:1;} }
 
         .numeros-section {
-            background: var(--sidebar-bg); border-radius: 12px; padding: 15px;
-            margin-bottom: 15px; border: 1px solid #2d3436;
+            background: var(--sidebar-bg); border-radius: 12px; padding: 12px;
+            margin-bottom: 10px; border: 1px solid #2d3436;
         }
-        .numeros-section h3 { color: var(--gold); font-size: 0.9rem; margin-bottom: 10px; text-align: center; }
+        .numeros-section h3 { color: var(--gold); font-size: 0.8rem; margin-bottom: 8px; text-align: center; }
 
-        .ultima-bola-jugador { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 12px; }
+        .ultima-bola-jugador { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px; }
         .bola-grande {
             background: linear-gradient(135deg, #ff4d4d, #dc2626); color: white;
-            width: 80px; height: 80px; border-radius: 50%;
+            width: 70px; height: 70px; border-radius: 50%;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             box-shadow: 0 0 20px rgba(255,77,77,0.5); animation: pulse 1s infinite;
         }
-        .bola-grande .letra { font-size: 1.3rem; font-weight: 900; line-height: 1; }
-        .bola-grande .numero { font-size: 2rem; font-weight: 900; line-height: 1; }
-        @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.05);} }
+        .bola-grande .letra { font-size: 1.1rem; font-weight: 900; line-height: 1; }
+        .bola-grande .numero { font-size: 1.8rem; font-weight: 900; line-height: 1; }
 
-        .ultimos-numeros { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
+        .ultimos-numeros { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; }
         .num-chico {
-            background: white; color: var(--text-dark); padding: 4px 10px;
-            border-radius: 15px; font-weight: bold; font-size: 0.75rem; border: 2px solid #e2e8f0;
+            background: white; color: var(--text-dark); padding: 3px 8px;
+            border-radius: 12px; font-weight: bold; font-size: 0.7rem; border: 2px solid #e2e8f0;
         }
         .num-chico.cantado { background: linear-gradient(135deg, #ffca28, #ffb300); color: #16213e; border-color: #f59e0b; }
 
-        .voz-control { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 8px 0; }
-        .btn-voz { padding: 6px 15px; border: none; border-radius: 20px; cursor: pointer; font-size: 0.75rem; font-weight: bold; }
+        .voz-control { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 6px 0; }
+        .btn-voz { padding: 5px 12px; border: none; border-radius: 15px; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
         .btn-voz.activada { background: #10b981; color: white; }
         .btn-voz.desactivada { background: #6b7280; color: white; }
 
         .btn-ver-numeros {
-            display: block; margin: 8px auto; padding: 8px 20px;
-            background: #3b82f6; color: white; border: none; border-radius: 20px;
-            cursor: pointer; font-size: 0.8rem; font-weight: bold;
+            display: block; margin: 6px auto; padding: 6px 15px;
+            background: #3b82f6; color: white; border: none; border-radius: 15px;
+            cursor: pointer; font-size: 0.75rem; font-weight: bold;
         }
 
-        .cartones-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 15px; }
+        /* ============ CONTROLES DE VISTA ============ */
+        .controles-vista {
+            display: flex; gap: 8px; justify-content: center; margin-bottom: 10px;
+        }
+        .btn-vista {
+            padding: 8px 15px; border: none; border-radius: 8px;
+            cursor: pointer; font-weight: bold; font-size: 0.8rem;
+            background: #334155; color: white; transition: all 0.2s;
+        }
+        .btn-vista.activo { background: #3b82f6; }
+
+        /* ============ CARTONES - HORIZONTAL (default) ============ */
+        .cartones-grid {
+            display: grid; gap: 12px; margin-bottom: 12px;
+        }
+        .cartones-grid.horizontal {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+        .cartones-grid.vertical {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
 
         .carton-card {
             background: white; color: var(--text-dark); border-radius: 12px;
-            padding: 12px; cursor: pointer; transition: all 0.3s;
+            padding: 15px; cursor: pointer; transition: all 0.3s;
             border: 3px solid #e2e8f0; position: relative;
         }
-        .carton-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
+        .carton-card:hover { transform: translateY(-2px); }
         .carton-card.seleccionado { border-color: var(--success); box-shadow: 0 0 15px rgba(16,185,129,0.4); background: #f0fdf4; }
         .carton-card .carton-check {
-            position: absolute; top: 8px; right: 8px; width: 24px; height: 24px;
+            position: absolute; top: 8px; right: 8px; width: 26px; height: 26px;
             border-radius: 50%; background: #e2e8f0; display: flex;
             align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;
         }
         .carton-card.seleccionado .carton-check { background: var(--success); color: white; }
-        .carton-numero { text-align: center; font-size: 0.9rem; font-weight: 900; color: var(--red); margin-bottom: 8px; }
-        .carton-tabla { width: 100%; border-collapse: collapse; }
-        .carton-tabla th { background: #ff4d4d; color: white; padding: 5px; font-size: 0.65rem; border: 1px solid #e2e8f0; }
-        .carton-tabla td {
-            padding: 8px; border: 1px solid #e2e8f0; text-align: center;
-            font-weight: bold; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; user-select: none;
-        }
-        .carton-tabla td:hover { background: #e8f5e9; }
-        .carton-tabla td.free { background: #fef3c7; font-size: 0.9rem; cursor: default; }
-        .carton-tabla td.marcado { background: #10b981 !important; color: white !important; }
-        .carton-tabla td.patron { border: 3px solid #f59e0b !important; box-shadow: inset 0 0 8px rgba(245,158,11,0.4); }
+        .carton-numero { text-align: center; font-size: 1rem; font-weight: 900; color: var(--red); margin-bottom: 10px; }
 
-        .btn-bingo-container { text-align: center; margin-bottom: 15px; }
+        .carton-tabla { width: 100%; border-collapse: collapse; }
+        .carton-tabla th {
+            background: #ff4d4d; color: white; padding: 10px 6px;
+            font-size: 0.9rem; border: 1px solid #e2e8f0;
+        }
+        .carton-tabla td {
+            padding: 12px 4px; border: 1px solid #e2e8f0; text-align: center;
+            font-weight: bold; font-size: 1rem; cursor: pointer;
+            transition: all 0.2s; min-width: 35px; min-height: 40px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .carton-tabla td:active { transform: scale(0.95); }
+        .carton-tabla td.free { background: #fef3c7; font-size: 1.2rem; cursor: default; }
+        .carton-tabla td.marcado { background: #10b981 !important; color: white !important; }
+        .carton-tabla td.patron { border: 3px solid #f59e0b !important; }
+
+        .btn-bingo-container { text-align: center; margin-bottom: 12px; }
         .btn-bingo {
             background: linear-gradient(135deg, #ef4444, #dc2626); color: white;
-            border: none; padding: 18px 40px; border-radius: 15px; font-weight: 900;
-            cursor: pointer; font-size: 1.2rem; transition: all 0.3s;
+            border: none; padding: 16px 35px; border-radius: 15px; font-weight: 900;
+            cursor: pointer; font-size: 1.1rem; transition: all 0.3s;
             box-shadow: 0 4px 20px rgba(239,68,68,0.4); animation: glowBingo 2s infinite;
         }
-        .btn-bingo:hover { transform: scale(1.05); }
-        .btn-bingo:disabled { background: #6b7280 !important; opacity: 0.5; cursor: not-allowed; animation: none; }
+        .btn-bingo:disabled { background: #6b7280 !important; opacity: 0.5; animation: none; }
         @keyframes glowBingo { 0%,100%{box-shadow:0 4px 20px rgba(239,68,68,0.4);} 50%{box-shadow:0 4px 35px rgba(239,68,68,0.8);} }
 
-        .bingo-info { text-align: center; color: var(--text-gray); font-size: 0.8rem; margin-top: 8px; }
-        .oportunidades { text-align: center; margin-top: 5px; font-size: 0.8rem; }
+        .bingo-info { text-align: center; color: var(--text-gray); font-size: 0.75rem; margin-top: 5px; }
+        .oportunidades { text-align: center; margin-top: 5px; font-size: 0.75rem; }
+        .ganados-info { text-align: center; margin-top: 5px; font-size: 0.75rem; color: #10b981; }
 
-        .estado-juego { text-align: center; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; }
+        .estado-juego { text-align: center; padding: 8px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; font-size: 0.85rem; }
         .estado-juego.esperando { background: #334155; color: #94a3b8; }
         .estado-juego.jugando { background: #10b981; color: white; }
-        .estado-juego.terminado { background: #ef4444; color: white; font-size: 1.1rem; }
-        .estado-juego.revisando { background: #f59e0b; color: #16213e; animation: pulse 1s infinite; }
+        .estado-juego.terminado { background: #ef4444; color: white; }
+        .estado-juego.pausa { background: #f59e0b; color: #16213e; animation: pulse 1s infinite; }
 
         .modal-overlay {
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
@@ -143,10 +187,12 @@
         }
 
         @media (max-width: 600px) {
-            .cartones-grid { grid-template-columns: repeat(2, 1fr); }
-            .bola-grande { width: 60px; height: 60px; }
-            .bola-grande .numero { font-size: 1.5rem; }
-            .btn-bingo { padding: 14px 30px; font-size: 1rem; }
+            .cartones-grid.horizontal { grid-template-columns: 1fr; }
+            .cartones-grid.vertical { grid-template-columns: repeat(2, 1fr); }
+            .carton-tabla td { padding: 10px 3px; font-size: 0.85rem; min-width: 28px; }
+            .carton-tabla th { padding: 8px 3px; font-size: 0.75rem; }
+            .bola-grande { width: 55px; height: 55px; }
+            .bola-grande .numero { font-size: 1.4rem; }
         }
     </style>
 </head>
@@ -156,6 +202,15 @@
             <h1>🎯 BINGO PRO</h1>
             <div class="jugador-nombre" id="jugadorNombre">Cargando...</div>
         </div>
+
+        <!-- CRONÓMETRO -->
+        <div class="cronometro-jugador" id="cronometroJugador">
+            <div class="tiempo" id="tiempoCron">--:--</div>
+            <div class="estado-cron" id="estadoCron">Esperando inicio...</div>
+        </div>
+
+        <!-- PAUSA CADA 25 -->
+        <div class="pausa-info" id="pausaInfo">⏸️ PAUSA - Verifica tus números cantados</div>
 
         <div class="estado-juego esperando" id="estadoJuego">⏳ Esperando que inicie el juego...</div>
         <div id="notificacionContainer"></div>
@@ -167,28 +222,27 @@
                     <span class="letra">-</span><span class="numero">--</span>
                 </div>
                 <div style="text-align:center;">
-                    <div style="color:#94a3b8;font-size:0.75rem;">Total</div>
-                    <div style="font-size:1.5rem;font-weight:900;color:#ffca28;" id="totalCantados">0/75</div>
+                    <div style="color:#94a3b8;font-size:0.7rem;">Total</div>
+                    <div style="font-size:1.3rem;font-weight:900;color:#ffca28;" id="totalCantados">0/75</div>
                 </div>
             </div>
             
             <div class="voz-control">
-                <span style="font-size:0.7rem;color:#94a3b8;">🔊 Voz:</span>
-                <button class="btn-voz activada" id="btnVoz" onclick="toggleVoz()">ACTIVADA</button>
+                <span style="font-size:0.7rem;color:#94a3b8;">🔊</span>
+                <button class="btn-voz activada" id="btnVoz" onclick="toggleVoz()">VOZ</button>
             </div>
 
-            <button class="btn-ver-numeros" onclick="abrirModalNumeros()">📋 VER TODOS LOS NÚMEROS</button>
-
-            <div class="ultimos-numeros" id="ultimosNumeros">
-                <span class="num-chico" style="opacity:0.3;">--</span>
-                <span class="num-chico" style="opacity:0.3;">--</span>
-                <span class="num-chico" style="opacity:0.3;">--</span>
-                <span class="num-chico" style="opacity:0.3;">--</span>
-                <span class="num-chico" style="opacity:0.3;">--</span>
-            </div>
+            <button class="btn-ver-numeros" onclick="abrirModalNumeros()">📋 VER TODOS</button>
+            <div class="ultimos-numeros" id="ultimosNumeros"></div>
         </div>
 
-        <div class="cartones-grid" id="cartonesGrid">
+        <!-- CONTROLES DE VISTA -->
+        <div class="controles-vista">
+            <button class="btn-vista activo" id="btnHorizontal" onclick="cambiarVista('horizontal')">📱 HORIZONTAL</button>
+            <button class="btn-vista" id="btnVertical" onclick="cambiarVista('vertical')">📱 VERTICAL</button>
+        </div>
+
+        <div class="cartones-grid horizontal" id="cartonesGrid">
             <p style="color:#94a3b8;text-align:center;grid-column:1/-1;padding:40px;">Cargando cartones...</p>
         </div>
 
@@ -196,12 +250,13 @@
             <button class="btn-bingo" id="btnBingo" disabled onclick="cantarBingo()">🚨 ¡BINGO!</button>
             <div class="bingo-info" id="bingoInfo">Selecciona un cartón para cantar BINGO</div>
             <div class="oportunidades" id="oportunidadesInfo"></div>
+            <div class="ganados-info" id="ganadosInfo"></div>
         </div>
     </div>
 
     <div class="modal-overlay" id="modalNumeros">
         <div class="modal-content">
-            <h3>📋 TODOS LOS NÚMEROS CANTADOS</h3>
+            <h3>📋 TODOS LOS NÚMEROS</h3>
             <div class="modal-numeros" id="modalNumerosList"></div>
             <button class="btn-cerrar-modal" onclick="cerrarModalNumeros()">CERRAR</button>
         </div>
@@ -224,80 +279,70 @@
 
         const params = new URLSearchParams(window.location.search);
         let NOMBRE_JUGADOR = 'Jugador', CARTONES_IDS = [], SALA_ID = 'sala-default';
-
-        const datosCodificados = params.get('d');
-        if (datosCodificados) {
+        const dc = params.get('d');
+        if (dc) {
             try {
-                const d = JSON.parse(decodeURIComponent(atob(datosCodificados)));
-                NOMBRE_JUGADOR = d.n || 'Jugador';
-                CARTONES_IDS = d.c || [];
-                SALA_ID = d.s || 'sala-default';
-                if ((Date.now() - (d.t || 0)) / 3600000 > 24) {
-                    document.body.innerHTML = '<div style="text-align:center;padding:50px;color:#ef4444;">❌ Link expirado</div>';
-                    throw new Error('Expirado');
-                }
+                const d = JSON.parse(decodeURIComponent(atob(dc)));
+                NOMBRE_JUGADOR = d.n || 'Jugador'; CARTONES_IDS = d.c || []; SALA_ID = d.s || 'sala-default';
+                if ((Date.now() - (d.t || 0)) / 3600000 > 24) { document.body.innerHTML = '<div style="text-align:center;padding:50px;color:#ef4444;">❌ Link expirado</div>'; throw new Error('Expirado'); }
             } catch(e) {}
         }
 
         let cartonesJugador = [], numerosCantados = [], cartonSeleccionado = null;
         let vozActivada = true, ultimoNumeroVoz = null;
         let bingosErrados = parseInt(sessionStorage.getItem('bingos_errados_' + SALA_ID) || '0');
+        let bingosGanados = parseInt(sessionStorage.getItem('bingos_ganados_' + SALA_ID) || '0');
         let descalificado = sessionStorage.getItem('descalificado_' + SALA_ID) === 'true';
-        let estadoRevision = false;
         let patronActual = Array(25).fill(false);
+        let cronometroActivo = false;
+        let tiempoRestante = 0;
+        let intervaloCron = null;
 
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('jugadorNombre').textContent = '👤 ' + NOMBRE_JUGADOR;
-            if (CARTONES_IDS.length === 0) {
-                document.getElementById('cartonesGrid').innerHTML = '<p style="color:#ef4444;text-align:center;grid-column:1/-1;padding:40px;">❌ Link inválido</p>';
-                return;
-            }
-            actualizarOportunidades();
-            if (descalificado) descalificarJugador();
+            if (CARTONES_IDS.length === 0) { document.getElementById('cartonesGrid').innerHTML = '<p style="color:#ef4444;">❌ Link inválido</p>'; return; }
+            actualizarInfo();
+            if (descalificado || bingosGanados >= 2) descalificarJugador();
             cargarCartones();
-            escucharNumeros();
-            escucharBingosOtros();
-            escucharRevision();
-            escucharPartida();
+            escucharTodo();
         });
+
+        function cambiarVista(tipo) {
+            const grid = document.getElementById('cartonesGrid');
+            grid.classList.remove('horizontal', 'vertical');
+            grid.classList.add(tipo);
+            document.getElementById('btnHorizontal').classList.toggle('activo', tipo === 'horizontal');
+            document.getElementById('btnVertical').classList.toggle('activo', tipo === 'vertical');
+        }
 
         function cargarCartones() {
             db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
                 cartonesJugador = [];
-                CARTONES_IDS.forEach(function(id) {
-                    const c = snap.child(id).val();
-                    if (c) cartonesJugador.push(c);
-                });
+                CARTONES_IDS.forEach(function(id) { const c = snap.child(id).val(); if (c) cartonesJugador.push(c); });
                 mostrarCartones();
             });
         }
 
-        function esPartePatron(letra, fila) {
-            const colIndex = ['B','I','N','G','O'].indexOf(letra);
-            const patronIndex = fila * 5 + colIndex;
-            return patronActual[patronIndex];
-        }
-
+        // PERMITIR MARCAR AUNQUE NO HAYA SALIDO (DAR DIFICULTAD)
         function toggleMarcar(cartonIndex, letra, fila, valor, evento) {
             evento.stopPropagation();
             if (letra === 'N' && fila === 2) return;
-            if (descalificado) { alert('❌ Estás descalificado'); return; }
-            if (!numerosCantados.includes(valor)) {
-                alert('❌ ' + obtenerLetra(valor) + '-' + valor + ' NO ha sido cantado');
-                return;
-            }
+            if (descalificado || bingosGanados >= 2) { alert('❌ No puedes jugar más'); return; }
             const key = 'marcas_' + SALA_ID + '_' + cartonIndex;
             let marcas = JSON.parse(localStorage.getItem(key) || '[]');
-            const celdaId = letra + '-' + fila;
-            if (marcas.includes(celdaId)) marcas = marcas.filter(m => m !== celdaId);
-            else marcas.push(celdaId);
+            const celda = letra + '-' + fila;
+            if (marcas.includes(celda)) marcas = marcas.filter(m => m !== celda);
+            else marcas.push(celda);
             localStorage.setItem(key, JSON.stringify(marcas));
             mostrarCartones();
         }
 
-        function estaMarcado(cartonIndex, letra, fila) {
-            const key = 'marcas_' + SALA_ID + '_' + cartonIndex;
-            return (JSON.parse(localStorage.getItem(key) || '[]')).includes(letra + '-' + fila);
+        function estaMarcado(idx, l, f) {
+            return (JSON.parse(localStorage.getItem('marcas_' + SALA_ID + '_' + idx) || '[]')).includes(l + '-' + f);
+        }
+
+        function esPartePatron(letra, fila) {
+            return patronActual[['B','I','N','G','O'].indexOf(letra) + fila * 5];
         }
 
         function mostrarCartones() {
@@ -308,7 +353,6 @@
                 card.className = 'carton-card';
                 if (cartonSeleccionado === index) card.classList.add('seleccionado');
                 card.onclick = function(e) { if (e.target.tagName !== 'TD') seleccionarCarton(index); };
-                
                 let t = '<table class="carton-tabla"><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
                 if (c.carton) {
                     for (let f=0;f<5;f++) {
@@ -317,7 +361,7 @@
                             const v = c.carton[l][f], centro = (l==='N'&&f===2);
                             const marcado = centro || estaMarcado(index, l, f);
                             const patron = esPartePatron(l, f);
-                            t += '<td class="'+(centro?'free':'')+(marcado?' marcado':'')+(patron?' patron':'')+'" onclick="toggleMarcar('+index+',\''+l+'\','+f+','+v+',event)">'+(centro?'⭐':v)+'</td>';
+                            t += '<td class="'+(centro?'free':'')+(marcado?' marcado':'')+(patron?' patron':'')+'" onclick="toggleMarcar('+index+',\''+l+'\','+f+','+v+',event)" title="'+(centro?'FREE':(marcado?'Marcado':'Tocar para marcar'))+'">'+(centro?'⭐':v)+'</td>';
                         });
                         t += '</tr>';
                     }
@@ -329,197 +373,155 @@
             actualizarBtnBingo();
         }
 
-        function seleccionarCarton(index) {
-            cartonSeleccionado = (cartonSeleccionado === index) ? null : index;
-            mostrarCartones();
-        }
+        function seleccionarCarton(index) { cartonSeleccionado = (cartonSeleccionado === index) ? null : index; mostrarCartones(); }
 
         function actualizarBtnBingo() {
             const btn = document.getElementById('btnBingo'), info = document.getElementById('bingoInfo');
-            if (descalificado) {
-                btn.disabled = true; btn.textContent = '🚫 DESCALIFICADO'; btn.style.background = '#ef4444';
-                info.textContent = '2 bingos errados';
-            } else if (cartonSeleccionado !== null) {
-                btn.disabled = false; info.textContent = 'Cartón #'+(cartonesJugador[cartonSeleccionado]?.numero||'?')+' seleccionado';
-                info.style.color = '#10b981';
-            } else {
-                btn.disabled = true; info.textContent = 'Selecciona un cartón para cantar BINGO'; info.style.color = '#94a3b8';
-            }
+            if (descalificado || bingosGanados >= 2) { btn.disabled = true; btn.textContent = bingosGanados >= 2 ? '🏆 MÁXIMO ALCANZADO' : '🚫 DESCALIFICADO'; }
+            else if (cartonSeleccionado !== null) { btn.disabled = false; info.textContent = 'Cartón #'+(cartonesJugador[cartonSeleccionado]?.numero||'?')+' seleccionado'; info.style.color = '#10b981'; }
+            else { btn.disabled = true; info.textContent = 'Selecciona un cartón'; info.style.color = '#94a3b8'; }
         }
 
-        function actualizarOportunidades() {
-            const el = document.getElementById('oportunidadesInfo');
-            const r = 2 - bingosErrados;
-            if (r <= 0) el.innerHTML = '<span style="color:#ef4444;">❌ Sin oportunidades</span>';
-            else if (r === 1) el.innerHTML = '<span style="color:#f59e0b;">⚠️ 1 oportunidad</span>';
-            else el.innerHTML = '<span style="color:#10b981;">✅ ' + r + ' oportunidades</span>';
+        function actualizarInfo() {
+            const op = document.getElementById('oportunidadesInfo'), r = 2 - bingosErrados;
+            if (r <= 0) op.innerHTML = '<span style="color:#ef4444;">❌ Sin oportunidades</span>';
+            else if (r === 1) op.innerHTML = '<span style="color:#f59e0b;">⚠️ 1 oportunidad</span>';
+            else op.innerHTML = '<span style="color:#10b981;">✅ ' + r + ' oportunidades</span>';
+            document.getElementById('ganadosInfo').textContent = bingosGanados > 0 ? '🏆 Ganados: ' + bingosGanados + '/2' : '';
         }
 
-        function descalificarJugador() {
-            descalificado = true;
-            sessionStorage.setItem('descalificado_' + SALA_ID, 'true');
-            actualizarBtnBingo();
-            mostrarCartones();
-            mostrarNotificacion('❌ Has sido DESCALIFICADO por 2 bingos errados.', 'errado');
+        function descalificarJugador() { 
+            descalificado = true; 
+            sessionStorage.setItem('descalificado_' + SALA_ID, 'true'); 
+            actualizarBtnBingo(); 
+            mostrarCartones(); 
         }
 
         function cantarBingo() {
-            if (descalificado) return;
-            if (cartonSeleccionado === null) return;
+            if (descalificado || bingosGanados >= 2 || cartonSeleccionado === null) return;
             const carton = cartonesJugador[cartonSeleccionado];
-            if (confirm('¿Cantar BINGO con Cartón #'+(carton.numero||'?')+'?\n⚠️ Oportunidades: '+(2-bingosErrados))) {
-                db.ref('bingos/' + SALA_ID).push({
-                    jugador: NOMBRE_JUGADOR, cartonId: carton.id,
-                    cartonNumero: carton.numero, timestamp: Date.now(), revisado: false
-                });
+            if (confirm('¿Cantar BINGO con Cartón #'+(carton.numero||'?')+'?')) {
+                db.ref('bingos/' + SALA_ID).push({ jugador: NOMBRE_JUGADOR, cartonId: carton.id, cartonNumero: carton.numero, timestamp: Date.now() });
                 document.getElementById('btnBingo').disabled = true;
                 document.getElementById('btnBingo').textContent = '⏳ REVISANDO...';
-                document.getElementById('btnBingo').style.background = '#f59e0b';
-                mostrarNotificacion('✅ BINGO cantado. El admin está revisando...', 'info');
             }
         }
 
-        function escucharRevision() {
-            db.ref('partidas/' + SALA_ID + '/revisando').on('value', function(snap) {
-                const data = snap.val();
-                const estadoEl = document.getElementById('estadoJuego');
-                if (data && data.activo) {
-                    estadoRevision = true;
-                    estadoEl.className = 'estado-juego revisando';
-                    estadoEl.textContent = data.jugador === NOMBRE_JUGADOR ? '🔍 Revisando TU bingo...' : '🔍 Revisando bingo de ' + data.jugador;
-                } else if (!estadoRevision) {
-                    estadoEl.className = 'estado-juego jugando';
-                    estadoEl.textContent = '▶️ Juego en progreso';
-                }
-            });
-
-            db.ref('partidas/' + SALA_ID + '/resultadoRevision').on('value', function(snap) {
-                const data = snap.val();
-                if (!data) return;
-                
-                // Notificar a todos
-                if (data.resultado === 'errado') {
-                    mostrarNotificacion('❌ BINGO ERRADO de ' + data.jugador, 'errado');
-                } else if (data.resultado === 'valido') {
-                    mostrarNotificacion('🎉 ¡BINGO VÁLIDO! ' + data.jugador + ' ha GANADO', 'ganador');
-                }
-
-                if (data.jugador === NOMBRE_JUGADOR) {
-                    if (data.resultado === 'errado') {
-                        bingosErrados++;
-                        sessionStorage.setItem('bingos_errados_' + SALA_ID, bingosErrados.toString());
-                        actualizarOportunidades();
-                        document.getElementById('btnBingo').disabled = false;
-                        document.getElementById('btnBingo').textContent = '🚨 ¡BINGO!';
-                        document.getElementById('btnBingo').style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
-                        if (bingosErrados >= 2) descalificarJugador();
-                    } else if (data.resultado === 'valido') {
-                        document.getElementById('estadoJuego').className = 'estado-juego terminado';
-                        document.getElementById('estadoJuego').textContent = '🎉 ¡GANASTE! 🏆';
-                        document.getElementById('btnBingo').disabled = true;
-                        document.getElementById('btnBingo').textContent = '🏆 GANADOR';
-                        document.getElementById('btnBingo').style.background = '#10b981';
-                    }
-                }
-                db.ref('partidas/' + SALA_ID + '/resultadoRevision').remove();
-            });
-        }
-
-        function escucharBingosOtros() {
-            db.ref('bingos/' + SALA_ID).on('child_added', function(snap) {
-                const bingo = snap.val();
-                if (bingo.jugador !== NOMBRE_JUGADOR && !bingo.revisado) {
-                    mostrarNotificacion('🚨 ¡' + bingo.jugador + ' ha cantado BINGO!', 'bingo');
-                }
-            });
-        }
-
-        function escucharPartida() {
-            db.ref('partidas/' + SALA_ID + '/estado').on('value', function(snap) {
-                const estado = snap.val();
-                if (estado === 'terminado') {
-                    document.getElementById('estadoJuego').className = 'estado-juego terminado';
-                } else if (estado === 'nueva_partida') {
-                    // Limpiar todo para nueva partida
-                    numerosCantados = [];
-                    bingosErrados = 0;
-                    descalificado = false;
-                    cartonSeleccionado = null;
-                    patronActual = Array(25).fill(false);
-                    sessionStorage.removeItem('bingos_errados_' + SALA_ID);
-                    sessionStorage.removeItem('descalificado_' + SALA_ID);
-                    // Limpiar marcas
-                    for (let i = 0; i < 4; i++) localStorage.removeItem('marcas_' + SALA_ID + '_' + i);
-                    
-                    document.getElementById('btnBingo').disabled = false;
-                    document.getElementById('btnBingo').textContent = '🚨 ¡BINGO!';
-                    document.getElementById('btnBingo').style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
-                    document.getElementById('estadoJuego').className = 'estado-juego esperando';
-                    document.getElementById('estadoJuego').textContent = '⏳ Nueva partida iniciando...';
-                    document.getElementById('totalCantados').textContent = '0/75';
-                    document.getElementById('ultimaBolaJugador').querySelector('.letra').textContent = '-';
-                    document.getElementById('ultimaBolaJugador').querySelector('.numero').textContent = '--';
-                    document.getElementById('notificacionContainer').innerHTML = '';
-                    actualizarOportunidades();
-                    mostrarCartones();
-                    actualizarDisplay({});
-                    mostrarNotificacion('🔄 ¡NUEVA PARTIDA! Limpia tus cartones y prepárate.', 'nueva-partida');
-                }
-            });
-        }
-
-        function mostrarNotificacion(mensaje, tipo) {
-            const cont = document.getElementById('notificacionContainer');
-            const notif = document.createElement('div');
-            notif.className = 'notificacion ' + (tipo || 'info');
-            notif.textContent = mensaje;
-            cont.appendChild(notif);
-            setTimeout(function() {
-                notif.style.opacity = '0'; notif.style.transition = 'opacity 0.5s';
-                setTimeout(function() { if (notif.parentNode) notif.remove(); }, 500);
-            }, 6000);
-        }
-
-        function toggleVoz() {
-            vozActivada = !vozActivada;
-            const btn = document.getElementById('btnVoz');
-            btn.textContent = vozActivada ? 'ACTIVADA' : 'DESACTIVADA';
-            btn.className = 'btn-voz ' + (vozActivada ? 'activada' : 'desactivada');
-        }
-
-        function decirNumero(letra, numero) {
-            if (!vozActivada) return;
-            window.speechSynthesis.cancel();
-            const msg = new SpeechSynthesisUtterance(letra + ' ' + numero);
-            msg.lang = 'es-ES'; msg.rate = 0.8; window.speechSynthesis.speak(msg);
-        }
-
-        function escucharNumeros() {
+        // ============ ESCUCHAR TODO ============
+        function escucharTodo() {
             db.ref('partidas/' + SALA_ID).on('value', function(snap) {
                 const data = snap.val();
                 if (!data) return;
                 
-                // Cargar patrón
+                // Patrón
                 if (data.patron) patronActual = data.patron;
                 
-                if (!estadoRevision && data.estado !== 'terminado' && data.estado !== 'nueva_partida') {
-                    const estadoEl = document.getElementById('estadoJuego');
-                    if (data.estado === 'jugando' || data.estado === 'iniciando') {
-                        estadoEl.className = 'estado-juego jugando';
-                        estadoEl.textContent = '▶️ Juego en progreso';
+                // Estado del juego
+                const estadoEl = document.getElementById('estadoJuego');
+                if (data.estado === 'jugando') { estadoEl.className = 'estado-juego jugando'; estadoEl.textContent = '▶️ Juego en progreso'; }
+                else if (data.estado === 'terminado') { estadoEl.className = 'estado-juego terminado'; estadoEl.textContent = '🏁 Terminado' + (data.ganador ? ' - ' + data.ganador : ''); }
+                else if (data.estado === 'pausa') { estadoEl.className = 'estado-juego pausa'; estadoEl.textContent = '⏸️ PAUSA - Revisa tus números'; }
+                else if (data.estado === 'nueva_partida') { reiniciarParaNuevaPartida(); }
+                else if (data.estado === 'iniciando') { estadoEl.className = 'estado-juego jugando'; estadoEl.textContent = '🔔 ¡Atención! El juego va a comenzar'; }
+                
+                // Pausa cada 25
+                if (data.pausa) {
+                    document.getElementById('pausaInfo').style.display = 'block';
+                } else {
+                    document.getElementById('pausaInfo').style.display = 'none';
+                }
+                
+                // Revisando
+                if (data.revisando && data.revisando.activo) {
+                    if (data.revisando.jugador === NOMBRE_JUGADOR) {
+                        mostrarNotificacion('🔍 El admin está revisando TU bingo...', 'revisando');
                     }
                 }
                 
+                // Resultado revisión
+                if (data.resultadoRevision && data.resultadoRevision.jugador === NOMBRE_JUGADOR) {
+                    if (data.resultadoRevision.resultado === 'errado') {
+                        bingosErrados++;
+                        sessionStorage.setItem('bingos_errados_' + SALA_ID, bingosErrados.toString());
+                        actualizarInfo();
+                        document.getElementById('btnBingo').disabled = false;
+                        document.getElementById('btnBingo').textContent = '🚨 ¡BINGO!';
+                        if (bingosErrados >= 2) descalificarJugador();
+                    } else if (data.resultadoRevision.resultado === 'valido') {
+                        bingosGanados++;
+                        sessionStorage.setItem('bingos_ganados_' + SALA_ID, bingosGanados.toString());
+                        actualizarInfo();
+                        if (bingosGanados >= 2) {
+                            document.getElementById('btnBingo').disabled = true;
+                            document.getElementById('btnBingo').textContent = '🏆 MÁXIMO ALCANZADO';
+                        }
+                        mostrarNotificacion('🎉 ¡BINGO VÁLIDO! Has ganado ' + bingosGanados + '/2', 'ganador');
+                    }
+                }
+                
+                // Números cantados
                 if (data.cantados && data.cantados.length > 0) {
                     if (data.cantados.length > numerosCantados.length && data.ultimaBola && data.ultimaBola !== ultimoNumeroVoz) {
                         ultimoNumeroVoz = data.ultimaBola;
-                        decirNumero(obtenerLetra(data.ultimaBola), data.ultimaBola);
+                        if (vozActivada && 'speechSynthesis' in window) {
+                            window.speechSynthesis.cancel();
+                            const msg = new SpeechSynthesisUtterance(obtenerLetra(data.ultimaBola) + ' ' + data.ultimaBola);
+                            msg.lang = 'es-ES'; msg.rate = 0.8; window.speechSynthesis.speak(msg);
+                        }
                     }
                     numerosCantados = data.cantados;
                     actualizarDisplay(data);
                     mostrarCartones();
                 }
+                
+                // Cronómetro
+                if (data.cronometro !== undefined) {
+                    tiempoRestante = data.cronometro;
+                    actualizarCronometro();
+                    if (data.cronometro > 0 && !intervaloCron) iniciarCronometro();
+                }
+                
+                // Alerta de inicio
+                if (data.alertaInicio && data.alertaInicio !== sessionStorage.getItem('alerta_' + SALA_ID)) {
+                    sessionStorage.setItem('alerta_' + SALA_ID, data.alertaInicio);
+                    if ('speechSynthesis' in window) {
+                        const msg = new SpeechSynthesisUtterance('¡Atención! El bingo va a comenzar. Prepárate.');
+                        msg.lang = 'es-ES'; window.speechSynthesis.speak(msg);
+                    }
+                    mostrarNotificacion('🔔 ¡El juego va a comenzar! Prepárate.', 'alerta');
+                }
             });
+        }
+
+        function reiniciarParaNuevaPartida() {
+            numerosCantados = []; bingosErrados = 0; bingosGanados = 0;
+            descalificado = false; cartonSeleccionado = null; patronActual = Array(25).fill(false);
+            sessionStorage.removeItem('bingos_errados_' + SALA_ID);
+            sessionStorage.removeItem('bingos_ganados_' + SALA_ID);
+            sessionStorage.removeItem('descalificado_' + SALA_ID);
+            for (let i=0;i<4;i++) localStorage.removeItem('marcas_'+SALA_ID+'_'+i);
+            document.getElementById('btnBingo').disabled = false;
+            document.getElementById('btnBingo').textContent = '🚨 ¡BINGO!';
+            document.getElementById('btnBingo').style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+            document.getElementById('totalCantados').textContent = '0/75';
+            actualizarInfo();
+            mostrarCartones();
+            mostrarNotificacion('🔄 ¡NUEVA PARTIDA!', 'nueva-partida');
+        }
+
+        function iniciarCronometro() {
+            if (intervaloCron) clearInterval(intervaloCron);
+            intervaloCron = setInterval(function() {
+                if (tiempoRestante > 0) tiempoRestante--;
+                actualizarCronometro();
+                if (tiempoRestante <= 0 && intervaloCron) { clearInterval(intervaloCron); intervaloCron = null; }
+            }, 1000);
+        }
+
+        function actualizarCronometro() {
+            const mins = Math.floor(tiempoRestante / 60), segs = tiempoRestante % 60;
+            document.getElementById('tiempoCron').textContent = String(mins).padStart(2,'0') + ':' + String(segs).padStart(2,'0');
+            document.getElementById('estadoCron').textContent = tiempoRestante > 0 ? '⏳ Tiempo para iniciar' : '▶️ Jugando';
         }
 
         function actualizarDisplay(data) {
@@ -529,20 +531,18 @@
                 c.querySelector('.numero').textContent = data.ultimaBola;
             }
             document.getElementById('totalCantados').textContent = (numerosCantados.length || 0) + '/75';
-            
-            const ult = document.getElementById('ultimosNumeros');
-            ult.innerHTML = '';
-            const ultimos = numerosCantados.slice(-5).reverse();
-            ultimos.forEach(function(n) {
-                const s = document.createElement('span');
-                s.className = 'num-chico cantado'; s.textContent = obtenerLetra(n) + '-' + n;
-                ult.appendChild(s);
+            const ult = document.getElementById('ultimosNumeros'); ult.innerHTML = '';
+            numerosCantados.slice(-5).reverse().forEach(function(n) {
+                const s = document.createElement('span'); s.className = 'num-chico cantado'; s.textContent = obtenerLetra(n) + '-' + n; ult.appendChild(s);
             });
-            for (let i = ultimos.length; i < 5; i++) {
-                const s = document.createElement('span');
-                s.className = 'num-chico'; s.style.opacity = '0.3'; s.textContent = '--';
-                ult.appendChild(s);
-            }
+        }
+
+        function mostrarNotificacion(mensaje, tipo) {
+            const cont = document.getElementById('notificacionContainer');
+            const notif = document.createElement('div');
+            notif.className = 'notificacion ' + (tipo || '');
+            notif.textContent = mensaje; cont.appendChild(notif);
+            setTimeout(() => { notif.style.opacity = '0'; notif.style.transition = 'opacity 0.5s'; setTimeout(() => { if (notif.parentNode) notif.remove(); }, 500); }, 5000);
         }
 
         function abrirModalNumeros() {
@@ -550,17 +550,13 @@
             const lista = document.getElementById('modalNumerosList');
             lista.innerHTML = numerosCantados.length === 0 ? '<p style="color:#94a3b8;">No hay números</p>' : '';
             numerosCantados.slice().sort((a,b)=>a-b).forEach(function(n) {
-                const s = document.createElement('span');
-                s.className = 'num-chico cantado'; s.textContent = obtenerLetra(n) + '-' + n;
-                lista.appendChild(s);
+                const s = document.createElement('span'); s.className = 'num-chico cantado'; s.textContent = obtenerLetra(n) + '-' + n; lista.appendChild(s);
             });
         }
 
         function cerrarModalNumeros() { document.getElementById('modalNumeros').classList.remove('activo'); }
-        function obtenerLetra(n) {
-            if (n <= 15) return 'B'; if (n <= 30) return 'I';
-            if (n <= 45) return 'N'; if (n <= 60) return 'G'; return 'O';
-        }
+        function toggleVoz() { vozActivada = !vozActivada; const b = document.getElementById('btnVoz'); b.textContent = vozActivada ? 'VOZ ON' : 'VOZ OFF'; b.className = 'btn-voz ' + (vozActivada ? 'activada' : 'desactivada'); }
+        function obtenerLetra(n) { if (n <= 15) return 'B'; if (n <= 30) return 'I'; if (n <= 45) return 'N'; if (n <= 60) return 'G'; return 'O'; }
     </script>
 </body>
 </html>
