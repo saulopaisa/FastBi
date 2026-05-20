@@ -48,12 +48,17 @@
         <!-- VERIFICADOR DE CARTÓN -->
         <div class="verifier-area">
             <div class="verifier-title">🔍 VERIFICAR CARTÓN</div>
-            <div style="display: flex; gap: 5px; margin-bottom: 8px;">
-                <input type="text" id="idABuscar" placeholder="ID o # Cartón" style="flex:1;">
-                <button onclick="window.revisarCartonManual()" class="btn-programar" style="padding: 8px 15px;">
-                    BUSCAR
-                </button>
-            </div>
+           <div style="display: flex; gap: 5px; margin-bottom: 8px;">
+    <input type="text" id="idABuscar" placeholder="ID o # Cartón" style="flex:1;">
+    <button onclick="window.revisarCartonManual()" class="btn-programar" style="padding: 8px 15px;">
+        BUSCAR
+    </button>
+</div>
+<div style="display: flex; gap: 5px; margin-bottom: 8px;">
+    <button onclick="window.notificarRevisionJugador()" class="btn-programar" style="flex:1; background: #f59e0b; color: #16213e;">
+        🔍 NOTIFICAR REVISIÓN AL JUGADOR
+    </button>
+</div>
             
             <!-- Minicartón verificador -->
             <div id="minicartonVerificador" class="minicarton-container">
