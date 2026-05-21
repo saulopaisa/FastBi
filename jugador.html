@@ -57,6 +57,7 @@
         .notificacion.nueva-partida { background: #8b5cf6; color: white; }
         .notificacion.info { background: #334155; color: white; }
         .notificacion.bingo-manual { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; border-left: 4px solid #ffca28; }
+        .notificacion.mensaje-admin { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; border-left: 4px solid #ffca28; }
         @keyframes slideDown { from{transform:translateY(-100%);opacity:0;} to{transform:translateY(0);opacity:1;} }
 
         .numeros-section {
@@ -349,7 +350,7 @@
 
         function reiniciarParaNuevaPartida() {
             numerosCantados = []; bingosErrados = 0; bingosGanados = 0; descalificado = false; cartonSeleccionado = null; patronActual = Array(25).fill(false);
-            sessionStorage.removeItem('bingos_errados_' + SALA_ID); sessionStorage.removeItem('bingos_ganados_' + SALA_ID); sessionStorage.removeItem('descalificado_' + SALA_ID); sessionStorage.removeItem('alerta_' + SALA_ID);
+            sessionStorage.removeItem('bingos_errados_' + SALA_ID); sessionStorage.removeItem('bingos_ganados_' + SALA_ID); sessionStorage.removeItem('descalificado_' + SALA_ID); sessionStorage.removeItem('alerta_' + SALA_ID); sessionStorage.removeItem('msg_' + SALA_ID); sessionStorage.removeItem('lastMsg_' + SALA_ID);
             for (let i=0;i<4;i++) localStorage.removeItem('marcas_'+SALA_ID+'_'+i);
             const btnBingo = document.getElementById('btnBingo'); btnBingo.disabled = false; btnBingo.textContent = '🚨 ¡BINGO!'; btnBingo.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
             document.getElementById('totalCantados').textContent = '0/75'; document.getElementById('estadoJuego').className = 'estado-juego esperando'; document.getElementById('estadoJuego').textContent = '⏳ Nueva partida iniciando...';
@@ -371,6 +372,25 @@
                 else if (data.estado === 'pausa') { estadoEl.className = 'estado-juego pausa'; estadoEl.textContent = '⏸️ PAUSA'; document.getElementById('pausaInfo').style.display = 'block'; }
                 else if (data.estado === 'iniciando') { estadoEl.className = 'estado-juego jugando'; estadoEl.textContent = '🔔 ¡El juego va a comenzar!'; }
                 if (!data.pausa) document.getElementById('pausaInfo').style.display = 'none';
+                
+                // MENSAJE DEL ADMIN
+                if (data.mensajeAdmin && data.mensajeAdmin !== sessionStorage.getItem('msg_' + SALA_ID)) {
+                    sessionStorage.setItem('msg_' + SALA_ID, data.mensajeAdmin);
+                    mostrarNotificacion('📝 Admin: ' + data.mensajeAdmin, 'mensaje-admin');
+                }
+                
+                // MENSAJES INDIVIDUALES
+                if (data.mensajesIndividuales) {
+                    db.ref('partidas/' + SALA_ID + '/mensajesIndividuales').orderByChild('timestamp').startAt(parseInt(sessionStorage.getItem('lastMsg_' + SALA_ID) || '0') + 1).once('value', function(msgSnap) {
+                        msgSnap.forEach(function(msgChild) {
+                            const msg = msgChild.val();
+                            if (msg.jugador === NOMBRE_JUGADOR) {
+                                sessionStorage.setItem('lastMsg_' + SALA_ID, msg.timestamp.toString());
+                                mostrarNotificacion('💬 Admin: ' + msg.mensaje, 'mensaje-admin');
+                            }
+                        });
+                    });
+                }
                 
                 if (data.revisando && data.revisando.activo) {
                     if (data.revisando.jugador === NOMBRE_JUGADOR) { mostrarNotificacion('🔍 El admin está revisando TU bingo... Espera.', 'revisando'); }
