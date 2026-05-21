@@ -34,6 +34,16 @@
                     ⏰ PROGRAMAR
                 </button>
             </div>
+
+            <!-- BOTONES DE MENSAJES -->
+            <div style="display:flex;gap:5px;margin-bottom:8px;">
+                <button onclick="window.enviarMensajeJugador()" class="btn-programar" style="flex:1;background:#6366f1;color:white;">
+                    📝 MSJ A TODOS
+                </button>
+                <button onclick="window.enviarMensajeIndividual()" class="btn-programar" style="flex:1;background:#8b5cf6;color:white;">
+                    💬 MSJ INDIVIDUAL
+                </button>
+            </div>
             
             <button id="btnAutoBingo" onclick="window.iniciarBingoAutomatico()" class="btn-accion" disabled 
                 style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
@@ -48,17 +58,15 @@
         <!-- VERIFICADOR DE CARTÓN -->
         <div class="verifier-area">
             <div class="verifier-title">🔍 VERIFICAR CARTÓN</div>
-           <div style="display: flex; gap: 5px; margin-bottom: 8px;">
-    <input type="text" id="idABuscar" placeholder="ID o # Cartón" style="flex:1;">
-    <button onclick="window.revisarCartonManual()" class="btn-programar" style="padding: 8px 15px;">
-        BUSCAR
-    </button>
-</div>
-<div style="display: flex; gap: 5px; margin-bottom: 8px;">
-    <button onclick="window.notificarRevisionJugador()" class="btn-programar" style="flex:1; background: #f59e0b; color: #16213e;">
-        🔍 NOTIFICAR REVISIÓN AL JUGADOR
-    </button>
-</div>
+            <div style="display: flex; gap: 5px; margin-bottom: 8px;">
+                <input type="text" id="idABuscar" placeholder="ID o # Cartón" style="flex:1;">
+                <button onclick="window.revisarCartonManual()" class="btn-programar" style="padding: 8px 15px;">
+                    BUSCAR
+                </button>
+            </div>
+            <button onclick="window.notificarRevisionJugador()" class="btn-programar" style="width:100%;padding:8px;margin-bottom:8px;background:#f59e0b;color:#16213e;">
+                🔍 NOTIFICAR REVISIÓN AL JUGADOR
+            </button>
             
             <!-- Minicartón verificador -->
             <div id="minicartonVerificador" class="minicarton-container">
@@ -85,7 +93,7 @@
 
     <!-- ============ PANEL DERECHO ============ -->
     <div class="main-content">
-        <!-- Header del panel derecho con botón -->
+        <!-- Header con botones -->
         <div class="panel-header">
             <h3>📊 TABLERO DE SEGUIMIENTO (1-75)</h3>
             <div class="panel-header-botones">
