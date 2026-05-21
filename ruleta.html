@@ -37,12 +37,7 @@
 
             <!-- BOTONES DE MENSAJES -->
             <div style="display:flex;gap:5px;margin-bottom:8px;">
-                <button onclick="window.enviarMensajeJugador()" class="btn-programar" style="flex:1;background:#6366f1;color:white;">
-                    📝 MSJ A TODOS
-                </button>
-                <button onclick="window.enviarMensajeIndividual()" class="btn-programar" style="flex:1;background:#8b5cf6;color:white;">
-                    💬 MSJ INDIVIDUAL
-                </button>
+                <button id="btnMensaje" onclick="window.enviarMensajeJugador()" class="btn-programar" style="width:100%;background:#6366f1;color:white;" disabled>📝 MENSAJE A TODOS</button>
             </div>
             
             <button id="btnAutoBingo" onclick="window.iniciarBingoAutomatico()" class="btn-accion" disabled 
