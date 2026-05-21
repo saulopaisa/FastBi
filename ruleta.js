@@ -15,6 +15,9 @@ window.intervaloTemporizador = null;
 window.bingoDetectado = false;
 window.etapaActual = localStorage.getItem('bingo_etapa_' + SALA_ID) ? parseInt(localStorage.getItem('bingo_etapa_' + SALA_ID)) : 1;
 window.modoJuegoSeleccionado = null;
+window.ganadoresPartida = parseInt(sessionStorage.getItem('ganadores_' + SALA_ID) || '0');
+window.enPausa = false;
+window.pausaTimeout = null;
 
 // ============ AUDIO BINGO (SISTEMA) ============
 function reproducirAudioBingo(nombreJugador) {
@@ -101,22 +104,14 @@ function inicializarTablero75() {
 
 function actualizarUltimaBola() {
     const c = document.getElementById('ultimaBola'); if (!c) return;
-    if (window.cantados.length > 0) {
-        const u = window.cantados[window.cantados.length - 1];
-        c.querySelector('.letra').textContent = obtenerLetra(u);
-        c.querySelector('.numero').textContent = u;
-    } else { c.querySelector('.letra').textContent = '-'; c.querySelector('.numero').textContent = '--'; }
+    if (window.cantados.length > 0) { const u = window.cantados[window.cantados.length - 1]; c.querySelector('.letra').textContent = obtenerLetra(u); c.querySelector('.numero').textContent = u; }
+    else { c.querySelector('.letra').textContent = '-'; c.querySelector('.numero').textContent = '--'; }
 }
 
 function actualizarUltimosCantados() {
     const c = document.getElementById('ultimosCantados'); if (!c) return; c.innerHTML = '';
     const u = window.cantados.slice(-5).reverse();
-    for (let i = 0; i < 5; i++) {
-        const d = document.createElement('div');
-        d.className = i < u.length ? 'ultimo-item' : 'ultimo-item vacio';
-        d.innerHTML = i < u.length ? '<div class="letra-peq">' + obtenerLetra(u[i]) + '</div><div class="num-peq">' + u[i] + '</div>' : '<div class="letra-peq">-</div><div class="num-peq">--</div>';
-        c.appendChild(d);
-    }
+    for (let i = 0; i < 5; i++) { const d = document.createElement('div'); d.className = i < u.length ? 'ultimo-item' : 'ultimo-item vacio'; d.innerHTML = i < u.length ? '<div class="letra-peq">' + obtenerLetra(u[i]) + '</div><div class="num-peq">' + u[i] + '</div>' : '<div class="letra-peq">-</div><div class="num-peq">--</div>'; c.appendChild(d); }
 }
 
 function obtenerLetra(n) { if (n <= 15) return 'B'; if (n <= 30) return 'I'; if (n <= 45) return 'N'; if (n <= 60) return 'G'; return 'O'; }
@@ -130,9 +125,8 @@ function guardarEstado() {
 
 function actualizarOnlineCount() {
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
-        let count = 0;
-        snap.forEach(function(child) { const c = child.val(); if (c.estado === 'asignado' && window.jugadoresActivos.includes(c.asignadoA)) count++; });
-        const el = document.getElementById('onlineCount'); if (el) el.innerHTML = '👥 JUGADORES EN RONDA: ' + count;
+        let count = 0; snap.forEach(function(child) { const c = child.val(); if (c.estado === 'asignado' && window.jugadoresActivos.includes(c.asignadoA)) count++; });
+        const el = document.getElementById('onlineCount'); if (el) el.innerHTML = '👥 JUGADORES EN RONDA: ' + count + ' | 🏆 Ganadores: ' + window.ganadoresPartida + '/2';
     });
 }
 
@@ -141,21 +135,27 @@ function actualizarEtapas() {
     const btn1 = document.getElementById('btnEtapa1'), btn2 = document.getElementById('btnEtapa2');
     const btnAuto = document.getElementById('btnAutoBingo'), btnManual = document.getElementById('drawBtn');
     const btnProg = document.getElementById('btnProgramar'), panel = document.getElementById('panelJuego');
+    const btnMsj = document.getElementById('btnMensaje');
+    
     if (window.etapaActual === 1) {
         if (btn1) btn1.style.opacity = '1'; if (btn2) { btn2.disabled = true; btn2.style.opacity = '0.4'; }
         if (btnAuto) { btnAuto.disabled = true; btnAuto.style.opacity = '0.4'; }
         if (btnManual) { btnManual.style.opacity = '0.4'; btnManual.style.pointerEvents = 'none'; }
         if (btnProg) btnProg.disabled = true; if (panel) { panel.style.opacity = '0.4'; panel.style.pointerEvents = 'none'; }
+        if (btnMsj) btnMsj.disabled = true;
     } else if (window.etapaActual === 2) {
         if (btn1) btn1.style.opacity = '0.5'; if (btn2) { btn2.disabled = false; btn2.style.opacity = '1'; }
         if (btnAuto) { btnAuto.disabled = true; btnAuto.style.opacity = '0.4'; }
         if (btnManual) { btnManual.style.opacity = '0.4'; btnManual.style.pointerEvents = 'none'; }
         if (btnProg) btnProg.disabled = true; if (panel) { panel.style.opacity = '0.4'; panel.style.pointerEvents = 'none'; }
+        if (btnMsj) btnMsj.disabled = true;
     } else if (window.etapaActual === 3) {
         if (btn1) btn1.style.opacity = '0.5'; if (btn2) { btn2.style.opacity = '0.5'; btn2.disabled = true; }
-        if (btnAuto) { btnAuto.disabled = false; btnAuto.style.opacity = '1'; }
-        if (btnManual) { btnManual.style.opacity = '1'; btnManual.style.pointerEvents = 'all'; }
-        if (btnProg) btnProg.disabled = false; if (panel) { panel.style.opacity = '1'; panel.style.pointerEvents = 'all'; }
+        if (btnAuto) { btnAuto.disabled = window.enPausa; btnAuto.style.opacity = window.enPausa ? '0.4' : '1'; }
+        if (btnManual) { btnManual.style.opacity = window.enPausa ? '0.4' : '1'; btnManual.style.pointerEvents = window.enPausa ? 'none' : 'all'; }
+        if (btnProg) btnProg.disabled = window.enPausa;
+        if (panel) { panel.style.opacity = window.enPausa ? '0.4' : '1'; panel.style.pointerEvents = window.enPausa ? 'none' : 'all'; }
+        if (btnMsj) btnMsj.disabled = false;
     }
 }
 function abrirModal(id) { const m = document.getElementById(id); if (m) m.classList.add('activo'); }
@@ -208,92 +208,42 @@ window.abrirModalPatron = function() {
 window.confirmarPatron = function() { db.ref('partidas/' + SALA_ID + '/patron').set(window.patronBingo); window.etapaActual = 3; window.juegoActivo = true; guardarEstado(); actualizarEtapas(); cerrarModal('modalPatron'); };
 window.aplicarPredefinido = function(t) { if (t === 'lleno') window.patronBingo = Array(25).fill(true); if (t === 'limpiar') window.patronBingo = Array(25).fill(false); if (t === 'equis') { window.patronBingo = Array(25).fill(false); [0,4,6,8,12,16,18,20,24].forEach(p => window.patronBingo[p] = true); } guardarEstado(); window.abrirModalPatron(); };
 
-// ============ TEMPORIZADOR (PREGUNTA MODO ANTES) ============
+// ============ TEMPORIZADOR ============
 window.programarJuego = function() {
     const min = parseInt(document.getElementById('minutosInicio').value) || 0;
-    if (min <= 0) { alert('Ingresa los minutos para el inicio'); return; }
-    
-    const modo = confirm('⏰ Se iniciará el cronómetro de ' + min + ' minutos.\n\n' +
-        '¿Deseas que al llegar a CERO el juego inicie en modo AUTOMÁTICO?\n\n' +
-        '✅ ACEPTAR = Modo AUTOMÁTICO (canta solo cada 11 seg)\n' +
-        '❌ CANCELAR = Modo MANUAL (tú cantas las bolas)');
-    
+    if (min <= 0) { alert('Ingresa los minutos'); return; }
+    const modo = confirm('⏰ Cronómetro de ' + min + ' min.\n\n¿Modo AUTOMÁTICO al llegar a 0?\n✅ Aceptar = Auto\n❌ Cancelar = Manual');
     window.modoJuegoSeleccionado = modo ? 'automatico' : 'manual';
-    
     if (window.intervaloTemporizador) clearInterval(window.intervaloTemporizador);
-    const btnProg = document.getElementById('btnProgramar');
-    if (btnProg) { btnProg.textContent = '⏳ ESPERANDO... (' + (modo ? 'AUTO' : 'MANUAL') + ')'; btnProg.disabled = true; }
-    
-    let tiempo = min * 60;
-    const cron = document.getElementById('cronometroBingo');
-    if (cron) cron.textContent = min + ':00';
-    
-    db.ref('partidas/' + SALA_ID).update({
-        cronometro: tiempo, estado: 'iniciando',
-        alertaInicio: 'inicio_' + Date.now(),
-        mensajeAdmin: '⏰ Juego inicia en ' + min + ' min. Modo: ' + (modo ? 'AUTOMÁTICO' : 'MANUAL'),
-        timestamp: Date.now()
-    });
-    
+    const btnProg = document.getElementById('btnProgramar'); if (btnProg) { btnProg.textContent = '⏳ ESPERANDO... (' + (modo ? 'AUTO' : 'MANUAL') + ')'; btnProg.disabled = true; }
+    let tiempo = min * 60; const cron = document.getElementById('cronometroBingo'); if (cron) cron.textContent = min + ':00';
+    db.ref('partidas/' + SALA_ID).update({ cronometro: tiempo, estado: 'iniciando', alertaInicio: 'inicio_' + Date.now(), mensajeAdmin: '⏰ Juego en ' + min + ' min. Modo: ' + (modo ? 'AUTO' : 'MANUAL'), timestamp: Date.now() });
     window.intervaloTemporizador = setInterval(function() {
-        tiempo--;
-        const mins = Math.floor(tiempo / 60), segs = tiempo % 60;
-        if (cron) cron.textContent = String(mins).padStart(2,'0') + ':' + String(segs).padStart(2,'0');
+        tiempo--; const mins = Math.floor(tiempo / 60), segs = tiempo % 60; if (cron) cron.textContent = String(mins).padStart(2,'0') + ':' + String(segs).padStart(2,'0');
         db.ref('partidas/' + SALA_ID).update({ cronometro: tiempo });
-        
-        if (tiempo <= 0) {
-            clearInterval(window.intervaloTemporizador);
-            window.intervaloTemporizador = null;
-            if (cron) cron.textContent = '00:00';
-            if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; }
-            
-            db.ref('partidas/' + SALA_ID).update({
-                estado: 'jugando', cronometro: 0,
-                mensajeAdmin: '▶️ ¡El juego ha comenzado! Modo: ' + (window.modoJuegoSeleccionado === 'automatico' ? 'AUTOMÁTICO' : 'MANUAL'),
-                timestamp: Date.now()
-            });
-            
-            if ('speechSynthesis' in window) {
-                const msg = new SpeechSynthesisUtterance('¡Es hora de empezar el bingo!');
-                msg.lang = 'es-ES'; window.speechSynthesis.speak(msg);
-            }
-            
-            if (window.modoJuegoSeleccionado === 'automatico') {
-                window.iniciarBingoAutomatico();
-                alert('🤖 Modo AUTOMÁTICO activado. ¡El juego comenzó solo!');
-            } else {
-                alert('🎲 Modo MANUAL activado. Usa el botón SORTEAR BOLA.');
-            }
+        if (tiempo <= 0) { clearInterval(window.intervaloTemporizador); window.intervaloTemporizador = null; if (cron) cron.textContent = '00:00'; if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; }
+            db.ref('partidas/' + SALA_ID).update({ estado: 'jugando', cronometro: 0, mensajeAdmin: '▶️ ¡Juego iniciado! Modo: ' + (window.modoJuegoSeleccionado === 'automatico' ? 'AUTO' : 'MANUAL'), timestamp: Date.now() });
+            if ('speechSynthesis' in window) { const msg = new SpeechSynthesisUtterance('¡Es hora de empezar el bingo!'); msg.lang = 'es-ES'; window.speechSynthesis.speak(msg); }
+            if (window.modoJuegoSeleccionado === 'automatico') { window.iniciarBingoAutomatico(); alert('🤖 Modo AUTOMÁTICO activado.'); } else { alert('🎲 Modo MANUAL.'); }
         }
     }, 1000);
 };
 
-// ============ MENSAJES A JUGADORES ============
+// ============ MENSAJES ============
 window.enviarMensajeJugador = function() {
-    const mensaje = prompt('📝 Escribe el mensaje para TODOS los jugadores:');
+    const mensaje = prompt('📝 Mensaje para TODOS los jugadores:');
     if (!mensaje || !mensaje.trim()) return;
     db.ref('partidas/' + SALA_ID).update({ mensajeAdmin: mensaje.trim(), timestamp: Date.now() });
-    alert('✅ Mensaje enviado a todos los jugadores.');
+    alert('✅ Mensaje enviado.');
 };
 
-window.enviarMensajeIndividual = function() {
-    const jugador = prompt('👤 Nombre del jugador:');
-    if (!jugador || !jugador.trim()) return;
-    const mensaje = prompt('📝 Mensaje para ' + jugador + ':');
-    if (!mensaje || !mensaje.trim()) return;
-    db.ref('partidas/' + SALA_ID + '/mensajesIndividuales').push({
-        jugador: jugador.trim(), mensaje: mensaje.trim(), timestamp: Date.now()
-    });
-    alert('✅ Mensaje enviado a ' + jugador + '.');
-};
-
-// ============ BINGO AUTOMÁTICO ============
+// ============ BINGO AUTOMÁTICO (NO SE DETIENE CON BINGO) ============
 window.iniciarBingoAutomatico = function() {
-    if (window.modoAutomatico) return;
+    if (window.modoAutomatico || window.enPausa) return;
     window.modoAutomatico = true; window.bingoDetectado = false;
     const btnAuto = document.getElementById('btnAutoBingo'); if (btnAuto) { btnAuto.textContent = '⏸️ DETENER'; btnAuto.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)'; btnAuto.onclick = window.detenerBingoAutomatico; }
     const btnManual = document.getElementById('drawBtn'); if (btnManual) { btnManual.style.opacity = '0.5'; btnManual.style.pointerEvents = 'none'; }
-    function cantarAuto() { if (!window.modoAutomatico || window.bingoDetectado) return; if (window.cantados.length >= 75) { window.detenerBingoAutomatico(); return; } let b, i = 0; do { b = Math.floor(Math.random()*75)+1; i++; } while (window.cantados.includes(b) && i < 1000); cantarBola(b); verificarTodosLosCartones(); verificarPausa(); }
+    function cantarAuto() { if (!window.modoAutomatico || window.enPausa) return; if (window.cantados.length >= 75) { window.detenerBingoAutomatico(); return; } let b, i = 0; do { b = Math.floor(Math.random()*75)+1; i++; } while (window.cantados.includes(b) && i < 1000); cantarBola(b); verificarTodosLosCartones(); verificarPausa(); }
     window.intervaloAutomatico = setInterval(cantarAuto, 11000); setTimeout(cantarAuto, 500);
     db.ref('partidas/' + SALA_ID).update({ modo: 'automatico' });
 };
@@ -304,13 +254,21 @@ window.detenerBingoAutomatico = function() {
     db.ref('partidas/' + SALA_ID).update({ modo: 'manual' });
 };
 
-// ============ PAUSA CADA 25 ============
+// ============ PAUSA CADA 25 (DESHABILITA TODO) ============
 function verificarPausa() {
-    if (window.cantados.length > 0 && window.cantados.length % 25 === 0 && window.cantados.length < 75) {
-        db.ref('partidas/' + SALA_ID).update({ estado: 'pausa', pausa: true, mensaje: '⏸️ PAUSA', timestamp: Date.now() });
+    if (window.cantados.length > 0 && window.cantados.length % 25 === 0 && window.cantados.length < 75 && !window.enPausa) {
+        window.enPausa = true;
+        db.ref('partidas/' + SALA_ID).update({ estado: 'pausa', pausa: true, mensajeAdmin: '⏸️ PAUSA de 1 minuto - Revisa tus números', timestamp: Date.now() });
         if (window.modoAutomatico) window.detenerBingoAutomatico();
-        alert('⏸️ PAUSA de 1 minuto cada 25 números.');
-        setTimeout(function() { db.ref('partidas/' + SALA_ID).update({ estado: 'jugando', pausa: false, timestamp: Date.now() }); alert('✅ Pausa terminada.'); }, 60000);
+        actualizarEtapas();
+        alert('⏸️ PAUSA de 1 minuto cada 25 números.\nSe deshabilitaron las opciones.');
+        
+        window.pausaTimeout = setTimeout(function() {
+            window.enPausa = false;
+            db.ref('partidas/' + SALA_ID).update({ estado: 'jugando', pausa: false, mensajeAdmin: '▶️ Juego reanudado', timestamp: Date.now() });
+            actualizarEtapas();
+            alert('✅ Pausa terminada. Ya puedes continuar.');
+        }, 60000);
     }
 }
 
@@ -326,7 +284,7 @@ function cantarBola(bola) {
 }
 
 document.getElementById('drawBtn').addEventListener('click', function() {
-    if (window.modoAutomatico || window.etapaActual !== 3) return;
+    if (window.modoAutomatico || window.etapaActual !== 3 || window.enPausa) return;
     if (window.cantados.length >= 75) { alert('🎉 Fin'); return; }
     let b, i = 0; do { b = Math.floor(Math.random()*75)+1; i++; } while (window.cantados.includes(b) && i < 1000);
     cantarBola(b); verificarTodosLosCartones(); verificarPausa();
@@ -338,7 +296,7 @@ function verificarTodosLosCartones() {
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
         let bingo = false, ganador = null;
         snap.forEach(function(child) { const c = child.val(); if (c.estado === 'asignado' && window.jugadoresActivos.includes(c.asignadoA) && verificarBingoCarton(c) && !bingo) { bingo = true; ganador = c; } });
-        if (bingo && ganador) { window.bingoDetectado = true; notificarBingo(ganador); }
+        if (bingo && ganador) { window.bingoDetectado = true; notificarBingo(ganador); /* NO detener automático */ }
     });
 }
 function verificarBingoCarton(c) { if (!c || !c.carton || !window.patronBingo) return false; for (let i = 0; i < 25; i++) { if (!window.patronBingo[i]) continue; const f = Math.floor(i/5), col = i%5, l = ['B','I','N','G','O'][col]; if (i !== 12 && !window.cantados.includes(c.carton[l][f])) return false; } return true; }
@@ -368,12 +326,10 @@ function verificarBingoAutomatico(c) {
 
 // ============ NOTIFICAR REVISIÓN ============
 window.notificarRevisionJugador = function() {
-    const c = window.cartonEnAlerta || window.cartonActual;
-    const nombre = c ? (c.asignadoA || 'Jugador') : 'Jugador';
+    const c = window.cartonEnAlerta || window.cartonActual; const nombre = c ? (c.asignadoA || 'Jugador') : 'Jugador';
     db.ref('partidas/' + SALA_ID + '/revisando').set({ activo: true, jugador: nombre, timestamp: Date.now() });
-    const cont = document.getElementById('notificacionesBingo');
-    if (cont) { const notif = document.createElement('div'); notif.className = 'notificacion-bingo'; notif.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)'; notif.innerHTML = '<div class="notif-jugador">🔍 REVISANDO</div><div class="notif-carton">👤 ' + nombre + '</div>'; cont.insertBefore(notif, cont.firstChild); }
-    alert('🔍 Se notificó a ' + nombre + ' que estás revisando.');
+    const cont = document.getElementById('notificacionesBingo'); if (cont) { const notif = document.createElement('div'); notif.className = 'notificacion-bingo'; notif.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)'; notif.innerHTML = '<div class="notif-jugador">🔍 REVISANDO</div><div class="notif-carton">👤 ' + nombre + '</div>'; cont.insertBefore(notif, cont.firstChild); }
+    alert('🔍 Se notificó a ' + nombre + '.');
 };
 function finalizarRevision(jugador, resultado) { db.ref('partidas/' + SALA_ID + '/revisando').set({ activo: false }); db.ref('partidas/' + SALA_ID + '/resultadoRevision').set({ jugador: jugador, resultado: resultado, timestamp: Date.now() }); }
 
@@ -382,27 +338,37 @@ function notificarBingo(c) {
     const aj = document.getElementById('alertaJugador'), ac = document.getElementById('alertaCarton'), ab = document.getElementById('alertaBingo');
     if (aj) aj.textContent = '👤 ' + (c.asignadoA||'Sin asignar'); if (ac) ac.textContent = '🎫 Cartón #' + (c.numero||'?'); if (ab) ab.style.display = 'block';
     window.cartonEnAlerta = c; reproducirAudioBingo(c.asignadoA || 'Jugador');
-    const cont = document.getElementById('notificacionesBingo');
-    if (cont) { const notif = document.createElement('div'); notif.className = 'notificacion-bingo'; notif.innerHTML = '<div class="notif-jugador">⚠️ ALERTA SISTEMA</div><div class="notif-carton">👤 ' + (c.asignadoA||'') + ' | 🎫 #' + (c.numero||'?') + '</div>'; notif.onclick = function() { document.getElementById('idABuscar').value = c.numero||''; window.revisarCartonManual(); }; cont.insertBefore(notif, cont.firstChild); }
+    const cont = document.getElementById('notificacionesBingo'); if (cont) { const notif = document.createElement('div'); notif.className = 'notificacion-bingo'; notif.innerHTML = '<div class="notif-jugador">⚠️ ALERTA SISTEMA</div><div class="notif-carton">👤 ' + (c.asignadoA||'') + ' | 🎫 #' + (c.numero||'?') + '</div>'; cont.insertBefore(notif, cont.firstChild); }
 }
 function notificarBingoManual(c) {
     const aj = document.getElementById('alertaJugador'), ac = document.getElementById('alertaCarton'), ab = document.getElementById('alertaBingo');
     if (aj) aj.textContent = '👤 ' + (c.asignadoA||'Sin asignar'); if (ac) ac.textContent = '🎫 Cartón #' + (c.numero||'?'); if (ab) ab.style.display = 'block';
     window.cartonEnAlerta = c; reproducirAudioBingoManual(c.asignadoA || 'Jugador');
-    const cont = document.getElementById('notificacionesBingo');
-    if (cont) { const notif = document.createElement('div'); notif.className = 'notificacion-bingo'; notif.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; notif.style.borderLeft = '4px solid #ffca28'; notif.innerHTML = '<div class="notif-jugador">🚨 BINGO MANUAL</div><div class="notif-carton">👤 ' + (c.asignadoA||'') + ' | 🎫 #' + (c.numero||'?') + '</div>'; notif.onclick = function() { document.getElementById('idABuscar').value = c.numero||''; window.revisarCartonManual(); }; cont.insertBefore(notif, cont.firstChild); }
+    const cont = document.getElementById('notificacionesBingo'); if (cont) { const notif = document.createElement('div'); notif.className = 'notificacion-bingo'; notif.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; notif.style.borderLeft = '4px solid #ffca28'; notif.innerHTML = '<div class="notif-jugador">🚨 BINGO MANUAL</div><div class="notif-carton">👤 ' + (c.asignadoA||'') + ' | 🎫 #' + (c.numero||'?') + '</div>'; cont.insertBefore(notif, cont.firstChild); }
 }
 function escucharBingosJugadores() { db.ref('bingos/' + SALA_ID).on('child_added', function(snap) { const bingo = snap.val(); db.ref('salas/' + SALA_ID + '/cartones/' + bingo.cartonId).once('value', function(cs) { const c = cs.val(); if (c) { notificarBingoManual(c); } }); }); }
 
-// ============ ALERTA ============
+// ============ ALERTA (MÁX 2 GANADORES) ============
 window.cerrarAlerta = function() { const ab = document.getElementById('alertaBingo'); if (ab) ab.style.display = 'none'; window.cartonEnAlerta = null; };
 window.bingoValido = function() {
     const c = window.cartonEnAlerta || window.cartonActual; const nombre = c ? (c.asignadoA || 'Jugador') : 'Jugador';
-    if (confirm('¿BINGO VÁLIDO para ' + nombre + '?')) {
-        db.ref('partidas/' + SALA_ID).update({ estado: 'terminado', ganador: nombre, timestamp: Date.now() });
-        finalizarRevision(nombre, 'valido'); if (window.modoAutomatico) window.detenerBingoAutomatico(); window.cerrarAlerta();
+    if (window.ganadoresPartida >= 2) { alert('⚠️ Ya hay 2 ganadores en esta partida. Inicia una nueva partida.'); return; }
+    if (confirm('¿BINGO VÁLIDO para ' + nombre + '?\nGanadores actuales: ' + window.ganadoresPartida + '/2')) {
+        window.ganadoresPartida++; sessionStorage.setItem('ganadores_' + SALA_ID, window.ganadoresPartida.toString());
+        actualizarOnlineCount();
+        finalizarRevision(nombre, 'valido'); window.cerrarAlerta();
         reproducirAudioGanador(nombre);
-        setTimeout(function() { alert('🎉 ¡GANADOR! ¡' + nombre + '!'); setTimeout(function() { if (confirm('🎉 ¿NUEVA PARTIDA?')) iniciarNuevaPartida(); }, 500); }, 500);
+        
+        if (window.ganadoresPartida >= 2) {
+            db.ref('partidas/' + SALA_ID).update({ estado: 'terminado', ganador: nombre, mensajeAdmin: '🎉 ¡2 GANADORES! Partida terminada.', timestamp: Date.now() });
+            if (window.modoAutomatico) window.detenerBingoAutomatico();
+            setTimeout(function() { alert('🎉 ¡2 GANADORES! ¡' + nombre + '!\n\nMáximo alcanzado. Inicia nueva partida.'); setTimeout(function() { if (confirm('🎉 ¿NUEVA PARTIDA?')) iniciarNuevaPartida(); }, 500); }, 500);
+        } else {
+            db.ref('partidas/' + SALA_ID).update({ mensajeAdmin: '🎉 ¡BINGO! ' + nombre + ' ha ganado. Ganadores: ' + window.ganadoresPartida + '/2', timestamp: Date.now() });
+            window.bingoDetectado = false; window.cartonActual = null; window.cartonEnAlerta = null;
+            alert('🎉 ¡BINGO VÁLIDO! ' + nombre + ' (' + window.ganadoresPartida + '/2)\n\nEl juego continúa para el segundo ganador.');
+            document.getElementById('minicartonVerificador').innerHTML = '<p style="color:#64748b;text-align:center;">Busca un cartón para verificar</p>';
+        }
     }
 };
 window.bingoErrado = function() {
@@ -416,26 +382,28 @@ window.bingoErrado = function() {
 
 // ============ NUEVA PARTIDA ============
 function iniciarNuevaPartida() {
-    window.cantados = []; window.bingoDetectado = false; window.cartonActual = null; window.cartonEnAlerta = null;
+    window.cantados = []; window.bingoDetectado = false; window.cartonActual = null; window.cartonEnAlerta = null; window.ganadoresPartida = 0; window.enPausa = false;
+    if (window.pausaTimeout) clearTimeout(window.pausaTimeout);
     if (window.modoAutomatico) window.detenerBingoAutomatico();
+    sessionStorage.setItem('ganadores_' + SALA_ID, '0');
     localStorage.setItem('bingo_cantados_' + SALA_ID, JSON.stringify([]));
-    db.ref('partidas/' + SALA_ID).set({ estado: 'nueva_partida', cantados: [], ultimaBola: null, ultimaLetra: null, mensaje: '🔄 Nueva partida', timestamp: Date.now(), patron: Array(25).fill(false), revisando: { activo: false }, resultadoRevision: null, pausa: false, cronometro: 0, alertaInicio: null, ganador: null, mensajeAdmin: null });
+    db.ref('partidas/' + SALA_ID).set({ estado: 'nueva_partida', cantados: [], ultimaBola: null, ultimaLetra: null, mensajeAdmin: '🔄 Nueva partida', timestamp: Date.now(), patron: Array(25).fill(false), revisando: { activo: false }, resultadoRevision: null, pausa: false, cronometro: 0, alertaInicio: null, ganador: null });
     db.ref('bingos/' + SALA_ID).remove();
     inicializarTablero75(); document.getElementById('minicartonVerificador').innerHTML = '<p style="color:#64748b;text-align:center;">Busca un cartón para verificar</p>';
     document.getElementById('notificacionesBingo').innerHTML = ''; document.getElementById('alertaBingo').style.display = 'none';
     document.getElementById('cronometroBingo').textContent = '00:00';
     const btnProg = document.getElementById('btnProgramar'); if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; }
     const btnAuto = document.getElementById('btnAutoBingo'); if (btnAuto) { btnAuto.textContent = '🤖 BINGO AUTOMÁTICO'; btnAuto.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; btnAuto.onclick = window.iniciarBingoAutomatico; }
-    document.getElementById('idABuscar').value = '';
+    document.getElementById('idABuscar').value = ''; actualizarEtapas(); actualizarOnlineCount();
     setTimeout(function() { db.ref('partidas/' + SALA_ID).update({ estado: 'jugando', cantados: [], timestamp: Date.now() }); alert('✅ Nueva partida lista.'); }, 2000);
 }
 
 // ============ REINICIAR ============
 document.getElementById('resetBtn').addEventListener('click', function() {
-    if (confirm('⚠️ ¿Reiniciar todo?')) { if (window.intervaloAutomatico) clearInterval(window.intervaloAutomatico); if (window.intervaloTemporizador) clearInterval(window.intervaloTemporizador); window.cantados = []; window.patronBingo = Array(25).fill(false); window.jugadoresActivos = []; window.juegoActivo = false; window.modoAutomatico = false; window.bingoDetectado = false; window.etapaActual = 1; window.modoJuegoSeleccionado = null; ['bingo_cantados_','bingo_patron_','bingo_jugadores_','bingo_activo_','bingo_etapa_'].forEach(k => localStorage.removeItem(k + SALA_ID)); db.ref('partidas/' + SALA_ID).remove(); db.ref('bingos/' + SALA_ID).remove(); inicializarTablero75(); actualizarEtapas(); document.getElementById('minicartonVerificador').innerHTML = '<p style="color:#64748b;text-align:center;">Busca un cartón para verificar</p>'; document.getElementById('notificacionesBingo').innerHTML = ''; document.getElementById('alertaBingo').style.display = 'none'; document.getElementById('cronometroBingo').textContent = '00:00'; const bp = document.getElementById('btnProgramar'); if (bp) { bp.textContent = '⏰ PROGRAMAR'; bp.disabled = false; } const ba = document.getElementById('btnAutoBingo'); if (ba) { ba.textContent = '🤖 BINGO AUTOMÁTICO'; ba.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; ba.onclick = window.iniciarBingoAutomatico; } document.getElementById('idABuscar').value = ''; }
+    if (confirm('⚠️ ¿Reiniciar todo?')) { if (window.intervaloAutomatico) clearInterval(window.intervaloAutomatico); if (window.intervaloTemporizador) clearInterval(window.intervaloTemporizador); if (window.pausaTimeout) clearTimeout(window.pausaTimeout); window.cantados = []; window.patronBingo = Array(25).fill(false); window.jugadoresActivos = []; window.juegoActivo = false; window.modoAutomatico = false; window.bingoDetectado = false; window.etapaActual = 1; window.modoJuegoSeleccionado = null; window.ganadoresPartida = 0; window.enPausa = false; sessionStorage.setItem('ganadores_' + SALA_ID, '0'); ['bingo_cantados_','bingo_patron_','bingo_jugadores_','bingo_activo_','bingo_etapa_'].forEach(k => localStorage.removeItem(k + SALA_ID)); db.ref('partidas/' + SALA_ID).remove(); db.ref('bingos/' + SALA_ID).remove(); inicializarTablero75(); actualizarEtapas(); document.getElementById('minicartonVerificador').innerHTML = '<p style="color:#64748b;text-align:center;">Busca un cartón para verificar</p>'; document.getElementById('notificacionesBingo').innerHTML = ''; document.getElementById('alertaBingo').style.display = 'none'; document.getElementById('cronometroBingo').textContent = '00:00'; const bp = document.getElementById('btnProgramar'); if (bp) { bp.textContent = '⏰ PROGRAMAR'; bp.disabled = false; } const ba = document.getElementById('btnAutoBingo'); if (ba) { ba.textContent = '🤖 BINGO AUTOMÁTICO'; ba.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; ba.onclick = window.iniciarBingoAutomatico; } document.getElementById('idABuscar').value = ''; actualizarOnlineCount(); }
 });
 
-document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { cerrarModal('modalCartones'); cerrarModal('modalPatron'); } if (e.code === 'Space' && window.etapaActual === 3 && !window.modoAutomatico) { e.preventDefault(); document.getElementById('drawBtn').click(); } });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { cerrarModal('modalCartones'); cerrarModal('modalPatron'); } if (e.code === 'Space' && window.etapaActual === 3 && !window.modoAutomatico && !window.enPausa) { e.preventDefault(); document.getElementById('drawBtn').click(); } });
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎮 Panel iniciado - Sala:', SALA_ID);
