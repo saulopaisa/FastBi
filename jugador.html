@@ -46,18 +46,20 @@
         }
         @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.7;} }
 
-        /* NOTIFICACIONES */
+        /* NOTIFICACIONES - COLORES DIFERENCIADOS */
         .notificacion {
             padding: 12px 15px; border-radius: 10px; margin-bottom: 8px;
             text-align: center; animation: slideDown 0.5s; font-weight: bold; font-size: 0.9rem;
         }
         .notificacion.alerta { background: #ef4444; color: white; }
+        .notificacion.alerta-sistema { background: #f59e0b; color: #16213e; border-left: 4px solid #fff; }
         .notificacion.revisando { background: #f59e0b; color: #16213e; }
         .notificacion.ganador { background: #10b981; color: white; }
         .notificacion.nueva-partida { background: #8b5cf6; color: white; }
         .notificacion.info { background: #334155; color: white; }
         .notificacion.bingo-manual { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; border-left: 4px solid #ffca28; }
         .notificacion.mensaje-admin { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; border-left: 4px solid #ffca28; }
+        .notificacion.bingo-otro { background: #ef4444; color: white; border-left: 4px solid #ffca28; font-size: 1rem; animation: slideDown 0.5s, pulse 1s infinite; }
         @keyframes slideDown { from{transform:translateY(-100%);opacity:0;} to{transform:translateY(0);opacity:1;} }
 
         .numeros-section {
@@ -350,7 +352,7 @@
 
         function reiniciarParaNuevaPartida() {
             numerosCantados = []; bingosErrados = 0; bingosGanados = 0; descalificado = false; cartonSeleccionado = null; patronActual = Array(25).fill(false);
-            sessionStorage.removeItem('bingos_errados_' + SALA_ID); sessionStorage.removeItem('bingos_ganados_' + SALA_ID); sessionStorage.removeItem('descalificado_' + SALA_ID); sessionStorage.removeItem('alerta_' + SALA_ID); sessionStorage.removeItem('msg_' + SALA_ID); sessionStorage.removeItem('lastMsg_' + SALA_ID);
+            sessionStorage.removeItem('bingos_errados_' + SALA_ID); sessionStorage.removeItem('bingos_ganados_' + SALA_ID); sessionStorage.removeItem('descalificado_' + SALA_ID); sessionStorage.removeItem('alerta_' + SALA_ID); sessionStorage.removeItem('msg_' + SALA_ID); sessionStorage.removeItem('bingo_cantado_' + SALA_ID);
             for (let i=0;i<4;i++) localStorage.removeItem('marcas_'+SALA_ID+'_'+i);
             const btnBingo = document.getElementById('btnBingo'); btnBingo.disabled = false; btnBingo.textContent = '🚨 ¡BINGO!'; btnBingo.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
             document.getElementById('totalCantados').textContent = '0/75'; document.getElementById('estadoJuego').className = 'estado-juego esperando'; document.getElementById('estadoJuego').textContent = '⏳ Nueva partida iniciando...';
@@ -379,17 +381,12 @@
                     mostrarNotificacion('📝 Admin: ' + data.mensajeAdmin, 'mensaje-admin');
                 }
                 
-                // MENSAJES INDIVIDUALES
-                if (data.mensajesIndividuales) {
-                    db.ref('partidas/' + SALA_ID + '/mensajesIndividuales').orderByChild('timestamp').startAt(parseInt(sessionStorage.getItem('lastMsg_' + SALA_ID) || '0') + 1).once('value', function(msgSnap) {
-                        msgSnap.forEach(function(msgChild) {
-                            const msg = msgChild.val();
-                            if (msg.jugador === NOMBRE_JUGADOR) {
-                                sessionStorage.setItem('lastMsg_' + SALA_ID, msg.timestamp.toString());
-                                mostrarNotificacion('💬 Admin: ' + msg.mensaje, 'mensaje-admin');
-                            }
-                        });
-                    });
+                // NOTIFICAR CUANDO ALGUIEN CANTA BINGO (ROJO)
+                if (data.bingoCantado && data.bingoCantado !== sessionStorage.getItem('bingo_cantado_' + SALA_ID)) {
+                    sessionStorage.setItem('bingo_cantado_' + SALA_ID, data.bingoCantado);
+                    if (data.bingoCantado !== NOMBRE_JUGADOR) {
+                        mostrarNotificacion('🚨 ¡' + data.bingoCantado + ' ha cantado BINGO!', 'bingo-otro');
+                    }
                 }
                 
                 if (data.revisando && data.revisando.activo) {
@@ -414,7 +411,7 @@
         function iniciarCronometro() { if (intervaloCron) clearInterval(intervaloCron); intervaloCron = setInterval(function() { if (tiempoRestante > 0) tiempoRestante--; actualizarCronometro(); if (tiempoRestante <= 0 && intervaloCron) { clearInterval(intervaloCron); intervaloCron = null; } }, 1000); }
         function actualizarCronometro() { const m = Math.floor(tiempoRestante/60), s = tiempoRestante%60; document.getElementById('tiempoCron').textContent = String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); document.getElementById('estadoCron').textContent = tiempoRestante > 0 ? '⏳ Tiempo para iniciar' : '▶️ Jugando'; }
         function actualizarDisplay(data) { if (data && data.ultimaBola) { const c = document.getElementById('ultimaBolaJugador'); c.querySelector('.letra').textContent = obtenerLetra(data.ultimaBola); c.querySelector('.numero').textContent = data.ultimaBola; } document.getElementById('totalCantados').textContent = (numerosCantados.length||0)+'/75'; const ult = document.getElementById('ultimosNumeros'); ult.innerHTML = ''; numerosCantados.slice(-5).reverse().forEach(function(n){ const s=document.createElement('span'); s.className='num-chico cantado'; s.textContent=obtenerLetra(n)+'-'+n; ult.appendChild(s); }); }
-        function mostrarNotificacion(mensaje, tipo) { const cont = document.getElementById('notificacionContainer'); const notif = document.createElement('div'); notif.className = 'notificacion ' + (tipo || 'info'); notif.textContent = mensaje; cont.appendChild(notif); setTimeout(() => { notif.style.opacity = '0'; notif.style.transition = 'opacity 0.5s'; setTimeout(() => { if (notif.parentNode) notif.remove(); }, 500); }, 5000); }
+        function mostrarNotificacion(mensaje, tipo) { const cont = document.getElementById('notificacionContainer'); const notif = document.createElement('div'); notif.className = 'notificacion ' + (tipo || 'info'); notif.textContent = mensaje; cont.appendChild(notif); setTimeout(() => { notif.style.opacity = '0'; notif.style.transition = 'opacity 0.5s'; setTimeout(() => { if (notif.parentNode) notif.remove(); }, 500); }, 40000); }
         function abrirModalNumeros() { document.getElementById('modalNumeros').classList.add('activo'); const lista = document.getElementById('modalNumerosList'); lista.innerHTML = numerosCantados.length === 0 ? '<p style="color:#94a3b8;">No hay números</p>' : ''; numerosCantados.slice().sort((a,b)=>a-b).forEach(function(n){ const s=document.createElement('span'); s.className='num-chico cantado'; s.textContent=obtenerLetra(n)+'-'+n; lista.appendChild(s); }); }
         function cerrarModalNumeros() { document.getElementById('modalNumeros').classList.remove('activo'); }
         function toggleVoz() { vozActivada = !vozActivada; const b = document.getElementById('btnVoz'); b.textContent = vozActivada ? 'VOZ ON' : 'VOZ OFF'; b.className = 'btn-voz ' + (vozActivada ? 'activada' : 'desactivada'); }
