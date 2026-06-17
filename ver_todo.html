@@ -41,44 +41,25 @@
             gap: 10px;
         }
 
-        .header h1 {
-            color: var(--red);
-            font-size: 1.5rem;
-            font-weight: 900;
-            letter-spacing: 2px;
-        }
+        .header h1 { color: var(--red); font-size: 1.5rem; font-weight: 900; letter-spacing: 2px; }
 
         .btn-header {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: all 0.3s;
-            color: white;
+            padding: 10px 20px; border: none; border-radius: 8px;
+            font-weight: bold; cursor: pointer; font-size: 0.85rem;
+            transition: all 0.3s; color: white;
             background: linear-gradient(135deg, var(--purple), #7c3aed);
         }
-
         .btn-header:hover { transform: translateY(-2px); }
 
         .stats-container {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 15px; margin-bottom: 20px;
         }
 
         .stat-card {
-            background: var(--sidebar-bg);
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            border: 1px solid #2d3436;
-            cursor: pointer;
-            transition: all 0.3s;
+            background: var(--sidebar-bg); padding: 20px; border-radius: 12px;
+            text-align: center; border: 1px solid #2d3436; cursor: pointer; transition: all 0.3s;
         }
-
         .stat-card:hover { transform: translateY(-2px); border-color: var(--gold); }
         .stat-card.activo { border-color: var(--gold); box-shadow: 0 0 15px rgba(255,183,3,0.3); }
         .stat-card .stat-numero { font-size: 2rem; font-weight: 900; }
@@ -88,16 +69,12 @@
         .stat-card:nth-child(3) .stat-numero { color: var(--gold); }
         .stat-card:nth-child(4) .stat-numero { color: #ef4444; }
 
-        .filtros {
-            display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
-        }
-
+        .filtros { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
         .filtros input, .filtros select {
             padding: 10px 15px; border-radius: 8px;
             border: 2px solid #2d3748; background: #1e293b;
             color: white; font-size: 0.85rem;
         }
-
         .filtros input { flex: 1; min-width: 200px; }
         .filtros input::placeholder { color: #64748b; }
         .filtros select { cursor: pointer; }
@@ -115,18 +92,12 @@
             border-left: 5px solid var(--blue);
             transition: all 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-
         .carton-card:hover { transform: translateY(-3px); }
         .carton-card.asignado { border-left-color: var(--gold); }
         .carton-card.usado { border-left-color: #ef4444; opacity: 0.7; }
 
-        .carton-header {
-            display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 10px;
-        }
-
+        .carton-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .carton-numero { font-size: 1.1rem; font-weight: 900; color: var(--red); }
-
         .carton-estado {
             font-size: 0.65rem; padding: 3px 10px; border-radius: 15px;
             font-weight: bold; text-transform: uppercase; cursor: pointer;
@@ -137,7 +108,6 @@
         .estado-usado { background: #fee2e2; color: #991b1b; }
 
         .carton-jugador { font-size: 0.8rem; color: var(--success); margin-bottom: 8px; font-weight: bold; }
-
         .carton-tabla { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
         .carton-tabla th { background: #ff4d4d; color: white; padding: 6px; font-size: 0.7rem; border: 1px solid #e2e8f0; }
         .carton-tabla td { padding: 6px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold; font-size: 0.8rem; }
@@ -209,7 +179,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Cargar sala desde link compartido
+        // Cargar sala desde link compartido (SOLO configura localStorage, no expira)
         const urlParams = new URLSearchParams(window.location.search);
         const datosCodificados = urlParams.get('d');
         if (datosCodificados) {
@@ -225,18 +195,76 @@
         const SALA_ID = localStorage.getItem('salaActiva') || 'sala-default';
         let todosLosCartones = [];
 
+        console.log('📁 Sala:', SALA_ID);
+
+        // ============ CARGAR CARTONES (LOCALSTORAGE PRIMERO, FIREBASE DESPUÉS) ============
         function cargarCartones() {
+            // 1. Intentar cargar desde localStorage (SIN CONSUMIR FIREBASE)
+            const cartonesLocales = localStorage.getItem('cartones_' + SALA_ID);
+            if (cartonesLocales) {
+                try {
+                    todosLosCartones = JSON.parse(cartonesLocales);
+                    todosLosCartones.sort((a, b) => (a.numero || 0) - (b.numero || 0));
+                    actualizarStats();
+                    mostrarCartones(todosLosCartones);
+                    console.log('✅ Cartones cargados desde localStorage (' + todosLosCartones.length + ')');
+                    
+                    // Actualizar en segundo plano desde Firebase (sin bloquear)
+                    actualizarDesdeFirebase();
+                    return;
+                } catch(e) {
+                    localStorage.removeItem('cartones_' + SALA_ID);
+                }
+            }
+            
+            // 2. Si no hay en localStorage, cargar desde Firebase
+            cargarDesdeFirebase();
+        }
+
+        function cargarDesdeFirebase() {
             db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
                 todosLosCartones = [];
+                
                 if (!snap.exists()) {
-                    document.getElementById('cartonesGrid').innerHTML = '<div class="sin-cartones"><div class="icono">📋</div><p>No hay cartones en esta sala</p></div>';
+                    document.getElementById('cartonesGrid').innerHTML = 
+                        '<div class="sin-cartones"><div class="icono">📋</div><p>No hay cartones en esta sala</p></div>';
                     actualizarStats();
                     return;
                 }
-                snap.forEach(function(child) { todosLosCartones.push({ key: child.key, ...child.val() }); });
+                
+                snap.forEach(function(child) {
+                    todosLosCartones.push({ key: child.key, ...child.val() });
+                });
+                
                 todosLosCartones.sort((a, b) => (a.numero || 0) - (b.numero || 0));
+                
+                // Guardar en localStorage para siempre
+                localStorage.setItem('cartones_' + SALA_ID, JSON.stringify(todosLosCartones));
+                
                 actualizarStats();
                 mostrarCartones(todosLosCartones);
+                console.log('✅ Cartones cargados desde Firebase y guardados localmente (' + todosLosCartones.length + ')');
+            });
+        }
+
+        function actualizarDesdeFirebase() {
+            db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
+                if (!snap.exists()) return;
+                
+                const cartonesFB = [];
+                snap.forEach(function(child) {
+                    cartonesFB.push({ key: child.key, ...child.val() });
+                });
+                
+                // Solo actualizar si hay cambios
+                if (cartonesFB.length !== todosLosCartones.length) {
+                    todosLosCartones = cartonesFB;
+                    todosLosCartones.sort((a, b) => (a.numero || 0) - (b.numero || 0));
+                    localStorage.setItem('cartones_' + SALA_ID, JSON.stringify(todosLosCartones));
+                    actualizarStats();
+                    mostrarCartones(todosLosCartones);
+                    console.log('🔄 Cartones actualizados desde Firebase');
+                }
             });
         }
 
@@ -308,10 +336,10 @@
 
         function copiarLinkSala() {
             const base = location.origin + location.pathname.replace('ver_todo.html', '');
-            const datos = { s: SALA_ID, t: Date.now() };
+            const datos = { s: SALA_ID };
             const link = base + 'ver_todo.html?d=' + btoa(encodeURIComponent(JSON.stringify(datos)));
             navigator.clipboard.writeText(link).then(function() {
-                alert('✅ Link de sala copiado!\n\nComparte este link para que vean los mismos cartones.\n\nEl link expira en 24 horas.');
+                alert('✅ Link de sala copiado!\n\nComparte este link para que vean los mismos cartones.\n\nLos cartones NO expiran.');
             });
         }
 
