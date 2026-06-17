@@ -15,6 +15,7 @@
             --gold: #ffb703;
             --success: #10b981;
             --blue: #3b82f6;
+            --purple: #8b5cf6;
         }
 
         * {
@@ -40,6 +41,8 @@
             border-radius: 15px;
             margin-bottom: 20px;
             border: 2px solid #2d3436;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .header h1 {
@@ -73,14 +76,6 @@
             background: linear-gradient(135deg, var(--blue), #2563eb);
         }
 
-        .btn-generar {
-            background: linear-gradient(135deg, var(--red), #dc2626);
-        }
-
-        .btn-ruleta {
-            background: linear-gradient(135deg, var(--success), #059669);
-        }
-
         /* ============ ESTADÍSTICAS ============ */
         .stats-container {
             display: grid;
@@ -95,12 +90,23 @@
             border-radius: 12px;
             text-align: center;
             border: 1px solid #2d3436;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--gold);
+        }
+
+        .stat-card.activo {
+            border-color: var(--gold);
+            box-shadow: 0 0 15px rgba(255, 183, 3, 0.3);
         }
 
         .stat-card .stat-numero {
             font-size: 2rem;
             font-weight: 900;
-            color: var(--gold);
         }
 
         .stat-card .stat-label {
@@ -120,6 +126,7 @@
             gap: 10px;
             margin-bottom: 20px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
         .filtros input,
@@ -185,6 +192,7 @@
             border-left: 5px solid var(--blue);
             transition: all 0.3s;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            position: relative;
         }
 
         .carton-card:hover {
@@ -220,6 +228,12 @@
             border-radius: 15px;
             font-weight: bold;
             text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .carton-estado:hover {
+            transform: scale(1.1);
         }
 
         .estado-disponible {
@@ -278,6 +292,48 @@
             word-break: break-all;
         }
 
+        .btn-copiar-link {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .btn-copiar-link:hover {
+            background: #2563eb;
+        }
+
+        .btn-copiar-link.copiado {
+            background: #10b981;
+        }
+
+        .btn-link-jugador {
+            display: block;
+            width: 100%;
+            padding: 6px;
+            margin-top: 5px;
+            background: var(--purple);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.7rem;
+            transition: all 0.2s;
+        }
+
+        .btn-link-jugador:hover {
+            background: #7c3aed;
+        }
+
         .sin-cartones {
             text-align: center;
             padding: 60px 20px;
@@ -323,32 +379,29 @@
     <div class="header">
         <h1>🎯 BINGO PRO - Todos los Cartones</h1>
         <div class="header-buttons">
-            <button class="btn-header btn-generar" onclick="location.href='generar.html'">
-                📝 GENERAR CARTONES
-            </button>
-            <button class="btn-header btn-ruleta" onclick="location.href='ruleta.html'">
-                🎮 IR A RULETA
+            <button class="btn-header btn-volver" onclick="location.href='generar.html'">
+                📝 VOLVER A GENERAR
             </button>
         </div>
     </div>
 
-    <!-- ============ ESTADÍSTICAS ============ -->
+    <!-- ============ ESTADÍSTICAS (CLICKABLES) ============ -->
     <div class="stats-container" id="statsContainer">
-        <div class="stat-card">
+        <div class="stat-card" onclick="filtrarPorEstado('todos')" id="statTotalCard">
             <div class="stat-numero" id="statTotal">0</div>
             <div class="stat-label">Total Cartones</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" onclick="filtrarPorEstado('disponible')" id="statDisponibleCard">
             <div class="stat-numero" id="statDisponibles">0</div>
-            <div class="stat-label">Disponibles</div>
+            <div class="stat-label">🟢 Disponibles</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" onclick="filtrarPorEstado('asignado')" id="statAsignadoCard">
             <div class="stat-numero" id="statAsignados">0</div>
-            <div class="stat-label">Asignados</div>
+            <div class="stat-label">🟡 Asignados</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-numero" id="statJugadores">0</div>
-            <div class="stat-label">Jugadores</div>
+        <div class="stat-card" onclick="filtrarPorEstado('usado')" id="statUsadoCard">
+            <div class="stat-numero" id="statUsados">0</div>
+            <div class="stat-label">🔴 Usados</div>
         </div>
     </div>
 
@@ -377,7 +430,6 @@
     <!-- ============ SCRIPTS ============ -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
@@ -424,12 +476,60 @@
             const total = todosLosCartones.length;
             const disponibles = todosLosCartones.filter(c => c.estado === 'disponible').length;
             const asignados = todosLosCartones.filter(c => c.estado === 'asignado').length;
+            const usados = todosLosCartones.filter(c => c.estado === 'usado').length;
             const jugadoresUnicos = new Set(todosLosCartones.filter(c => c.asignadoA).map(c => c.asignadoA)).size;
             
             document.getElementById('statTotal').textContent = total;
             document.getElementById('statDisponibles').textContent = disponibles;
             document.getElementById('statAsignados').textContent = asignados;
-            document.getElementById('statJugadores').textContent = jugadoresUnicos;
+            document.getElementById('statUsados').textContent = usados;
+        }
+        
+        // ============ FILTRAR POR ESTADO (CLICK EN STATS) ============
+        function filtrarPorEstado(estado) {
+            document.getElementById('filtroEstado').value = estado;
+            
+            // Marcar stat activo
+            document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('activo'));
+            if (estado === 'todos') document.getElementById('statTotalCard').classList.add('activo');
+            else if (estado === 'disponible') document.getElementById('statDisponibleCard').classList.add('activo');
+            else if (estado === 'asignado') document.getElementById('statAsignadoCard').classList.add('activo');
+            else if (estado === 'usado') document.getElementById('statUsadoCard').classList.add('activo');
+            
+            filtrarCartones();
+        }
+        
+        // ============ GENERAR LINK CIFRADO ============
+        function generarLinkCifrado(nombre, ids) {
+            const base = location.origin + location.pathname.replace('ver_todo.html', '');
+            const datos = { n: nombre, c: ids, s: SALA_ID, t: Date.now() };
+            return base + 'jugador.html?d=' + btoa(encodeURIComponent(JSON.stringify(datos)));
+        }
+        
+        // ============ COPIAR LINK INDIVIDUAL ============
+        function copiarLinkCarton(id, btn) {
+            const link = generarLinkCifrado('Cartón individual', [id]);
+            navigator.clipboard.writeText(link).then(function() {
+                btn.textContent = '✅ COPIADO!';
+                btn.classList.add('copiado');
+                setTimeout(function() {
+                    btn.textContent = '🔗 COPIAR LINK';
+                    btn.classList.remove('copiado');
+                }, 2000);
+            });
+        }
+        
+        // ============ COPIAR LINK DE JUGADOR ============
+        function copiarLinkJugador(nombre, ids, btn) {
+            const link = generarLinkCifrado(nombre, ids);
+            navigator.clipboard.writeText(link).then(function() {
+                btn.textContent = '✅ LINK DE ' + nombre.toUpperCase() + ' COPIADO!';
+                btn.style.background = '#10b981';
+                setTimeout(function() {
+                    btn.textContent = '👤 LINK DE ' + nombre.toUpperCase();
+                    btn.style.background = '#8b5cf6';
+                }, 2000);
+            });
         }
         
         // ============ MOSTRAR CARTONES ============
@@ -442,6 +542,15 @@
             }
             
             grid.innerHTML = '';
+            
+            // Agrupar por jugador para mostrar link
+            const jugadores = {};
+            cartones.forEach(function(c) {
+                if (c.asignadoA) {
+                    if (!jugadores[c.asignadoA]) jugadores[c.asignadoA] = [];
+                    jugadores[c.asignadoA].push(c.id || c.key);
+                }
+            });
             
             cartones.forEach(function(c) {
                 const card = document.createElement('div');
@@ -465,15 +574,21 @@
                 
                 tablaHTML += '</table>';
                 
+                const idCarton = c.id || c.key || '';
+                const nombreJugador = c.asignadoA || '';
+                const idsJugador = nombreJugador ? jugadores[nombreJugador] : [];
+                
                 card.innerHTML = 
                     '<div class="carton-header">' +
                     '<span class="carton-numero"># ' + (c.numero || '?') + '</span>' +
-                    '<span class="carton-estado estado-' + (c.estado || 'disponible') + '">' + (c.estado || 'disponible') + '</span>' +
+                    '<span class="carton-estado estado-' + (c.estado || 'disponible') + '" onclick="filtrarPorEstado(\'' + (c.estado || 'disponible') + '\')">' + (c.estado || 'disponible') + '</span>' +
                     '</div>' +
-                    (c.asignadoA ? '<div class="carton-jugador">👤 ' + c.asignadoA + '</div>' : '') +
+                    (nombreJugador ? '<div class="carton-jugador">👤 ' + nombreJugador + '</div>' : '') +
                     (c.nombre && c.nombre !== 'Cartón ' + c.numero ? '<div style="font-size:0.8rem;color:#64748b;margin-bottom:5px;">' + c.nombre + '</div>' : '') +
                     tablaHTML +
-                    '<div class="carton-id">ID: ' + (c.id || c.key || '') + '</div>';
+                    '<button class="btn-copiar-link" onclick="copiarLinkCarton(\'' + idCarton + '\', this)">🔗 COPIAR LINK INDIVIDUAL</button>' +
+                    (nombreJugador && idsJugador.length > 0 ? '<button class="btn-link-jugador" onclick="copiarLinkJugador(\'' + nombreJugador.replace(/'/g, "\\'") + '\', ' + JSON.stringify(idsJugador) + ', this)">👤 LINK DE ' + nombreJugador.toUpperCase() + '</button>' : '') +
+                    '<div class="carton-id">ID: ' + idCarton + '</div>';
                 
                 grid.appendChild(card);
             });
@@ -483,6 +598,13 @@
         function filtrarCartones() {
             const busqueda = document.getElementById('buscarCarton').value.toLowerCase();
             const estado = document.getElementById('filtroEstado').value;
+            
+            // Actualizar stats activos
+            document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('activo'));
+            if (estado === 'todos') document.getElementById('statTotalCard').classList.add('activo');
+            else if (estado === 'disponible') document.getElementById('statDisponibleCard').classList.add('activo');
+            else if (estado === 'asignado') document.getElementById('statAsignadoCard').classList.add('activo');
+            else if (estado === 'usado') document.getElementById('statUsadoCard').classList.add('activo');
             
             const filtrados = todosLosCartones.filter(function(c) {
                 const matchBusqueda = !busqueda || 
@@ -506,74 +628,29 @@
                 return;
             }
             
-            const ventana = window.open('', '_blank', 'width=900,height=700');
+            const ventana = window.open('', '_blank', 'width=800,height=600');
             ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PDF Cartones</title>');
-            ventana.document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>');
             ventana.document.write('<style>');
-            ventana.document.write('*{margin:0;padding:0;box-sizing:border-box}');
-            ventana.document.write('body{font-family:Arial;background:white}');
-            ventana.document.write('.pagina{width:750px;padding:15px 20px;background:white;page-break-after:always;height:1000px;overflow:hidden}');
-            ventana.document.write('.pagina:last-child{page-break-after:avoid}');
-            ventana.document.write('h1{text-align:center;color:#ff4d4d;font-size:18px;margin:0 0 3px}');
-            ventana.document.write('h2{text-align:center;color:#1e293b;font-size:15px;margin:0 0 3px}');
-            ventana.document.write('.info{text-align:center;color:#64748b;font-size:11px;margin-bottom:10px}');
-            ventana.document.write('.carton{border:3px solid #000;border-radius:10px;padding:12px 15px;background:white;margin-bottom:15px}');
-            ventana.document.write('table{width:100%;border-collapse:collapse}');
-            ventana.document.write('th{background:#ff4d4d;color:white;padding:10px;font-size:16px;border:2px solid #000}');
-            ventana.document.write('td{padding:12px;border:2px solid #000;text-align:center;font-weight:bold;font-size:18px}');
-            ventana.document.write('.free{background:#fef3c7;font-size:22px}');
-            ventana.document.write('.num-carton{text-align:center;margin-bottom:6px}');
-            ventana.document.write('.num-carton span{background:#ff4d4d;color:white;padding:4px 18px;border-radius:12px;font-size:14px;font-weight:bold}');
-            ventana.document.write('.jugador{text-align:center;color:#10b981;margin:4px 0;font-size:14px;font-weight:bold}');
+            ventana.document.write('*{margin:0;padding:0}body{font-family:Arial;background:white}.pagina{width:750px;padding:15px;page-break-after:always;min-height:100vh}.pagina:last-child{page-break-after:avoid}h1{text-align:center;color:#ff4d4d;font-size:18px}h2{text-align:center;font-size:14px}.carton{border:2px solid #000;border-radius:8px;padding:10px;margin-bottom:15px}table{width:100%;border-collapse:collapse}th{background:#ff4d4d;color:white;padding:8px;border:1px solid #000}td{padding:8px;border:1px solid #000;text-align:center;font-weight:bold}.free{background:#fef3c7}.num-carton{text-align:center;margin-bottom:5px}.num-carton span{background:#ff4d4d;color:white;padding:3px 12px;border-radius:10px;font-size:12px;font-weight:bold}.jugador{text-align:center;color:#10b981;font-size:12px;font-weight:bold}');
             ventana.document.write('</style></head><body>');
             
             for (let i = 0; i < todosLosCartones.length; i += 2) {
-                ventana.document.write('<div class="pagina">');
-                ventana.document.write('<h1>🎯 BINGO PRO</h1>');
-                ventana.document.write('<h2>Todos los Cartones</h2>');
-                ventana.document.write('<p class="info">Pág. ' + (Math.floor(i/2)+1) + ' | ' + todosLosCartones.length + ' cartones</p>');
+                ventana.document.write('<div class="pagina"><h1>🎯 BINGO PRO</h1><h2>Todos los Cartones</h2>');
+                ventana.document.write('<p style="text-align:center;font-size:10px;">Pág. ' + (Math.floor(i/2)+1) + ' | ' + todosLosCartones.length + ' cartones</p>');
                 ventana.document.write(generarHTMLCartonPDF(todosLosCartones[i]));
                 if (i+1 < todosLosCartones.length) ventana.document.write(generarHTMLCartonPDF(todosLosCartones[i+1]));
                 ventana.document.write('</div>');
             }
-            
-            ventana.document.write('</body></html>');
+            ventana.document.write('<script>window.onload=function(){setTimeout(window.print,800)};<\/script></body></html>');
             ventana.document.close();
-            
-            setTimeout(function() {
-                ventana.html2pdf().set({
-                    margin: 0,
-                    filename: 'todos-cartones.pdf',
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false },
-                    jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
-                    pagebreak: { mode: ['css', 'legacy'] }
-                }).from(ventana.document.body).save().then(function() {
-                    setTimeout(function() { ventana.close(); }, 1000);
-                }).catch(function(err) {
-                    console.error(err);
-                    ventana.close();
-                });
-            }, 2000);
         }
         
         function generarHTMLCartonPDF(c) {
             if (!c || !c.carton) return '<div class="carton"><p>Error</p></div>';
-            
-            let html = '<div class="carton">';
-            html += '<div class="num-carton"><span>Cartón #' + (c.numero||'?') + '</span></div>';
+            let html = '<div class="carton"><div class="num-carton"><span>Cartón #' + (c.numero||'?') + '</span></div>';
             if (c.asignadoA) html += '<p class="jugador">👤 ' + c.asignadoA + '</p>';
             html += '<table><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
-            
-            for (let f = 0; f < 5; f++) {
-                html += '<tr>';
-                ['B','I','N','G','O'].forEach(function(l) {
-                    const v = c.carton[l][f];
-                    const centro = (l === 'N' && f === 2);
-                    html += '<td class="' + (centro ? 'free' : '') + '">' + (centro ? '⭐' : v) + '</td>';
-                });
-                html += '</tr>';
-            }
+            for (let f = 0; f < 5; f++) { html += '<tr>'; ['B','I','N','G','O'].forEach(function(l) { const v = c.carton[l][f], centro = (l==='N'&&f===2); html += '<td class="'+(centro?'free':'')+'">'+(centro?'⭐':v)+'</td>'; }); html += '</tr>'; }
             html += '</table></div>';
             return html;
         }
