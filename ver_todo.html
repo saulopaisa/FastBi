@@ -43,6 +43,35 @@
 
         .header h1 { color: var(--red); font-size: 1.5rem; font-weight: 900; letter-spacing: 2px; }
 
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .sync-badge {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .sync-badge.conectado {
+            background: #10b981;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        .sync-badge.desconectado {
+            background: #ef4444;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
         .btn-header {
             padding: 10px 20px; border: none; border-radius: 8px;
             font-weight: bold; cursor: pointer; font-size: 0.85rem;
@@ -95,6 +124,14 @@
         .carton-card:hover { transform: translateY(-3px); }
         .carton-card.asignado { border-left-color: var(--gold); }
         .carton-card.usado { border-left-color: #ef4444; opacity: 0.7; }
+        .carton-card.actualizado {
+            animation: highlightCard 1s ease-out;
+            border-left-color: #10b981 !important;
+        }
+        @keyframes highlightCard {
+            0% { box-shadow: 0 0 20px rgba(16,185,129,0.6); }
+            100% { box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        }
 
         .carton-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .carton-numero { font-size: 1.1rem; font-weight: 900; color: var(--red); }
@@ -116,6 +153,23 @@
         .sin-cartones { text-align: center; padding: 60px 20px; color: var(--text-gray); font-size: 1.2rem; grid-column: 1 / -1; }
         .sin-cartones .icono { font-size: 4rem; margin-bottom: 15px; }
 
+        .toast-sync {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
         @media (max-width: 768px) {
             .header { text-align: center; }
             .stats-container { grid-template-columns: repeat(2, 1fr); }
@@ -126,9 +180,12 @@
 <body>
     <div class="header">
         <h1>🎯 BINGO PRO - Todos los Cartones</h1>
-        <button class="btn-header" onclick="copiarLinkSala()">
-            🔗 COPIAR LINK DE SALA
-        </button>
+        <div class="header-info">
+            <span class="sync-badge desconectado" id="syncBadge">🔄 Sincronizando...</span>
+            <button class="btn-header" onclick="copiarLinkSala()">
+                🔗 COPIAR LINK DE SALA
+            </button>
+        </div>
     </div>
 
     <div class="stats-container" id="statsContainer">
@@ -179,7 +236,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Cargar sala desde link compartido (SOLO configura localStorage, no expira)
+        // Cargar sala desde link compartido
         const urlParams = new URLSearchParams(window.location.search);
         const datosCodificados = urlParams.get('d');
         if (datosCodificados) {
@@ -194,12 +251,105 @@
 
         const SALA_ID = localStorage.getItem('salaActiva') || 'sala-default';
         let todosLosCartones = [];
+        let idsActualizados = new Set();
 
         console.log('📁 Sala:', SALA_ID);
 
-        // ============ CARGAR CARTONES (LOCALSTORAGE PRIMERO, FIREBASE DESPUÉS) ============
-        function cargarCartones() {
-            // 1. Intentar cargar desde localStorage (SIN CONSUMIR FIREBASE)
+        // ============ SINCRONIZACIÓN EN TIEMPO REAL ============
+        function iniciarSincronizacion() {
+            // Verificar conexión
+            db.ref('.info/connected').on('value', function(snap) {
+                const badge = document.getElementById('syncBadge');
+                if (snap.val() === true) {
+                    badge.textContent = '🟢 CONECTADO - En vivo';
+                    badge.className = 'sync-badge conectado';
+                } else {
+                    badge.textContent = '🔴 DESCONECTADO';
+                    badge.className = 'sync-badge desconectado';
+                }
+            });
+
+            // Escuchar cambios en tiempo real
+            db.ref('salas/' + SALA_ID + '/cartones').on('value', function(snap) {
+                const cartonesFB = [];
+                
+                if (snap.exists()) {
+                    snap.forEach(function(child) {
+                        cartonesFB.push({ key: child.key, ...child.val() });
+                    });
+                }
+                
+                // Detectar cambios
+                const cambiosDetectados = detectarCambios(cartonesFB);
+                
+                // Actualizar lista
+                todosLosCartones = cartonesFB;
+                todosLosCartones.sort((a, b) => (a.numero || 0) - (b.numero || 0));
+                
+                // Guardar en localStorage
+                localStorage.setItem('cartones_' + SALA_ID, JSON.stringify(todosLosCartones));
+                
+                // Actualizar UI
+                actualizarStats();
+                mostrarCartones(todosLosCartones);
+                
+                // Mostrar notificación de cambios
+                if (cambiosDetectados) {
+                    mostrarToastSync('🔄 Cartones actualizados en tiempo real');
+                    
+                    // Resaltar cartones modificados por 2 segundos
+                    setTimeout(function() {
+                        idsActualizados.clear();
+                    }, 2000);
+                }
+                
+                console.log('📡 Sincronizado: ' + todosLosCartones.length + ' cartones');
+            });
+        }
+
+        function detectarCambios(nuevosCartones) {
+            if (todosLosCartones.length === 0) return false;
+            
+            let hayCambios = false;
+            
+            // Detectar cartones nuevos o modificados
+            nuevosCartones.forEach(function(c) {
+                const existente = todosLosCartones.find(function(e) { return e.key === c.key; });
+                if (!existente || 
+                    existente.estado !== c.estado || 
+                    existente.asignadoA !== c.asignadoA ||
+                    existente.nombre !== c.nombre) {
+                    idsActualizados.add(c.key);
+                    hayCambios = true;
+                }
+            });
+            
+            // Detectar cartones eliminados
+            todosLosCartones.forEach(function(c) {
+                const sigueExistiendo = nuevosCartones.find(function(n) { return n.key === c.key; });
+                if (!sigueExistiendo) {
+                    hayCambios = true;
+                }
+            });
+            
+            return hayCambios;
+        }
+
+        function mostrarToastSync(mensaje) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-sync';
+            toast.textContent = mensaje;
+            document.body.appendChild(toast);
+            setTimeout(function() {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s';
+                setTimeout(function() { if (toast.parentNode) toast.remove(); }, 500);
+            }, 2500);
+        }
+
+        // ============ CARGAR CARTONES ============
+        function cargarCartonesInicial() {
+            // Intentar desde localStorage primero
             const cartonesLocales = localStorage.getItem('cartones_' + SALA_ID);
             if (cartonesLocales) {
                 try {
@@ -207,65 +357,14 @@
                     todosLosCartones.sort((a, b) => (a.numero || 0) - (b.numero || 0));
                     actualizarStats();
                     mostrarCartones(todosLosCartones);
-                    console.log('✅ Cartones cargados desde localStorage (' + todosLosCartones.length + ')');
-                    
-                    // Actualizar en segundo plano desde Firebase (sin bloquear)
-                    actualizarDesdeFirebase();
-                    return;
+                    console.log('✅ Cargados desde localStorage (' + todosLosCartones.length + ')');
                 } catch(e) {
                     localStorage.removeItem('cartones_' + SALA_ID);
                 }
             }
             
-            // 2. Si no hay en localStorage, cargar desde Firebase
-            cargarDesdeFirebase();
-        }
-
-        function cargarDesdeFirebase() {
-            db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
-                todosLosCartones = [];
-                
-                if (!snap.exists()) {
-                    document.getElementById('cartonesGrid').innerHTML = 
-                        '<div class="sin-cartones"><div class="icono">📋</div><p>No hay cartones en esta sala</p></div>';
-                    actualizarStats();
-                    return;
-                }
-                
-                snap.forEach(function(child) {
-                    todosLosCartones.push({ key: child.key, ...child.val() });
-                });
-                
-                todosLosCartones.sort((a, b) => (a.numero || 0) - (b.numero || 0));
-                
-                // Guardar en localStorage para siempre
-                localStorage.setItem('cartones_' + SALA_ID, JSON.stringify(todosLosCartones));
-                
-                actualizarStats();
-                mostrarCartones(todosLosCartones);
-                console.log('✅ Cartones cargados desde Firebase y guardados localmente (' + todosLosCartones.length + ')');
-            });
-        }
-
-        function actualizarDesdeFirebase() {
-            db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
-                if (!snap.exists()) return;
-                
-                const cartonesFB = [];
-                snap.forEach(function(child) {
-                    cartonesFB.push({ key: child.key, ...child.val() });
-                });
-                
-                // Solo actualizar si hay cambios
-                if (cartonesFB.length !== todosLosCartones.length) {
-                    todosLosCartones = cartonesFB;
-                    todosLosCartones.sort((a, b) => (a.numero || 0) - (b.numero || 0));
-                    localStorage.setItem('cartones_' + SALA_ID, JSON.stringify(todosLosCartones));
-                    actualizarStats();
-                    mostrarCartones(todosLosCartones);
-                    console.log('🔄 Cartones actualizados desde Firebase');
-                }
-            });
+            // Iniciar sincronización en tiempo real
+            iniciarSincronizacion();
         }
 
         function actualizarStats() {
@@ -294,7 +393,11 @@
             grid.innerHTML = '';
             cartones.forEach(function(c) {
                 const card = document.createElement('div');
-                card.className = 'carton-card ' + (c.estado === 'asignado' ? 'asignado' : '') + (c.estado === 'usado' ? 'usado' : '');
+                card.className = 'carton-card ' + 
+                    (c.estado === 'asignado' ? 'asignado' : '') + 
+                    (c.estado === 'usado' ? 'usado' : '') +
+                    (idsActualizados.has(c.key) ? ' actualizado' : '');
+                
                 let tablaHTML = '<table class="carton-tabla"><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
                 if (c.carton) {
                     for (let f = 0; f < 5; f++) {
@@ -307,6 +410,7 @@
                     }
                 }
                 tablaHTML += '</table>';
+                
                 card.innerHTML = 
                     '<div class="carton-header">' +
                     '<span class="carton-numero"># ' + (c.numero || '?') + '</span>' +
@@ -315,6 +419,7 @@
                     (c.asignadoA ? '<div class="carton-jugador">👤 ' + c.asignadoA + '</div>' : '') +
                     (c.nombre && c.nombre !== 'Cartón ' + c.numero ? '<div style="font-size:0.8rem;color:#64748b;margin-bottom:5px;">' + c.nombre + '</div>' : '') +
                     tablaHTML;
+                
                 grid.appendChild(card);
             });
         }
@@ -339,11 +444,11 @@
             const datos = { s: SALA_ID };
             const link = base + 'ver_todo.html?d=' + btoa(encodeURIComponent(JSON.stringify(datos)));
             navigator.clipboard.writeText(link).then(function() {
-                alert('✅ Link de sala copiado!\n\nComparte este link para que vean los mismos cartones.\n\nLos cartones NO expiran.');
+                alert('✅ Link de sala copiado!\n\nComparte para que vean los mismos cartones en tiempo real.');
             });
         }
 
-        document.addEventListener('DOMContentLoaded', cargarCartones);
+        document.addEventListener('DOMContentLoaded', cargarCartonesInicial);
     </script>
 </body>
 </html>
