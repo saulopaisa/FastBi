@@ -35,10 +35,10 @@
                 </button>
             </div>
 
-            <!-- BOTONES DE MENSAJES -->
-            <div style="display:flex;gap:5px;margin-bottom:8px;">
-                <button id="btnMensaje" onclick="window.enviarMensajeJugador()" class="btn-programar" style="width:100%;background:#6366f1;color:white;" disabled>📝 MENSAJE A TODOS</button>
-            </div>
+            <!-- BOTÓN DE MENSAJE -->
+            <button id="btnMensaje" onclick="window.enviarMensajeJugador()" class="btn-programar" style="width:100%;background:#6366f1;color:white;margin-bottom:5px;" disabled>
+                📝 MENSAJE A TODOS
+            </button>
             
             <button id="btnAutoBingo" onclick="window.iniciarBingoAutomatico()" class="btn-accion" disabled 
                 style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
@@ -74,6 +74,22 @@
                 </button>
                 <button onclick="window.bingoValido()" class="btn-bingo-valido">
                     ✅ BINGO VÁLIDO
+                </button>
+            </div>
+        </div>
+        
+        <!-- ELIMINAR JUGADORES -->
+        <div style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+            <div class="verifier-title" style="color: #ef4444;">🗑️ ELIMINAR JUGADORES</div>
+            <button onclick="window.abrirModalEliminarJugadores()" class="btn-programar" style="width:100%;background:#ef4444;color:white;margin-bottom:5px;">
+                📋 SELECCIONAR JUGADORES A ELIMINAR
+            </button>
+            <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                <button onclick="window.eliminarJugadoresSeleccionados()" class="btn-programar" style="flex:1;background:#dc2626;color:white;">
+                    🗑️ ELIMINAR RONDA
+                </button>
+                <button onclick="window.eliminarTodosJugadores()" class="btn-programar" style="flex:1;background:#991b1b;color:white;">
+                    ⚠️ ELIMINAR TODOS
                 </button>
             </div>
         </div>
@@ -143,19 +159,10 @@
     <div id="modalCartones" class="modal-overlay">
         <div class="modal-content" onclick="event.stopPropagation()">
             <h3>📋 PASO 1: ¿QUIÉN JUEGA?</h3>
-            
-            <input type="text" class="modal-buscador" placeholder="🔍 Buscar jugador..." 
-                oninput="window.buscarJugadorModal(this.value)">
-            
-            <button onclick="window.seleccionarTodosJugadores()" class="btn-seleccionar-todos">
-                ✅ SELECCIONAR TODOS
-            </button>
-            
+            <input type="text" class="modal-buscador" placeholder="🔍 Buscar jugador..." oninput="window.buscarJugadorModal(this.value)">
+            <button onclick="window.seleccionarTodosJugadores()" class="btn-seleccionar-todos">✅ SELECCIONAR TODOS</button>
             <div id="listaCheckCartones" class="grid-seleccion-cartones"></div>
-            
-            <button onclick="window.confirmarJugadores()" class="btn-accion btn-empezar">
-                ✅ CONFIRMAR Y PASAR AL PATRÓN
-            </button>
+            <button onclick="window.confirmarJugadores()" class="btn-accion btn-empezar">✅ CONFIRMAR Y PASAR AL PATRÓN</button>
         </div>
     </div>
 
@@ -169,8 +176,40 @@
                 <button onclick="window.aplicarPredefinido('limpiar')" class="btn-predefinido">🔄 BORRAR</button>
             </div>
             <div id="gridDibujoPatron" class="grid-patron-admin"></div>
-            <button onclick="window.confirmarPatron()" class="btn-accion btn-empezar" style="margin-top: 15px;">
-                ✅ CONFIRMAR Y ACTIVAR JUEGO
+            <button onclick="window.confirmarPatron()" class="btn-accion btn-empezar" style="margin-top: 15px;">✅ CONFIRMAR Y ACTIVAR JUEGO</button>
+        </div>
+    </div>
+
+    <!-- ============ MODAL ELIMINAR JUGADORES ============ -->
+    <div id="modalEliminarJugadores" class="modal-overlay">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3>🗑️ ELIMINAR JUGADORES</h3>
+            <p style="color:#94a3b8;font-size:0.8rem;margin-bottom:10px;text-align:center;">
+                Selecciona los jugadores que deseas eliminar de la ronda actual
+            </p>
+            
+            <!-- Buscador en modal -->
+            <input type="text" class="modal-buscador" placeholder="🔍 Buscar jugador..." 
+                oninput="window.buscarEnModalEliminar(this.value)">
+            
+            <!-- Seleccionar todos -->
+            <button onclick="window.seleccionarTodosEnEliminar()" class="btn-seleccionar-todos" style="background:#ef4444;">
+                ✅ SELECCIONAR TODOS
+            </button>
+            
+            <div id="listaEliminarJugadores" class="grid-seleccion-cartones"></div>
+            
+            <div style="display:flex;gap:8px;margin-top:15px;">
+                <button onclick="window.confirmarEliminarJugadores()" class="btn-accion" style="background:#ef4444;flex:1;">
+                    🗑️ ELIMINAR SELECCIONADOS
+                </button>
+                <button onclick="cerrarModal('modalEliminarJugadores')" class="btn-accion" style="background:#6b7280;flex:1;">
+                    ❌ CANCELAR
+                </button>
+            </div>
+            
+            <button onclick="window.eliminarTodosJugadoresModal()" class="btn-accion" style="background:#991b1b;margin-top:8px;width:100%;">
+                ⚠️ ELIMINAR TODOS LOS JUGADORES
             </button>
         </div>
     </div>
