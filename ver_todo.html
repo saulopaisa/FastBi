@@ -18,11 +18,7 @@
             --purple: #8b5cf6;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -34,13 +30,15 @@
 
         .header {
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
             padding: 15px 20px;
             background: linear-gradient(180deg, var(--sidebar-bg), #0f172a);
             border-radius: 15px;
             margin-bottom: 20px;
             border: 2px solid #2d3436;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .header h1 {
@@ -48,10 +46,22 @@
             font-size: 1.5rem;
             font-weight: 900;
             letter-spacing: 2px;
-            text-align: center;
         }
 
-        /* ============ ESTADÍSTICAS ============ */
+        .btn-header {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            color: white;
+            background: linear-gradient(135deg, var(--purple), #7c3aed);
+        }
+
+        .btn-header:hover { transform: translateY(-2px); }
+
         .stats-container {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -69,71 +79,30 @@
             transition: all 0.3s;
         }
 
-        .stat-card:hover {
-            transform: translateY(-2px);
-            border-color: var(--gold);
-        }
-
-        .stat-card.activo {
-            border-color: var(--gold);
-            box-shadow: 0 0 15px rgba(255, 183, 3, 0.3);
-        }
-
-        .stat-card .stat-numero {
-            font-size: 2rem;
-            font-weight: 900;
-        }
-
-        .stat-card .stat-label {
-            font-size: 0.8rem;
-            color: var(--text-gray);
-            margin-top: 5px;
-        }
-
+        .stat-card:hover { transform: translateY(-2px); border-color: var(--gold); }
+        .stat-card.activo { border-color: var(--gold); box-shadow: 0 0 15px rgba(255,183,3,0.3); }
+        .stat-card .stat-numero { font-size: 2rem; font-weight: 900; }
+        .stat-card .stat-label { font-size: 0.8rem; color: var(--text-gray); margin-top: 5px; }
         .stat-card:nth-child(1) .stat-numero { color: #3b82f6; }
         .stat-card:nth-child(2) .stat-numero { color: #10b981; }
         .stat-card:nth-child(3) .stat-numero { color: var(--gold); }
         .stat-card:nth-child(4) .stat-numero { color: #ef4444; }
 
-        /* ============ FILTROS ============ */
         .filtros {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            align-items: center;
+            display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
         }
 
-        .filtros input,
-        .filtros select {
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: 2px solid #2d3748;
-            background: #1e293b;
-            color: white;
-            font-size: 0.85rem;
+        .filtros input, .filtros select {
+            padding: 10px 15px; border-radius: 8px;
+            border: 2px solid #2d3748; background: #1e293b;
+            color: white; font-size: 0.85rem;
         }
 
-        .filtros input {
-            flex: 1;
-            min-width: 200px;
-        }
+        .filtros input { flex: 1; min-width: 200px; }
+        .filtros input::placeholder { color: #64748b; }
+        .filtros select { cursor: pointer; }
+        .filtros input:focus, .filtros select:focus { outline: none; border-color: var(--blue); }
 
-        .filtros input::placeholder {
-            color: #64748b;
-        }
-
-        .filtros select {
-            cursor: pointer;
-        }
-
-        .filtros input:focus,
-        .filtros select:focus {
-            outline: none;
-            border-color: var(--blue);
-        }
-
-        /* ============ GRID DE CARTONES ============ */
         .cartones-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -141,141 +110,57 @@
         }
 
         .carton-card {
-            background: white;
-            color: var(--text-dark);
-            border-radius: 12px;
-            padding: 15px;
+            background: white; color: var(--text-dark);
+            border-radius: 12px; padding: 15px;
             border-left: 5px solid var(--blue);
-            transition: all 0.3s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        .carton-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-        }
-
-        .carton-card.asignado {
-            border-left-color: var(--gold);
-        }
-
-        .carton-card.usado {
-            border-left-color: #ef4444;
-            opacity: 0.7;
-        }
+        .carton-card:hover { transform: translateY(-3px); }
+        .carton-card.asignado { border-left-color: var(--gold); }
+        .carton-card.usado { border-left-color: #ef4444; opacity: 0.7; }
 
         .carton-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 10px;
         }
 
-        .carton-numero {
-            font-size: 1.1rem;
-            font-weight: 900;
-            color: var(--red);
-        }
+        .carton-numero { font-size: 1.1rem; font-weight: 900; color: var(--red); }
 
         .carton-estado {
-            font-size: 0.65rem;
-            padding: 3px 10px;
-            border-radius: 15px;
-            font-weight: bold;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.2s;
+            font-size: 0.65rem; padding: 3px 10px; border-radius: 15px;
+            font-weight: bold; text-transform: uppercase; cursor: pointer;
         }
+        .carton-estado:hover { transform: scale(1.1); }
+        .estado-disponible { background: #dcfce7; color: #166534; }
+        .estado-asignado { background: #fef3c7; color: #92400e; }
+        .estado-usado { background: #fee2e2; color: #991b1b; }
 
-        .carton-estado:hover {
-            transform: scale(1.1);
-        }
+        .carton-jugador { font-size: 0.8rem; color: var(--success); margin-bottom: 8px; font-weight: bold; }
 
-        .estado-disponible {
-            background: #dcfce7;
-            color: #166534;
-        }
+        .carton-tabla { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .carton-tabla th { background: #ff4d4d; color: white; padding: 6px; font-size: 0.7rem; border: 1px solid #e2e8f0; }
+        .carton-tabla td { padding: 6px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold; font-size: 0.8rem; }
+        .carton-tabla td.free { background: #fef3c7; font-size: 0.9rem; }
 
-        .estado-asignado {
-            background: #fef3c7;
-            color: #92400e;
-        }
+        .sin-cartones { text-align: center; padding: 60px 20px; color: var(--text-gray); font-size: 1.2rem; grid-column: 1 / -1; }
+        .sin-cartones .icono { font-size: 4rem; margin-bottom: 15px; }
 
-        .estado-usado {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .carton-jugador {
-            font-size: 0.8rem;
-            color: var(--success);
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-
-        .carton-tabla {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 10px;
-        }
-
-        .carton-tabla th {
-            background: #ff4d4d;
-            color: white;
-            padding: 6px;
-            font-size: 0.7rem;
-            border: 1px solid #e2e8f0;
-        }
-
-        .carton-tabla td {
-            padding: 6px;
-            border: 1px solid #e2e8f0;
-            text-align: center;
-            font-weight: bold;
-            font-size: 0.8rem;
-        }
-
-        .carton-tabla td.free {
-            background: #fef3c7;
-            font-size: 0.9rem;
-        }
-
-        .sin-cartones {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-gray);
-            font-size: 1.2rem;
-            grid-column: 1 / -1;
-        }
-
-        .sin-cartones .icono {
-            font-size: 4rem;
-            margin-bottom: 15px;
-        }
-
-        /* ============ RESPONSIVE ============ */
         @media (max-width: 768px) {
-            .header {
-                text-align: center;
-            }
-
-            .stats-container {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .cartones-grid {
-                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            }
+            .header { text-align: center; }
+            .stats-container { grid-template-columns: repeat(2, 1fr); }
+            .cartones-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
         }
     </style>
 </head>
 <body>
-    <!-- ============ HEADER ============ -->
     <div class="header">
         <h1>🎯 BINGO PRO - Todos los Cartones</h1>
+        <button class="btn-header" onclick="copiarLinkSala()">
+            🔗 COPIAR LINK DE SALA
+        </button>
     </div>
 
-    <!-- ============ ESTADÍSTICAS (CLICKABLES) ============ -->
     <div class="stats-container" id="statsContainer">
         <div class="stat-card" onclick="filtrarPorEstado('todos')" id="statTotalCard">
             <div class="stat-numero" id="statTotal">0</div>
@@ -295,7 +180,6 @@
         </div>
     </div>
 
-    <!-- ============ FILTROS ============ -->
     <div class="filtros">
         <input type="text" id="buscarCarton" placeholder="🔍 Buscar por nombre, jugador o número..." oninput="filtrarCartones()">
         <select id="filtroEstado" onchange="filtrarCartones()">
@@ -306,15 +190,10 @@
         </select>
     </div>
 
-    <!-- ============ GRID DE CARTONES ============ -->
     <div class="cartones-grid" id="cartonesGrid">
-        <div class="sin-cartones">
-            <div class="icono">🎫</div>
-            <p>Cargando cartones...</p>
-        </div>
+        <div class="sin-cartones"><div class="icono">🎫</div><p>Cargando cartones...</p></div>
     </div>
 
-    <!-- ============ SCRIPTS ============ -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script>
@@ -329,94 +208,77 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        
+
+        // Cargar sala desde link compartido
+        const urlParams = new URLSearchParams(window.location.search);
+        const datosCodificados = urlParams.get('d');
+        if (datosCodificados) {
+            try {
+                const decoded = JSON.parse(decodeURIComponent(atob(datosCodificados)));
+                if (decoded.s) {
+                    localStorage.setItem('salaActiva', decoded.s);
+                    window.location.href = location.pathname;
+                }
+            } catch(e) {}
+        }
+
         const SALA_ID = localStorage.getItem('salaActiva') || 'sala-default';
         let todosLosCartones = [];
-        
-        console.log('📁 Sala:', SALA_ID);
-        
-        // ============ CARGAR CARTONES ============
+
         function cargarCartones() {
             db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
                 todosLosCartones = [];
-                
                 if (!snap.exists()) {
-                    document.getElementById('cartonesGrid').innerHTML = 
-                        '<div class="sin-cartones"><div class="icono">📋</div><p>No hay cartones generados en esta sala</p></div>';
+                    document.getElementById('cartonesGrid').innerHTML = '<div class="sin-cartones"><div class="icono">📋</div><p>No hay cartones en esta sala</p></div>';
                     actualizarStats();
                     return;
                 }
-                
-                snap.forEach(function(child) {
-                    todosLosCartones.push({ key: child.key, ...child.val() });
-                });
-                
+                snap.forEach(function(child) { todosLosCartones.push({ key: child.key, ...child.val() }); });
                 todosLosCartones.sort((a, b) => (a.numero || 0) - (b.numero || 0));
-                
                 actualizarStats();
                 mostrarCartones(todosLosCartones);
             });
         }
-        
-        // ============ ACTUALIZAR ESTADÍSTICAS ============
+
         function actualizarStats() {
-            const total = todosLosCartones.length;
-            const disponibles = todosLosCartones.filter(c => c.estado === 'disponible').length;
-            const asignados = todosLosCartones.filter(c => c.estado === 'asignado').length;
-            const usados = todosLosCartones.filter(c => c.estado === 'usado').length;
-            
-            document.getElementById('statTotal').textContent = total;
-            document.getElementById('statDisponibles').textContent = disponibles;
-            document.getElementById('statAsignados').textContent = asignados;
-            document.getElementById('statUsados').textContent = usados;
+            document.getElementById('statTotal').textContent = todosLosCartones.length;
+            document.getElementById('statDisponibles').textContent = todosLosCartones.filter(c => c.estado === 'disponible').length;
+            document.getElementById('statAsignados').textContent = todosLosCartones.filter(c => c.estado === 'asignado').length;
+            document.getElementById('statUsados').textContent = todosLosCartones.filter(c => c.estado === 'usado').length;
         }
-        
-        // ============ FILTRAR POR ESTADO (CLICK EN STATS) ============
+
         function filtrarPorEstado(estado) {
             document.getElementById('filtroEstado').value = estado;
-            
             document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('activo'));
             if (estado === 'todos') document.getElementById('statTotalCard').classList.add('activo');
             else if (estado === 'disponible') document.getElementById('statDisponibleCard').classList.add('activo');
             else if (estado === 'asignado') document.getElementById('statAsignadoCard').classList.add('activo');
             else if (estado === 'usado') document.getElementById('statUsadoCard').classList.add('activo');
-            
             filtrarCartones();
         }
-        
-        // ============ MOSTRAR CARTONES ============
+
         function mostrarCartones(cartones) {
             const grid = document.getElementById('cartonesGrid');
-            
             if (cartones.length === 0) {
-                grid.innerHTML = '<div class="sin-cartones"><div class="icono">🔍</div><p>No se encontraron cartones con ese filtro</p></div>';
+                grid.innerHTML = '<div class="sin-cartones"><div class="icono">🔍</div><p>No se encontraron cartones</p></div>';
                 return;
             }
-            
             grid.innerHTML = '';
-            
             cartones.forEach(function(c) {
                 const card = document.createElement('div');
                 card.className = 'carton-card ' + (c.estado === 'asignado' ? 'asignado' : '') + (c.estado === 'usado' ? 'usado' : '');
-                
                 let tablaHTML = '<table class="carton-tabla"><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
-                
                 if (c.carton) {
                     for (let f = 0; f < 5; f++) {
                         tablaHTML += '<tr>';
                         ['B','I','N','G','O'].forEach(function(l) {
-                            const valor = c.carton[l][f];
-                            const centro = (l === 'N' && f === 2);
+                            const valor = c.carton[l][f], centro = (l === 'N' && f === 2);
                             tablaHTML += '<td class="' + (centro ? 'free' : '') + '">' + (centro ? '⭐' : valor) + '</td>';
                         });
                         tablaHTML += '</tr>';
                     }
-                } else {
-                    tablaHTML += '<tr><td colspan="5">Sin datos</td></tr>';
                 }
-                
                 tablaHTML += '</table>';
-                
                 card.innerHTML = 
                     '<div class="carton-header">' +
                     '<span class="carton-numero"># ' + (c.numero || '?') + '</span>' +
@@ -425,41 +287,35 @@
                     (c.asignadoA ? '<div class="carton-jugador">👤 ' + c.asignadoA + '</div>' : '') +
                     (c.nombre && c.nombre !== 'Cartón ' + c.numero ? '<div style="font-size:0.8rem;color:#64748b;margin-bottom:5px;">' + c.nombre + '</div>' : '') +
                     tablaHTML;
-                
                 grid.appendChild(card);
             });
         }
-        
-        // ============ FILTRAR ============
+
         function filtrarCartones() {
             const busqueda = document.getElementById('buscarCarton').value.toLowerCase();
             const estado = document.getElementById('filtroEstado').value;
-            
             document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('activo'));
             if (estado === 'todos') document.getElementById('statTotalCard').classList.add('activo');
             else if (estado === 'disponible') document.getElementById('statDisponibleCard').classList.add('activo');
             else if (estado === 'asignado') document.getElementById('statAsignadoCard').classList.add('activo');
             else if (estado === 'usado') document.getElementById('statUsadoCard').classList.add('activo');
-            
             const filtrados = todosLosCartones.filter(function(c) {
-                const matchBusqueda = !busqueda || 
-                    (c.nombre || '').toLowerCase().includes(busqueda) ||
-                    (c.asignadoA || '').toLowerCase().includes(busqueda) ||
-                    String(c.numero || '').includes(busqueda);
-                
-                const matchEstado = estado === 'todos' || c.estado === estado;
-                
-                return matchBusqueda && matchEstado;
+                const matchBusqueda = !busqueda || (c.nombre||'').toLowerCase().includes(busqueda) || (c.asignadoA||'').toLowerCase().includes(busqueda) || String(c.numero||'').includes(busqueda);
+                return matchBusqueda && (estado === 'todos' || c.estado === estado);
             });
-            
             mostrarCartones(filtrados);
         }
-        
-        // ============ INICIAR ============
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('📋 Vista de cartones iniciada');
-            cargarCartones();
-        });
+
+        function copiarLinkSala() {
+            const base = location.origin + location.pathname.replace('ver_todo.html', '');
+            const datos = { s: SALA_ID, t: Date.now() };
+            const link = base + 'ver_todo.html?d=' + btoa(encodeURIComponent(JSON.stringify(datos)));
+            navigator.clipboard.writeText(link).then(function() {
+                alert('✅ Link de sala copiado!\n\nComparte este link para que vean los mismos cartones.\n\nEl link expira en 24 horas.');
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', cargarCartones);
     </script>
 </body>
 </html>
