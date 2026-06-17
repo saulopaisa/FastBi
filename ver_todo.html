@@ -34,15 +34,13 @@
 
         .header {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
             padding: 15px 20px;
             background: linear-gradient(180deg, var(--sidebar-bg), #0f172a);
             border-radius: 15px;
             margin-bottom: 20px;
             border: 2px solid #2d3436;
-            flex-wrap: wrap;
-            gap: 10px;
         }
 
         .header h1 {
@@ -50,30 +48,7 @@
             font-size: 1.5rem;
             font-weight: 900;
             letter-spacing: 2px;
-        }
-
-        .header-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-header {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: all 0.3s;
-            color: white;
-        }
-
-        .btn-header:hover {
-            transform: translateY(-2px);
-        }
-
-        .btn-volver {
-            background: linear-gradient(135deg, var(--blue), #2563eb);
+            text-align: center;
         }
 
         /* ============ ESTADÍSTICAS ============ */
@@ -158,25 +133,6 @@
             border-color: var(--blue);
         }
 
-        .btn-filtro {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: all 0.3s;
-            color: white;
-        }
-
-        .btn-exportar {
-            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-        }
-
-        .btn-exportar:hover {
-            transform: translateY(-2px);
-        }
-
         /* ============ GRID DE CARTONES ============ */
         .cartones-grid {
             display: grid;
@@ -192,7 +148,6 @@
             border-left: 5px solid var(--blue);
             transition: all 0.3s;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            position: relative;
         }
 
         .carton-card:hover {
@@ -285,55 +240,6 @@
             font-size: 0.9rem;
         }
 
-        .carton-id {
-            font-size: 0.6rem;
-            color: #94a3b8;
-            margin-top: 5px;
-            word-break: break-all;
-        }
-
-        .btn-copiar-link {
-            display: block;
-            width: 100%;
-            padding: 8px;
-            margin-top: 8px;
-            background: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.75rem;
-            transition: all 0.2s;
-        }
-
-        .btn-copiar-link:hover {
-            background: #2563eb;
-        }
-
-        .btn-copiar-link.copiado {
-            background: #10b981;
-        }
-
-        .btn-link-jugador {
-            display: block;
-            width: 100%;
-            padding: 6px;
-            margin-top: 5px;
-            background: var(--purple);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.7rem;
-            transition: all 0.2s;
-        }
-
-        .btn-link-jugador:hover {
-            background: #7c3aed;
-        }
-
         .sin-cartones {
             text-align: center;
             padding: 60px 20px;
@@ -350,18 +256,7 @@
         /* ============ RESPONSIVE ============ */
         @media (max-width: 768px) {
             .header {
-                flex-direction: column;
-                gap: 10px;
                 text-align: center;
-            }
-
-            .header-buttons {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            .btn-header {
-                width: 100%;
             }
 
             .stats-container {
@@ -378,11 +273,6 @@
     <!-- ============ HEADER ============ -->
     <div class="header">
         <h1>🎯 BINGO PRO - Todos los Cartones</h1>
-        <div class="header-buttons">
-            <button class="btn-header btn-volver" onclick="location.href='generar.html'">
-                📝 VOLVER A GENERAR
-            </button>
-        </div>
     </div>
 
     <!-- ============ ESTADÍSTICAS (CLICKABLES) ============ -->
@@ -414,9 +304,6 @@
             <option value="asignado">🟡 Asignados</option>
             <option value="usado">🔴 Usados</option>
         </select>
-        <button class="btn-filtro btn-exportar" onclick="exportarPDFTodos()">
-            📄 EXPORTAR PDF
-        </button>
     </div>
 
     <!-- ============ GRID DE CARTONES ============ -->
@@ -455,7 +342,7 @@
                 
                 if (!snap.exists()) {
                     document.getElementById('cartonesGrid').innerHTML = 
-                        '<div class="sin-cartones"><div class="icono">📋</div><p>No hay cartones generados en esta sala</p><p style="font-size:0.9rem;">Ve a Generar Cartones para crear algunos</p></div>';
+                        '<div class="sin-cartones"><div class="icono">📋</div><p>No hay cartones generados en esta sala</p></div>';
                     actualizarStats();
                     return;
                 }
@@ -477,7 +364,6 @@
             const disponibles = todosLosCartones.filter(c => c.estado === 'disponible').length;
             const asignados = todosLosCartones.filter(c => c.estado === 'asignado').length;
             const usados = todosLosCartones.filter(c => c.estado === 'usado').length;
-            const jugadoresUnicos = new Set(todosLosCartones.filter(c => c.asignadoA).map(c => c.asignadoA)).size;
             
             document.getElementById('statTotal').textContent = total;
             document.getElementById('statDisponibles').textContent = disponibles;
@@ -489,7 +375,6 @@
         function filtrarPorEstado(estado) {
             document.getElementById('filtroEstado').value = estado;
             
-            // Marcar stat activo
             document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('activo'));
             if (estado === 'todos') document.getElementById('statTotalCard').classList.add('activo');
             else if (estado === 'disponible') document.getElementById('statDisponibleCard').classList.add('activo');
@@ -497,39 +382,6 @@
             else if (estado === 'usado') document.getElementById('statUsadoCard').classList.add('activo');
             
             filtrarCartones();
-        }
-        
-        // ============ GENERAR LINK CIFRADO ============
-        function generarLinkCifrado(nombre, ids) {
-            const base = location.origin + location.pathname.replace('ver_todo.html', '');
-            const datos = { n: nombre, c: ids, s: SALA_ID, t: Date.now() };
-            return base + 'jugador.html?d=' + btoa(encodeURIComponent(JSON.stringify(datos)));
-        }
-        
-        // ============ COPIAR LINK INDIVIDUAL ============
-        function copiarLinkCarton(id, btn) {
-            const link = generarLinkCifrado('Cartón individual', [id]);
-            navigator.clipboard.writeText(link).then(function() {
-                btn.textContent = '✅ COPIADO!';
-                btn.classList.add('copiado');
-                setTimeout(function() {
-                    btn.textContent = '🔗 COPIAR LINK';
-                    btn.classList.remove('copiado');
-                }, 2000);
-            });
-        }
-        
-        // ============ COPIAR LINK DE JUGADOR ============
-        function copiarLinkJugador(nombre, ids, btn) {
-            const link = generarLinkCifrado(nombre, ids);
-            navigator.clipboard.writeText(link).then(function() {
-                btn.textContent = '✅ LINK DE ' + nombre.toUpperCase() + ' COPIADO!';
-                btn.style.background = '#10b981';
-                setTimeout(function() {
-                    btn.textContent = '👤 LINK DE ' + nombre.toUpperCase();
-                    btn.style.background = '#8b5cf6';
-                }, 2000);
-            });
         }
         
         // ============ MOSTRAR CARTONES ============
@@ -542,15 +394,6 @@
             }
             
             grid.innerHTML = '';
-            
-            // Agrupar por jugador para mostrar link
-            const jugadores = {};
-            cartones.forEach(function(c) {
-                if (c.asignadoA) {
-                    if (!jugadores[c.asignadoA]) jugadores[c.asignadoA] = [];
-                    jugadores[c.asignadoA].push(c.id || c.key);
-                }
-            });
             
             cartones.forEach(function(c) {
                 const card = document.createElement('div');
@@ -574,21 +417,14 @@
                 
                 tablaHTML += '</table>';
                 
-                const idCarton = c.id || c.key || '';
-                const nombreJugador = c.asignadoA || '';
-                const idsJugador = nombreJugador ? jugadores[nombreJugador] : [];
-                
                 card.innerHTML = 
                     '<div class="carton-header">' +
                     '<span class="carton-numero"># ' + (c.numero || '?') + '</span>' +
                     '<span class="carton-estado estado-' + (c.estado || 'disponible') + '" onclick="filtrarPorEstado(\'' + (c.estado || 'disponible') + '\')">' + (c.estado || 'disponible') + '</span>' +
                     '</div>' +
-                    (nombreJugador ? '<div class="carton-jugador">👤 ' + nombreJugador + '</div>' : '') +
+                    (c.asignadoA ? '<div class="carton-jugador">👤 ' + c.asignadoA + '</div>' : '') +
                     (c.nombre && c.nombre !== 'Cartón ' + c.numero ? '<div style="font-size:0.8rem;color:#64748b;margin-bottom:5px;">' + c.nombre + '</div>' : '') +
-                    tablaHTML +
-                    '<button class="btn-copiar-link" onclick="copiarLinkCarton(\'' + idCarton + '\', this)">🔗 COPIAR LINK INDIVIDUAL</button>' +
-                    (nombreJugador && idsJugador.length > 0 ? '<button class="btn-link-jugador" onclick="copiarLinkJugador(\'' + nombreJugador.replace(/'/g, "\\'") + '\', ' + JSON.stringify(idsJugador) + ', this)">👤 LINK DE ' + nombreJugador.toUpperCase() + '</button>' : '') +
-                    '<div class="carton-id">ID: ' + idCarton + '</div>';
+                    tablaHTML;
                 
                 grid.appendChild(card);
             });
@@ -599,7 +435,6 @@
             const busqueda = document.getElementById('buscarCarton').value.toLowerCase();
             const estado = document.getElementById('filtroEstado').value;
             
-            // Actualizar stats activos
             document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('activo'));
             if (estado === 'todos') document.getElementById('statTotalCard').classList.add('activo');
             else if (estado === 'disponible') document.getElementById('statDisponibleCard').classList.add('activo');
@@ -610,8 +445,7 @@
                 const matchBusqueda = !busqueda || 
                     (c.nombre || '').toLowerCase().includes(busqueda) ||
                     (c.asignadoA || '').toLowerCase().includes(busqueda) ||
-                    String(c.numero || '').includes(busqueda) ||
-                    (c.id || '').toLowerCase().includes(busqueda);
+                    String(c.numero || '').includes(busqueda);
                 
                 const matchEstado = estado === 'todos' || c.estado === estado;
                 
@@ -619,40 +453,6 @@
             });
             
             mostrarCartones(filtrados);
-        }
-        
-        // ============ EXPORTAR PDF ============
-        function exportarPDFTodos() {
-            if (todosLosCartones.length === 0) {
-                alert('No hay cartones para exportar');
-                return;
-            }
-            
-            const ventana = window.open('', '_blank', 'width=800,height=600');
-            ventana.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PDF Cartones</title>');
-            ventana.document.write('<style>');
-            ventana.document.write('*{margin:0;padding:0}body{font-family:Arial;background:white}.pagina{width:750px;padding:15px;page-break-after:always;min-height:100vh}.pagina:last-child{page-break-after:avoid}h1{text-align:center;color:#ff4d4d;font-size:18px}h2{text-align:center;font-size:14px}.carton{border:2px solid #000;border-radius:8px;padding:10px;margin-bottom:15px}table{width:100%;border-collapse:collapse}th{background:#ff4d4d;color:white;padding:8px;border:1px solid #000}td{padding:8px;border:1px solid #000;text-align:center;font-weight:bold}.free{background:#fef3c7}.num-carton{text-align:center;margin-bottom:5px}.num-carton span{background:#ff4d4d;color:white;padding:3px 12px;border-radius:10px;font-size:12px;font-weight:bold}.jugador{text-align:center;color:#10b981;font-size:12px;font-weight:bold}');
-            ventana.document.write('</style></head><body>');
-            
-            for (let i = 0; i < todosLosCartones.length; i += 2) {
-                ventana.document.write('<div class="pagina"><h1>🎯 BINGO PRO</h1><h2>Todos los Cartones</h2>');
-                ventana.document.write('<p style="text-align:center;font-size:10px;">Pág. ' + (Math.floor(i/2)+1) + ' | ' + todosLosCartones.length + ' cartones</p>');
-                ventana.document.write(generarHTMLCartonPDF(todosLosCartones[i]));
-                if (i+1 < todosLosCartones.length) ventana.document.write(generarHTMLCartonPDF(todosLosCartones[i+1]));
-                ventana.document.write('</div>');
-            }
-            ventana.document.write('<script>window.onload=function(){setTimeout(window.print,800)};<\/script></body></html>');
-            ventana.document.close();
-        }
-        
-        function generarHTMLCartonPDF(c) {
-            if (!c || !c.carton) return '<div class="carton"><p>Error</p></div>';
-            let html = '<div class="carton"><div class="num-carton"><span>Cartón #' + (c.numero||'?') + '</span></div>';
-            if (c.asignadoA) html += '<p class="jugador">👤 ' + c.asignadoA + '</p>';
-            html += '<table><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
-            for (let f = 0; f < 5; f++) { html += '<tr>'; ['B','I','N','G','O'].forEach(function(l) { const v = c.carton[l][f], centro = (l==='N'&&f===2); html += '<td class="'+(centro?'free':'')+'">'+(centro?'⭐':v)+'</td>'; }); html += '</tr>'; }
-            html += '</table></div>';
-            return html;
         }
         
         // ============ INICIAR ============
