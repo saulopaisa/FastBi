@@ -19,6 +19,60 @@ window.ganadoresPartida = parseInt(sessionStorage.getItem('ganadores_' + SALA_ID
 window.enPausa = false;
 window.pausaTimeout = null;
 
+// ============ SINCRONIZAR ESTADO DESDE FIREBASE AL CARGAR ============
+function sincronizarEstadoDesdeFirebase() {
+    db.ref('partidas/' + SALA_ID).once('value', function(snap) {
+        const data = snap.val();
+        if (!data) return;
+        
+        // Restaurar jugadores activos
+        if (data.jugadoresActivos && data.jugadoresActivos.length > 0) {
+            window.jugadoresActivos = data.jugadoresActivos;
+            guardarEstado();
+            if (window.etapaActual < 2) window.etapaActual = 2;
+        }
+        
+        // Restaurar patrón
+        if (data.patron && data.patron.some(function(x) { return x; })) {
+            window.patronBingo = data.patron;
+            guardarEstado();
+            if (window.etapaActual < 3) window.etapaActual = 3;
+            window.juegoActivo = true;
+        }
+        
+        // Restaurar cantados
+        if (data.cantados && data.cantados.length > 0) {
+            window.cantados = data.cantados;
+            guardarEstado();
+            window.juegoActivo = true;
+            if (window.etapaActual < 3) window.etapaActual = 3;
+        }
+        
+        // Restaurar ganadores
+        if (data.ganadoresCount !== undefined) {
+            window.ganadoresPartida = data.ganadoresCount;
+            sessionStorage.setItem('ganadores_' + SALA_ID, window.ganadoresPartida.toString());
+        }
+        
+        // Restaurar modo
+        if (data.modo === 'automatico') {
+            window.modoJuegoSeleccionado = 'automatico';
+        } else if (data.modo === 'manual') {
+            window.modoJuegoSeleccionado = 'manual';
+        }
+        
+        // Restaurar pausa
+        if (data.pausa) {
+            window.enPausa = data.pausa;
+        }
+        
+        actualizarEtapas();
+        actualizarOnlineCount();
+        inicializarTablero75();
+        console.log('✅ Estado sincronizado desde Firebase - Etapa: ' + window.etapaActual);
+    });
+}
+
 // ============ AUDIO BINGO ============
 function reproducirAudioBingo(nombreJugador) {
     if ('speechSynthesis' in window) {
@@ -357,6 +411,7 @@ window.bingoValido = function() {
     if (window.ganadoresPartida >= 2) { alert('⚠️ Ya hay 2 ganadores.'); return; }
     if (confirm('¿BINGO VÁLIDO para ' + nombre + '?\nGanadores: ' + window.ganadoresPartida + '/2')) {
         window.ganadoresPartida++; sessionStorage.setItem('ganadores_' + SALA_ID, window.ganadoresPartida.toString()); actualizarOnlineCount();
+        db.ref('partidas/' + SALA_ID).update({ ganadoresCount: window.ganadoresPartida });
         finalizarRevision(nombre, 'valido'); window.cerrarAlerta(); reproducirAudioGanador(nombre);
         if (window.ganadoresPartida >= 2) {
             db.ref('partidas/' + SALA_ID).update({ estado: 'terminado', ganador: nombre, mensajeAdmin: '🎉 ¡2 GANADORES!', timestamp: Date.now() });
@@ -386,7 +441,7 @@ function iniciarNuevaPartida() {
     if (window.modoAutomatico) window.detenerBingoAutomatico();
     sessionStorage.setItem('ganadores_' + SALA_ID, '0');
     localStorage.setItem('bingo_cantados_' + SALA_ID, JSON.stringify([]));
-    db.ref('partidas/' + SALA_ID).set({ estado: 'nueva_partida', cantados: [], ultimaBola: null, ultimaLetra: null, mensajeAdmin: '🔄 Nueva partida', timestamp: Date.now(), patron: Array(25).fill(false), revisando: { activo: false }, resultadoRevision: null, pausa: false, cronometro: 0, alertaInicio: null, ganador: null, bingoCantado: null });
+    db.ref('partidas/' + SALA_ID).set({ estado: 'nueva_partida', cantados: [], ultimaBola: null, ultimaLetra: null, mensajeAdmin: '🔄 Nueva partida', timestamp: Date.now(), patron: Array(25).fill(false), revisando: { activo: false }, resultadoRevision: null, pausa: false, cronometro: 0, alertaInicio: null, ganador: null, bingoCantado: null, ganadoresCount: 0 });
     db.ref('bingos/' + SALA_ID).remove();
     inicializarTablero75(); document.getElementById('minicartonVerificador').innerHTML = '<p style="color:#64748b;text-align:center;">Busca un cartón para verificar</p>';
     document.getElementById('notificacionesBingo').innerHTML = ''; document.getElementById('alertaBingo').style.display = 'none';
@@ -404,14 +459,13 @@ document.getElementById('resetBtn').addEventListener('click', function() {
 
 // ============ ELIMINAR JUGADORES ============
 window.abrirModalEliminarJugadores = function() {
-    const modal = document.getElementById('modalEliminarJugadores');
-    const lista = document.getElementById('listaEliminarJugadores');
+    const modal = document.getElementById('modalEliminarJugadores'), lista = document.getElementById('listaEliminarJugadores');
     if (!modal || !lista) return;
     abrirModal('modalEliminarJugadores'); lista.innerHTML = '';
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
         const jugadoresUnicos = new Set();
         snap.forEach(function(child) { const c = child.val(); if (c.asignadoA) jugadoresUnicos.add(c.asignadoA); });
-        if (jugadoresUnicos.size === 0) { lista.innerHTML = '<p style="color:white;text-align:center;grid-column:1/-1;">No hay jugadores</p>'; return; }
+        if (jugadoresUnicos.size === 0) { lista.innerHTML = '<p style="color:white;text-align:center;">No hay jugadores</p>'; return; }
         jugadoresUnicos.forEach(function(jugador) {
             const item = document.createElement('div'); item.className = 'item-jugador'; item.setAttribute('data-jugador', jugador.toLowerCase());
             if (window.jugadoresActivos.includes(jugador)) item.classList.add('seleccionado');
@@ -432,7 +486,7 @@ window.confirmarEliminarJugadores = function() {
     const seleccionados = document.querySelectorAll('#listaEliminarJugadores .item-jugador.seleccionado');
     if (seleccionados.length === 0) { alert('Selecciona al menos un jugador.'); return; }
     const nombres = Array.from(seleccionados).map(function(item) { return item.getAttribute('data-jugador'); });
-    if (confirm('⚠️ ¿Eliminar ' + nombres.length + ' jugadores?\n\n' + nombres.join(', ') + '\n\nSe eliminarán sus cartones.')) {
+    if (confirm('⚠️ ¿Eliminar ' + nombres.length + ' jugadores?\n\nSe eliminarán sus cartones.')) {
         db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
             const updates = {}; let eliminados = 0;
             snap.forEach(function(child) { const c = child.val(); if (c.asignadoA && nombres.includes(c.asignadoA.toLowerCase())) { updates['salas/' + SALA_ID + '/cartones/' + child.key] = null; eliminados++; } });
@@ -441,13 +495,13 @@ window.confirmarEliminarJugadores = function() {
     }
 };
 window.eliminarTodosJugadoresModal = function() {
-    if (confirm('⚠️⚠️ ¿ELIMINAR TODOS LOS JUGADORES Y CARTONES?\n\nEsta acción NO se puede deshacer.')) {
+    if (confirm('⚠️⚠️ ¿ELIMINAR TODOS LOS JUGADORES Y CARTONES?')) {
         db.ref('salas/' + SALA_ID + '/cartones').remove(function() { window.jugadoresActivos = []; guardarEstado(); actualizarOnlineCount(); db.ref('partidas/' + SALA_ID + '/jugadoresActivos').set([]); cerrarModal('modalEliminarJugadores'); alert('✅ Todos eliminados.'); });
     }
 };
 window.eliminarJugadoresSeleccionados = function() {
     if (window.jugadoresActivos.length === 0) { alert('No hay jugadores en la ronda.'); return; }
-    if (confirm('⚠️ ¿Eliminar jugadores de la ronda?\n\n' + window.jugadoresActivos.join(', ') + '\n\nNo borra cartones.')) {
+    if (confirm('⚠️ ¿Eliminar jugadores de la ronda?\n\nNo borra cartones.')) {
         window.jugadoresActivos = []; guardarEstado(); actualizarOnlineCount(); actualizarEtapas(); db.ref('partidas/' + SALA_ID + '/jugadoresActivos').set([]); alert('✅ Eliminados de la ronda.');
     }
 };
@@ -463,7 +517,34 @@ document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { cer
 // ============ INICIAR ============
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎮 Panel iniciado - Sala:', SALA_ID);
-    inicializarTablero75(); escucharBingosJugadores(); actualizarEtapas(); actualizarOnlineCount();
+    inicializarTablero75();
+    escucharBingosJugadores();
+    actualizarEtapas();
+    actualizarOnlineCount();
+    
+    // Sincronizar estado desde Firebase
+    sincronizarEstadoDesdeFirebase();
+    
     if (window.juegoActivo && window.etapaActual === 3) actualizarEtapas();
-    db.ref('partidas/' + SALA_ID).on('value', function(snap) { const data = snap.val(); if (data && data.cantados && data.cantados.length > window.cantados.length) { window.cantados = data.cantados; guardarEstado(); inicializarTablero75(); if (window.cartonActual) { mostrarMinicarton(window.cartonActual); verificarBingoAutomatico(window.cartonActual); } } });
+    
+    db.ref('partidas/' + SALA_ID).on('value', function(snap) {
+        const data = snap.val();
+        if (data && data.cantados && data.cantados.length > window.cantados.length) {
+            window.cantados = data.cantados;
+            guardarEstado();
+            inicializarTablero75();
+            if (window.cartonActual) { mostrarMinicarton(window.cartonActual); verificarBingoAutomatico(window.cartonActual); }
+        }
+        // Sincronizar pausa
+        if (data && data.pausa !== undefined && data.pausa !== window.enPausa) {
+            window.enPausa = data.pausa;
+            actualizarEtapas();
+        }
+        // Sincronizar ganadores
+        if (data && data.ganadoresCount !== undefined && data.ganadoresCount !== window.ganadoresPartida) {
+            window.ganadoresPartida = data.ganadoresCount;
+            sessionStorage.setItem('ganadores_' + SALA_ID, window.ganadoresPartida.toString());
+            actualizarOnlineCount();
+        }
+    });
 });
