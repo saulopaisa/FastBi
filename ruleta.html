@@ -12,6 +12,19 @@
         <div class="titulo">🎯 BINGO PRO</div>
         <div class="subtitulo">Panel de Control</div>
         
+        <!-- SELECTOR DE SALA -->
+        <div style="margin-bottom:10px; padding:8px; background:#1e293b; border-radius:8px; display:flex; gap:5px; align-items:center;">
+            <span style="color:#94a3b8; font-size:0.65rem;">SALA:</span>
+            <input type="text" id="inputSalaId" placeholder="ID de sala" 
+                style="flex:1; padding:5px; border-radius:4px; border:1px solid #2d3748; background:#0f172a; color:white; font-size:0.7rem;">
+            <button onclick="cambiarSala()" style="padding:5px 10px; background:#3b82f6; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem;">
+                🔄
+            </button>
+            <button onclick="copiarSalaId()" style="padding:5px 8px; background:#6366f1; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem;">
+                📋
+            </button>
+        </div>
+        
         <div id="onlineCount" class="online-count">👥 JUGADORES EN RONDA: 0</div>
 
         <!-- ETAPA 1 -->
@@ -35,7 +48,6 @@
                 </button>
             </div>
 
-            <!-- BOTÓN DE MENSAJE -->
             <button id="btnMensaje" onclick="window.enviarMensajeJugador()" class="btn-programar" style="width:100%;background:#6366f1;color:white;margin-bottom:5px;" disabled>
                 📝 MENSAJE A TODOS
             </button>
@@ -63,7 +75,6 @@
                 🔍 NOTIFICAR REVISIÓN AL JUGADOR
             </button>
             
-            <!-- Minicartón verificador -->
             <div id="minicartonVerificador" class="minicarton-container">
                 <p style="color:#64748b; text-align:center; font-size:0.8rem;">Busca un cartón para verificar</p>
             </div>
@@ -94,7 +105,6 @@
             </div>
         </div>
         
-        <!-- Notificaciones -->
         <div id="notificacionesBingo" class="notificaciones-container"></div>
         
         <button id="resetBtn" class="btn-reiniciar">
@@ -104,20 +114,14 @@
 
     <!-- ============ PANEL DERECHO ============ -->
     <div class="main-content">
-        <!-- Header con botones -->
         <div class="panel-header">
             <h3>📊 TABLERO DE SEGUIMIENTO (1-75)</h3>
             <div class="panel-header-botones">
-                <button class="btn-ver-cartones" onclick="location.href='ver_todo.html'">
-                    👁️ VER CARTONES
-                </button>
-                <button class="btn-ver-cartones btn-generar" onclick="location.href='generar.html'">
-                    📝 GENERAR
-                </button>
+                <button class="btn-ver-cartones" onclick="location.href='ver_todo.html'">👁️ VER CARTONES</button>
+                <button class="btn-ver-cartones btn-generar" onclick="location.href='generar.html'">📝 GENERAR</button>
             </div>
         </div>
         
-        <!-- ALERTA DE BINGO -->
         <div id="alertaBingo" class="alerta-bingo" style="display:none;">
             <div class="alerta-bingo-contenido">
                 <span class="alerta-icono">🚨</span>
@@ -134,7 +138,6 @@
             </div>
         </div>
         
-        <!-- Indicador de última bola -->
         <div class="ultima-bola-container">
             <div class="ultima-bola" id="ultimaBola">
                 <span class="letra">-</span>
@@ -142,7 +145,6 @@
             </div>
         </div>
         
-        <!-- Últimos 5 cantados -->
         <div class="ultimos-container" id="ultimosCantados">
             <div class="ultimo-item vacio"><div class="letra-peq">-</div><div class="num-peq">--</div></div>
             <div class="ultimo-item vacio"><div class="letra-peq">-</div><div class="num-peq">--</div></div>
@@ -151,11 +153,10 @@
             <div class="ultimo-item vacio"><div class="letra-peq">-</div><div class="num-peq">--</div></div>
         </div>
         
-        <!-- Tablero completo -->
         <div id="historyGrid" class="history-grid"></div>
     </div>
 
-    <!-- ============ MODAL CARTONES ============ -->
+    <!-- ============ MODALES ============ -->
     <div id="modalCartones" class="modal-overlay">
         <div class="modal-content" onclick="event.stopPropagation()">
             <h3>📋 PASO 1: ¿QUIÉN JUEGA?</h3>
@@ -166,7 +167,6 @@
         </div>
     </div>
 
-    <!-- ============ MODAL PATRÓN ============ -->
     <div id="modalPatron" class="modal-overlay">
         <div class="modal-content" onclick="event.stopPropagation()">
             <h3>🎯 PASO 2: ELIGE EL PATRÓN</h3>
@@ -176,41 +176,22 @@
                 <button onclick="window.aplicarPredefinido('limpiar')" class="btn-predefinido">🔄 BORRAR</button>
             </div>
             <div id="gridDibujoPatron" class="grid-patron-admin"></div>
-            <button onclick="window.confirmarPatron()" class="btn-accion btn-empezar" style="margin-top: 15px;">✅ CONFIRMAR Y ACTIVAR JUEGO</button>
+            <button onclick="window.confirmarPatron()" class="btn-accion btn-empezar" style="margin-top:15px;">✅ CONFIRMAR Y ACTIVAR JUEGO</button>
         </div>
     </div>
 
-    <!-- ============ MODAL ELIMINAR JUGADORES ============ -->
     <div id="modalEliminarJugadores" class="modal-overlay">
         <div class="modal-content" onclick="event.stopPropagation()">
             <h3>🗑️ ELIMINAR JUGADORES</h3>
-            <p style="color:#94a3b8;font-size:0.8rem;margin-bottom:10px;text-align:center;">
-                Selecciona los jugadores que deseas eliminar de la ronda actual
-            </p>
-            
-            <!-- Buscador en modal -->
-            <input type="text" class="modal-buscador" placeholder="🔍 Buscar jugador..." 
-                oninput="window.buscarEnModalEliminar(this.value)">
-            
-            <!-- Seleccionar todos -->
-            <button onclick="window.seleccionarTodosEnEliminar()" class="btn-seleccionar-todos" style="background:#ef4444;">
-                ✅ SELECCIONAR TODOS
-            </button>
-            
+            <p style="color:#94a3b8;font-size:0.8rem;margin-bottom:10px;text-align:center;">Selecciona los jugadores a eliminar</p>
+            <input type="text" class="modal-buscador" placeholder="🔍 Buscar jugador..." oninput="window.buscarEnModalEliminar(this.value)">
+            <button onclick="window.seleccionarTodosEnEliminar()" class="btn-seleccionar-todos" style="background:#ef4444;">✅ SELECCIONAR TODOS</button>
             <div id="listaEliminarJugadores" class="grid-seleccion-cartones"></div>
-            
             <div style="display:flex;gap:8px;margin-top:15px;">
-                <button onclick="window.confirmarEliminarJugadores()" class="btn-accion" style="background:#ef4444;flex:1;">
-                    🗑️ ELIMINAR SELECCIONADOS
-                </button>
-                <button onclick="cerrarModal('modalEliminarJugadores')" class="btn-accion" style="background:#6b7280;flex:1;">
-                    ❌ CANCELAR
-                </button>
+                <button onclick="window.confirmarEliminarJugadores()" class="btn-accion" style="background:#ef4444;flex:1;">🗑️ ELIMINAR</button>
+                <button onclick="cerrarModal('modalEliminarJugadores')" class="btn-accion" style="background:#6b7280;flex:1;">CANCELAR</button>
             </div>
-            
-            <button onclick="window.eliminarTodosJugadoresModal()" class="btn-accion" style="background:#991b1b;margin-top:8px;width:100%;">
-                ⚠️ ELIMINAR TODOS LOS JUGADORES
-            </button>
+            <button onclick="window.eliminarTodosJugadoresModal()" class="btn-accion" style="background:#991b1b;margin-top:8px;width:100%;">⚠️ ELIMINAR TODOS</button>
         </div>
     </div>
 
@@ -232,5 +213,34 @@
         console.log('🔥 Firebase listo');
     </script>
     <script src="ruleta.js"></script>
+    
+    <!-- SCRIPT PARA CAMBIAR SALA -->
+    <script>
+        // Mostrar sala actual
+        document.getElementById('inputSalaId').value = localStorage.getItem('salaActiva') || 'sala-default';
+        
+        function cambiarSala() {
+            const nuevaSala = document.getElementById('inputSalaId').value.trim();
+            if (nuevaSala) {
+                localStorage.setItem('salaActiva', nuevaSala);
+                location.reload();
+            }
+        }
+        
+        function copiarSalaId() {
+            const salaId = localStorage.getItem('salaActiva') || 'sala-default';
+            navigator.clipboard.writeText(salaId).then(function() {
+                alert('✅ ID de sala copiado: ' + salaId + '\n\nPega este ID en el otro dispositivo.');
+            });
+        }
+        
+        // Permitir cargar sala desde URL: ?sala=XXX
+        const urlParams = new URLSearchParams(window.location.search);
+        const salaParam = urlParams.get('sala');
+        if (salaParam) {
+            localStorage.setItem('salaActiva', salaParam);
+            window.location.href = location.pathname;
+        }
+    </script>
 </body>
 </html>
