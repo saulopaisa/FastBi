@@ -78,6 +78,44 @@ body {
     box-shadow: 0 4px 10px rgba(255, 202, 40, 0.3);
 }
 
+/* ============ SELECTOR DE SALA ============ */
+.selector-sala {
+    margin-bottom: 10px;
+    padding: 8px;
+    background: #1e293b;
+    border-radius: 8px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.selector-sala span {
+    color: #94a3b8;
+    font-size: 0.65rem;
+    white-space: nowrap;
+}
+
+.selector-sala input {
+    flex: 1;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #2d3748;
+    background: #0f172a;
+    color: white;
+    font-size: 0.7rem;
+    min-width: 0;
+}
+
+.selector-sala button {
+    padding: 5px 8px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    color: white;
+    white-space: nowrap;
+}
+
 /* ============ BOTONES ============ */
 .btn-accion {
     width: 100%;
@@ -151,17 +189,17 @@ body {
 @keyframes flashBingo { 0%,100%{background:#10b981;} 50%{background:#34d399;} }
 
 /* ============ NOTIFICACIONES ============ */
-.notificaciones-container { margin-top: 8px; max-height: 120px; overflow-y: auto; }
+.notificaciones-container { margin-top: 8px; max-height: 100px; overflow-y: auto; }
 .notificacion-bingo {
     background: linear-gradient(135deg, #ef4444, #dc2626); color: white;
-    padding: 10px; border-radius: 8px; margin-bottom: 5px;
-    animation: slideNotify 0.5s ease-out; font-size: 0.8rem;
+    padding: 8px; border-radius: 8px; margin-bottom: 5px;
+    animation: slideNotify 0.5s ease-out; font-size: 0.75rem;
     cursor: pointer; border-left: 4px solid #ffca28;
 }
 .notificacion-bingo:hover { background: linear-gradient(135deg, #f87171, #ef4444); }
-.notif-jugador { font-weight: bold; font-size: 0.9rem; }
-.notif-carton { color: #ffca28; }
-.notif-tiempo { font-size: 0.65rem; color: #fca5a5; margin-top: 3px; }
+.notif-jugador { font-weight: bold; font-size: 0.85rem; }
+.notif-carton { color: #ffca28; font-size: 0.75rem; }
+.notif-tiempo { font-size: 0.6rem; color: #fca5a5; margin-top: 3px; }
 @keyframes slideNotify { from{transform:translateX(100%);opacity:0;} to{transform:translateX(0);opacity:1;} }
 
 /* ============ BOTONES VERIFICACIÓN ============ */
@@ -303,23 +341,313 @@ body {
 .btn-predefinido { font-size: 0.7rem; padding: 8px; cursor: pointer; background: #334155; color: white; border: 1px solid #475569; border-radius: 6px; font-weight: bold; }
 .btn-predefinido:hover { background: #475569; }
 
-/* ============ RESPONSIVE ============ */
-@media (max-width: 768px) {
-    body { flex-direction: column; }
-    .sidebar { width: 100%; min-width: 100%; max-height: 40vh; border-right: none; border-bottom: 2px solid var(--border-color); }
-    .main-content { padding: 8px; }
-    .ultima-bola { width: 80px; height: 80px; }
-    .ultima-bola .letra { font-size: 1.3rem; }
-    .ultima-bola .numero { font-size: 2rem; }
-    .history-grid { gap: 2px; padding: 6px; }
-    .celda-seguimiento { font-size: 0.6rem; border-radius: 4px; border-width: 1px; }
-    .grid-seleccion-cartones { grid-template-columns: repeat(2, 1fr); }
-    .panel-header { flex-direction: column; gap: 8px; }
-    .panel-header-botones { width: 100%; }
-    .btn-ver-cartones { flex: 1; text-align: center; }
+/* ============ RESPONSIVE - CELULAR ============ */
+@media (max-width: 900px) {
+    body {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    .sidebar {
+        width: 100%;
+        min-width: 100%;
+        max-height: none;
+        border-right: none;
+        border-bottom: 2px solid var(--border-color);
+        padding: 10px;
+    }
+
+    .titulo {
+        font-size: 1.2rem;
+    }
+
+    .online-count {
+        font-size: 0.8rem;
+        padding: 6px;
+    }
+
+    .btn-accion {
+        padding: 8px;
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+    }
+
+    .btn-sortear {
+        padding: 14px;
+        font-size: 1rem;
+    }
+
+    .cronometro {
+        font-size: 1.3rem;
+    }
+
+    .main-content {
+        padding: 8px;
+        flex: none;
+        min-height: 60vh;
+    }
+
+    .panel-header {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .panel-header h3 {
+        font-size: 0.85rem;
+    }
+
+    .btn-ver-cartones {
+        padding: 6px 10px;
+        font-size: 0.7rem;
+    }
+
+    .ultima-bola {
+        width: 80px;
+        height: 80px;
+    }
+
+    .ultima-bola .letra {
+        font-size: 1.3rem;
+    }
+
+    .ultima-bola .numero {
+        font-size: 2rem;
+    }
+
+    .ultimos-container {
+        gap: 4px;
+    }
+
+    .ultimo-item {
+        padding: 4px 6px;
+        min-width: 40px;
+    }
+
+    .ultimo-item .num-peq {
+        font-size: 1rem;
+    }
+
+    .history-grid {
+        gap: 2px;
+        padding: 4px;
+    }
+
+    .celda-seguimiento {
+        font-size: 0.6rem;
+        border-radius: 3px;
+        border-width: 1px;
+    }
+
+    .alerta-bingo-contenido {
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+    }
+
+    .alerta-acciones {
+        flex-direction: row;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .alerta-btn-valido,
+    .alerta-btn-errado,
+    .alerta-btn-cerrar {
+        padding: 8px 12px;
+        font-size: 0.75rem;
+    }
+
+    .minicarton-container {
+        min-height: 100px;
+    }
+
+    .minicarton-container td {
+        padding: 4px;
+        font-size: 0.7rem;
+    }
+
+    .minicarton-container th {
+        padding: 4px;
+        font-size: 0.65rem;
+    }
+
+    .notificaciones-container {
+        max-height: 80px;
+    }
+
+    .notificacion-bingo {
+        padding: 6px;
+        font-size: 0.7rem;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 15px;
+        max-height: 85vh;
+    }
+
+    .grid-seleccion-cartones {
+        grid-template-columns: repeat(2, 1fr);
+        max-height: 200px;
+    }
+
+    .item-jugador {
+        padding: 10px;
+    }
+
+    .selector-sala {
+        padding: 6px;
+    }
+
+    .selector-sala input {
+        font-size: 0.65rem;
+    }
 }
-@media (max-height: 800px) {
-    .celda-seguimiento { font-size: 0.65rem; }
-    .history-grid { gap: 2px; padding: 6px; }
-    .ultima-bola { width: 90px; height: 90px; }
+
+@media (max-width: 480px) {
+    .sidebar {
+        padding: 8px;
+    }
+
+    .titulo {
+        font-size: 1.1rem;
+    }
+
+    .btn-accion {
+        padding: 7px;
+        font-size: 0.75rem;
+    }
+
+    .btn-sortear {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+
+    .history-grid {
+        gap: 1px;
+        padding: 3px;
+        border-radius: 8px;
+    }
+
+    .celda-seguimiento {
+        font-size: 0.5rem;
+        border-radius: 2px;
+        border-width: 1px;
+    }
+
+    .ultima-bola {
+        width: 60px;
+        height: 60px;
+    }
+
+    .ultima-bola .letra {
+        font-size: 1rem;
+    }
+
+    .ultima-bola .numero {
+        font-size: 1.5rem;
+    }
+
+    .ultimo-item {
+        padding: 3px 5px;
+        min-width: 30px;
+    }
+
+    .ultimo-item .letra-peq {
+        font-size: 0.6rem;
+    }
+
+    .ultimo-item .num-peq {
+        font-size: 0.85rem;
+    }
+
+    .panel-header {
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .panel-header-botones {
+        width: 100%;
+    }
+
+    .btn-ver-cartones {
+        flex: 1;
+        text-align: center;
+        padding: 5px 8px;
+        font-size: 0.65rem;
+    }
+
+    .alerta-titulo {
+        font-size: 0.9rem;
+    }
+
+    .alerta-jugador {
+        font-size: 0.75rem;
+    }
+
+    .alerta-carton {
+        font-size: 0.65rem;
+    }
+
+    .modal-content {
+        width: 98%;
+        padding: 12px;
+    }
+
+    .grid-seleccion-cartones {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 5px;
+    }
+
+    .btn-group {
+        gap: 3px;
+    }
+
+    .btn-bingo-errado,
+    .btn-bingo-valido {
+        padding: 6px;
+        font-size: 0.65rem;
+    }
+
+    .cronometro {
+        font-size: 1.1rem;
+        padding: 4px;
+    }
+
+    .input-group input {
+        width: 40px;
+        padding: 6px;
+        font-size: 0.8rem;
+    }
+
+    .verifier-title {
+        font-size: 0.7rem;
+    }
+
+    .verifier-area input {
+        padding: 6px;
+        font-size: 0.75rem;
+    }
+}
+
+/* ============ TABLETS ============ */
+@media (min-width: 481px) and (max-width: 900px) {
+    .sidebar {
+        max-height: 45vh;
+    }
+
+    .main-content {
+        flex: 1;
+        min-height: 55vh;
+    }
+
+    .history-grid {
+        grid-template-columns: repeat(15, 1fr);
+        grid-template-rows: repeat(5, 1fr);
+    }
+
+    .celda-seguimiento {
+        font-size: 0.65rem;
+    }
 }
