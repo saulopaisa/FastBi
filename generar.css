@@ -583,3 +583,37 @@ body {
     .cartones-grid { grid-template-columns: 1fr; }
     .stats-row { grid-template-columns: repeat(2, 1fr); }
 }
+/* ============ BOTÓN ASIGNAR EN VISTA 2 ============ */
+.btn-asignar-ver {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    color: white;
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn-asignar-ver:disabled {
+    background: #475569 !important;
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ============ CARTÓN SELECCIONADO EN VISTA 2 ============ */
+.carton-card-ver {
+    position: relative;
+}
+
+.carton-card-ver.seleccionado {
+    border-left: 4px solid #10b981 !important;
+    background: #f0fdf4 !important;
+}
