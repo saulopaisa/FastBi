@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Bingo Pro - Panel de Control</title>
     <link rel="stylesheet" href="ruleta.css">
@@ -33,6 +33,11 @@
                     <span class="sala-id" id="salaIdDisplay">-</span>
                     <button onclick="copiarSalaId()" class="btn-mini">📋</button>
                 </div>
+                
+                <!-- COPIAR LINK DE SALA -->
+                <button onclick="generarLinkSala()" class="btn-accion" style="background:#6366f1;margin-bottom:8px;">
+                    🔗 COPIAR LINK DE SALA
+                </button>
                 
                 <!-- PARTIDA VIGENTE -->
                 <div class="partida-vigente" id="partidaVigente" style="display:none;">
@@ -242,6 +247,20 @@
     <!-- SCRIPTS -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    
+    <!-- Cargar sala desde URL compartida -->
+    <script>
+        (function() {
+            var params = new URLSearchParams(window.location.search);
+            var salaParam = params.get('sala');
+            if (salaParam) {
+                localStorage.setItem('salaActiva', decodeURIComponent(salaParam));
+                window.history.replaceState({}, document.title, location.pathname);
+            }
+        })();
+    </script>
+    
+    <!-- Configuración Firebase y Sala -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
@@ -259,7 +278,6 @@
         function generarSalaPersonalizada() {
             var salaGuardada = localStorage.getItem('salaActiva');
             if (salaGuardada && salaGuardada.startsWith('bingo')) return salaGuardada;
-            
             var ahora = new Date();
             var fecha = ahora.getMonth() + 1 + '/' + ahora.getDate() + '/' + ahora.getFullYear().toString().slice(-2);
             var salaId = 'bingo' + fecha;
@@ -267,12 +285,14 @@
             return salaId;
         }
         
-        const SALA_ID = generarSalaPersonalizada();
+        var SALA_ID = generarSalaPersonalizada();
         document.getElementById('salaIdDisplay').textContent = SALA_ID;
+        localStorage.setItem('salaActiva', SALA_ID);
         
         console.log('🔥 Firebase listo');
         console.log('📁 Sala:', SALA_ID);
     </script>
+    
     <script src="ruleta.js"></script>
     <script src="ruleta-movil.js"></script>
 </body>
