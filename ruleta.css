@@ -342,3 +342,136 @@ body {
     .btn-accion { padding: 10px; font-size: 0.8rem; }
     .grid-seleccion-cartones { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ============ BOTÓN COMENZAR PARTIDA ============ */
+.btn-comenzar {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    font-size: 1rem !important;
+    padding: 14px !important;
+    margin-top: 10px !important;
+    animation: glowComenzar 2s infinite;
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+}
+
+.btn-comenzar:disabled {
+    animation: none !important;
+    box-shadow: none !important;
+}
+
+@keyframes glowComenzar {
+    0%, 100% { box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); }
+    50% { box-shadow: 0 4px 35px rgba(16, 185, 129, 0.8); }
+}
+
+/* ============ CRONÓMETRO VISUAL ============ */
+.cronometro-visual {
+    margin-top: 15px;
+    padding: 15px;
+    background: #0f172a;
+    border-radius: 12px;
+    text-align: center;
+    border: 2px solid #f59e0b;
+    animation: pulse 2s infinite;
+}
+
+.cronometro-visual-tiempo {
+    font-family: 'Courier New', monospace;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #ff4d4d;
+    margin-bottom: 10px;
+}
+
+.cronometro-visual-barra {
+    width: 100%;
+    height: 8px;
+    background: #1e293b;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.cronometro-visual-progreso {
+    height: 100%;
+    background: linear-gradient(90deg, #f59e0b, #10b981);
+    border-radius: 4px;
+    transition: width 1s linear;
+    width: 0%;
+}
+
+.cronometro-visual-texto {
+    color: #94a3b8;
+    font-size: 0.7rem;
+    margin-top: 5px;
+}
+
+/* ============ CELDAS MÓVIL MÁS GRANDES ============ */
+.history-grid-movil {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    gap: 3px;
+    padding: 5px;
+}
+
+.celda-movil {
+    background: #e2e8f0;
+    border: 2px solid #cbd5e1;
+    aspect-ratio: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #475569;
+    border-radius: 4px;
+    padding: 6px 2px;
+    min-width: 0;
+    min-height: 0;
+    transition: all 0.3s;
+}
+
+.celda-movil.cantada {
+    background: linear-gradient(135deg, #ffca28, #ffb300);
+    color: #16213e;
+    border-color: #f59e0b;
+    font-size: 0.75rem;
+    box-shadow: 0 2px 6px rgba(255,202,40,0.4);
+}
+
+.celda-movil.ultima {
+    background: #ff4d4d !important;
+    color: white !important;
+    animation: pulse 0.8s ease-in-out infinite;
+    font-size: 0.8rem !important;
+}
+
+/* ============ CONFIG STATUS ============ */
+.config-status.pendiente {
+    border-left: 3px solid #64748b;
+}
+
+.config-status.completado {
+    border-left: 3px solid var(--success);
+}
+
+/* ============ ÚLTIMOS NÚMEROS ============ */
+.num-chico-movil.vacio {
+    opacity: 0.3;
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 400px) {
+    .celda-movil {
+        font-size: 0.6rem;
+        padding: 4px 1px;
+    }
+    .celda-movil.cantada {
+        font-size: 0.65rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .cronometro-visual-tiempo {
+        font-size: 1.8rem;
+    }
+}
