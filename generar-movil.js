@@ -1,7 +1,8 @@
-// generar-movil.js - Navegación y UI móvil para generar
+// generar-movil.js - Navegación, UI móvil y asignación en vista 2
 
 var pestanaActual = 'generar';
 var todosCartones = [];
+var seleccionadosVer = []; // Para selección en vista 2
 
 // ============ CAMBIAR PESTAÑA ============
 function cambiarPestana(pestana) {
@@ -36,8 +37,6 @@ function mostrarToastMovil(mensaje, tipo) {
         setTimeout(function() { if (toast.parentNode) toast.remove(); }, 300);
     }, 2500);
 }
-
-// Exponer globalmente
 window.mostrarToastMovil = mostrarToastMovil;
 
 // ============ CARGAR CARTONES PARA VER ============
@@ -50,9 +49,11 @@ function cargarCartonesVer() {
     
     db.ref('salas/' + salaId + '/cartones').once('value', function(snap) {
         todosCartones = [];
+        seleccionadosVer = [];
         if (!snap.exists()) {
             grid.innerHTML = '<p style="color:#94a3b8;text-align:center;grid-column:1/-1;padding:40px;">No hay cartones</p>';
             actualizarStats();
+            actualizarBtnAsignarVer();
             return;
         }
         
@@ -84,6 +85,94 @@ function actualizarStats() {
     if (elUsados) elUsados.textContent = usados;
 }
 
+function actualizarBtnAsignarVer() {
+    var btn = document.getElementById('btnAsignarVer');
+    if (btn) {
+        if (seleccionadosVer.length > 0 && seleccionadosVer.length <= 4) {
+            btn.disabled = false;
+            btn.textContent = '👤 ASIGNAR (' + seleccionadosVer.length + ') A JUGADOR';
+            btn.style.opacity = '1';
+        } else if (seleccionadosVer.length > 4) {
+            btn.disabled = true;
+            btn.textContent = '⚠️ MÁXIMO 4 CARTONES';
+            btn.style.opacity = '0.5';
+        } else {
+            btn.disabled = true;
+            btn.textContent = '👤 ASIGNAR SELECCIONADOS A JUGADOR';
+            btn.style.opacity = '0.5';
+        }
+    }
+}
+
+// ============ TOGGLE SELECCIÓN EN VISTA 2 ============
+function toggleSeleccionVer(id) {
+    var index = seleccionadosVer.indexOf(id);
+    if (index !== -1) {
+        seleccionadosVer.splice(index, 1);
+    } else {
+        if (seleccionadosVer.length >= 4) {
+            mostrarToastMovil('⚠️ Máximo 4 cartones por jugador', 'error');
+            return;
+        }
+        seleccionadosVer.push(id);
+    }
+    
+    // Actualizar visual
+    var cartas = document.querySelectorAll('.carton-card-ver');
+    cartas.forEach(function(carta) {
+        var cid = carta.getAttribute('data-id');
+        if (seleccionadosVer.indexOf(cid) !== -1) {
+            carta.classList.add('seleccionado');
+            carta.style.borderLeft = '4px solid #10b981';
+            carta.style.background = '#f0fdf4';
+        } else {
+            carta.classList.remove('seleccionado');
+            carta.style.borderLeft = '4px solid #3b82f6';
+            carta.style.background = 'white';
+        }
+    });
+    
+    actualizarBtnAsignarVer();
+}
+
+// ============ ASIGNAR DESDE VISTA 2 ============
+function asignarDesdeVistaVer() {
+    if (seleccionadosVer.length === 0) {
+        mostrarToastMovil('⚠️ Selecciona al menos un cartón', 'error');
+        return;
+    }
+    
+    if (seleccionadosVer.length > 4) {
+        mostrarToastMovil('⚠️ Máximo 4 cartones por jugador', 'error');
+        return;
+    }
+    
+    var nombre = prompt('👤 Nombre del jugador:');
+    if (!nombre || !nombre.trim()) return;
+    
+    var nj = nombre.trim();
+    var ids = seleccionadosVer.slice();
+    var completados = 0;
+    var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
+    
+    ids.forEach(function(id) {
+        db.ref('salas/' + salaId + '/cartones/' + id).update({
+            estado: 'asignado',
+            asignadoA: nj
+        }, function(error) {
+            if (!error) {
+                completados++;
+                if (completados === ids.length) {
+                    seleccionadosVer = [];
+                    mostrarToastMovil('✅ ' + ids.length + ' cartones asignados a ' + nj, 'success');
+                    cargarCartonesVer(); // Refrescar
+                }
+            }
+        });
+    });
+}
+
+// ============ MOSTRAR CARTONES EN VISTA 2 ============
 function mostrarCartonesVer(cartones) {
     var grid = document.getElementById('cartonesGridVer');
     if (!grid) return;
@@ -97,8 +186,20 @@ function mostrarCartonesVer(cartones) {
     
     cartones.forEach(function(item) {
         var c = item.data;
+        var id = item.key;
+        var estaSeleccionado = seleccionadosVer.indexOf(id) !== -1;
+        
         var card = document.createElement('div');
         card.className = 'carton-card-ver ' + (c.estado === 'asignado' ? 'asignado' : '') + (c.estado === 'usado' ? 'usado' : '');
+        card.setAttribute('data-id', id);
+        
+        if (estaSeleccionado) {
+            card.style.borderLeft = '4px solid #10b981';
+            card.style.background = '#f0fdf4';
+        }
+        
+        // Checkbox de selección
+        var checkHTML = '<div style="position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;background:' + (estaSeleccionado ? '#10b981' : '#e2e8f0') + ';display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:white;font-weight:bold;cursor:pointer;z-index:5;" onclick="event.stopPropagation();toggleSeleccionVer(\'' + id + '\')">' + (estaSeleccionado ? '✓' : '') + '</div>';
         
         var tabla = '<table class="carton-card-tabla"><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
         if (c.carton) {
@@ -115,7 +216,8 @@ function mostrarCartonesVer(cartones) {
         tabla += '</table>';
         
         card.innerHTML = 
-            '<div class="carton-card-header">' +
+            checkHTML +
+            '<div class="carton-card-header" onclick="toggleSeleccionVer(\'' + id + '\')">' +
             '<span class="carton-card-numero"># ' + (c.numero || '?') + '</span>' +
             '<span class="carton-card-estado estado-' + (c.estado || 'disponible') + '">' + (c.estado || 'disponible') + '</span>' +
             '</div>' +
@@ -124,8 +226,11 @@ function mostrarCartonesVer(cartones) {
         
         grid.appendChild(card);
     });
+    
+    actualizarBtnAsignarVer();
 }
 
+// ============ FILTRAR EN VISTA 2 ============
 function filtrarVer(estado) {
     if (estado) {
         var filtro = document.getElementById('filtroVer');
@@ -151,25 +256,21 @@ function filtrarVer(estado) {
     mostrarCartonesVer(filtrados);
 }
 
-// ============ EXPORTAR PDF (LLAMA A generar.js) ============
+// ============ EXPORTAR PDF ============
 function exportarPDF() {
     if (typeof exportarPDFTodos === 'function') {
         exportarPDFTodos();
-    } else if (typeof abrirMenuPDF === 'function') {
-        abrirMenuPDF();
     } else {
-        mostrarToastMovil('📄 Función PDF en desarrollo', 'error');
+        mostrarToastMovil('📄 Abriendo PDF...', 'success');
     }
 }
 
-// ============ MOSTRAR JUGADORES EN VISTA PREVIA ============
-function mostrarJugadoresEnPreview() {
+// ============ MOSTRAR JUGADORES ============
+function verJugadores() {
     var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
-    
-    // Crear un contenedor temporal si no existe vista-previa-contenido
     var preview = document.getElementById('vista-previa-contenido');
     if (!preview) {
-        // Mostrar en la sección de ver
+        // Mostrar en sección ver
         preview = document.getElementById('sectionVer');
         if (!preview) return;
     }
@@ -185,7 +286,7 @@ function mostrarJugadoresEnPreview() {
         });
         
         if (Object.keys(jugadores).length === 0) {
-            preview.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;"><h3>👥 No hay jugadores</h3><p>Asigna cartones primero</p></div>';
+            preview.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;"><h3>👥 No hay jugadores</h3></div>';
             return;
         }
         
@@ -209,10 +310,9 @@ function mostrarJugadoresEnPreview() {
     });
 }
 
-// ============ MOSTRAR LINKS EN VISTA PREVIA ============
-function mostrarLinksEnPreview() {
+// ============ MOSTRAR LINKS ============
+function verLinks() {
     var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
-    
     var preview = document.getElementById('vista-previa-contenido');
     if (!preview) {
         preview = document.getElementById('sectionVer');
@@ -240,15 +340,6 @@ function mostrarLinksEnPreview() {
         html += '</div></div>';
         preview.innerHTML = html;
     });
-}
-
-// ============ FUNCIONES QUE SE LLAMAN DESDE LOS BOTONES ============
-function verJugadores() {
-    mostrarJugadoresEnPreview();
-}
-
-function verLinks() {
-    mostrarLinksEnPreview();
 }
 
 // ============ ACTUALIZAR CONTADOR ============
