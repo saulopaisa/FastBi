@@ -13,32 +13,71 @@
         <div class="subtitulo">Panel de Control</div>
         
         <!-- SELECTOR DE SALA -->
-        <div style="margin-bottom:10px; padding:8px; background:#1e293b; border-radius:8px; display:flex; gap:5px; align-items:center;">
-            <span style="color:#94a3b8; font-size:0.65rem;">SALA:</span>
-            <input type="text" id="inputSalaId" placeholder="ID de sala" 
-                style="flex:1; padding:5px; border-radius:4px; border:1px solid #2d3748; background:#0f172a; color:white; font-size:0.7rem;">
-            <button onclick="cambiarSala()" style="padding:5px 10px; background:#3b82f6; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem;">
-                🔄
-            </button>
-            <button onclick="copiarSalaId()" style="padding:5px 8px; background:#6366f1; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem;">
-                📋
-            </button>
+        <div class="selector-sala">
+            <span>SALA:</span>
+            <input type="text" id="inputSalaId" placeholder="ID de sala">
+            <button onclick="cambiarSala()" style="background:#3b82f6;">🔄</button>
+            <button onclick="copiarSalaId()" style="background:#6366f1;">📋</button>
         </div>
         
         <div id="onlineCount" class="online-count">👥 JUGADORES EN RONDA: 0</div>
 
-        <!-- ETAPA 1 -->
-        <button id="btnEtapa1" onclick="window.abrirModalCartones()" class="btn-accion btn-etapa1">
-            📋 1. SELECCIONAR JUGADORES
-        </button>
-        
-        <!-- ETAPA 2 -->
-        <button id="btnEtapa2" onclick="window.abrirModalPatron()" class="btn-accion btn-etapa2" disabled>
-            🎯 2. CONFIGURAR PATRÓN
-        </button>
+        <!-- PESTAÑAS DE NAVEGACIÓN -->
+        <div class="tabs-nav">
+            <button class="tab-btn activo" onclick="cambiarPestana('config')" id="tabConfig">
+                ⚙️ CONFIGURAR
+            </button>
+            <button class="tab-btn" onclick="cambiarPestana('juego')" id="tabJuego" disabled>
+                🎮 JUEGO
+            </button>
+            <button class="tab-btn" onclick="cambiarPestana('verificador')" id="tabVerificador">
+                🔍 VERIFICAR
+            </button>
+        </div>
 
-        <!-- ETAPA 3 - JUEGO -->
-        <div id="panelJuego" class="panel-juego" style="opacity: 0.4; pointer-events: none;">
+        <!-- ============ PESTAÑA 1: CONFIGURACIÓN ============ -->
+        <div class="tab-content activo" id="pestanaConfig">
+            <button id="btnEtapa1" onclick="window.abrirModalCartones()" class="btn-accion btn-etapa1">
+                📋 1. SELECCIONAR JUGADORES
+            </button>
+            
+            <button id="btnEtapa2" onclick="window.abrirModalPatron()" class="btn-accion btn-etapa2" disabled>
+                🎯 2. CONFIGURAR PATRÓN
+            </button>
+
+            <div style="margin-top:15px; padding:10px; background:#1e293b; border-radius:8px;">
+                <p style="color:#94a3b8; font-size:0.75rem; text-align:center; margin-bottom:8px;">
+                    ✅ Configura los jugadores y el patrón para habilitar el juego
+                </p>
+                <div style="display:flex; gap:5px;">
+                    <span style="color:#10b981; font-size:0.7rem;">● Jugadores</span>
+                    <span style="color:#94a3b8; font-size:0.7rem;" id="statusJugadores">Pendiente</span>
+                </div>
+                <div style="display:flex; gap:5px; margin-top:3px;">
+                    <span style="color:#f59e0b; font-size:0.7rem;">● Patrón</span>
+                    <span style="color:#94a3b8; font-size:0.7rem;" id="statusPatron">Pendiente</span>
+                </div>
+            </div>
+            
+            <!-- ELIMINAR JUGADORES -->
+            <div style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                <div class="verifier-title" style="color: #ef4444;">🗑️ ELIMINAR JUGADORES</div>
+                <button onclick="window.abrirModalEliminarJugadores()" class="btn-programar" style="width:100%;background:#ef4444;color:white;margin-bottom:5px;">
+                    📋 SELECCIONAR JUGADORES A ELIMINAR
+                </button>
+                <div style="display: flex; gap: 5px;">
+                    <button onclick="window.eliminarJugadoresSeleccionados()" class="btn-programar" style="flex:1;background:#dc2626;color:white;">
+                        🗑️ ELIMINAR RONDA
+                    </button>
+                    <button onclick="window.eliminarTodosJugadores()" class="btn-programar" style="flex:1;background:#991b1b;color:white;">
+                        ⚠️ ELIMINAR TODOS
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ PESTAÑA 2: JUEGO ============ -->
+        <div class="tab-content" id="pestanaJuego">
             <div id="cronometroBingo" class="cronometro">00:00</div>
             
             <div class="input-group">
@@ -47,10 +86,6 @@
                     ⏰ PROGRAMAR
                 </button>
             </div>
-
-            <button id="btnMensaje" onclick="window.enviarMensajeJugador()" class="btn-programar" style="width:100%;background:#6366f1;color:white;margin-bottom:5px;" disabled>
-                📝 MENSAJE A TODOS
-            </button>
             
             <button id="btnAutoBingo" onclick="window.iniciarBingoAutomatico()" class="btn-accion" disabled 
                 style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
@@ -60,10 +95,27 @@
             <button id="drawBtn" class="btn-accion btn-sortear" style="opacity: 0.4; pointer-events: none;">
                 🎲 SORTEAR BOLA (MANUAL)
             </button>
+            
+            <!-- CHAT CON JUGADORES -->
+            <div style="margin-top:10px; border-top:1px solid var(--border-color); padding-top:10px;">
+                <div class="verifier-title" style="color: #6366f1;">💬 COMUNICAR A JUGADORES</div>
+                <div style="display:flex; gap:5px; margin-bottom:5px;">
+                    <input type="text" id="mensajeChat" placeholder="Escribe un mensaje..." 
+                        style="flex:1; padding:8px; border-radius:6px; border:2px solid #2d3748; background:#1e293b; color:white; font-size:0.8rem;"
+                        onkeypress="if(event.key==='Enter') enviarMensajeChat()">
+                    <button onclick="enviarMensajeChat()" class="btn-programar" style="background:#6366f1; color:white; white-space:nowrap;">
+                        ENVIAR
+                    </button>
+                </div>
+                <!-- Historial de mensajes -->
+                <div id="chatHistorial" style="max-height:120px; overflow-y:auto; background:#0f172a; border-radius:6px; padding:8px;">
+                    <p style="color:#64748b; font-size:0.7rem; text-align:center;">No hay mensajes aún</p>
+                </div>
+            </div>
         </div>
 
-        <!-- VERIFICADOR DE CARTÓN -->
-        <div class="verifier-area">
+        <!-- ============ PESTAÑA 3: VERIFICADOR ============ -->
+        <div class="tab-content" id="pestanaVerificador">
             <div class="verifier-title">🔍 VERIFICAR CARTÓN</div>
             <div style="display: flex; gap: 5px; margin-bottom: 8px;">
                 <input type="text" id="idABuscar" placeholder="ID o # Cartón" style="flex:1;">
@@ -75,6 +127,7 @@
                 🔍 NOTIFICAR REVISIÓN AL JUGADOR
             </button>
             
+            <!-- Minicartón verificador -->
             <div id="minicartonVerificador" class="minicarton-container">
                 <p style="color:#64748b; text-align:center; font-size:0.8rem;">Busca un cartón para verificar</p>
             </div>
@@ -89,22 +142,7 @@
             </div>
         </div>
         
-        <!-- ELIMINAR JUGADORES -->
-        <div style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 10px;">
-            <div class="verifier-title" style="color: #ef4444;">🗑️ ELIMINAR JUGADORES</div>
-            <button onclick="window.abrirModalEliminarJugadores()" class="btn-programar" style="width:100%;background:#ef4444;color:white;margin-bottom:5px;">
-                📋 SELECCIONAR JUGADORES A ELIMINAR
-            </button>
-            <div style="display: flex; gap: 5px; margin-bottom: 5px;">
-                <button onclick="window.eliminarJugadoresSeleccionados()" class="btn-programar" style="flex:1;background:#dc2626;color:white;">
-                    🗑️ ELIMINAR RONDA
-                </button>
-                <button onclick="window.eliminarTodosJugadores()" class="btn-programar" style="flex:1;background:#991b1b;color:white;">
-                    ⚠️ ELIMINAR TODOS
-                </button>
-            </div>
-        </div>
-        
+        <!-- Notificaciones -->
         <div id="notificacionesBingo" class="notificaciones-container"></div>
         
         <button id="resetBtn" class="btn-reiniciar">
@@ -214,9 +252,110 @@
     </script>
     <script src="ruleta.js"></script>
     
-    <!-- SCRIPT PARA CAMBIAR SALA -->
+    <!-- SCRIPT PARA PESTAÑAS Y CHAT -->
     <script>
-        // Mostrar sala actual
+        let pestanaActual = 'config';
+        
+        function cambiarPestana(pestana) {
+            // Ocultar todas
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('activo'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('activo'));
+            
+            // Mostrar seleccionada
+            document.getElementById('pestana' + pestana.charAt(0).toUpperCase() + pestana.slice(1)).classList.add('activo');
+            document.getElementById('tab' + pestana.charAt(0).toUpperCase() + pestana.slice(1)).classList.add('activo');
+            
+            pestanaActual = pestana;
+        }
+        
+        // Actualizar estado de configuración
+        function actualizarStatusConfig() {
+            const statusJ = document.getElementById('statusJugadores');
+            const statusP = document.getElementById('statusPatron');
+            const tabJuego = document.getElementById('tabJuego');
+            
+            if (window.jugadoresActivos && window.jugadoresActivos.length > 0) {
+                statusJ.textContent = '✅ ' + window.jugadoresActivos.length + ' jugadores';
+                statusJ.style.color = '#10b981';
+            } else {
+                statusJ.textContent = 'Pendiente';
+                statusJ.style.color = '#94a3b8';
+            }
+            
+            if (window.patronBingo && window.patronBingo.some(x => x)) {
+                statusP.textContent = '✅ Configurado';
+                statusP.style.color = '#10b981';
+            } else {
+                statusP.textContent = 'Pendiente';
+                statusP.style.color = '#94a3b8';
+            }
+            
+            // Habilitar pestaña de juego si ambos están listos
+            if (window.etapaActual >= 3) {
+                tabJuego.disabled = false;
+                tabJuego.style.opacity = '1';
+            }
+        }
+        
+        // Chat
+        function enviarMensajeChat() {
+            const input = document.getElementById('mensajeChat');
+            const mensaje = input.value.trim();
+            if (!mensaje) return;
+            
+            const chatRef = db.ref('partidas/' + (localStorage.getItem('salaActiva') || 'sala-default') + '/chat');
+            chatRef.push({
+                mensaje: mensaje,
+                timestamp: Date.now(),
+                admin: true
+            });
+            
+            input.value = '';
+        }
+        
+        // Escuchar mensajes del chat
+        function escucharChat() {
+            const salaId = localStorage.getItem('salaActiva') || 'sala-default';
+            db.ref('partidas/' + salaId + '/chat').limitToLast(20).on('value', function(snap) {
+                const historial = document.getElementById('chatHistorial');
+                if (!historial) return;
+                
+                if (!snap.exists()) {
+                    historial.innerHTML = '<p style="color:#64748b; font-size:0.7rem; text-align:center;">No hay mensajes aún</p>';
+                    return;
+                }
+                
+                historial.innerHTML = '';
+                const mensajes = [];
+                snap.forEach(function(child) {
+                    mensajes.push(child.val());
+                });
+                
+                mensajes.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+                
+                mensajes.forEach(function(msg) {
+                    const div = document.createElement('div');
+                    div.style.cssText = 'margin-bottom:4px; padding:4px 8px; border-radius:6px; font-size:0.7rem;';
+                    
+                    if (msg.admin) {
+                        div.style.background = '#6366f1';
+                        div.style.color = 'white';
+                        div.style.textAlign = 'right';
+                        div.textContent = '📢 ' + msg.mensaje;
+                    } else {
+                        div.style.background = '#334155';
+                        div.style.color = 'white';
+                        div.textContent = msg.mensaje;
+                    }
+                    
+                    historial.appendChild(div);
+                });
+                
+                historial.scrollTop = historial.scrollHeight;
+            });
+        }
+        
+        // Sala
         document.getElementById('inputSalaId').value = localStorage.getItem('salaActiva') || 'sala-default';
         
         function cambiarSala() {
@@ -230,17 +369,22 @@
         function copiarSalaId() {
             const salaId = localStorage.getItem('salaActiva') || 'sala-default';
             navigator.clipboard.writeText(salaId).then(function() {
-                alert('✅ ID de sala copiado: ' + salaId + '\n\nPega este ID en el otro dispositivo.');
+                alert('✅ ID de sala copiado: ' + salaId);
             });
         }
         
-        // Permitir cargar sala desde URL: ?sala=XXX
         const urlParams = new URLSearchParams(window.location.search);
         const salaParam = urlParams.get('sala');
         if (salaParam) {
             localStorage.setItem('salaActiva', salaParam);
             window.location.href = location.pathname;
         }
+        
+        // Iniciar chat al cargar
+        document.addEventListener('DOMContentLoaded', function() {
+            escucharChat();
+            actualizarStatusConfig();
+        });
     </script>
 </body>
 </html>
