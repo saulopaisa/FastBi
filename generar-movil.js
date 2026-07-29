@@ -2,7 +2,7 @@
 
 var pestanaActual = 'generar';
 var todosCartones = [];
-var seleccionadosVer = []; // Para selección en vista 2
+var seleccionadosVer = [];
 
 // ============ CAMBIAR PESTAÑA ============
 function cambiarPestana(pestana) {
@@ -39,7 +39,7 @@ function mostrarToastMovil(mensaje, tipo) {
 }
 window.mostrarToastMovil = mostrarToastMovil;
 
-// ============ CARGAR CARTONES PARA VER ============
+// ============ CARGAR CARTONES PARA VER (VISTA 2) ============
 function cargarCartonesVer() {
     var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
     var grid = document.getElementById('cartonesGridVer');
@@ -117,7 +117,6 @@ function toggleSeleccionVer(id) {
         seleccionadosVer.push(id);
     }
     
-    // Actualizar visual
     var cartas = document.querySelectorAll('.carton-card-ver');
     cartas.forEach(function(carta) {
         var cid = carta.getAttribute('data-id');
@@ -165,7 +164,7 @@ function asignarDesdeVistaVer() {
                 if (completados === ids.length) {
                     seleccionadosVer = [];
                     mostrarToastMovil('✅ ' + ids.length + ' cartones asignados a ' + nj, 'success');
-                    cargarCartonesVer(); // Refrescar
+                    cargarCartonesVer();
                 }
             }
         });
@@ -198,7 +197,6 @@ function mostrarCartonesVer(cartones) {
             card.style.background = '#f0fdf4';
         }
         
-        // Checkbox de selección
         var checkHTML = '<div style="position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;background:' + (estaSeleccionado ? '#10b981' : '#e2e8f0') + ';display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:white;font-weight:bold;cursor:pointer;z-index:5;" onclick="event.stopPropagation();toggleSeleccionVer(\'' + id + '\')">' + (estaSeleccionado ? '✓' : '') + '</div>';
         
         var tabla = '<table class="carton-card-tabla"><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
@@ -265,81 +263,30 @@ function exportarPDF() {
     }
 }
 
-// ============ MOSTRAR JUGADORES ============
+// ============ MOSTRAR JUGADORES (EN VISTA 1 - usa el preview de generar.js) ============
 function verJugadores() {
-    var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
-    var preview = document.getElementById('vista-previa-contenido');
-    if (!preview) {
-        // Mostrar en sección ver
-        preview = document.getElementById('sectionVer');
-        if (!preview) return;
-    }
-    
-    db.ref('salas/' + salaId + '/cartones').once('value', function(snap) {
-        var jugadores = {};
-        snap.forEach(function(child) {
-            var c = child.val();
-            if (c.asignadoA) {
-                if (!jugadores[c.asignadoA]) jugadores[c.asignadoA] = [];
-                jugadores[c.asignadoA].push({ id: c.id, numero: c.numero });
-            }
-        });
-        
-        if (Object.keys(jugadores).length === 0) {
-            preview.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;"><h3>👥 No hay jugadores</h3></div>';
-            return;
+    // Llamar a la función original de generar.js que muestra en vista-previa-contenido
+    if (typeof window.verJugadoresOriginal === 'function') {
+        window.verJugadoresOriginal();
+    } else {
+        mostrarToastMovil('👥 Cargando jugadores...', 'success');
+        // Fallback: usar la función de generar.js
+        if (typeof verJugadoresGenerar === 'function') {
+            verJugadoresGenerar();
         }
-        
-        var html = '<div style="padding:15px;"><h3 style="color:#ff4d4d;">👥 JUGADORES</h3><div style="max-height:60vh;overflow-y:auto;">';
-        
-        Object.keys(jugadores).forEach(function(nombre) {
-            var cartones = jugadores[nombre];
-            var ids = cartones.map(function(c) { return c.id; });
-            var link = generarLinkCifrado(nombre, ids);
-            
-            html += '<div style="background:#f1f5f9;padding:10px;margin:5px 0;border-radius:8px;">';
-            html += '<strong>👤 ' + nombre + '</strong> - ' + cartones.length + ' cart.';
-            html += '<div style="display:flex;gap:5px;margin-top:5px;">';
-            html += '<input value="' + link + '" readonly style="flex:1;padding:5px;font-size:0.7rem;" onclick="this.select()">';
-            html += '<button onclick="navigator.clipboard.writeText(\'' + link + '\');mostrarToastMovil(\'✅ Copiado\',\'success\')" style="background:#3b82f6;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">📋</button>';
-            html += '</div></div>';
-        });
-        
-        html += '</div></div>';
-        preview.innerHTML = html;
-    });
+    }
 }
 
-// ============ MOSTRAR LINKS ============
+// ============ MOSTRAR LINKS (EN VISTA 1 - usa el preview de generar.js) ============
 function verLinks() {
-    var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
-    var preview = document.getElementById('vista-previa-contenido');
-    if (!preview) {
-        preview = document.getElementById('sectionVer');
-        if (!preview) return;
-    }
-    
-    db.ref('salas/' + salaId + '/cartones').once('value', function(snap) {
-        if (!snap.exists()) {
-            preview.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;"><h3>📋 Sin cartones</h3></div>';
-            return;
+    if (typeof window.verLinksOriginal === 'function') {
+        window.verLinksOriginal();
+    } else {
+        mostrarToastMovil('🔗 Cargando links...', 'success');
+        if (typeof verLinksGenerar === 'function') {
+            verLinksGenerar();
         }
-        
-        var html = '<div style="padding:15px;"><h3 style="color:#ff4d4d;">🔗 LINKS</h3><div style="max-height:60vh;overflow-y:auto;text-align:left;">';
-        
-        snap.forEach(function(child) {
-            var c = child.val();
-            var link = generarLinkCifrado(c.asignadoA || 'Cartón #' + c.numero, [c.id]);
-            
-            html += '<div style="background:#f1f5f9;padding:8px;margin:4px 0;border-radius:6px;">';
-            html += '<strong>#' + c.numero + '</strong>' + (c.asignadoA ? ' (' + c.asignadoA + ')' : '');
-            html += '<input value="' + link + '" readonly style="width:100%;padding:4px;margin-top:4px;font-size:0.7rem;" onclick="this.select()">';
-            html += '</div>';
-        });
-        
-        html += '</div></div>';
-        preview.innerHTML = html;
-    });
+    }
 }
 
 // ============ ACTUALIZAR CONTADOR ============
