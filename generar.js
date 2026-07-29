@@ -1,4 +1,4 @@
-// generar.js - Versión Final con Cartones Dispersos
+// generar.js - Versión Final
 
 const SALA_ID = localStorage.getItem('salaActiva') || ('sala-' + Date.now());
 localStorage.setItem('salaActiva', SALA_ID);
@@ -92,7 +92,6 @@ function mostrarLista() {
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
         const total = snap.numChildren() || 0;
         
-        // Buscar ambos IDs de contador (viejo y nuevo)
         var contador = document.getElementById('contadorRegistrados') || document.getElementById('contadorCartones');
         if (contador) contador.innerHTML = '🎫 CARTONES: ' + total;
         
@@ -206,7 +205,7 @@ function mostrarAsignacionExitosa(nombre, ids, link) {
     preview.innerHTML = '<div style="padding:20px;"><h2 style="color:#10b981;">✅ Asignado</h2><h3>👤 ' + nombre + '</h3><p>' + ids.length + ' cart.</p>' +
         '<div style="background:#f1f5f9;padding:15px;border-radius:8px;margin:15px 0;"><input id="linkJugadorInput" value="' + link + '" readonly style="width:100%;padding:10px;border:2px solid #3b82f6;border-radius:6px;margin-bottom:10px;" onclick="this.select()">' +
         '<button id="btnCopiarLink" style="background:#3b82f6;color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-weight:bold;">📋 COPIAR LINK</button></div>' +
-        '<button onclick="exportarPDFPorJugador(\'' + nombre.replace(/'/g,"\\'") + '\')" style="background:#8b5cf6;color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;">📄 PDF de ' + nombre + '</button></div>';
+        '<button onclick="exportarPDFPorJugador(\'' + nombre.replace(/'/g, "\\'") + '\')" style="background:#8b5cf6;color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;">📄 PDF de ' + nombre + '</button></div>';
     
     var btnCopiar = document.getElementById('btnCopiarLink');
     if (btnCopiar) {
@@ -243,29 +242,76 @@ function borrarTodo() { if (confirm('⚠️ ¿Eliminar TODOS?')) { seleccionados
 function exportarJSON() { db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) { const d={sala:SALA_ID,cartones:snap.val()||{}}; const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='cartones-'+SALA_ID+'.json'; a.click(); mostrarToast('💾 Exportado', 'success'); }); }
 function importarJSON(e) { const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=function(ev){const d=JSON.parse(ev.target.result);if(d.cartones){db.ref('salas/'+SALA_ID+'/cartones').set(d.cartones,()=>{mostrarLista();mostrarToast('✅ Importado', 'success');});}}; r.readAsText(f); }
 
+// ============ MOSTRAR JUGADORES (CORREGIDO) ============
 function verJugadores() {
-    const p = document.getElementById('vista-previa-contenido');
-    if (!p) return;
-    db.ref('salas/'+SALA_ID+'/cartones').once('value',function(snap){
-        const j={};snap.forEach(function(c){const v=c.val();if(v.asignadoA){if(!j[v.asignadoA])j[v.asignadoA]=[];j[v.asignadoA].push({id:v.id,numero:v.numero});}});
-        if(Object.keys(j).length===0){p.innerHTML='<div class="preview-empty"><h3>👥 No hay jugadores</h3></div>';return;}
-        let h='<h3 style="color:#ff4d4d;">👥 JUGADORES</h3><div style="max-height:60vh;overflow-y:auto;">';
-        Object.keys(j).forEach(function(n){const c=j[n],ids=c.map(x=>x.id),l=generarLinkCifrado(n,ids);h+='<div style="background:#f1f5f9;padding:10px;margin:5px 0;border-radius:8px;"><strong>👤 '+n+'</strong> - '+c.length+' cart.<div style="display:flex;gap:5px;margin-top:5px;"><input value="'+l+'" readonly style="flex:1;padding:5px;font-size:0.75rem;" onclick="this.select()"><button onclick="navigator.clipboard.writeText(\''+l+'\');mostrarToast(\'✅ Copiado\',\'success\')" style="background:#3b82f6;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">📋</button></div></div>';});
-        h+='</div>';p.innerHTML=h;
+    var preview = document.getElementById('vista-previa-contenido');
+    if (!preview) return;
+    
+    db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
+        var jugadores = {};
+        snap.forEach(function(child) {
+            var c = child.val();
+            if (c.asignadoA) {
+                if (!jugadores[c.asignadoA]) jugadores[c.asignadoA] = [];
+                jugadores[c.asignadoA].push({ id: c.id, numero: c.numero });
+            }
+        });
+        
+        if (Object.keys(jugadores).length === 0) {
+            preview.innerHTML = '<div class="preview-empty"><h3>👥 No hay jugadores</h3><p>Asigna cartones primero</p></div>';
+            return;
+        }
+        
+        var html = '<h3 style="color:#ff4d4d;padding:10px;">👥 JUGADORES</h3><div style="max-height:60vh;overflow-y:auto;padding:10px;">';
+        
+        Object.keys(jugadores).forEach(function(nombre) {
+            var cartones = jugadores[nombre];
+            var ids = cartones.map(function(c) { return c.id; });
+            var link = generarLinkCifrado(nombre, ids);
+            
+            html += '<div style="background:#f1f5f9;padding:10px;margin:5px 0;border-radius:8px;">';
+            html += '<strong>👤 ' + nombre + '</strong> - ' + cartones.length + ' cart.';
+            html += '<div style="display:flex;gap:5px;margin-top:5px;">';
+            html += '<input value="' + link + '" readonly style="flex:1;padding:5px;font-size:0.75rem;" onclick="this.select()">';
+            html += '<button onclick="navigator.clipboard.writeText(\'' + link + '\');mostrarToast(\'✅ Copiado\',\'success\')" style="background:#3b82f6;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">📋</button>';
+            html += '<button onclick="exportarPDFPorJugador(\'' + nombre.replace(/'/g, '\\\'') + '\')" style="background:#8b5cf6;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">📄</button>';
+            html += '</div></div>';
+        });
+        
+        html += '</div>';
+        preview.innerHTML = html;
     });
 }
 
+// ============ MOSTRAR LINKS (CORREGIDO) ============
 function verLinks() {
-    const p = document.getElementById('vista-previa-contenido');
-    if (!p) return;
-    db.ref('salas/'+SALA_ID+'/cartones').once('value',function(snap){
-        if(!snap.exists()){p.innerHTML='<div class="preview-empty"><h3>📋 Sin cartones</h3></div>';return;}
-        let h='<h3 style="color:#ff4d4d;">🔗 LINKS</h3><div style="max-height:60vh;overflow-y:auto;text-align:left;">';
-        snap.forEach(function(c){const v=c.val(),l=generarLinkCifrado(v.asignadoA||'Cartón #'+v.numero,[v.id]);h+='<div style="background:#f1f5f9;padding:8px;margin:4px 0;border-radius:6px;"><strong>#'+v.numero+'</strong>'+(v.asignadoA?' ('+v.asignadoA+')':'')+'<input value="'+l+'" readonly style="width:100%;padding:4px;margin-top:4px;font-size:0.75rem;" onclick="this.select()"></div>';});
-        h+='</div>';p.innerHTML=h;
+    var preview = document.getElementById('vista-previa-contenido');
+    if (!preview) return;
+    
+    db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
+        if (!snap.exists()) {
+            preview.innerHTML = '<div class="preview-empty"><h3>📋 Sin cartones</h3></div>';
+            return;
+        }
+        
+        var html = '<h3 style="color:#ff4d4d;padding:10px;">🔗 LINKS</h3><div style="max-height:60vh;overflow-y:auto;text-align:left;padding:10px;">';
+        
+        snap.forEach(function(child) {
+            var c = child.val();
+            var link = generarLinkCifrado(c.asignadoA || 'Cartón #' + c.numero, [c.id]);
+            
+            html += '<div style="background:#f1f5f9;padding:8px;margin:4px 0;border-radius:6px;">';
+            html += '<strong>#' + c.numero + '</strong>' + (c.asignadoA ? ' (' + c.asignadoA + ')' : '');
+            html += '<input value="' + link + '" readonly style="width:100%;padding:4px;margin-top:4px;font-size:0.75rem;" onclick="this.select()">';
+            html += '</div>';
+        });
+        
+        html += '</div>';
+        preview.innerHTML = html;
     });
 }
 
+// ============ TOAST ============
 function mostrarToast(mensaje, tipo) {
     if (typeof window.mostrarToastMovil === 'function') {
         window.mostrarToastMovil(mensaje, tipo);
@@ -284,7 +330,7 @@ function mostrarToast(mensaje, tipo) {
 
 // ============ PDF ============
 function getPDFStyles() {
-    return `*{margin:0;padding:0;box-sizing:border-box}@page{size:letter;margin:8mm}body{font-family:Arial;background:white;-webkit-print-color-adjust:exact;print-color-adjust:exact}.pagina{width:100%;max-width:100%;margin:0 auto;padding:5px;background:white;page-break-after:always;min-height:100vh;display:flex;flex-direction:column;justify-content:space-evenly}.pagina:last-child{page-break-after:avoid}h1{text-align:center;color:#ff4d4d;font-size:22px;margin:0}h2{text-align:center;color:#1e293b;font-size:16px;margin:0}.info{text-align:center;color:#64748b;font-size:10px;margin-bottom:8px}.carton{border:3px solid #000;border-radius:10px;padding:12px 15px;background:white;width:100%;flex:1;display:flex;flex-direction:column;justify-content:center}table{width:100%;border-collapse:collapse}th{background:#ff4d4d!important;color:white!important;padding:14px 8px;font-size:18px;border:2px solid #000}td{padding:16px 8px;border:2px solid #000;text-align:center;font-weight:bold;font-size:22px}.free{background:#fef3c7!important;font-size:26px}.num-carton{text-align:center;margin-bottom:8px}.num-carton span{background:#ff4d4d!important;color:white!important;padding:5px 18px;border-radius:15px;font-size:15px;font-weight:bold}.jugador{text-align:center;color:#10b981;margin:5px 0;font-size:14px;font-weight:bold}@media print{body{margin:0;padding:0}.pagina{page-break-after:always;min-height:auto;height:100vh}.pagina:last-child{page-break-after:avoid}}`;
+    return '*{margin:0;padding:0;box-sizing:border-box}@page{size:letter;margin:8mm}body{font-family:Arial;background:white;-webkit-print-color-adjust:exact;print-color-adjust:exact}.pagina{width:100%;max-width:100%;margin:0 auto;padding:5px;background:white;page-break-after:always;min-height:100vh;display:flex;flex-direction:column;justify-content:space-evenly}.pagina:last-child{page-break-after:avoid}h1{text-align:center;color:#ff4d4d;font-size:22px;margin:0}h2{text-align:center;color:#1e293b;font-size:16px;margin:0}.info{text-align:center;color:#64748b;font-size:10px;margin-bottom:8px}.carton{border:3px solid #000;border-radius:10px;padding:12px 15px;background:white;width:100%;flex:1;display:flex;flex-direction:column;justify-content:center}table{width:100%;border-collapse:collapse}th{background:#ff4d4d!important;color:white!important;padding:14px 8px;font-size:18px;border:2px solid #000}td{padding:16px 8px;border:2px solid #000;text-align:center;font-weight:bold;font-size:22px}.free{background:#fef3c7!important;font-size:26px}.num-carton{text-align:center;margin-bottom:8px}.num-carton span{background:#ff4d4d!important;color:white!important;padding:5px 18px;border-radius:15px;font-size:15px;font-weight:bold}.jugador{text-align:center;color:#10b981;margin:5px 0;font-size:14px;font-weight:bold}@media print{body{margin:0;padding:0}.pagina{page-break-after:always;min-height:auto;height:100vh}.pagina:last-child{page-break-after:avoid}}';
 }
 
 function htmlCartonPDF(c) { if(!c||!c.carton)return'<div class="carton"><p>Error</p></div>';const ca=c.carton,n=c.numero||'?',a=c.asignadoA||'';let h='<div class="carton"><div class="num-carton"><span>Cartón #'+n+'</span></div>';if(a)h+='<p class="jugador">👤 '+a+'</p>';h+='<table><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';for(let f=0;f<5;f++){h+='<tr>';['B','I','N','G','O'].forEach(function(l){const v=ca[l]?ca[l][f]:'?',c=(l==='N'&&f===2);h+='<td class="'+(c?'free':'')+'">'+(c?'⭐':v)+'</td>';});h+='</tr>';}h+='</table></div>';return h;}
@@ -330,27 +376,27 @@ function abrirMenuPDF() {
         h+='<button onclick="exportarPDFTodos()" style="width:100%;padding:15px;background:#ff4d4d;color:white;border:none;border-radius:10px;cursor:pointer;font-size:1.1rem;font-weight:bold;margin-bottom:20px;">📄 TODOS ('+t+')</button>';
         if(j.size>0){h+='<h3>👤 Por Jugador</h3><div style="max-height:50vh;overflow-y:auto;">';
             j.forEach(function(n){let c=0;snap.forEach(function(ch){if(ch.val().asignadoA===n)c++;});
-                h+='<div style="background:#f1f5f9;padding:12px;margin:8px 0;border-radius:8px;display:flex;justify-content:space-between;"><div><strong>👤 '+n+'</strong><br><span>'+c+' cart.</span></div><button onclick="exportarPDFPorJugador(\''+n.replace(/'/g,\"\\\\'\")+'\')" style="background:#8b5cf6;color:white;border:none;padding:8px 15px;border-radius:6px;cursor:pointer;">📄 PDF</button></div>';
+                h+='<div style="background:#f1f5f9;padding:12px;margin:8px 0;border-radius:8px;display:flex;justify-content:space-between;"><div><strong>👤 '+n+'</strong><br><span>'+c+' cart.</span></div><button onclick="exportarPDFPorJugador(\''+n.replace(/'/g,'\\\'')+'\')" style="background:#8b5cf6;color:white;border:none;padding:8px 15px;border-radius:6px;cursor:pointer;">📄 PDF</button></div>';
             });h+='</div>';}else{h+='<p style="color:#94a3b8;text-align:center;">No hay jugadores asignados</p>';}
         h+='</div>';p.innerHTML=h;
     });
 }
 
+// ============ FILTRAR ============
+function filtrarCartones(t) {
+    var items = document.querySelectorAll('.carton-item');
+    if (items.length === 0) items = document.querySelectorAll('.card-carton');
+    items.forEach(function(c) { c.style.display = c.textContent.toLowerCase().includes(t.toLowerCase()) ? '' : 'none'; });
+}
+
 // ============ INICIAR ============
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Bingo Pro Admin - Cartones Dispersos');
+    console.log('🚀 Bingo Pro Admin');
     inicializarRegistro();
     cargarRegistroDesdeFirebase();
     
-    // Buscar botones por ID o clase
-    var btnGenerar = document.getElementById('btnGenerar') || document.querySelector('.btn-generar');
-    var btnGuardar = document.getElementById('btnGuardar') || document.querySelector('.btn-tool');
-    var btnAbrir = document.getElementById('btnAbrir');
-    var btnPDF = document.getElementById('btnPDF') || document.querySelector('.btn-tool.pdf');
-    var btnLinks = document.getElementById('btnLinks') || document.querySelector('.btn-tool.links');
-    var btnJugadores = document.getElementById('btnJugadores') || document.querySelector('.btn-tool.jugadores');
-    var btnBorrar = document.getElementById('btnBorrar') || document.querySelector('.btn-tool.danger');
-    var btnIrJuego = document.getElementById('btnIrJuego') || document.querySelector('.btn-ir-juego');
+    var btnGenerar = document.querySelector('.btn-generar');
+    var btnIrJuego = document.querySelector('.btn-ir-juego');
     var btnAsignar = document.getElementById('btnAsignar');
     var fileIn = document.getElementById('fileIn');
     var buscador = document.getElementById('buscadorCartones');
@@ -365,9 +411,3 @@ document.addEventListener('DOMContentLoaded', function() {
     
     mostrarLista();
 });
-
-function filtrarCartones(t) {
-    var items = document.querySelectorAll('.carton-item');
-    if (items.length === 0) items = document.querySelectorAll('.card-carton');
-    items.forEach(function(c) { c.style.display = c.textContent.toLowerCase().includes(t.toLowerCase()) ? '' : 'none'; });
-}
