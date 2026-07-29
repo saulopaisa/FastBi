@@ -651,3 +651,84 @@ body {
         font-size: 0.65rem;
     }
 }
+/* ============ PESTAÑAS DE NAVEGACIÓN ============ */
+.tabs-nav {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 10px;
+    background: #0f172a;
+    border-radius: 8px;
+    padding: 3px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 8px 5px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.7rem;
+    transition: all 0.3s;
+    color: #94a3b8;
+    background: transparent;
+    white-space: nowrap;
+}
+
+.tab-btn.activo {
+    background: #3b82f6;
+    color: white;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.tab-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.tab-content {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.tab-content.activo {
+    display: flex;
+}
+
+/* Ajustar sidebar para las pestañas */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ============ CHAT ============ */
+#chatHistorial {
+    max-height: 120px;
+    overflow-y: auto;
+    background: #0f172a;
+    border-radius: 6px;
+    padding: 8px;
+}
+
+#chatHistorial::-webkit-scrollbar {
+    width: 4px;
+}
+
+#chatHistorial::-webkit-scrollbar-thumb {
+    background: #6366f1;
+    border-radius: 2px;
+}
+
+/* ============ RESPONSIVE PESTAÑAS ============ */
+@media (max-width: 480px) {
+    .tab-btn {
+        font-size: 0.6rem;
+        padding: 6px 3px;
+    }
+    
+    #chatHistorial {
+        max-height: 80px;
+    }
+}
