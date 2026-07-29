@@ -1,4 +1,4 @@
-// generar.js - Versión Final
+// generar.js - Versión Final Completa
 
 const SALA_ID = localStorage.getItem('salaActiva') || ('sala-' + Date.now());
 localStorage.setItem('salaActiva', SALA_ID);
@@ -183,7 +183,7 @@ function generarLote() {
     });
 }
 
-// ============ ASIGNAR A JUGADOR ============
+// ============ ASIGNAR A JUGADOR (VISTA 1) ============
 function asignarAJugador() {
     if (seleccionados.size === 0) { alert('Selecciona cartones'); return; }
     if (seleccionados.size > 4) { alert('Máximo 4'); return; }
@@ -242,7 +242,7 @@ function borrarTodo() { if (confirm('⚠️ ¿Eliminar TODOS?')) { seleccionados
 function exportarJSON() { db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) { const d={sala:SALA_ID,cartones:snap.val()||{}}; const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='cartones-'+SALA_ID+'.json'; a.click(); mostrarToast('💾 Exportado', 'success'); }); }
 function importarJSON(e) { const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=function(ev){const d=JSON.parse(ev.target.result);if(d.cartones){db.ref('salas/'+SALA_ID+'/cartones').set(d.cartones,()=>{mostrarLista();mostrarToast('✅ Importado', 'success');});}}; r.readAsText(f); }
 
-// ============ MOSTRAR JUGADORES (CORREGIDO) ============
+// ============ MOSTRAR JUGADORES ============
 function verJugadores() {
     var preview = document.getElementById('vista-previa-contenido');
     if (!preview) return;
@@ -283,7 +283,7 @@ function verJugadores() {
     });
 }
 
-// ============ MOSTRAR LINKS (CORREGIDO) ============
+// ============ MOSTRAR LINKS ============
 function verLinks() {
     var preview = document.getElementById('vista-previa-contenido');
     if (!preview) return;
@@ -310,6 +310,10 @@ function verLinks() {
         preview.innerHTML = html;
     });
 }
+
+// Exponer para generar-movil.js
+window.verJugadoresOriginal = verJugadores;
+window.verLinksOriginal = verLinks;
 
 // ============ TOAST ============
 function mostrarToast(mensaje, tipo) {
