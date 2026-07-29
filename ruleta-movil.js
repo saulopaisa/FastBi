@@ -1,14 +1,15 @@
 // ruleta-movil.js - Navegación y UI móvil
 
-let seccionActual = 'config';
-let intervaloCronometroVisual = null;
+var pestanaActual = 'config';
+var intervaloCronometroVisual = null;
+var intervaloCronometroRuleta = null;
 
 // ============ NAVEGACIÓN ============
 function navegarA(seccion) {
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('activo'));
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('activo'); });
     document.getElementById('nav' + seccion.charAt(0).toUpperCase() + seccion.slice(1)).classList.add('activo');
     
-    document.querySelectorAll('.section-config, .section-ruleta').forEach(s => s.classList.remove('activo'));
+    document.querySelectorAll('.section-config, .section-ruleta').forEach(function(s) { s.classList.remove('activo'); });
     
     if (seccion === 'config') {
         document.getElementById('sectionConfig').classList.add('activo');
@@ -16,87 +17,164 @@ function navegarA(seccion) {
         document.getElementById('sectionRuleta').classList.add('activo');
     }
     
-    seccionActual = seccion;
+    pestanaActual = seccion;
+}
+
+// ============ GENERAR LINK DE SALA ============
+function generarLinkSala() {
+    var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
+    var link = location.origin + location.pathname + '?sala=' + encodeURIComponent(salaId);
+    navigator.clipboard.writeText(link).then(function() {
+        alert('✅ Link copiado!\n\nPégalo en el otro dispositivo:\n\n' + link);
+    });
+}
+
+// ============ VERIFICAR PARTIDA VIGENTE ============
+function verificarPartidaVigente() {
+    if (typeof window.juegoActivo === 'undefined') return;
+    
+    var aviso = document.getElementById('partidaVigente');
+    var btnComenzar = document.getElementById('btnComenzarPartida');
+    var btnReiniciar = document.getElementById('btnReiniciarPartida');
+    var cronVisual = document.getElementById('cronometroVisual');
+    
+    if (window.juegoActivo && window.etapaActual >= 3) {
+        if (aviso) aviso.style.display = 'block';
+        if (btnComenzar) btnComenzar.style.display = 'none';
+        if (btnReiniciar) btnReiniciar.style.display = 'block';
+        if (cronVisual) cronVisual.style.display = 'none';
+        if (window.intervaloTemporizador) {
+            document.getElementById('cronometroVisualRuleta').style.display = 'block';
+        }
+    } else {
+        if (aviso) aviso.style.display = 'none';
+        if (btnComenzar) btnComenzar.style.display = 'block';
+        if (btnReiniciar) btnReiniciar.style.display = 'none';
+    }
 }
 
 // ============ COMENZAR PARTIDA ============
 function comenzarPartida() {
-    const min = parseInt(document.getElementById('minutosInicioMobile').value) || 0;
+    if (typeof window.juegoActivo === 'undefined') {
+        alert('Error: ruleta.js no cargó. Recarga la página.');
+        return;
+    }
+    
+    if (window.juegoActivo && window.etapaActual >= 3) {
+        alert('⚠️ Ya hay una partida vigente. Ve a la pestaña RULETA.');
+        navegarA('ruleta');
+        return;
+    }
+    
+    var min = parseInt(document.getElementById('minutosInicioMobile').value) || 0;
     
     if (min <= 0) {
-        // Iniciar inmediatamente
-        if (window.modoJuegoSeleccionado === 'automatico') {
+        window.juegoActivo = true;
+        localStorage.setItem('bingo_activo_' + (localStorage.getItem('salaActiva')||'bingo-default'), 'true');
+        if (window.modoJuegoSeleccionado === 'automatico' && window.iniciarBingoAutomatico) {
             window.iniciarBingoAutomatico();
         }
         navegarA('ruleta');
         actualizarUIMovil();
+        verificarPartidaVigente();
         return;
     }
     
-    // Mostrar cronómetro visual
-    const cronVisual = document.getElementById('cronometroVisual');
-    cronVisual.style.display = 'block';
+    var cronVisual = document.getElementById('cronometroVisual');
+    if (cronVisual) cronVisual.style.display = 'block';
+    document.getElementById('cronometroVisualRuleta').style.display = 'block';
     
-    let tiempo = min * 60;
-    const tiempoTotal = tiempo;
+    var tiempo = min * 60;
+    var tiempoTotal = tiempo;
     
-    actualizarCronometroVisual(tiempo, tiempoTotal);
+    actualizarCronometroConfig(tiempo, tiempoTotal);
+    actualizarCronometroRuleta(tiempo, tiempoTotal);
     
     if (intervaloCronometroVisual) clearInterval(intervaloCronometroVisual);
+    if (intervaloCronometroRuleta) clearInterval(intervaloCronometroRuleta);
     
     intervaloCronometroVisual = setInterval(function() {
         tiempo--;
-        actualizarCronometroVisual(tiempo, tiempoTotal);
+        actualizarCronometroConfig(tiempo, tiempoTotal);
+        actualizarCronometroRuleta(tiempo, tiempoTotal);
         
         if (tiempo <= 0) {
             clearInterval(intervaloCronometroVisual);
+            clearInterval(intervaloCronometroRuleta);
             intervaloCronometroVisual = null;
-            cronVisual.style.display = 'none';
+            intervaloCronometroRuleta = null;
             
-            // Iniciar juego
-            if (window.modoJuegoSeleccionado === 'automatico') {
+            if (cronVisual) cronVisual.style.display = 'none';
+            document.getElementById('cronometroVisualRuleta').style.display = 'none';
+            
+            window.juegoActivo = true;
+            localStorage.setItem('bingo_activo_' + (localStorage.getItem('salaActiva')||'bingo-default'), 'true');
+            
+            if (window.modoJuegoSeleccionado === 'automatico' && window.iniciarBingoAutomatico) {
                 window.iniciarBingoAutomatico();
             }
-            navegarA('ruleta');
-            actualizarUIMovil();
+            
+            verificarPartidaVigente();
             
             if ('speechSynthesis' in window) {
-                const msg = new SpeechSynthesisUtterance('¡Es hora de empezar el bingo!');
+                var msg = new SpeechSynthesisUtterance('¡Es hora de empezar el bingo!');
                 msg.lang = 'es-ES'; window.speechSynthesis.speak(msg);
             }
         }
     }, 1000);
 }
 
-function actualizarCronometroVisual(tiempo, tiempoTotal) {
-    const mins = Math.floor(tiempo / 60);
-    const segs = tiempo % 60;
-    document.getElementById('cronometroVisualTiempo').textContent = 
-        String(mins).padStart(2, '0') + ':' + String(segs).padStart(2, '0');
-    
-    const porcentaje = ((tiempoTotal - tiempo) / tiempoTotal) * 100;
-    document.getElementById('cronometroVisualProgreso').style.width = porcentaje + '%';
+function actualizarCronometroConfig(tiempo, tiempoTotal) {
+    var mins = Math.floor(tiempo / 60);
+    var segs = tiempo % 60;
+    var el = document.getElementById('cronometroVisualTiempo');
+    if (el) el.textContent = String(mins).padStart(2, '0') + ':' + String(segs).padStart(2, '0');
+    var porcentaje = ((tiempoTotal - tiempo) / tiempoTotal) * 100;
+    var prog = document.getElementById('cronometroVisualProgreso');
+    if (prog) prog.style.width = porcentaje + '%';
+}
+
+function actualizarCronometroRuleta(tiempo, tiempoTotal) {
+    var mins = Math.floor(tiempo / 60);
+    var segs = tiempo % 60;
+    var el = document.getElementById('cronometroVisualRuletaTiempo');
+    if (el) el.textContent = String(mins).padStart(2, '0') + ':' + String(segs).padStart(2, '0');
+    var porcentaje = ((tiempoTotal - tiempo) / tiempoTotal) * 100;
+    var prog = document.getElementById('cronometroVisualRuletaProgreso');
+    if (prog) prog.style.width = porcentaje + '%';
 }
 
 // ============ PROGRAMAR JUEGO MÓVIL ============
 function programarJuegoMobile() {
-    const min = parseInt(document.getElementById('minutosInicioMobile').value) || 0;
+    var min = parseInt(document.getElementById('minutosInicioMobile').value) || 0;
     if (min <= 0) { alert('Ingresa los minutos'); return; }
     
-    // Preguntar modo
-    const modo = confirm('⏰ Cronómetro de ' + min + ' min.\n\n¿Modo AUTOMÁTICO al llegar a 0?\n✅ Aceptar = Auto\n❌ Cancelar = Manual');
+    var modo = confirm('⏰ Cronómetro de ' + min + ' min.\n\n¿Modo AUTOMÁTICO al llegar a 0?\n✅ Aceptar = Auto\n❌ Cancelar = Manual');
     window.modoJuegoSeleccionado = modo ? 'automatico' : 'manual';
     
-    // Iniciar cronómetro visual
+    if (window.programarJuego) window.programarJuego();
     comenzarPartida();
-    
-    // También iniciar el cronómetro normal
-    window.programarJuego();
+}
+
+// ============ REINICIAR PARTIDA ============
+function reiniciarPartida() {
+    if (confirm('⚠️ ¿Reiniciar la partida? Se limpiarán los números cantados.')) {
+        var resetBtn = document.getElementById('resetBtn');
+        if (resetBtn) resetBtn.click();
+        
+        document.getElementById('cronometroVisual').style.display = 'none';
+        document.getElementById('cronometroVisualRuleta').style.display = 'none';
+        if (intervaloCronometroVisual) clearInterval(intervaloCronometroVisual);
+        if (intervaloCronometroRuleta) clearInterval(intervaloCronometroRuleta);
+        verificarPartidaVigente();
+        actualizarUIMovil();
+        navegarA('config');
+    }
 }
 
 // ============ INICIAR AUTO MÓVIL ============
 function iniciarAutoMobile() {
-    window.iniciarBingoAutomatico();
+    if (window.iniciarBingoAutomatico) window.iniciarBingoAutomatico();
 }
 
 // ============ MODAL VERIFICADOR ============
@@ -109,24 +187,23 @@ function cerrarModalVerificador() {
 }
 
 function buscarCartonMobile() {
-    const id = document.getElementById('idABuscarMobile').value.trim();
+    var id = document.getElementById('idABuscarMobile').value.trim();
     if (!id) { alert('Ingresa un ID'); return; }
     
-    document.getElementById('idABuscar').value = id;
-    if (window.revisarCartonManual) {
-        window.revisarCartonManual();
-    }
+    var inputPC = document.getElementById('idABuscar');
+    if (inputPC) inputPC.value = id;
+    if (window.revisarCartonManual) window.revisarCartonManual();
     
     setTimeout(function() {
-        const original = document.getElementById('minicartonVerificador');
-        const mobile = document.getElementById('minicartonMobile');
+        var original = document.getElementById('minicartonVerificador');
+        var mobile = document.getElementById('minicartonMobile');
         if (original && mobile) mobile.innerHTML = original.innerHTML;
     }, 500);
 }
 
 // ============ CHAT ============
 function toggleChat() {
-    const panel = document.getElementById('chatPanel');
+    var panel = document.getElementById('chatPanel');
     panel.classList.toggle('activo');
     if (panel.classList.contains('activo')) {
         document.getElementById('chatBadge').style.display = 'none';
@@ -135,106 +212,112 @@ function toggleChat() {
 }
 
 function enviarChat() {
-    const input = document.getElementById('chatInput');
-    const mensaje = input.value.trim();
+    var input = document.getElementById('chatInput');
+    var mensaje = input.value.trim();
     if (!mensaje) return;
     
-    const salaId = localStorage.getItem('salaActiva') || 'sala-default';
+    var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
     db.ref('partidas/' + salaId + '/chat').push({
-        mensaje: mensaje,
-        timestamp: Date.now(),
-        admin: true
+        mensaje: mensaje, timestamp: Date.now(), admin: true
     });
-    
     input.value = '';
 }
 
+function limpiarChat() {
+    if (confirm('¿Borrar toda la conversación?')) {
+        var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
+        db.ref('partidas/' + salaId + '/chat').remove();
+        document.getElementById('chatMensajes').innerHTML = '<p class="chat-vacio">No hay mensajes</p>';
+    }
+}
+
 function escucharChat() {
-    const salaId = localStorage.getItem('salaActiva') || 'sala-default';
+    var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
     db.ref('partidas/' + salaId + '/chat').limitToLast(30).on('value', function(snap) {
-        const contenedor = document.getElementById('chatMensajes');
+        var contenedor = document.getElementById('chatMensajes');
         if (!contenedor) return;
-        
-        if (!snap.exists()) {
-            contenedor.innerHTML = '<p class="chat-vacio">No hay mensajes</p>';
-            return;
-        }
+        if (!snap.exists()) { contenedor.innerHTML = '<p class="chat-vacio">No hay mensajes</p>'; return; }
         
         contenedor.innerHTML = '';
-        const mensajes = [];
+        var mensajes = [];
         snap.forEach(function(child) { mensajes.push(child.val()); });
-        mensajes.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        mensajes.sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
         
         mensajes.forEach(function(msg) {
-            const div = document.createElement('div');
+            var div = document.createElement('div');
             div.className = 'msg-item ' + (msg.admin ? 'msg-admin' : 'msg-jugador');
             div.innerHTML = msg.mensaje + '<div class="msg-timestamp">' + new Date(msg.timestamp).toLocaleTimeString() + '</div>';
             contenedor.appendChild(div);
         });
-        
         contenedor.scrollTop = contenedor.scrollHeight;
         
-        const panel = document.getElementById('chatPanel');
-        if (!panel.classList.contains('activo')) {
-            const badge = document.getElementById('chatBadge');
-            const count = mensajes.length;
-            if (count > 0) {
-                badge.style.display = 'flex';
-                badge.textContent = count > 99 ? '99+' : count;
-            }
+        var panel = document.getElementById('chatPanel');
+        if (!panel.classList.contains('activo') && mensajes.length > 0) {
+            var badge = document.getElementById('chatBadge');
+            badge.style.display = 'flex';
+            badge.textContent = mensajes.length > 99 ? '99+' : mensajes.length;
         }
     });
 }
 
-// ============ SORTEO MANUAL MÓVIL ============
-function sortearManualMobile() {
-    if (document.getElementById('drawBtn')) {
-        document.getElementById('drawBtn').click();
-    }
+// ============ COPIAR SALA ============
+function copiarSalaId() {
+    var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
+    navigator.clipboard.writeText(salaId).then(function() {
+        alert('✅ ID de sala: ' + salaId);
+    });
 }
 
-// ============ ACTUALIZAR UI MÓVIL ============
+// ============ SORTEO MANUAL ============
+function sortearManualMobile() {
+    var btnPC = document.getElementById('drawBtn');
+    if (btnPC) btnPC.click();
+}
+
+// ============ ACTUALIZAR UI ============
 function actualizarUIMovil() {
     if (typeof window.etapaActual === 'undefined') return;
     
-    const configLista = window.etapaActual >= 2;
-    const juegoListo = window.etapaActual >= 3;
+    var configLista = window.etapaActual >= 2;
+    var juegoListo = window.etapaActual >= 3;
+    var enPausa = window.enPausa || false;
     
-    // Status jugadores
     if (window.jugadoresActivos && window.jugadoresActivos.length > 0) {
-        document.getElementById('statusJugadoresTexto').textContent = window.jugadoresActivos.length + ' jugadores';
-        document.getElementById('statusJugadoresCheck').textContent = '✅';
-        document.getElementById('statusJugadoresCard').classList.add('completado');
-        document.getElementById('statusJugadoresCard').classList.remove('pendiente');
+        var txt = document.getElementById('statusJugadoresTexto');
+        var check = document.getElementById('statusJugadoresCheck');
+        var card = document.getElementById('statusJugadoresCard');
+        if (txt) txt.textContent = window.jugadoresActivos.length + ' jugadores';
+        if (check) check.textContent = '✅';
+        if (card) { card.classList.add('completado'); card.classList.remove('pendiente'); }
     }
     
-    // Status patrón
     if (window.patronBingo && window.patronBingo.some(function(x) { return x; })) {
-        document.getElementById('statusPatronTexto').textContent = obtenerNombrePatronMovil();
-        document.getElementById('statusPatronCheck').textContent = '✅';
-        document.getElementById('statusPatronCard').classList.add('completado');
-        document.getElementById('statusPatronCard').classList.remove('pendiente');
+        var txt = document.getElementById('statusPatronTexto');
+        var check = document.getElementById('statusPatronCheck');
+        var card = document.getElementById('statusPatronCard');
+        if (txt) txt.textContent = obtenerNombrePatronMovil();
+        if (check) check.textContent = '✅';
+        if (card) { card.classList.add('completado'); card.classList.remove('pendiente'); }
     }
     
-    // Habilitar botones
-    const btnEtapa2 = document.getElementById('btnEtapa2Mobile');
-    const btnComenzar = document.getElementById('btnComenzarPartida');
-    const btnProg = document.getElementById('btnProgramarMobile');
-    const btnAuto = document.getElementById('btnAutoMobile');
-    const btnManual = document.getElementById('drawBtnMobile');
+    setDisabled('btnEtapa2Mobile', !configLista);
+    setDisabled('btnComenzarPartida', !juegoListo);
+    setDisabled('btnProgramarMobile', !juegoListo || enPausa);
+    setDisabled('btnAutoMobile', !juegoListo || enPausa);
+    setDisabled('drawBtnMobile', !juegoListo || enPausa);
     
-    if (btnEtapa2) btnEtapa2.disabled = !configLista;
-    if (btnComenzar) btnComenzar.disabled = !juegoListo;
-    if (btnProg) btnProg.disabled = !juegoListo || (window.enPausa || false);
-    if (btnAuto) btnAuto.disabled = !juegoListo || (window.enPausa || false);
-    if (btnManual) btnManual.disabled = !juegoListo || (window.enPausa || false);
-    
-    // Habilitar pestaña ruleta
-    const navRuleta = document.getElementById('navRuleta');
+    var navRuleta = document.getElementById('navRuleta');
     if (navRuleta && juegoListo) {
         navRuleta.style.opacity = '1';
         navRuleta.style.pointerEvents = 'all';
     }
+    
+    verificarPartidaVigente();
+}
+
+function setDisabled(id, state) {
+    var el = document.getElementById(id);
+    if (el) el.disabled = state;
 }
 
 function obtenerNombrePatronMovil() {
@@ -246,7 +329,7 @@ function obtenerNombrePatronMovil() {
     return a + ' celdas';
 }
 
-// ============ TABLERO MÓVIL (NÚMEROS MÁS GRANDES) ============
+// ============ TABLERO ============
 function inicializarTableroMovil() {
     var grid = document.getElementById('historyGridMobile');
     if (!grid) return;
@@ -255,39 +338,8 @@ function inicializarTableroMovil() {
         var div = document.createElement('div');
         div.className = 'celda-movil';
         div.textContent = i;
-        if (window.cantados && window.cantados.indexOf(i) !== -1) {
-            div.classList.add('cantada');
-        }
+        if (window.cantados && window.cantados.indexOf(i) !== -1) div.classList.add('cantada');
         grid.appendChild(div);
-    }
-}
-
-function actualizarUltimaBolaMovil() {
-    var c = document.getElementById('ultimaBolaMobile');
-    if (!c || !window.cantados) return;
-    if (window.cantados.length > 0) {
-        var u = window.cantados[window.cantados.length - 1];
-        c.querySelector('.letra').textContent = obtenerLetra(u);
-        c.querySelector('.numero').textContent = u;
-    }
-}
-
-function actualizarUltimosMovil() {
-    var c = document.getElementById('ultimosCantadosMobile');
-    if (!c || !window.cantados) return;
-    c.innerHTML = '';
-    var ultimos = window.cantados.slice(-5).reverse();
-    for (var i = 0; i < 5; i++) {
-        var s = document.createElement('span');
-        s.className = 'num-chico-movil';
-        if (i < ultimos.length) {
-            s.classList.add('cantado');
-            s.textContent = obtenerLetra(ultimos[i]) + '-' + ultimos[i];
-        } else {
-            s.classList.add('vacio');
-            s.textContent = '--';
-        }
-        c.appendChild(s);
     }
 }
 
@@ -303,28 +355,23 @@ function obtenerLetra(n) {
 document.addEventListener('DOMContentLoaded', function() {
     escucharChat();
     inicializarTableroMovil();
+    verificarPartidaVigente();
     
     setInterval(function() {
         actualizarUIMovil();
         inicializarTableroMovil();
-        actualizarUltimaBolaMovil();
-        actualizarUltimosMovil();
         
         var total = window.cantados ? window.cantados.length : 0;
         var el = document.getElementById('totalCantadosMobile');
         if (el) el.textContent = total + '/75';
         
-        if (window.jugadoresActivos) {
-            var oc = document.getElementById('onlineCountMobile');
-            if (oc) oc.textContent = '👥 ' + window.jugadoresActivos.length;
-        }
+        var oc = document.getElementById('onlineCountMobile');
+        if (oc && window.jugadoresActivos) oc.textContent = '👥 ' + window.jugadoresActivos.length;
         
-        // Sincronizar cronómetro
         var cronPC = document.getElementById('cronometroBingo');
         var cronMobile = document.getElementById('cronometroBingoMobile');
         if (cronPC && cronMobile) cronMobile.textContent = cronPC.textContent;
         
-        // Sincronizar alerta
         var alertaPC = document.getElementById('alertaBingo');
         var alertaMobile = document.getElementById('alertaBingoMobile');
         if (alertaPC && alertaMobile && alertaPC.style.display === 'block') {
