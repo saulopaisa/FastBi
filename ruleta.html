@@ -9,24 +9,24 @@
     <link rel="stylesheet" href="ruleta.css">
 </head>
 <body>
-    <!-- ============ HEADER SUPERIOR (MÓVIL) ============ -->
+    <!-- HEADER SUPERIOR -->
     <div class="app-header">
         <h1>🎯 BINGO PRO</h1>
         <div class="header-actions">
             <span class="online-badge" id="onlineCountMobile">👥 0</span>
-            <button class="btn-header-icon" onclick="toggleChat()" title="Chat">💬</button>
-            <button class="btn-header-icon" onclick="location.href='ver_todo.html'" title="Ver cartones">👁️</button>
+            <button class="btn-header-icon" onclick="toggleChat()">💬</button>
+            <button class="btn-header-icon" onclick="location.href='ver_todo.html'">👁️</button>
         </div>
     </div>
 
-    <!-- ============ CONTENIDO PRINCIPAL ============ -->
+    <!-- CONTENIDO PRINCIPAL -->
     <div class="app-content" id="appContent">
         <!-- SECCIÓN CONFIGURACIÓN -->
         <div class="section-config activo" id="sectionConfig">
             <div class="config-card">
                 <h3>⚙️ CONFIGURAR PARTIDA</h3>
                 
-                <div class="config-status completado" id="statusJugadoresCard">
+                <div class="config-status" id="statusJugadoresCard">
                     <span class="icon">👥</span>
                     <div>
                         <strong>Jugadores</strong>
@@ -35,7 +35,7 @@
                     <span class="config-check" id="statusJugadoresCheck">❌</span>
                 </div>
 
-                <div class="config-status pendiente" id="statusPatronCard">
+                <div class="config-status" id="statusPatronCard">
                     <span class="icon">🎯</span>
                     <div>
                         <strong>Patrón de juego</strong>
@@ -52,9 +52,18 @@
                     🎯 CONFIGURAR PATRÓN
                 </button>
 
-                <button onclick="window.abrirModalEliminarJugadores()" class="btn-accion btn-eliminar">
-                    🗑️ ELIMINAR JUGADORES
+                <!-- BOTÓN COMENZAR PARTIDA -->
+                <button id="btnComenzarPartida" onclick="comenzarPartida()" class="btn-accion btn-comenzar" disabled>
+                    🚀 COMENZAR PARTIDA
                 </button>
+                
+                <div id="cronometroVisual" class="cronometro-visual" style="display:none;">
+                    <div class="cronometro-visual-tiempo" id="cronometroVisualTiempo">00:00</div>
+                    <div class="cronometro-visual-barra">
+                        <div class="cronometro-visual-progreso" id="cronometroVisualProgreso"></div>
+                    </div>
+                    <p class="cronometro-visual-texto">⏳ Tiempo restante para iniciar</p>
+                </div>
             </div>
         </div>
 
@@ -78,14 +87,14 @@
             <!-- Programar -->
             <div class="programar-row">
                 <input type="number" id="minutosInicioMobile" placeholder="Min" min="1" max="60" class="input-minutos">
-                <button id="btnProgramarMobile" onclick="window.programarJuego()" class="btn-juego btn-programar-movil" disabled>
+                <button id="btnProgramarMobile" onclick="programarJuegoMobile()" class="btn-juego btn-programar-movil" disabled>
                     ⏰ PROGRAMAR
                 </button>
             </div>
 
             <!-- Controles -->
             <div class="controles-juego">
-                <button id="btnAutoMobile" onclick="window.iniciarBingoAutomatico()" class="btn-juego btn-auto" disabled>
+                <button id="btnAutoMobile" onclick="iniciarAutoMobile()" class="btn-juego btn-auto" disabled>
                     🤖 AUTO
                 </button>
                 <button id="drawBtnMobile" onclick="sortearManualMobile()" class="btn-juego btn-manual" disabled>
@@ -95,11 +104,11 @@
 
             <!-- Últimos números -->
             <div class="ultimos-movil" id="ultimosCantadosMobile">
-                <span class="num-chico-movil" style="opacity:0.3;">--</span>
-                <span class="num-chico-movil" style="opacity:0.3;">--</span>
-                <span class="num-chico-movil" style="opacity:0.3;">--</span>
-                <span class="num-chico-movil" style="opacity:0.3;">--</span>
-                <span class="num-chico-movil" style="opacity:0.3;">--</span>
+                <span class="num-chico-movil vacio">--</span>
+                <span class="num-chico-movil vacio">--</span>
+                <span class="num-chico-movil vacio">--</span>
+                <span class="num-chico-movil vacio">--</span>
+                <span class="num-chico-movil vacio">--</span>
             </div>
 
             <!-- Tablero -->
@@ -108,18 +117,12 @@
                     <h3>📊 TABLERO (1-75)</h3>
                     <span class="tablero-contador" id="totalCantadosMobile">0/75</span>
                 </div>
-                <div class="ultima-bola-movil">
-                    <div class="bola-grande-movil" id="ultimaBolaMobile">
-                        <span class="letra">-</span>
-                        <span class="numero">--</span>
-                    </div>
-                </div>
                 <div class="history-grid-movil" id="historyGridMobile"></div>
             </div>
         </div>
     </div>
 
-    <!-- ============ CHAT FLOTANTE ============ -->
+    <!-- CHAT FLOTANTE -->
     <div class="chat-flotante">
         <button class="btn-chat" onclick="toggleChat()">💬</button>
         <div class="chat-panel" id="chatPanel">
@@ -134,7 +137,7 @@
         </div>
     </div>
 
-    <!-- ============ MODAL VERIFICADOR ============ -->
+    <!-- MODAL VERIFICADOR -->
     <div id="modalVerificador" class="modal-overlay">
         <div class="modal-content" onclick="event.stopPropagation()">
             <h3>🔍 VERIFICAR CARTÓN</h3>
@@ -156,7 +159,7 @@
         </div>
     </div>
 
-    <!-- ============ MODALES ============ -->
+    <!-- MODALES -->
     <div id="modalCartones" class="modal-overlay">
         <div class="modal-content" onclick="event.stopPropagation()">
             <h3>📋 PASO 1: ¿QUIÉN JUEGA?</h3>
@@ -180,20 +183,7 @@
         </div>
     </div>
 
-    <div id="modalEliminarJugadores" class="modal-overlay">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <h3>🗑️ ELIMINAR JUGADORES</h3>
-            <input type="text" class="modal-buscador" placeholder="🔍 Buscar..." oninput="window.buscarEnModalEliminar(this.value)">
-            <button onclick="window.seleccionarTodosEnEliminar()" class="btn-seleccionar-todos" style="background:#ef4444;">✅ SELECCIONAR TODOS</button>
-            <div id="listaEliminarJugadores" class="grid-seleccion-cartones"></div>
-            <div class="modal-botones-eliminar">
-                <button onclick="window.confirmarEliminarJugadores()" class="btn-accion" style="background:#ef4444;flex:1;">🗑️ ELIMINAR</button>
-                <button onclick="cerrarModal('modalEliminarJugadores')" class="btn-accion" style="background:#6b7280;flex:1;">CANCELAR</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============ BARRA DE NAVEGACIÓN INFERIOR ============ -->
+    <!-- BARRA DE NAVEGACIÓN INFERIOR -->
     <div class="bottom-nav">
         <div class="nav-item activo" onclick="navegarA('config')" id="navConfig">
             <span class="nav-icon">⚙️</span>
@@ -214,7 +204,7 @@
         </div>
     </div>
 
-    <!-- ============ SCRIPTS ============ -->
+    <!-- SCRIPTS -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script>
