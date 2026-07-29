@@ -2,18 +2,8 @@
 
 var db = firebase.database();
 
-// Usar la misma función de sala personalizada
-function generarSalaPersonalizada() {
-    var salaGuardada = localStorage.getItem('salaActiva');
-    if (salaGuardada && salaGuardada.startsWith('bingo')) return salaGuardada;
-    var ahora = new Date();
-    var fecha = ahora.getMonth() + 1 + '/' + ahora.getDate() + '/' + ahora.getFullYear().toString().slice(-2);
-    var salaId = 'bingo' + fecha;
-    localStorage.setItem('salaActiva', salaId);
-    return salaId;
-}
-
-const SALA_ID = generarSalaPersonalizada();
+// Usar sala del localStorage (YA fue configurada en el HTML)
+var SALA_ID = localStorage.getItem('salaActiva') || 'bingo-default';
 
 window.cantados = JSON.parse(localStorage.getItem('bingo_cantados_' + SALA_ID)) || [];
 window.patronBingo = JSON.parse(localStorage.getItem('bingo_patron_' + SALA_ID)) || Array(25).fill(false);
@@ -531,7 +521,6 @@ function cantarBola(bola) {
     }
 }
 
-// Sorteo manual
 document.getElementById('drawBtn').addEventListener('click', function() {
     if (window.modoAutomatico || window.etapaActual !== 3 || window.enPausa) return;
     if (window.cantados.length >= 75) { alert('🎉 Fin'); return; }
