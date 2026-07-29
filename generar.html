@@ -13,13 +13,12 @@
         <h1>🎯 BINGO PRO</h1>
         <div class="header-actions">
             <a href="ruleta.html" class="btn-header-icon">🎮</a>
-            <a href="ver_todo.html" class="btn-header-icon">👁️</a>
         </div>
     </div>
 
     <!-- CONTENIDO -->
     <div class="app-content">
-        <!-- SECCIÓN GENERAR -->
+        <!-- SECCIÓN 1: GENERAR -->
         <div class="section activo" id="sectionGenerar">
             <div class="contador" id="contadorCartones">🎫 CARTONES: 0</div>
 
@@ -56,7 +55,7 @@
             </button>
         </div>
 
-        <!-- SECCIÓN VER CARTONES -->
+        <!-- SECCIÓN 2: VER Y ASIGNAR -->
         <div class="section" id="sectionVer">
             <div class="stats-row" id="statsContainer">
                 <div class="stat-item" onclick="filtrarVer('todos')">
@@ -76,6 +75,11 @@
                     <div class="stat-label">🔴 Usados</div>
                 </div>
             </div>
+
+            <!-- BOTÓN ASIGNAR EN VISTA 2 -->
+            <button class="btn btn-asignar-ver" id="btnAsignarVer" onclick="asignarDesdeVistaVer()" disabled>
+                👤 ASIGNAR SELECCIONADOS A JUGADOR
+            </button>
 
             <div class="filtros-row">
                 <input type="text" id="buscarVer" placeholder="🔍 Buscar..." oninput="filtrarVer()">
@@ -101,7 +105,7 @@
         </div>
         <div class="nav-item" onclick="cambiarPestana('ver')" id="navVer">
             <span class="nav-icon">👁️</span>
-            <span class="nav-label">VER</span>
+            <span class="nav-label">VER/ASIG.</span>
         </div>
         <div class="nav-item" onclick="location.href='ruleta.html'">
             <span class="nav-icon">🎮</span>
