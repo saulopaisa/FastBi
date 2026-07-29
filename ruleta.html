@@ -27,19 +27,16 @@
             <div class="config-card">
                 <h3>⚙️ CONFIGURAR PARTIDA</h3>
                 
-                <!-- SALA ACTUAL -->
                 <div class="sala-info-card">
                     <span>📁 Sala:</span>
                     <span class="sala-id" id="salaIdDisplay">-</span>
                     <button onclick="copiarSalaId()" class="btn-mini">📋</button>
                 </div>
                 
-                <!-- COPIAR LINK DE SALA -->
                 <button onclick="generarLinkSala()" class="btn-accion" style="background:#6366f1;margin-bottom:8px;">
                     🔗 COPIAR LINK DE SALA
                 </button>
                 
-                <!-- PARTIDA VIGENTE -->
                 <div class="partida-vigente" id="partidaVigente" style="display:none;">
                     <span>⚠️ Ya hay una partida vigente</span>
                 </div>
@@ -90,7 +87,6 @@
 
         <!-- SECCIÓN RULETA -->
         <div class="section-ruleta" id="sectionRuleta">
-            <!-- Alerta de bingo -->
             <div id="alertaBingoMobile" class="alerta-bingo-flotante" style="display:none;">
                 <div class="alerta-flotante-titulo">🚨 ¡BINGO CANTADO!</div>
                 <div class="alerta-flotante-jugador" id="alertaJugadorMobile">-</div>
@@ -102,10 +98,8 @@
                 </div>
             </div>
 
-            <!-- Cronómetro -->
             <div class="cronometro-movil" id="cronometroBingoMobile">00:00</div>
 
-            <!-- Cronómetro visual en ruleta -->
             <div id="cronometroVisualRuleta" class="cronometro-visual" style="display:none;">
                 <div class="cronometro-visual-tiempo" id="cronometroVisualRuletaTiempo">00:00</div>
                 <div class="cronometro-visual-barra">
@@ -114,7 +108,6 @@
                 <p class="cronometro-visual-texto">⏳ Iniciando partida...</p>
             </div>
 
-            <!-- Programar -->
             <div class="programar-row">
                 <input type="number" id="minutosInicioMobile" placeholder="Min" min="1" max="60" class="input-minutos">
                 <button id="btnProgramarMobile" onclick="programarJuegoMobile()" class="btn-juego btn-programar-movil" disabled>
@@ -122,7 +115,6 @@
                 </button>
             </div>
 
-            <!-- Controles -->
             <div class="controles-juego">
                 <button id="btnAutoMobile" onclick="iniciarAutoMobile()" class="btn-juego btn-auto" disabled>
                     🤖 AUTO
@@ -132,7 +124,6 @@
                 </button>
             </div>
 
-            <!-- Últimos números -->
             <div class="ultimos-movil" id="ultimosCantadosMobile">
                 <span class="num-chico-movil vacio">--</span>
                 <span class="num-chico-movil vacio">--</span>
@@ -141,7 +132,6 @@
                 <span class="num-chico-movil vacio">--</span>
             </div>
 
-            <!-- Tablero -->
             <div class="tablero-container">
                 <div class="tablero-header">
                     <h3>📊 TABLERO (1-75)</h3>
@@ -192,7 +182,7 @@
         </div>
     </div>
 
-    <!-- MODAL CARTONES (CON BOTÓN REGRESAR) -->
+    <!-- MODAL CARTONES -->
     <div id="modalCartones" class="modal-overlay">
         <div class="modal-content" onclick="event.stopPropagation()">
             <h3>📋 PASO 1: ¿QUIÉN JUEGA?</h3>
@@ -260,7 +250,7 @@
         })();
     </script>
     
-    <!-- Configuración Firebase y Sala -->
+    <!-- Configuración Firebase (SIN declarar SALA_ID) -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
@@ -274,23 +264,16 @@
         firebase.initializeApp(firebaseConfig);
         var db = firebase.database();
         
-        // Generar sala personalizada: bingo + fecha
-        function generarSalaPersonalizada() {
-            var salaGuardada = localStorage.getItem('salaActiva');
-            if (salaGuardada && salaGuardada.startsWith('bingo')) return salaGuardada;
+        // Generar sala si no existe
+        if (!localStorage.getItem('salaActiva') || !String(localStorage.getItem('salaActiva')).startsWith('bingo')) {
             var ahora = new Date();
             var fecha = ahora.getMonth() + 1 + '/' + ahora.getDate() + '/' + ahora.getFullYear().toString().slice(-2);
-            var salaId = 'bingo' + fecha;
-            localStorage.setItem('salaActiva', salaId);
-            return salaId;
+            localStorage.setItem('salaActiva', 'bingo' + fecha);
         }
         
-        var SALA_ID = generarSalaPersonalizada();
-        document.getElementById('salaIdDisplay').textContent = SALA_ID;
-        localStorage.setItem('salaActiva', SALA_ID);
-        
+        document.getElementById('salaIdDisplay').textContent = localStorage.getItem('salaActiva');
         console.log('🔥 Firebase listo');
-        console.log('📁 Sala:', SALA_ID);
+        console.log('📁 Sala:', localStorage.getItem('salaActiva'));
     </script>
     
     <script src="ruleta.js"></script>
