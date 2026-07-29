@@ -2,196 +2,158 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Bingo Pro - Panel de Control</title>
     <link rel="stylesheet" href="ruleta.css">
 </head>
 <body>
-    <!-- ============ PANEL IZQUIERDO ============ -->
-    <div class="sidebar">
-        <div class="titulo">🎯 BINGO PRO</div>
-        <div class="subtitulo">Panel de Control</div>
-        
-        <!-- SELECTOR DE SALA -->
-        <div class="selector-sala">
-            <span>SALA:</span>
-            <input type="text" id="inputSalaId" placeholder="ID de sala">
-            <button onclick="cambiarSala()" style="background:#3b82f6;">🔄</button>
-            <button onclick="copiarSalaId()" style="background:#6366f1;">📋</button>
+    <!-- ============ HEADER SUPERIOR (MÓVIL) ============ -->
+    <div class="app-header">
+        <h1>🎯 BINGO PRO</h1>
+        <div class="header-actions">
+            <span class="online-badge" id="onlineCountMobile">👥 0</span>
+            <button class="btn-header-icon" onclick="toggleChat()" title="Chat">💬</button>
+            <button class="btn-header-icon" onclick="location.href='ver_todo.html'" title="Ver cartones">👁️</button>
         </div>
-        
-        <div id="onlineCount" class="online-count">👥 JUGADORES EN RONDA: 0</div>
+    </div>
 
-        <!-- PESTAÑAS DE NAVEGACIÓN -->
-        <div class="tabs-nav">
-            <button class="tab-btn activo" onclick="cambiarPestana('config')" id="tabConfig">
-                ⚙️ CONFIGURAR
-            </button>
-            <button class="tab-btn" onclick="cambiarPestana('juego')" id="tabJuego" disabled>
-                🎮 JUEGO
-            </button>
-            <button class="tab-btn" onclick="cambiarPestana('verificador')" id="tabVerificador">
-                🔍 VERIFICAR
-            </button>
-        </div>
-
-        <!-- ============ PESTAÑA 1: CONFIGURACIÓN ============ -->
-        <div class="tab-content activo" id="pestanaConfig">
-            <button id="btnEtapa1" onclick="window.abrirModalCartones()" class="btn-accion btn-etapa1">
-                📋 1. SELECCIONAR JUGADORES
-            </button>
-            
-            <button id="btnEtapa2" onclick="window.abrirModalPatron()" class="btn-accion btn-etapa2" disabled>
-                🎯 2. CONFIGURAR PATRÓN
-            </button>
-
-            <div style="margin-top:15px; padding:10px; background:#1e293b; border-radius:8px;">
-                <p style="color:#94a3b8; font-size:0.75rem; text-align:center; margin-bottom:8px;">
-                    ✅ Configura los jugadores y el patrón para habilitar el juego
-                </p>
-                <div style="display:flex; gap:5px;">
-                    <span style="color:#10b981; font-size:0.7rem;">● Jugadores</span>
-                    <span style="color:#94a3b8; font-size:0.7rem;" id="statusJugadores">Pendiente</span>
+    <!-- ============ CONTENIDO PRINCIPAL ============ -->
+    <div class="app-content" id="appContent">
+        <!-- SECCIÓN CONFIGURACIÓN -->
+        <div class="section-config activo" id="sectionConfig">
+            <div class="config-card">
+                <h3>⚙️ CONFIGURAR PARTIDA</h3>
+                
+                <div class="config-status completado" id="statusJugadoresCard">
+                    <span class="icon">👥</span>
+                    <div>
+                        <strong>Jugadores</strong>
+                        <div class="config-status-text" id="statusJugadoresTexto">No seleccionados</div>
+                    </div>
+                    <span class="config-check" id="statusJugadoresCheck">❌</span>
                 </div>
-                <div style="display:flex; gap:5px; margin-top:3px;">
-                    <span style="color:#f59e0b; font-size:0.7rem;">● Patrón</span>
-                    <span style="color:#94a3b8; font-size:0.7rem;" id="statusPatron">Pendiente</span>
+
+                <div class="config-status pendiente" id="statusPatronCard">
+                    <span class="icon">🎯</span>
+                    <div>
+                        <strong>Patrón de juego</strong>
+                        <div class="config-status-text" id="statusPatronTexto">No configurado</div>
+                    </div>
+                    <span class="config-check" id="statusPatronCheck">❌</span>
                 </div>
-            </div>
-            
-            <!-- ELIMINAR JUGADORES -->
-            <div style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 10px;">
-                <div class="verifier-title" style="color: #ef4444;">🗑️ ELIMINAR JUGADORES</div>
-                <button onclick="window.abrirModalEliminarJugadores()" class="btn-programar" style="width:100%;background:#ef4444;color:white;margin-bottom:5px;">
-                    📋 SELECCIONAR JUGADORES A ELIMINAR
+
+                <button onclick="window.abrirModalCartones()" class="btn-accion btn-jugadores">
+                    📋 SELECCIONAR JUGADORES
                 </button>
-                <div style="display: flex; gap: 5px;">
-                    <button onclick="window.eliminarJugadoresSeleccionados()" class="btn-programar" style="flex:1;background:#dc2626;color:white;">
-                        🗑️ ELIMINAR RONDA
-                    </button>
-                    <button onclick="window.eliminarTodosJugadores()" class="btn-programar" style="flex:1;background:#991b1b;color:white;">
-                        ⚠️ ELIMINAR TODOS
-                    </button>
-                </div>
+                
+                <button id="btnEtapa2Mobile" onclick="window.abrirModalPatron()" class="btn-accion btn-patron" disabled>
+                    🎯 CONFIGURAR PATRÓN
+                </button>
+
+                <button onclick="window.abrirModalEliminarJugadores()" class="btn-accion btn-eliminar">
+                    🗑️ ELIMINAR JUGADORES
+                </button>
             </div>
         </div>
 
-        <!-- ============ PESTAÑA 2: JUEGO ============ -->
-        <div class="tab-content" id="pestanaJuego">
-            <div id="cronometroBingo" class="cronometro">00:00</div>
-            
-            <div class="input-group">
-                <input type="number" id="minutosInicio" placeholder="Min" min="1" max="60">
-                <button id="btnProgramar" onclick="window.programarJuego()" class="btn-programar" style="flex:1;" disabled>
+        <!-- SECCIÓN RULETA -->
+        <div class="section-ruleta" id="sectionRuleta">
+            <!-- Alerta de bingo -->
+            <div id="alertaBingoMobile" class="alerta-bingo-flotante" style="display:none;">
+                <div class="alerta-flotante-titulo">🚨 ¡BINGO CANTADO!</div>
+                <div class="alerta-flotante-jugador" id="alertaJugadorMobile">-</div>
+                <div class="alerta-flotante-carton" id="alertaCartonMobile">-</div>
+                <div class="alerta-flotante-acciones">
+                    <button onclick="window.bingoValido()" class="btn-flotante-valido">✅ VÁLIDO</button>
+                    <button onclick="window.bingoErrado()" class="btn-flotante-errado">❌ ERRADO</button>
+                    <button onclick="document.getElementById('alertaBingoMobile').style.display='none'" class="btn-flotante-cerrar">✕</button>
+                </div>
+            </div>
+
+            <!-- Cronómetro -->
+            <div class="cronometro-movil" id="cronometroBingoMobile">00:00</div>
+
+            <!-- Programar -->
+            <div class="programar-row">
+                <input type="number" id="minutosInicioMobile" placeholder="Min" min="1" max="60" class="input-minutos">
+                <button id="btnProgramarMobile" onclick="window.programarJuego()" class="btn-juego btn-programar-movil" disabled>
                     ⏰ PROGRAMAR
                 </button>
             </div>
-            
-            <button id="btnAutoBingo" onclick="window.iniciarBingoAutomatico()" class="btn-accion" disabled 
-                style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
-                🤖 BINGO AUTOMÁTICO
-            </button>
-            
-            <button id="drawBtn" class="btn-accion btn-sortear" style="opacity: 0.4; pointer-events: none;">
-                🎲 SORTEAR BOLA (MANUAL)
-            </button>
-            
-            <!-- CHAT CON JUGADORES -->
-            <div style="margin-top:10px; border-top:1px solid var(--border-color); padding-top:10px;">
-                <div class="verifier-title" style="color: #6366f1;">💬 COMUNICAR A JUGADORES</div>
-                <div style="display:flex; gap:5px; margin-bottom:5px;">
-                    <input type="text" id="mensajeChat" placeholder="Escribe un mensaje..." 
-                        style="flex:1; padding:8px; border-radius:6px; border:2px solid #2d3748; background:#1e293b; color:white; font-size:0.8rem;"
-                        onkeypress="if(event.key==='Enter') enviarMensajeChat()">
-                    <button onclick="enviarMensajeChat()" class="btn-programar" style="background:#6366f1; color:white; white-space:nowrap;">
-                        ENVIAR
-                    </button>
-                </div>
-                <!-- Historial de mensajes -->
-                <div id="chatHistorial" style="max-height:120px; overflow-y:auto; background:#0f172a; border-radius:6px; padding:8px;">
-                    <p style="color:#64748b; font-size:0.7rem; text-align:center;">No hay mensajes aún</p>
-                </div>
-            </div>
-        </div>
 
-        <!-- ============ PESTAÑA 3: VERIFICADOR ============ -->
-        <div class="tab-content" id="pestanaVerificador">
-            <div class="verifier-title">🔍 VERIFICAR CARTÓN</div>
-            <div style="display: flex; gap: 5px; margin-bottom: 8px;">
-                <input type="text" id="idABuscar" placeholder="ID o # Cartón" style="flex:1;">
-                <button onclick="window.revisarCartonManual()" class="btn-programar" style="padding: 8px 15px;">
-                    BUSCAR
+            <!-- Controles -->
+            <div class="controles-juego">
+                <button id="btnAutoMobile" onclick="window.iniciarBingoAutomatico()" class="btn-juego btn-auto" disabled>
+                    🤖 AUTO
+                </button>
+                <button id="drawBtnMobile" onclick="sortearManualMobile()" class="btn-juego btn-manual" disabled>
+                    🎲 MANUAL
                 </button>
             </div>
-            <button onclick="window.notificarRevisionJugador()" class="btn-programar" style="width:100%;padding:8px;margin-bottom:8px;background:#f59e0b;color:#16213e;">
-                🔍 NOTIFICAR REVISIÓN AL JUGADOR
-            </button>
-            
-            <!-- Minicartón verificador -->
-            <div id="minicartonVerificador" class="minicarton-container">
-                <p style="color:#64748b; text-align:center; font-size:0.8rem;">Busca un cartón para verificar</p>
+
+            <!-- Últimos números -->
+            <div class="ultimos-movil" id="ultimosCantadosMobile">
+                <span class="num-chico-movil" style="opacity:0.3;">--</span>
+                <span class="num-chico-movil" style="opacity:0.3;">--</span>
+                <span class="num-chico-movil" style="opacity:0.3;">--</span>
+                <span class="num-chico-movil" style="opacity:0.3;">--</span>
+                <span class="num-chico-movil" style="opacity:0.3;">--</span>
             </div>
-            
-            <div class="btn-group">
-                <button onclick="window.bingoErrado()" class="btn-bingo-errado">
-                    ❌ BINGO ERRADO
-                </button>
-                <button onclick="window.bingoValido()" class="btn-bingo-valido">
-                    ✅ BINGO VÁLIDO
-                </button>
+
+            <!-- Tablero -->
+            <div class="tablero-container">
+                <div class="tablero-header">
+                    <h3>📊 TABLERO (1-75)</h3>
+                    <span class="tablero-contador" id="totalCantadosMobile">0/75</span>
+                </div>
+                <div class="ultima-bola-movil">
+                    <div class="bola-grande-movil" id="ultimaBolaMobile">
+                        <span class="letra">-</span>
+                        <span class="numero">--</span>
+                    </div>
+                </div>
+                <div class="history-grid-movil" id="historyGridMobile"></div>
             </div>
         </div>
-        
-        <!-- Notificaciones -->
-        <div id="notificacionesBingo" class="notificaciones-container"></div>
-        
-        <button id="resetBtn" class="btn-reiniciar">
-            🔄 Reiniciar Todo
-        </button>
     </div>
 
-    <!-- ============ PANEL DERECHO ============ -->
-    <div class="main-content">
-        <div class="panel-header">
-            <h3>📊 TABLERO DE SEGUIMIENTO (1-75)</h3>
-            <div class="panel-header-botones">
-                <button class="btn-ver-cartones" onclick="location.href='ver_todo.html'">👁️ VER CARTONES</button>
-                <button class="btn-ver-cartones btn-generar" onclick="location.href='generar.html'">📝 GENERAR</button>
+    <!-- ============ CHAT FLOTANTE ============ -->
+    <div class="chat-flotante">
+        <button class="btn-chat" onclick="toggleChat()">💬</button>
+        <div class="chat-panel" id="chatPanel">
+            <div class="chat-header">💬 CHAT CON JUGADORES</div>
+            <div class="chat-mensajes" id="chatMensajes">
+                <p class="chat-vacio">No hay mensajes</p>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter')enviarChat()">
+                <button onclick="enviarChat()">➤</button>
             </div>
         </div>
-        
-        <div id="alertaBingo" class="alerta-bingo" style="display:none;">
-            <div class="alerta-bingo-contenido">
-                <span class="alerta-icono">🚨</span>
-                <div class="alerta-texto">
-                    <div class="alerta-titulo">¡BINGO CANTADO!</div>
-                    <div class="alerta-jugador" id="alertaJugador">-</div>
-                    <div class="alerta-carton" id="alertaCarton">-</div>
-                </div>
-                <div class="alerta-acciones">
-                    <button onclick="window.bingoValido()" class="alerta-btn-valido">✅ VÁLIDO</button>
-                    <button onclick="window.bingoErrado()" class="alerta-btn-errado">❌ ERRADO</button>
-                    <button onclick="window.cerrarAlerta()" class="alerta-btn-cerrar">✕</button>
-                </div>
+    </div>
+
+    <!-- ============ MODAL VERIFICADOR ============ -->
+    <div id="modalVerificador" class="modal-overlay">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3>🔍 VERIFICAR CARTÓN</h3>
+            <div class="modal-busqueda-row">
+                <input type="text" id="idABuscarMobile" placeholder="ID o # Cartón" class="modal-input-buscar">
+                <button onclick="buscarCartonMobile()" class="modal-btn-buscar">BUSCAR</button>
             </div>
-        </div>
-        
-        <div class="ultima-bola-container">
-            <div class="ultima-bola" id="ultimaBola">
-                <span class="letra">-</span>
-                <span class="numero">--</span>
+            <button onclick="window.notificarRevisionJugador()" class="modal-btn-notificar">
+                🔍 NOTIFICAR REVISIÓN
+            </button>
+            <div id="minicartonMobile" class="minicarton-mobile">
+                <p class="minicarton-placeholder">Busca un cartón para verificar</p>
             </div>
+            <div class="modal-botones-verificacion">
+                <button onclick="window.bingoErrado()" class="modal-btn-errado">❌ BINGO ERRADO</button>
+                <button onclick="window.bingoValido()" class="modal-btn-valido">✅ BINGO VÁLIDO</button>
+            </div>
+            <button onclick="cerrarModalVerificador()" class="modal-btn-cerrar">CERRAR</button>
         </div>
-        
-        <div class="ultimos-container" id="ultimosCantados">
-            <div class="ultimo-item vacio"><div class="letra-peq">-</div><div class="num-peq">--</div></div>
-            <div class="ultimo-item vacio"><div class="letra-peq">-</div><div class="num-peq">--</div></div>
-            <div class="ultimo-item vacio"><div class="letra-peq">-</div><div class="num-peq">--</div></div>
-            <div class="ultimo-item vacio"><div class="letra-peq">-</div><div class="num-peq">--</div></div>
-            <div class="ultimo-item vacio"><div class="letra-peq">-</div><div class="num-peq">--</div></div>
-        </div>
-        
-        <div id="historyGrid" class="history-grid"></div>
     </div>
 
     <!-- ============ MODALES ============ -->
@@ -201,7 +163,7 @@
             <input type="text" class="modal-buscador" placeholder="🔍 Buscar jugador..." oninput="window.buscarJugadorModal(this.value)">
             <button onclick="window.seleccionarTodosJugadores()" class="btn-seleccionar-todos">✅ SELECCIONAR TODOS</button>
             <div id="listaCheckCartones" class="grid-seleccion-cartones"></div>
-            <button onclick="window.confirmarJugadores()" class="btn-accion btn-empezar">✅ CONFIRMAR Y PASAR AL PATRÓN</button>
+            <button onclick="window.confirmarJugadores()" class="btn-accion btn-empezar">✅ CONFIRMAR</button>
         </div>
     </div>
 
@@ -214,22 +176,41 @@
                 <button onclick="window.aplicarPredefinido('limpiar')" class="btn-predefinido">🔄 BORRAR</button>
             </div>
             <div id="gridDibujoPatron" class="grid-patron-admin"></div>
-            <button onclick="window.confirmarPatron()" class="btn-accion btn-empezar" style="margin-top:15px;">✅ CONFIRMAR Y ACTIVAR JUEGO</button>
+            <button onclick="window.confirmarPatron()" class="btn-accion btn-empezar" style="margin-top:15px;">✅ CONFIRMAR</button>
         </div>
     </div>
 
     <div id="modalEliminarJugadores" class="modal-overlay">
         <div class="modal-content" onclick="event.stopPropagation()">
             <h3>🗑️ ELIMINAR JUGADORES</h3>
-            <p style="color:#94a3b8;font-size:0.8rem;margin-bottom:10px;text-align:center;">Selecciona los jugadores a eliminar</p>
-            <input type="text" class="modal-buscador" placeholder="🔍 Buscar jugador..." oninput="window.buscarEnModalEliminar(this.value)">
+            <input type="text" class="modal-buscador" placeholder="🔍 Buscar..." oninput="window.buscarEnModalEliminar(this.value)">
             <button onclick="window.seleccionarTodosEnEliminar()" class="btn-seleccionar-todos" style="background:#ef4444;">✅ SELECCIONAR TODOS</button>
             <div id="listaEliminarJugadores" class="grid-seleccion-cartones"></div>
-            <div style="display:flex;gap:8px;margin-top:15px;">
+            <div class="modal-botones-eliminar">
                 <button onclick="window.confirmarEliminarJugadores()" class="btn-accion" style="background:#ef4444;flex:1;">🗑️ ELIMINAR</button>
                 <button onclick="cerrarModal('modalEliminarJugadores')" class="btn-accion" style="background:#6b7280;flex:1;">CANCELAR</button>
             </div>
-            <button onclick="window.eliminarTodosJugadoresModal()" class="btn-accion" style="background:#991b1b;margin-top:8px;width:100%;">⚠️ ELIMINAR TODOS</button>
+        </div>
+    </div>
+
+    <!-- ============ BARRA DE NAVEGACIÓN INFERIOR ============ -->
+    <div class="bottom-nav">
+        <div class="nav-item activo" onclick="navegarA('config')" id="navConfig">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">CONFIG</span>
+        </div>
+        <div class="nav-item" onclick="navegarA('ruleta')" id="navRuleta">
+            <span class="nav-icon">🎲</span>
+            <span class="nav-label">RULETA</span>
+        </div>
+        <div class="nav-item" onclick="abrirModalVerificador()" id="navVerificar">
+            <span class="nav-icon">🔍</span>
+            <span class="nav-label">VERIFICAR</span>
+        </div>
+        <div class="nav-item" onclick="toggleChat()" id="navChat">
+            <span class="nav-icon">💬</span>
+            <span class="nav-label">CHAT</span>
+            <span class="nav-badge" id="chatBadge" style="display:none;">0</span>
         </div>
     </div>
 
@@ -251,140 +232,6 @@
         console.log('🔥 Firebase listo');
     </script>
     <script src="ruleta.js"></script>
-    
-    <!-- SCRIPT PARA PESTAÑAS Y CHAT -->
-    <script>
-        let pestanaActual = 'config';
-        
-        function cambiarPestana(pestana) {
-            // Ocultar todas
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('activo'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('activo'));
-            
-            // Mostrar seleccionada
-            document.getElementById('pestana' + pestana.charAt(0).toUpperCase() + pestana.slice(1)).classList.add('activo');
-            document.getElementById('tab' + pestana.charAt(0).toUpperCase() + pestana.slice(1)).classList.add('activo');
-            
-            pestanaActual = pestana;
-        }
-        
-        // Actualizar estado de configuración
-        function actualizarStatusConfig() {
-            const statusJ = document.getElementById('statusJugadores');
-            const statusP = document.getElementById('statusPatron');
-            const tabJuego = document.getElementById('tabJuego');
-            
-            if (window.jugadoresActivos && window.jugadoresActivos.length > 0) {
-                statusJ.textContent = '✅ ' + window.jugadoresActivos.length + ' jugadores';
-                statusJ.style.color = '#10b981';
-            } else {
-                statusJ.textContent = 'Pendiente';
-                statusJ.style.color = '#94a3b8';
-            }
-            
-            if (window.patronBingo && window.patronBingo.some(x => x)) {
-                statusP.textContent = '✅ Configurado';
-                statusP.style.color = '#10b981';
-            } else {
-                statusP.textContent = 'Pendiente';
-                statusP.style.color = '#94a3b8';
-            }
-            
-            // Habilitar pestaña de juego si ambos están listos
-            if (window.etapaActual >= 3) {
-                tabJuego.disabled = false;
-                tabJuego.style.opacity = '1';
-            }
-        }
-        
-        // Chat
-        function enviarMensajeChat() {
-            const input = document.getElementById('mensajeChat');
-            const mensaje = input.value.trim();
-            if (!mensaje) return;
-            
-            const chatRef = db.ref('partidas/' + (localStorage.getItem('salaActiva') || 'sala-default') + '/chat');
-            chatRef.push({
-                mensaje: mensaje,
-                timestamp: Date.now(),
-                admin: true
-            });
-            
-            input.value = '';
-        }
-        
-        // Escuchar mensajes del chat
-        function escucharChat() {
-            const salaId = localStorage.getItem('salaActiva') || 'sala-default';
-            db.ref('partidas/' + salaId + '/chat').limitToLast(20).on('value', function(snap) {
-                const historial = document.getElementById('chatHistorial');
-                if (!historial) return;
-                
-                if (!snap.exists()) {
-                    historial.innerHTML = '<p style="color:#64748b; font-size:0.7rem; text-align:center;">No hay mensajes aún</p>';
-                    return;
-                }
-                
-                historial.innerHTML = '';
-                const mensajes = [];
-                snap.forEach(function(child) {
-                    mensajes.push(child.val());
-                });
-                
-                mensajes.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-                
-                mensajes.forEach(function(msg) {
-                    const div = document.createElement('div');
-                    div.style.cssText = 'margin-bottom:4px; padding:4px 8px; border-radius:6px; font-size:0.7rem;';
-                    
-                    if (msg.admin) {
-                        div.style.background = '#6366f1';
-                        div.style.color = 'white';
-                        div.style.textAlign = 'right';
-                        div.textContent = '📢 ' + msg.mensaje;
-                    } else {
-                        div.style.background = '#334155';
-                        div.style.color = 'white';
-                        div.textContent = msg.mensaje;
-                    }
-                    
-                    historial.appendChild(div);
-                });
-                
-                historial.scrollTop = historial.scrollHeight;
-            });
-        }
-        
-        // Sala
-        document.getElementById('inputSalaId').value = localStorage.getItem('salaActiva') || 'sala-default';
-        
-        function cambiarSala() {
-            const nuevaSala = document.getElementById('inputSalaId').value.trim();
-            if (nuevaSala) {
-                localStorage.setItem('salaActiva', nuevaSala);
-                location.reload();
-            }
-        }
-        
-        function copiarSalaId() {
-            const salaId = localStorage.getItem('salaActiva') || 'sala-default';
-            navigator.clipboard.writeText(salaId).then(function() {
-                alert('✅ ID de sala copiado: ' + salaId);
-            });
-        }
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const salaParam = urlParams.get('sala');
-        if (salaParam) {
-            localStorage.setItem('salaActiva', salaParam);
-            window.location.href = location.pathname;
-        }
-        
-        // Iniciar chat al cargar
-        document.addEventListener('DOMContentLoaded', function() {
-            escucharChat();
-            actualizarStatusConfig();
-        });
-    </script>
+    <script src="ruleta-movil.js"></script>
 </body>
 </html>
