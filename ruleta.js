@@ -452,7 +452,10 @@ function cantarBola(bola) {
     var celda = document.getElementById('seguimiento-' + bola);
     if (celda) { celda.classList.add('cantada', 'ultima'); }
     actualizarUltimaBola(); actualizarUltimosCantados();
-    if (window.cartonActual) { mostrarMinicarton(window.cartonActual); verificarBingoAutomatico(window.cartonActual); }
+    if (window.cartonActual) {
+        actualizarMinicartonEnAmbasVistas(window.cartonActual);
+        verificarBingoAutomatico(window.cartonActual);
+    }
     db.ref('partidas/' + SALA_ID).update({ ultimaBola: bola, ultimaLetra: obtenerLetra(bola), cantados: window.cantados, timestamp: Date.now() });
     if ('speechSynthesis' in window) {
         var msg = new SpeechSynthesisUtterance(obtenerLetra(bola) + ' ' + bola);
@@ -497,7 +500,7 @@ function verificarBingoCarton(c) {
     return true;
 }
 
-// ============ VERIFICAR CARTÓN MANUAL (CORREGIDO) ============
+// ============ VERIFICAR CARTÓN MANUAL (CON MINICARTÓN EN AMBAS VISTAS) ============
 window.revisarCartonManual = function() {
     var idB = document.getElementById('idABuscar') || document.getElementById('idABuscarMobile');
     if (!idB) {
@@ -510,36 +513,128 @@ window.revisarCartonManual = function() {
         return;
     }
     
-    var cont = document.getElementById('minicartonVerificador');
-    if (cont) cont.innerHTML = '<p style="color:#94a3b8;text-align:center;">Buscando...</p>';
+    var contDesktop = document.getElementById('minicartonVerificador');
+    var contMobile = document.getElementById('minicartonMobile');
+    if (contDesktop) contDesktop.innerHTML = '<p style="color:#94a3b8;text-align:center;">Buscando...</p>';
+    if (contMobile) contMobile.innerHTML = '<p style="color:#94a3b8;text-align:center;">Buscando...</p>';
     
     db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
         var encontrado = false;
+        var cartonEncontrado = null;
+        
         snap.forEach(function(child) {
             var c = child.val();
             if ((c.numero == id || c.id === id) && !encontrado) {
-                window.cartonActual = c;
-                mostrarMinicarton(c);
-                verificarBingoAutomatico(c);
+                cartonEncontrado = c;
                 encontrado = true;
             }
         });
-        if (!encontrado && cont) {
-            cont.innerHTML = '<p style="color:#ef4444;text-align:center;">❌ Cartón #' + id + ' no encontrado</p>';
+        
+        if (encontrado && cartonEncontrado) {
+            window.cartonActual = cartonEncontrado;
+            actualizarMinicartonEnAmbasVistas(cartonEncontrado);
+            verificarBingoAutomatico(cartonEncontrado);
+            mostrarToast('✅ Cartón #' + (cartonEncontrado.numero || id) + ' encontrado', 'success');
+        } else {
+            if (contDesktop) contDesktop.innerHTML = '<p style="color:#ef4444;text-align:center;">❌ Cartón no encontrado</p>';
+            if (contMobile) contMobile.innerHTML = '<p style="color:#ef4444;text-align:center;">❌ Cartón no encontrado</p>';
             mostrarToast('❌ Cartón no encontrado', 'error');
-        } else if (encontrado) {
-            mostrarToast('✅ Cartón encontrado', 'success');
         }
     });
 };
 
-function mostrarMinicarton(c) {
-    var cont = document.getElementById('minicartonVerificador');
-    if (!cont || !c || !c.carton) return;
-    var marcados = 0, html = '<div class="minicarton-info"><span><strong>#' + (c.numero||'?') + '</strong></span><span class="minicarton-estado" id="estadoMini">' + (c.asignadoA||'Sin asignar') + '</span></div>';
-    html += '<div style="text-align:center;font-size:0.6rem;color:#64748b;">Patrón: ' + obtenerNombrePatron() + '</div><table><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
-    for (var f=0;f<5;f++) { html+='<tr>'; ['B','I','N','G','O'].forEach(function(l){ var v=c.carton[l][f], centro=(l==='N'&&f===2); var cantado=window.cantados.indexOf(v)!==-1; if(cantado&&!centro)marcados++; var pi=f*5+['B','I','N','G','O'].indexOf(l), ep=window.patronBingo[pi]; html+='<td class="'+(centro?'free':'')+(cantado?' marcado':'')+(ep&&!cantado&&!centro?' faltante-patron':'')+'">'+(centro?'⭐':v)+'</td>'; }); html+='</tr>'; }
-    html += '</table><div style="text-align:center;font-size:0.7rem;">Marcados: '+marcados+'/24</div>'; cont.innerHTML = html;
+// ============ GENERAR HTML DEL MINICARTÓN ============
+function generarHTMLMinicarton(c) {
+    if (!c || !c.carton) return '<p style="color:#ef4444;text-align:center;">Error: Cartón sin datos</p>';
+    
+    var marcados = 0;
+    var html = '<div class="minicarton-info"><span><strong>#' + (c.numero||'?') + '</strong></span>';
+    html += '<span class="minicarton-estado" id="estadoMini">' + (c.asignadoA||'Sin asignar') + '</span></div>';
+    html += '<div style="text-align:center;font-size:0.6rem;color:#64748b;margin-bottom:5px;">Patrón: ' + obtenerNombrePatron() + '</div>';
+    html += '<table style="width:100%;border-collapse:collapse;">';
+    html += '<tr style="background:#ff4d4d;color:white;"><th style="padding:6px;font-size:0.7rem;">B</th><th style="padding:6px;font-size:0.7rem;">I</th><th style="padding:6px;font-size:0.7rem;">N</th><th style="padding:6px;font-size:0.7rem;">G</th><th style="padding:6px;font-size:0.7rem;">O</th></tr>';
+    
+    for (var f = 0; f < 5; f++) {
+        html += '<tr>';
+        ['B','I','N','G','O'].forEach(function(l) {
+            var v = c.carton[l][f];
+            var centro = (l === 'N' && f === 2);
+            var cantado = window.cantados.indexOf(v) !== -1;
+            if (cantado && !centro) marcados++;
+            
+            var pi = f * 5 + ['B','I','N','G','O'].indexOf(l);
+            var esPatron = window.patronBingo[pi];
+            
+            html += '<td style="padding:6px;border:1px solid #e2e8f0;text-align:center;font-weight:bold;font-size:0.8rem;';
+            if (centro) html += 'background:#fef3c7;';
+            if (cantado && !centro) html += 'background:#10b981;color:white;';
+            if (esPatron && !cantado && !centro) html += 'border:2px dashed #f59e0b;background:#fef3c7;';
+            html += '">' + (centro ? '⭐' : v) + '</td>';
+        });
+        html += '</tr>';
+    }
+    
+    html += '</table>';
+    html += '<div style="text-align:center;font-size:0.7rem;color:#64748b;margin-top:5px;">Marcados: ' + marcados + '/24</div>';
+    
+    return html;
+}
+
+// ============ ACTUALIZAR MINICARTÓN EN AMBAS VISTAS ============
+function actualizarMinicartonEnAmbasVistas(c) {
+    var html = generarHTMLMinicarton(c);
+    var contDesktop = document.getElementById('minicartonVerificador');
+    var contMobile = document.getElementById('minicartonMobile');
+    if (contDesktop) contDesktop.innerHTML = html;
+    if (contMobile) contMobile.innerHTML = html;
+}
+
+// ============ VERIFICAR BINGO AUTOMÁTICO ============
+function verificarBingoAutomatico(c) {
+    if (!c || !c.carton) return false;
+    
+    var bingo = true;
+    var faltantes = [];
+    
+    for (var i = 0; i < 25; i++) {
+        if (!window.patronBingo[i]) continue;
+        var f = Math.floor(i / 5);
+        var col = i % 5;
+        var l = ['B','I','N','G','O'][col];
+        var v = c.carton[l][f];
+        
+        if (i !== 12 && window.cantados.indexOf(v) === -1) {
+            bingo = false;
+            faltantes.push(l + '-' + v);
+        }
+    }
+    
+    var estadoEl = document.getElementById('estadoMini');
+    if (estadoEl) {
+        if (bingo) {
+            estadoEl.className = 'minicarton-estado estado-bingo';
+            estadoEl.textContent = '🎉 ¡BINGO!';
+        } else {
+            estadoEl.className = 'minicarton-estado';
+            estadoEl.textContent = 'Faltan: ' + faltantes.slice(0, 3).join(', ') + (faltantes.length > 3 ? '...' : '');
+            estadoEl.style.background = '#fef3c7';
+            estadoEl.style.color = '#92400e';
+            estadoEl.style.fontSize = '0.6rem';
+        }
+    }
+    
+    var contDesktop = document.getElementById('minicartonVerificador');
+    var contMobile = document.getElementById('minicartonMobile');
+    
+    if (bingo) {
+        if (contDesktop) contDesktop.style.boxShadow = '0 0 20px #10b981';
+        if (contMobile) contMobile.style.boxShadow = '0 0 20px #10b981';
+    } else {
+        if (contDesktop) contDesktop.style.boxShadow = '';
+        if (contMobile) contMobile.style.boxShadow = '';
+    }
+    
+    return bingo;
 }
 
 function obtenerNombrePatron() {
@@ -547,12 +642,6 @@ function obtenerNombrePatron() {
     if (a === 25) return 'Lleno'; if (a === 0) return 'Sin patrón';
     if ([0,4,6,8,12,16,18,20,24].every(function(p){return window.patronBingo[p];}) && a === 9) return 'La X';
     return a + ' celdas';
-}
-
-function verificarBingoAutomatico(c) {
-    if(!c||!c.carton)return;var bingo=true,faltantes=[];
-    for(var i=0;i<25;i++){if(!window.patronBingo[i])continue;var f=Math.floor(i/5),col=i%5,l=['B','I','N','G','O'][col],v=c.carton[l][f];if(i!==12&&window.cantados.indexOf(v)===-1){bingo=false;faltantes.push(l+'-'+v);}}
-    var el=document.getElementById('estadoMini');if(bingo){if(el){el.className='minicarton-estado estado-bingo';el.textContent='🎉 BINGO';}var cont=document.getElementById('minicartonVerificador');if(cont)cont.style.boxShadow='0 0 20px #10b981';}else{if(el){el.className='minicarton-estado';el.textContent='Faltan: '+faltantes.slice(0,3).join(', ');el.style.background='#fef3c7';el.style.color='#92400e';}}
 }
 
 // ============ NOTIFICAR REVISIÓN ============
@@ -626,6 +715,8 @@ window.bingoValido = function() {
             window.bingoDetectado = false; window.cartonActual = null; window.cartonEnAlerta = null;
             var cont = document.getElementById('minicartonVerificador');
             if (cont) cont.innerHTML = '<p style="color:#64748b;text-align:center;">Busca un cartón para verificar</p>';
+            var contM = document.getElementById('minicartonMobile');
+            if (contM) contM.innerHTML = '<p style="color:#64748b;text-align:center;">Busca un cartón para verificar</p>';
         }
     }
 };
@@ -639,6 +730,8 @@ window.bingoErrado = function() {
         window.bingoDetectado = false; window.cerrarAlerta(); window.cartonActual = null;
         var cont = document.getElementById('minicartonVerificador');
         if (cont) cont.innerHTML = '<p style="color:#64748b;text-align:center;">Busca un cartón para verificar</p>';
+        var contM = document.getElementById('minicartonMobile');
+        if (contM) contM.innerHTML = '<p style="color:#64748b;text-align:center;">Busca un cartón para verificar</p>';
         mostrarToast('❌ BINGO ERRADO - El juego continúa', 'error');
     }
 };
@@ -655,6 +748,7 @@ function iniciarNuevaPartida() {
     db.ref('bingos/' + SALA_ID).remove();
     inicializarTablero75();
     var cont = document.getElementById('minicartonVerificador'); if (cont) cont.innerHTML = '<p style="color:#64748b;text-align:center;">Busca un cartón para verificar</p>';
+    var contM = document.getElementById('minicartonMobile'); if (contM) contM.innerHTML = '<p style="color:#64748b;text-align:center;">Busca un cartón para verificar</p>';
     var notif = document.getElementById('notificacionesBingo'); if (notif) notif.innerHTML = '';
     var alerta = document.getElementById('alertaBingo'); if (alerta) alerta.style.display = 'none';
     var cron = document.getElementById('cronometroBingo') || document.getElementById('cronometroBingoMobile'); if (cron) cron.textContent = '00:00';
@@ -681,6 +775,7 @@ if (resetBtn) {
             db.ref('partidas/' + SALA_ID).remove(); db.ref('bingos/' + SALA_ID).remove();
             inicializarTablero75(); actualizarEtapas();
             var cont = document.getElementById('minicartonVerificador'); if (cont) cont.innerHTML = '<p style="color:#64748b;text-align:center;">Busca un cartón para verificar</p>';
+            var contM = document.getElementById('minicartonMobile'); if (contM) contM.innerHTML = '<p style="color:#64748b;text-align:center;">Busca un cartón para verificar</p>';
             var notif = document.getElementById('notificacionesBingo'); if (notif) notif.innerHTML = '';
             var alerta = document.getElementById('alertaBingo'); if (alerta) alerta.style.display = 'none';
             var cron = document.getElementById('cronometroBingo') || document.getElementById('cronometroBingoMobile'); if (cron) cron.textContent = '00:00';
@@ -712,7 +807,10 @@ document.addEventListener('DOMContentLoaded', function() {
         var data = snap.val();
         if (data && data.cantados && data.cantados.length > window.cantados.length) {
             window.cantados = data.cantados; guardarEstado(); inicializarTablero75();
-            if (window.cartonActual) { mostrarMinicarton(window.cartonActual); verificarBingoAutomatico(window.cartonActual); }
+            if (window.cartonActual) {
+                actualizarMinicartonEnAmbasVistas(window.cartonActual);
+                verificarBingoAutomatico(window.cartonActual);
+            }
         }
         if (data && data.pausa !== undefined && data.pausa !== window.enPausa) { window.enPausa = data.pausa; actualizarEtapas(); }
         if (data && data.ganadoresCount !== undefined && data.ganadoresCount !== window.ganadoresPartida) {
