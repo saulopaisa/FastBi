@@ -19,7 +19,7 @@ function cambiarPestana(pestana) {
 }
 
 // ============ TOAST ============
-function mostrarToast(mensaje, tipo) {
+function mostrarToastMovil(mensaje, tipo) {
     var anterior = document.querySelector('.toast-notification');
     if (anterior) anterior.remove();
     
@@ -36,6 +36,9 @@ function mostrarToast(mensaje, tipo) {
         setTimeout(function() { if (toast.parentNode) toast.remove(); }, 300);
     }, 2500);
 }
+
+// Exponer globalmente
+window.mostrarToastMovil = mostrarToastMovil;
 
 // ============ CARGAR CARTONES PARA VER ============
 function cargarCartonesVer() {
@@ -148,29 +151,104 @@ function filtrarVer(estado) {
     mostrarCartonesVer(filtrados);
 }
 
-// ============ EXPORTAR PDF ============
+// ============ EXPORTAR PDF (LLAMA A generar.js) ============
 function exportarPDF() {
-    if (typeof window.exportarPDFTodos === 'function') {
-        window.exportarPDFTodos();
-    } else if (typeof window.abrirMenuPDF === 'function') {
-        window.abrirMenuPDF();
+    if (typeof exportarPDFTodos === 'function') {
+        exportarPDFTodos();
+    } else if (typeof abrirMenuPDF === 'function') {
+        abrirMenuPDF();
     } else {
-        mostrarToast('📄 Función PDF en desarrollo', 'error');
+        mostrarToastMovil('📄 Función PDF en desarrollo', 'error');
     }
 }
 
-// ============ VER LINKS ============
-function verLinks() {
-    if (typeof window.verLinks === 'function') {
-        window.verLinks();
+// ============ MOSTRAR JUGADORES EN VISTA PREVIA ============
+function mostrarJugadoresEnPreview() {
+    var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
+    
+    // Crear un contenedor temporal si no existe vista-previa-contenido
+    var preview = document.getElementById('vista-previa-contenido');
+    if (!preview) {
+        // Mostrar en la sección de ver
+        preview = document.getElementById('sectionVer');
+        if (!preview) return;
     }
+    
+    db.ref('salas/' + salaId + '/cartones').once('value', function(snap) {
+        var jugadores = {};
+        snap.forEach(function(child) {
+            var c = child.val();
+            if (c.asignadoA) {
+                if (!jugadores[c.asignadoA]) jugadores[c.asignadoA] = [];
+                jugadores[c.asignadoA].push({ id: c.id, numero: c.numero });
+            }
+        });
+        
+        if (Object.keys(jugadores).length === 0) {
+            preview.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;"><h3>👥 No hay jugadores</h3><p>Asigna cartones primero</p></div>';
+            return;
+        }
+        
+        var html = '<div style="padding:15px;"><h3 style="color:#ff4d4d;">👥 JUGADORES</h3><div style="max-height:60vh;overflow-y:auto;">';
+        
+        Object.keys(jugadores).forEach(function(nombre) {
+            var cartones = jugadores[nombre];
+            var ids = cartones.map(function(c) { return c.id; });
+            var link = generarLinkCifrado(nombre, ids);
+            
+            html += '<div style="background:#f1f5f9;padding:10px;margin:5px 0;border-radius:8px;">';
+            html += '<strong>👤 ' + nombre + '</strong> - ' + cartones.length + ' cart.';
+            html += '<div style="display:flex;gap:5px;margin-top:5px;">';
+            html += '<input value="' + link + '" readonly style="flex:1;padding:5px;font-size:0.7rem;" onclick="this.select()">';
+            html += '<button onclick="navigator.clipboard.writeText(\'' + link + '\');mostrarToastMovil(\'✅ Copiado\',\'success\')" style="background:#3b82f6;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">📋</button>';
+            html += '</div></div>';
+        });
+        
+        html += '</div></div>';
+        preview.innerHTML = html;
+    });
 }
 
-// ============ VER JUGADORES ============
+// ============ MOSTRAR LINKS EN VISTA PREVIA ============
+function mostrarLinksEnPreview() {
+    var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
+    
+    var preview = document.getElementById('vista-previa-contenido');
+    if (!preview) {
+        preview = document.getElementById('sectionVer');
+        if (!preview) return;
+    }
+    
+    db.ref('salas/' + salaId + '/cartones').once('value', function(snap) {
+        if (!snap.exists()) {
+            preview.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;"><h3>📋 Sin cartones</h3></div>';
+            return;
+        }
+        
+        var html = '<div style="padding:15px;"><h3 style="color:#ff4d4d;">🔗 LINKS</h3><div style="max-height:60vh;overflow-y:auto;text-align:left;">';
+        
+        snap.forEach(function(child) {
+            var c = child.val();
+            var link = generarLinkCifrado(c.asignadoA || 'Cartón #' + c.numero, [c.id]);
+            
+            html += '<div style="background:#f1f5f9;padding:8px;margin:4px 0;border-radius:6px;">';
+            html += '<strong>#' + c.numero + '</strong>' + (c.asignadoA ? ' (' + c.asignadoA + ')' : '');
+            html += '<input value="' + link + '" readonly style="width:100%;padding:4px;margin-top:4px;font-size:0.7rem;" onclick="this.select()">';
+            html += '</div>';
+        });
+        
+        html += '</div></div>';
+        preview.innerHTML = html;
+    });
+}
+
+// ============ FUNCIONES QUE SE LLAMAN DESDE LOS BOTONES ============
 function verJugadores() {
-    if (typeof window.verJugadores === 'function') {
-        window.verJugadores();
-    }
+    mostrarJugadoresEnPreview();
+}
+
+function verLinks() {
+    mostrarLinksEnPreview();
 }
 
 // ============ ACTUALIZAR CONTADOR ============
