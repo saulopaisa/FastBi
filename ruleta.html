@@ -16,6 +16,7 @@
             <span class="online-badge" id="onlineCountMobile">👥 0</span>
             <button class="btn-header-icon" onclick="toggleChat()">💬</button>
             <button class="btn-header-icon" onclick="location.href='ver_todo.html'">👁️</button>
+            <button class="btn-header-icon" onclick="location.href='generar.html'">📝</button>
         </div>
     </div>
 
@@ -25,6 +26,18 @@
         <div class="section-config activo" id="sectionConfig">
             <div class="config-card">
                 <h3>⚙️ CONFIGURAR PARTIDA</h3>
+                
+                <!-- SALA ACTUAL -->
+                <div class="sala-info-card">
+                    <span>📁 Sala:</span>
+                    <span class="sala-id" id="salaIdDisplay">-</span>
+                    <button onclick="copiarSalaId()" class="btn-mini">📋</button>
+                </div>
+                
+                <!-- PARTIDA VIGENTE -->
+                <div class="partida-vigente" id="partidaVigente" style="display:none;">
+                    <span>⚠️ Ya hay una partida vigente</span>
+                </div>
                 
                 <div class="config-status" id="statusJugadoresCard">
                     <span class="icon">👥</span>
@@ -52,9 +65,12 @@
                     🎯 CONFIGURAR PATRÓN
                 </button>
 
-                <!-- BOTÓN COMENZAR PARTIDA -->
                 <button id="btnComenzarPartida" onclick="comenzarPartida()" class="btn-accion btn-comenzar" disabled>
                     🚀 COMENZAR PARTIDA
+                </button>
+                
+                <button id="btnReiniciarPartida" onclick="reiniciarPartida()" class="btn-accion btn-reiniciar-partida" style="display:none;">
+                    🔄 REINICIAR PARTIDA
                 </button>
                 
                 <div id="cronometroVisual" class="cronometro-visual" style="display:none;">
@@ -83,6 +99,15 @@
 
             <!-- Cronómetro -->
             <div class="cronometro-movil" id="cronometroBingoMobile">00:00</div>
+
+            <!-- Cronómetro visual en ruleta -->
+            <div id="cronometroVisualRuleta" class="cronometro-visual" style="display:none;">
+                <div class="cronometro-visual-tiempo" id="cronometroVisualRuletaTiempo">00:00</div>
+                <div class="cronometro-visual-barra">
+                    <div class="cronometro-visual-progreso" id="cronometroVisualRuletaProgreso"></div>
+                </div>
+                <p class="cronometro-visual-texto">⏳ Iniciando partida...</p>
+            </div>
 
             <!-- Programar -->
             <div class="programar-row">
@@ -126,7 +151,10 @@
     <div class="chat-flotante">
         <button class="btn-chat" onclick="toggleChat()">💬</button>
         <div class="chat-panel" id="chatPanel">
-            <div class="chat-header">💬 CHAT CON JUGADORES</div>
+            <div class="chat-header">
+                💬 CHAT CON JUGADORES
+                <button onclick="limpiarChat()" style="background:transparent;border:none;color:#ffca28;cursor:pointer;font-size:0.7rem;float:right;">🗑️</button>
+            </div>
             <div class="chat-mensajes" id="chatMensajes">
                 <p class="chat-vacio">No hay mensajes</p>
             </div>
@@ -159,17 +187,21 @@
         </div>
     </div>
 
-    <!-- MODALES -->
+    <!-- MODAL CARTONES (CON BOTÓN REGRESAR) -->
     <div id="modalCartones" class="modal-overlay">
         <div class="modal-content" onclick="event.stopPropagation()">
             <h3>📋 PASO 1: ¿QUIÉN JUEGA?</h3>
             <input type="text" class="modal-buscador" placeholder="🔍 Buscar jugador..." oninput="window.buscarJugadorModal(this.value)">
             <button onclick="window.seleccionarTodosJugadores()" class="btn-seleccionar-todos">✅ SELECCIONAR TODOS</button>
             <div id="listaCheckCartones" class="grid-seleccion-cartones"></div>
-            <button onclick="window.confirmarJugadores()" class="btn-accion btn-empezar">✅ CONFIRMAR</button>
+            <div style="display:flex;gap:8px;">
+                <button onclick="window.confirmarJugadores()" class="btn-accion btn-empezar" style="flex:1;">✅ CONFIRMAR</button>
+                <button onclick="cerrarModal('modalCartones')" class="btn-accion" style="flex:1;background:#6b7280;">↩️ REGRESAR</button>
+            </div>
         </div>
     </div>
 
+    <!-- MODAL PATRÓN -->
     <div id="modalPatron" class="modal-overlay">
         <div class="modal-content" onclick="event.stopPropagation()">
             <h3>🎯 PASO 2: ELIGE EL PATRÓN</h3>
@@ -179,7 +211,10 @@
                 <button onclick="window.aplicarPredefinido('limpiar')" class="btn-predefinido">🔄 BORRAR</button>
             </div>
             <div id="gridDibujoPatron" class="grid-patron-admin"></div>
-            <button onclick="window.confirmarPatron()" class="btn-accion btn-empezar" style="margin-top:15px;">✅ CONFIRMAR</button>
+            <div style="display:flex;gap:8px;margin-top:15px;">
+                <button onclick="window.confirmarPatron()" class="btn-accion btn-empezar" style="flex:1;">✅ CONFIRMAR</button>
+                <button onclick="cerrarModal('modalPatron')" class="btn-accion" style="flex:1;background:#6b7280;">↩️ REGRESAR</button>
+            </div>
         </div>
     </div>
 
@@ -219,7 +254,24 @@
         };
         firebase.initializeApp(firebaseConfig);
         var db = firebase.database();
+        
+        // Generar sala personalizada: bingo + fecha
+        function generarSalaPersonalizada() {
+            var salaGuardada = localStorage.getItem('salaActiva');
+            if (salaGuardada && salaGuardada.startsWith('bingo')) return salaGuardada;
+            
+            var ahora = new Date();
+            var fecha = ahora.getMonth() + 1 + '/' + ahora.getDate() + '/' + ahora.getFullYear().toString().slice(-2);
+            var salaId = 'bingo' + fecha;
+            localStorage.setItem('salaActiva', salaId);
+            return salaId;
+        }
+        
+        const SALA_ID = generarSalaPersonalizada();
+        document.getElementById('salaIdDisplay').textContent = SALA_ID;
+        
         console.log('🔥 Firebase listo');
+        console.log('📁 Sala:', SALA_ID);
     </script>
     <script src="ruleta.js"></script>
     <script src="ruleta-movil.js"></script>
