@@ -43,7 +43,7 @@
             padding-bottom: 30px;
         }
 
-        /* ========== HEADER FIJO (STICKY) ========== */
+        /* ========== HEADER FIJO ========== */
         .header-fijo {
             position: sticky;
             top: 0;
@@ -86,7 +86,6 @@
 
         @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
 
-        /* Barra de números cantados (sticky dentro del header) */
         .numeros-bar {
             display: flex;
             align-items: center;
@@ -108,7 +107,11 @@
             font-weight: 900;
             box-shadow: 0 4px 20px rgba(239, 68, 68, 0.5);
             flex-shrink: 0;
+            cursor: pointer;
+            transition: transform 0.2s;
         }
+
+        .ultima-bola-grande:active { transform: scale(0.9); }
 
         .ultima-bola-grande .letra {
             font-size: 0.65em;
@@ -145,13 +148,13 @@
             font-weight: bold;
             font-size: 0.75em;
             animation: popIn 0.3s ease-out;
+            cursor: pointer;
         }
 
         .bola-chica.ultima {
             background: #fbbf24;
             color: #1e293b;
             border-color: #f59e0b;
-            animation: popIn 0.4s ease-out;
         }
 
         @keyframes popIn {
@@ -189,6 +192,30 @@
             color: var(--text-gray);
             text-transform: uppercase;
             letter-spacing: 1px;
+        }
+
+        /* Errores de bingo */
+        .errores-indicator {
+            text-align: center;
+            font-size: 0.75em;
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 8px;
+        }
+
+        .errores-indicator.clean {
+            color: var(--success);
+        }
+
+        .errores-indicator.warning {
+            color: var(--warning);
+            background: rgba(245, 158, 11, 0.1);
+            animation: pulse 2s infinite;
+        }
+
+        .errores-indicator.eliminado {
+            color: var(--danger);
+            background: rgba(239, 68, 68, 0.1);
         }
 
         /* Selector de vista */
@@ -239,17 +266,8 @@
             50%{transform:translateY(-12px);}
         }
 
-        .login-screen h2 {
-            color: var(--gold);
-            margin-bottom: 8px;
-            font-size: 1.3em;
-        }
-
-        .login-screen p {
-            color: var(--text-gray);
-            margin-bottom: 20px;
-            font-size: 0.85em;
-        }
+        .login-screen h2 { color: var(--gold); margin-bottom: 8px; font-size: 1.3em; }
+        .login-screen p { color: var(--text-gray); margin-bottom: 20px; font-size: 0.85em; }
 
         .input-nombre {
             width: 100%;
@@ -264,10 +282,7 @@
             transition: border-color 0.3s;
         }
 
-        .input-nombre:focus {
-            outline: none;
-            border-color: var(--gold);
-        }
+        .input-nombre:focus { outline: none; border-color: var(--gold); }
 
         .btn {
             padding: 12px 20px;
@@ -285,6 +300,7 @@
         }
 
         .btn:active { transform: scale(0.97); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
 
         .btn-primary {
             background: linear-gradient(135deg, #6366f1, #4f46e5);
@@ -332,6 +348,13 @@
             animation: pulse 1.5s infinite;
         }
 
+        .btn-ver-numeros {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            font-size: 0.8em;
+            padding: 10px;
+        }
+
         .error-msg {
             background: var(--danger);
             color: white;
@@ -344,7 +367,6 @@
         /* ========== GAME SCREEN ========== */
         .game-screen { display: none; }
 
-        /* Cartones - SIEMPRE HORIZONTAL CUANDO SE SELECCIONA */
         .cartones-container {
             display: flex;
             flex-direction: column;
@@ -476,7 +498,6 @@
             padding: 10px;
         }
 
-        /* Indicador de chat desbloqueado */
         .chat-status {
             text-align: center;
             font-size: 0.7em;
@@ -485,10 +506,7 @@
             border-radius: 8px;
         }
 
-        .chat-status.bloqueado {
-            color: var(--text-gray);
-        }
-
+        .chat-status.bloqueado { color: var(--text-gray); }
         .chat-status.desbloqueado {
             color: var(--success);
             background: rgba(16, 185, 129, 0.1);
@@ -580,11 +598,7 @@
         .chat-mensajes::-webkit-scrollbar { width: 3px; }
         .chat-mensajes::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 2px; }
 
-        .chat-vacio {
-            color: #64748b;
-            font-size: 0.7em;
-            text-align: center;
-        }
+        .chat-vacio { color: #64748b; font-size: 0.7em; text-align: center; }
 
         .msg-item {
             margin-bottom: 6px;
@@ -595,31 +609,10 @@
             word-wrap: break-word;
         }
 
-        .msg-admin {
-            background: #6366f1;
-            color: white;
-            margin-left: auto;
-            text-align: right;
-        }
-
-        .msg-jugador {
-            background: #334155;
-            color: white;
-        }
-
-        .msg-sistema {
-            background: #fef3c7;
-            color: #92400e;
-            text-align: center;
-            margin: 4px auto;
-            font-style: italic;
-        }
-
-        .msg-timestamp {
-            font-size: 0.55em;
-            color: rgba(255,255,255,0.6);
-            margin-top: 2px;
-        }
+        .msg-admin { background: #6366f1; color: white; margin-left: auto; text-align: right; }
+        .msg-jugador { background: #334155; color: white; }
+        .msg-sistema { background: #fef3c7; color: #92400e; text-align: center; margin: 4px auto; font-style: italic; }
+        .msg-timestamp { font-size: 0.55em; color: rgba(255,255,255,0.6); margin-top: 2px; }
 
         .chat-input-area {
             display: flex;
@@ -639,10 +632,7 @@
             outline: none;
         }
 
-        .chat-input-area input:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
+        .chat-input-area input:disabled { opacity: 0.4; cursor: not-allowed; }
 
         .chat-input-area button {
             background: #6366f1;
@@ -658,10 +648,7 @@
             justify-content: center;
         }
 
-        .chat-input-area button:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
+        .chat-input-area button:disabled { opacity: 0.4; cursor: not-allowed; }
 
         .chat-bloqueado-aviso {
             text-align: center;
@@ -670,7 +657,7 @@
             padding: 5px;
         }
 
-        /* ========== MODALES ========== */
+        /* ========== MODAL MINI RULETA ========== */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -686,17 +673,20 @@
 
         .modal-content {
             background: var(--card-bg);
-            padding: 25px;
+            padding: 20px;
             border-radius: 16px;
             text-align: center;
             width: 100%;
-            max-width: 350px;
+            max-width: 500px;
+            max-height: 85vh;
+            overflow-y: auto;
             border: 2px solid var(--gold);
         }
 
         .modal-content h2 {
             color: var(--gold);
             margin-bottom: 12px;
+            font-size: 1.1em;
         }
 
         .modal-buttons {
@@ -706,6 +696,72 @@
         }
 
         .modal-buttons .btn { flex: 1; }
+
+        /* Mini ruleta grid */
+        .miniruleta-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .miniruleta-letra {
+            background: var(--primary);
+            color: white;
+            padding: 8px;
+            border-radius: 8px 8px 0 0;
+            font-weight: bold;
+            font-size: 1.1em;
+            text-align: center;
+        }
+
+        .miniruleta-numeros {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            padding: 8px;
+            background: #0f172a;
+            border-radius: 0 0 8px 8px;
+            min-height: 40px;
+        }
+
+        .miniruleta-numero {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 6px 4px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.75em;
+            color: #64748b;
+        }
+
+        .miniruleta-numero.cantado {
+            background: var(--success);
+            color: white;
+            border-color: #059669;
+        }
+
+        .miniruleta-numero.vacio {
+            opacity: 0.3;
+        }
+
+        .miniruleta-seccion {
+            margin-bottom: 8px;
+        }
+
+        .miniruleta-seccion .letra-header {
+            font-weight: bold;
+            color: var(--gold);
+            margin-bottom: 4px;
+            font-size: 0.9em;
+        }
+
+        .miniruleta-total {
+            text-align: center;
+            margin-top: 10px;
+            color: var(--text-gray);
+            font-size: 0.8em;
+        }
 
         /* Confeti */
         .confetti-piece {
@@ -757,16 +813,14 @@
             .ultima-bola-grande { width: 50px; height: 50px; }
             .ultima-bola-grande .numero { font-size: 1.2em; }
             .chat-panel { width: 250px; }
-            .cartones-container.horizontal .carton-wrapper {
-                width: 280px;
-                min-width: 260px;
-            }
+            .cartones-container.horizontal .carton-wrapper { width: 280px; min-width: 260px; }
+            .miniruleta-numeros { grid-template-columns: repeat(4, 1fr); }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- ========== HEADER FIJO ========== -->
+        <!-- HEADER FIJO -->
         <div class="header-fijo" id="headerFijo">
             <div class="header-top">
                 <h1>🎱 BINGO</h1>
@@ -777,7 +831,7 @@
                 </div>
             </div>
             <div class="numeros-bar" id="numerosBar">
-                <div class="ultima-bola-grande" id="ultimaBolaGrande">
+                <div class="ultima-bola-grande" id="ultimaBolaGrande" onclick="abrirMiniRuleta()" title="Ver todos los números">
                     <span class="letra">-</span>
                     <span class="numero">--</span>
                 </div>
@@ -797,7 +851,6 @@
 
         <!-- Juego -->
         <div id="gameScreen" class="game-screen">
-            <!-- Info -->
             <div class="info-bar">
                 <div class="info-card">
                     <div class="info-value" id="jugadoresCount">0</div>
@@ -813,31 +866,45 @@
                 </div>
             </div>
 
-            <!-- Selector de vista (siempre visible si hay 2 cartones) -->
+            <!-- Indicador de errores -->
+            <div class="errores-indicator clean" id="erroresIndicator">
+                ✅ 0/2 errores de BINGO
+            </div>
+
             <div class="vista-selector" id="vistaSelector" style="display:none;">
                 <button onclick="cambiarVista('vertical')" id="btnVistaVertical" class="activo">📱 VERTICAL</button>
                 <button onclick="cambiarVista('horizontal')" id="btnVistaHorizontal">📱↔ HORIZONTAL</button>
             </div>
 
-            <!-- Cartones -->
             <div class="cartones-container vertical" id="cartonesContainer"></div>
 
-            <!-- Acciones -->
             <div class="acciones-jugador">
-                <button class="btn btn-bingo" onclick="cantarBingo()">🎉 ¡BINGO!</button>
-                <button class="btn btn-outline" id="btnAvisarAdmin" onclick="solicitarDesbloquearChat()">🔒 PEDIR HABLAR</button>
+                <button class="btn btn-bingo" id="btnCantarBingo" onclick="cantarBingo()">🎉 ¡BINGO!</button>
+                <button class="btn btn-ver-numeros" onclick="abrirMiniRuleta()">🔢 VER NÚMEROS</button>
             </div>
 
-            <!-- Estado del chat -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+                <button class="btn btn-outline" id="btnAvisarAdmin" onclick="solicitarDesbloquearChat()">🔒 PEDIR HABLAR</button>
+                <button class="btn btn-danger" onclick="salirDelJuego()">🚪 Salir</button>
+            </div>
+
             <div class="chat-status bloqueado" id="chatStatus">
                 🔒 Chat bloqueado. Usa "PEDIR HABLAR" si necesitas comunicarte.
             </div>
-
-            <button class="btn btn-danger" onclick="salirDelJuego()" style="margin-top:8px;">🚪 Salir</button>
         </div>
     </div>
 
-    <!-- ========== CHAT FLOTANTE ========== -->
+    <!-- MODAL MINI RULETA -->
+    <div class="modal-overlay" id="modalMiniRuleta">
+        <div class="modal-content">
+            <h2>🔢 NÚMEROS CANTADOS</h2>
+            <div class="miniruleta-container" id="miniruletaContainer"></div>
+            <div class="miniruleta-total" id="miniruletaTotal"></div>
+            <button class="btn btn-primary" onclick="cerrarModal('modalMiniRuleta')" style="margin-top:15px;">CERRAR</button>
+        </div>
+    </div>
+
+    <!-- CHAT FLOTANTE -->
     <div class="chat-flotante" id="chatFlotante" style="display:none;">
         <button class="btn-chat" onclick="toggleChat()">
             💬
@@ -865,10 +932,10 @@
     <div class="modal-overlay" id="modalConfirmar">
         <div class="modal-content">
             <h2>🎉 ¿Confirmar BINGO?</h2>
-            <p>¿Estás seguro de que completaste el patrón?</p>
+            <p>Recuerda: tienes máximo 2 intentos. Si fallas 2 veces, quedarás eliminado.</p>
             <div class="modal-buttons">
-                <button class="btn btn-success" onclick="confirmarBingo()">✅ Sí</button>
-                <button class="btn btn-danger" onclick="cerrarModal('modalConfirmar')">❌ No</button>
+                <button class="btn btn-success" onclick="confirmarBingo()">✅ Sí, BINGO</button>
+                <button class="btn btn-danger" onclick="cerrarModal('modalConfirmar')">❌ Cancelar</button>
             </div>
         </div>
     </div>
@@ -879,6 +946,15 @@
             <h2>🏆 ¡GANASTE!</h2>
             <p id="ganadorMensaje"></p>
             <button class="btn btn-primary" onclick="cerrarModal('modalGanador')">🎉 Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Modal Eliminado -->
+    <div class="modal-overlay" id="modalEliminado">
+        <div class="modal-content">
+            <h2>❌ ELIMINADO</h2>
+            <p>Has cantado BINGO erróneo 2 veces. Has sido eliminado de esta ronda.</p>
+            <button class="btn btn-danger" onclick="salirDelJuego()">🚪 Salir</button>
         </div>
     </div>
 
@@ -942,6 +1018,8 @@
         let chatDesbloqueado = false;
         let chatDesbloqueadoHasta = null;
         let timeoutDesbloqueo = null;
+        let erroresBingo = 0;
+        let eliminado = false;
 
         // ============ CONEXIÓN ============
         function actualizarEstadoConexion(online) {
@@ -961,14 +1039,12 @@
             const container = document.getElementById('cartonesContainer');
             container.classList.remove('vertical', 'horizontal');
             container.classList.add(tipo);
-            
             document.getElementById('btnVistaVertical').classList.toggle('activo', tipo === 'vertical');
             document.getElementById('btnVistaHorizontal').classList.toggle('activo', tipo === 'horizontal');
-            
             localStorage.setItem('bingo_vista', tipo);
         }
 
-        // ============ CHAT (BLOQUEADO POR DEFECTO) ============
+        // ============ CHAT ============
         function actualizarEstadoChat() {
             const input = document.getElementById('chatInput');
             const btnEnviar = document.getElementById('btnEnviarChat');
@@ -987,8 +1063,6 @@
                 btnAvisar.textContent = '🔓 CHAT ABIERTO';
                 btnAvisar.className = 'btn btn-outline desbloqueado';
                 headerStatus.textContent = '🔓';
-                
-                // Verificar si expiró
                 if (chatDesbloqueadoHasta && Date.now() > chatDesbloqueadoHasta) {
                     bloquearChat();
                 }
@@ -1011,8 +1085,6 @@
             if (timeoutDesbloqueo) clearTimeout(timeoutDesbloqueo);
             timeoutDesbloqueo = null;
             actualizarEstadoChat();
-            
-            // Notificar a Firebase
             db.ref('partidas/' + SALA_ID + '/chatDesbloqueos/' + miNombre).set({
                 desbloqueado: false,
                 timestamp: Date.now()
@@ -1023,13 +1095,11 @@
             chatDesbloqueado = true;
             chatDesbloqueadoHasta = Date.now() + (duracionMinutos * 60 * 1000);
             actualizarEstadoChat();
-            
             if (timeoutDesbloqueo) clearTimeout(timeoutDesbloqueo);
             timeoutDesbloqueo = setTimeout(() => {
                 bloquearChat();
                 mostrarToast('⏰ Tiempo de chat agotado', 'warning');
             }, duracionMinutos * 60 * 1000);
-            
             mostrarToast('🔓 Chat desbloqueado por ' + duracionMinutos + ' min', 'success');
         }
 
@@ -1038,10 +1108,7 @@
                 mostrarToast('✅ El chat ya está desbloqueado', 'success');
                 return;
             }
-            
             if (!miNombre) return;
-            
-            // Enviar solicitud al admin
             db.ref('partidas/' + SALA_ID).update({
                 solicitudChat: {
                     jugador: miNombre,
@@ -1049,18 +1116,14 @@
                     timestamp: Date.now()
                 }
             });
-            
             mostrarToast('📩 Solicitud enviada al administrador', 'warning');
         }
 
-        // Escuchar si el admin desbloquea el chat
         function escucharDesbloqueoChat() {
             db.ref('partidas/' + SALA_ID + '/chatDesbloqueos/' + miNombre).on('value', (snap) => {
                 const data = snap.val();
                 if (data && data.desbloqueado === true) {
-                    if (!chatDesbloqueado) {
-                        desbloquearChat(data.duracion || 2);
-                    }
+                    if (!chatDesbloqueado) desbloquearChat(data.duracion || 2);
                 } else if (data && data.desbloqueado === false) {
                     if (chatDesbloqueado) {
                         bloquearChat();
@@ -1120,6 +1183,8 @@
                 miNombre = nombre;
                 misCartones = cartonesAsignados;
                 juegoConectado = true;
+                erroresBingo = 0;
+                eliminado = false;
 
                 localStorage.setItem('bingo_jugador_nombre', nombre);
                 localStorage.setItem('bingo_jugador_sala', SALA_ID);
@@ -1134,6 +1199,7 @@
                 }
 
                 inicializarJuego();
+                actualizarIndicadorErrores();
                 mostrarToast('✅ Conectado con ' + cartonesAsignados.length + ' cartón(es)', 'success');
 
             } catch (error) {
@@ -1148,7 +1214,6 @@
             escucharChat();
             escucharDesbloqueoChat();
             actualizarEstadoChat();
-            
             const vistaGuardada = localStorage.getItem('bingo_vista');
             if (vistaGuardada) cambiarVista(vistaGuardada);
         }
@@ -1198,11 +1263,8 @@
         }
 
         function toggleCelda(cell) {
-            const valor = parseInt(cell.dataset.valor);
-            if (isNaN(valor)) return;
-            if (cantadosSet.has(valor)) {
-                cell.classList.toggle('marked');
-            }
+            // Permitir marcar/desmarcar SIEMPRE, no solo si está cantado
+            cell.classList.toggle('marked');
         }
 
         function aplicarPatronACartones() {
@@ -1226,6 +1288,29 @@
                     }
                 }
             });
+        }
+
+        // ============ INDICADOR DE ERRORES ============
+        function actualizarIndicadorErrores() {
+            const indicador = document.getElementById('erroresIndicator');
+            const btnBingo = document.getElementById('btnCantarBingo');
+            
+            if (eliminado) {
+                indicador.textContent = '❌ ELIMINADO - 2/2 errores';
+                indicador.className = 'errores-indicator eliminado';
+                btnBingo.disabled = true;
+                btnBingo.textContent = '❌ ELIMINADO';
+            } else if (erroresBingo === 0) {
+                indicador.textContent = '✅ 0/2 errores de BINGO';
+                indicador.className = 'errores-indicator clean';
+                btnBingo.disabled = false;
+                btnBingo.textContent = '🎉 ¡BINGO!';
+            } else if (erroresBingo === 1) {
+                indicador.textContent = '⚠️ 1/2 errores - ¡Cuidado! Solo te queda 1 oportunidad';
+                indicador.className = 'errores-indicator warning';
+                btnBingo.disabled = false;
+                btnBingo.textContent = '🎉 ¡BINGO! (último intento)';
+            }
         }
 
         // ============ ESCUCHAR PARTIDA ============
@@ -1284,14 +1369,28 @@
                     document.getElementById('cronometroDisplay').textContent = '⏸️';
                 }
 
+                // Resultado revisión del admin
                 if (data.resultadoRevision && data.resultadoRevision.jugador === miNombre) {
                     if (data.resultadoRevision.resultado === 'valido') {
                         lanzarConfeti();
                         document.getElementById('ganadorMensaje').textContent = 
                             '¡Felicidades ' + miNombre + '! Tu BINGO fue validado 🎉';
                         document.getElementById('modalGanador').classList.add('active');
+                        erroresBingo = 0;
+                        eliminado = false;
+                        actualizarIndicadorErrores();
                     } else if (data.resultadoRevision.resultado === 'errado') {
-                        mostrarToast('❌ BINGO ERRADO. Revisa tu cartón.', 'error');
+                        erroresBingo++;
+                        actualizarIndicadorErrores();
+                        
+                        if (erroresBingo >= 2) {
+                            eliminado = true;
+                            actualizarIndicadorErrores();
+                            document.getElementById('modalEliminado').classList.add('active');
+                            mostrarToast('❌ Has sido eliminado por 2 bingos errados', 'error');
+                        } else {
+                            mostrarToast('❌ BINGO ERRADO. Te queda 1 oportunidad.', 'error');
+                        }
                     }
                 }
             });
@@ -1314,6 +1413,7 @@
                 const bola = document.createElement('div');
                 bola.className = 'bola-chica' + (i === 0 ? ' ultima' : '');
                 bola.textContent = num;
+                bola.onclick = () => abrirMiniRuleta();
                 container.appendChild(bola);
             });
         }
@@ -1328,18 +1428,78 @@
         function limpiarParaNuevaPartida() {
             cantadosSet.clear();
             patronActual = [];
+            erroresBingo = 0;
+            eliminado = false;
+            
             document.getElementById('cantadosCount').textContent = '0';
             document.getElementById('cronometroDisplay').textContent = '--';
             document.getElementById('ultimaBolaGrande').querySelector('.letra').textContent = '-';
             document.getElementById('ultimaBolaGrande').querySelector('.numero').textContent = '--';
             document.getElementById('ultimasBolasScroll').innerHTML = '';
+            
             document.querySelectorAll('.carton-cell').forEach(cell => {
                 cell.classList.remove('marked', 'ultima-cantada', 'patron-cell');
             });
             document.querySelectorAll('.carton-cell.free').forEach(cell => cell.classList.add('marked'));
+            
+            actualizarIndicadorErrores();
             document.getElementById('modalPartidaTerminada').classList.remove('active');
             bloquearChat();
             mostrarToast('🔄 Listo para nueva partida', 'success');
+        }
+
+        // ============ MINI RULETA (MODAL) ============
+        function abrirMiniRuleta() {
+            const container = document.getElementById('miniruletaContainer');
+            const total = document.getElementById('miniruletaTotal');
+            
+            const letras = ['B', 'I', 'N', 'G', 'O'];
+            const rangos = {
+                'B': [1, 15],
+                'I': [16, 30],
+                'N': [31, 45],
+                'G': [46, 60],
+                'O': [61, 75]
+            };
+            
+            let html = '';
+            let totalCantados = 0;
+            
+            letras.forEach(letra => {
+                const [min, max] = rangos[letra];
+                html += '<div class="miniruleta-seccion">';
+                html += '<div class="miniruleta-letra" style="background:' + getColorLetra(letra) + ';">' + letra + ' (' + min + '-' + max + ')</div>';
+                html += '<div class="miniruleta-numeros">';
+                
+                let cantadosLetra = 0;
+                for (let i = min; i <= max; i++) {
+                    const cantado = cantadosSet.has(i);
+                    if (cantado) cantadosLetra++;
+                    html += '<div class="miniruleta-numero' + (cantado ? ' cantado' : '') + '">' + i + '</div>';
+                }
+                
+                html += '</div>';
+                html += '<div style="font-size:0.7em;color:#94a3b8;text-align:right;margin-top:2px;">' + cantadosLetra + '/' + (max - min + 1) + '</div>';
+                html += '</div>';
+                
+                totalCantados += cantadosLetra;
+            });
+            
+            container.innerHTML = html;
+            total.textContent = 'Total: ' + totalCantados + '/75 números cantados';
+            
+            document.getElementById('modalMiniRuleta').classList.add('active');
+        }
+
+        function getColorLetra(letra) {
+            const colores = {
+                'B': '#ef4444',
+                'I': '#f59e0b',
+                'N': '#10b981',
+                'G': '#3b82f6',
+                'O': '#8b5cf6'
+            };
+            return colores[letra] || '#6366f1';
         }
 
         // ============ CHAT ============
@@ -1389,9 +1549,7 @@
             panel.classList.toggle('activo');
             if (panel.classList.contains('activo')) {
                 document.getElementById('chatBadge').style.display = 'none';
-                if (chatDesbloqueado) {
-                    document.getElementById('chatInput').focus();
-                }
+                if (chatDesbloqueado) document.getElementById('chatInput').focus();
             }
         }
 
@@ -1400,11 +1558,9 @@
                 mostrarToast('🔒 Chat bloqueado. Usa "PEDIR HABLAR"', 'warning');
                 return;
             }
-            
             const input = document.getElementById('chatInput');
             const mensaje = input.value.trim();
             if (!mensaje || !miNombre) return;
-            
             db.ref('partidas/' + SALA_ID + '/chat').push({
                 mensaje: miNombre + ': ' + mensaje,
                 timestamp: Date.now(),
@@ -1414,38 +1570,13 @@
             input.value = '';
         }
 
-        // ============ BINGO ============
-        function verificarBingoLocal() {
-            if (misCartones.length === 0 || patronActual.length === 0) return false;
-            const letras = ['B', 'I', 'N', 'G', 'O'];
-            
-            for (let c = 0; c < misCartones.length; c++) {
-                const carton = misCartones[c].carton;
-                let bingo = true;
-                
-                for (let i = 0; i < 25; i++) {
-                    if (!patronActual[i]) continue;
-                    if (i === 12) continue;
-                    
-                    const fila = Math.floor(i / 5);
-                    const col = i % 5;
-                    const valor = carton[letras[col]][fila];
-                    
-                    if (!cantadosSet.has(valor)) {
-                        bingo = false;
-                        break;
-                    }
-                }
-                if (bingo) return true;
-            }
-            return false;
-        }
-
+        // ============ BINGO (SIN RESTRICCIÓN DE PATRÓN) ============
         function cantarBingo() {
-            if (!verificarBingoLocal()) {
-                mostrarToast('❌ Aún no completas el patrón', 'error');
+            if (eliminado) {
+                mostrarToast('❌ Has sido eliminado por 2 bingos errados', 'error');
                 return;
             }
+            // Ya no verificamos patrón - el jugador puede cantar bingo cuando quiera
             document.getElementById('modalConfirmar').classList.add('active');
         }
 
@@ -1480,19 +1611,24 @@
         }
 
         async function salirDelJuego() {
-            if (!juegoConectado || !confirm('¿Salir del juego?')) return;
+            if (!juegoConectado) return;
+            if (!eliminado && !confirm('¿Salir del juego?')) return;
+            
             for (const c of misCartones) {
                 await db.ref('salas/' + SALA_ID + '/cartones/' + c.id).update({
                     asignadoA: null,
                     estado: 'disponible'
                 });
             }
+            
             juegoConectado = false;
             miNombre = null;
             misCartones = [];
             cantadosSet.clear();
             mensajesChat = [];
             chatDesbloqueado = false;
+            erroresBingo = 0;
+            eliminado = false;
             if (timeoutDesbloqueo) clearTimeout(timeoutDesbloqueo);
             localStorage.clear();
             
@@ -1504,6 +1640,8 @@
             document.getElementById('chatFlotante').style.display = 'none';
             document.getElementById('vistaSelector').style.display = 'none';
             document.getElementById('chatMensajes').innerHTML = '<p class="chat-vacio">No hay mensajes</p>';
+            
+            document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
         }
 
         function lanzarConfeti() {
@@ -1597,7 +1735,7 @@
 
         document.querySelectorAll('.modal-overlay').forEach(modal => {
             modal.addEventListener('click', function(e) {
-                if (e.target === this && this.id !== 'modalPartidaTerminada') {
+                if (e.target === this && !['modalEliminado', 'modalPartidaTerminada'].includes(this.id)) {
                     this.classList.remove('active');
                 }
             });
