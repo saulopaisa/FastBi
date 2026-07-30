@@ -341,3 +341,38 @@ body {
         border: 1px solid #ccc;
     }
 }
+/* Buscador */
+.resultado-busqueda {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    background: #1e293b;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.8em;
+}
+
+.resultado-busqueda:hover {
+    background: #334155;
+    border-left: 3px solid var(--gold);
+}
+
+.resultado-busqueda .info {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.resultado-busqueda .asignar-btn {
+    background: var(--success);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.7em;
+    font-weight: bold;
+}
