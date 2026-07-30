@@ -2,78 +2,75 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Bingo - Jugador</title>
     
-    <!-- Firebase Realtime Database -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     
     <style>
         :root {
             --primary: #FF6B6B;
-            --secondary: #4ECDC4;
             --gold: #ffb703;
             --success: #10b981;
             --danger: #ef4444;
-            --dark: #1a1a2e;
-            --bg: #0b0f1a;
+            --warning: #f59e0b;
+            --dark: #0b0f1a;
             --card-bg: #16213e;
+            --text-white: #ffffff;
+            --text-gray: #94a3b8;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg);
-            color: white;
+            background: var(--dark);
+            color: var(--text-white);
             min-height: 100vh;
             min-height: 100dvh;
-            padding: 15px;
+            padding: 10px;
             -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
         }
 
-        /* Header */
+        /* ========== HEADER ========== */
         .header {
             text-align: center;
-            padding: 20px 0;
+            padding: 10px 0;
         }
 
         .header h1 {
-            font-size: 2.5em;
+            font-size: 1.8em;
             background: linear-gradient(45deg, var(--primary), var(--gold));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .sala-badge {
-            display: inline-block;
-            background: var(--card-bg);
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            margin: 10px 0;
-            border: 1px solid var(--gold);
+        .sala-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            font-size: 0.75em;
+            color: var(--text-gray);
+            margin-top: 5px;
         }
 
-        .sala-badge span {
-            color: var(--gold);
-            font-weight: bold;
-        }
-
-        /* Estado de conexión */
         .connection-dot {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            margin-right: 5px;
+            display: inline-block;
         }
         .connection-dot.online { background: var(--success); animation: pulse 2s infinite; }
         .connection-dot.offline { background: var(--danger); }
@@ -83,47 +80,50 @@
             50% { opacity: 0.5; }
         }
 
-        /* Pantalla de login */
+        /* ========== LOGIN ========== */
         .login-screen {
             text-align: center;
-            padding: 40px 20px;
+            padding: 30px 20px;
             background: var(--card-bg);
-            border-radius: 20px;
+            border-radius: 16px;
             border: 1px solid #2d3436;
+            max-width: 400px;
+            margin: 20px auto;
         }
 
         .login-screen .icon {
-            font-size: 5em;
-            margin-bottom: 20px;
+            font-size: 4em;
+            margin-bottom: 15px;
             animation: float 3s ease-in-out infinite;
         }
 
         @keyframes float {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
+            50% { transform: translateY(-12px); }
         }
 
         .login-screen h2 {
             color: var(--gold);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            font-size: 1.3em;
         }
 
         .login-screen p {
-            color: #94a3b8;
-            margin-bottom: 25px;
-            font-size: 0.9em;
+            color: var(--text-gray);
+            margin-bottom: 20px;
+            font-size: 0.85em;
         }
 
         .input-nombre {
             width: 100%;
-            padding: 15px;
+            padding: 14px;
             border: 2px solid #334155;
             border-radius: 12px;
             background: #1e293b;
             color: white;
             font-size: 1.1em;
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             transition: border-color 0.3s;
         }
 
@@ -133,22 +133,26 @@
         }
 
         .btn {
-            padding: 14px 30px;
+            padding: 14px 24px;
             border: none;
             border-radius: 12px;
             font-weight: bold;
-            font-size: 1em;
+            font-size: 0.95em;
             cursor: pointer;
             transition: all 0.2s;
             width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .btn:active { transform: scale(0.97); }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary), #dc2626);
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
             color: white;
-            font-size: 1.1em;
+            font-size: 1.05em;
         }
 
         .btn-success {
@@ -156,9 +160,34 @@
             color: white;
         }
 
+        .btn-bingo {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            color: white;
+            font-size: 1.2em !important;
+            padding: 16px !important;
+            animation: glowBingo 1.5s infinite;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        @keyframes glowBingo {
+            0%, 100% { box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); }
+            50% { box-shadow: 0 4px 35px rgba(16, 185, 129, 0.8); }
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning), #d97706);
+            color: #1e293b;
+        }
+
         .btn-danger {
             background: linear-gradient(135deg, var(--danger), #b91c1c);
             color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--warning);
+            color: var(--warning);
         }
 
         .error-msg {
@@ -167,73 +196,187 @@
             padding: 10px;
             border-radius: 10px;
             margin-top: 10px;
-            font-size: 0.9em;
+            font-size: 0.85em;
         }
 
-        /* Pantalla de juego */
+        /* ========== GAME SCREEN ========== */
         .game-screen {
             display: none;
         }
 
-        .game-info {
+        /* Info bar */
+        .info-bar {
             display: flex;
-            justify-content: space-around;
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 8px;
+            margin-bottom: 10px;
             flex-wrap: wrap;
         }
 
         .info-card {
             background: var(--card-bg);
-            padding: 12px 18px;
-            border-radius: 12px;
+            padding: 10px 14px;
+            border-radius: 10px;
             text-align: center;
             flex: 1;
-            min-width: 80px;
+            min-width: 60px;
             border: 1px solid #2d3436;
         }
 
         .info-value {
-            font-size: 1.8em;
+            font-size: 1.5em;
             font-weight: bold;
             color: var(--gold);
         }
 
         .info-label {
-            font-size: 0.7em;
-            color: #94a3b8;
+            font-size: 0.6em;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        /* Cartón */
-        .carton-container {
+        /* Mensaje admin */
+        .admin-mensaje {
+            background: linear-gradient(135deg, #1e3a5f, #0f172a);
+            border-left: 4px solid var(--gold);
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 0.85em;
+            animation: slideDown 0.3s;
+            display: none;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Última bola (GRANDE) */
+        .ultima-bola-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: var(--card-bg);
+            border-radius: 14px;
+            border: 1px solid #2d3436;
+        }
+
+        .ultima-bola-label {
+            font-size: 0.7em;
+            color: var(--text-gray);
+        }
+
+        .ultima-bola {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--danger), #b91c1c);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.5);
+            animation: bolaGrande 0.5s ease-out;
+        }
+
+        @keyframes bolaGrande {
+            0% { transform: scale(0) rotate(-180deg); }
+            70% { transform: scale(1.1) rotate(10deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+
+        .ultima-bola .letra {
+            font-size: 0.7em;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .ultima-bola .numero {
+            font-size: 1.6em;
+            line-height: 1;
+        }
+
+        .ultimas-bolas {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .bola-chica {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 1.5px solid var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.7em;
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            70% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Cartones */
+        .cartones-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        @media (min-width: 600px) {
+            .cartones-container.dos-cartones {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .carton-wrapper {
             background: white;
-            border-radius: 16px;
-            padding: 8px;
-            margin-bottom: 15px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            border-radius: 14px;
+            padding: 6px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            position: relative;
+        }
+
+        .carton-numero {
+            text-align: center;
+            font-size: 0.65em;
+            color: #64748b;
+            margin-bottom: 4px;
+            font-weight: bold;
         }
 
         .carton-header {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 4px;
-            margin-bottom: 4px;
+            gap: 3px;
+            margin-bottom: 3px;
         }
 
         .carton-header-cell {
             background: var(--primary);
             color: white;
-            padding: 12px 4px;
+            padding: 8px 2px;
             text-align: center;
             font-weight: 900;
-            font-size: 1.2em;
-            border-radius: 8px;
+            font-size: 0.9em;
+            border-radius: 6px;
         }
 
         .carton-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 4px;
+            gap: 3px;
         }
 
         .carton-cell {
@@ -243,16 +386,18 @@
             justify-content: center;
             background: #f1f5f9;
             border: 2px solid #e2e8f0;
-            border-radius: 8px;
+            border-radius: 6px;
             font-weight: 700;
-            font-size: 1.1em;
+            font-size: 0.85em;
             color: #1e293b;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.15s;
             position: relative;
+            min-width: 0;
+            padding: 2px;
         }
 
-        .carton-cell:active { transform: scale(0.95); }
+        .carton-cell:active { transform: scale(0.93); }
 
         .carton-cell.marked {
             background: var(--success) !important;
@@ -260,89 +405,50 @@
             border-color: #059669 !important;
         }
 
+        .carton-cell.marked::after {
+            content: '✓';
+            position: absolute;
+            top: 1px;
+            right: 2px;
+            font-size: 0.5em;
+        }
+
         .carton-cell.free {
             background: #fef3c7 !important;
             border-color: var(--gold) !important;
-            font-size: 0.8em;
+            font-size: 0.65em;
+            cursor: default;
         }
 
         .carton-cell.patron-cell {
-            border: 2px dashed var(--gold);
+            border: 2px dashed var(--warning);
             background: #fef9e7;
         }
 
         .carton-cell.ultima-cantada {
             animation: popCell 0.4s ease-out;
+            background: #fbbf24 !important;
+            color: #1e293b !important;
+            border-color: #f59e0b !important;
         }
 
         @keyframes popCell {
-            0% { transform: scale(0.5); }
-            70% { transform: scale(1.15); }
+            0% { transform: scale(0.6); }
+            60% { transform: scale(1.2); }
             100% { transform: scale(1); }
         }
 
-        /* Últimos números */
-        .ultimos-numeros {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-bottom: 15px;
+        /* Botones de acción */
+        .acciones-jugador {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
         }
 
-        .bola-numero {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            background: var(--card-bg);
-            border: 2px solid var(--gold);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.85em;
-            animation: bolaEntrada 0.4s ease-out;
-        }
-
-        @keyframes bolaEntrada {
-            0% { transform: scale(0) rotate(-180deg); }
-            100% { transform: scale(1) rotate(0); }
-        }
-
-        /* Botón BINGO */
-        .bingo-btn-container {
-            text-align: center;
-            margin: 15px 0;
-        }
-
-        .btn-bingo {
-            background: linear-gradient(135deg, var(--danger), #b91c1c);
-            color: white;
-            font-size: 1.3em;
-            padding: 16px;
-            width: 100%;
-            animation: glowBingo 1.5s infinite;
-        }
-
-        @keyframes glowBingo {
-            0%, 100% { box-shadow: 0 0 15px rgba(239,68,68,0.5); }
-            50% { box-shadow: 0 0 30px rgba(239,68,68,0.8); }
-        }
-
-        /* Mensaje admin */
-        .admin-mensaje {
-            background: var(--card-bg);
-            border-left: 4px solid var(--gold);
+        .acciones-jugador .btn {
+            font-size: 0.8em;
             padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 0.9em;
-            animation: slideIn 0.3s;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(-20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
         }
 
         /* Modal */
@@ -350,7 +456,7 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.85);
             z-index: 100;
             align-items: center;
             justify-content: center;
@@ -373,13 +479,17 @@
 
         .modal-content h2 {
             color: var(--gold);
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .modal-buttons {
             display: flex;
             gap: 10px;
             margin-top: 15px;
+        }
+
+        .modal-buttons .btn {
+            flex: 1;
         }
 
         /* Confeti */
@@ -390,11 +500,37 @@
             top: -20px;
             animation: confettiFall 3s linear forwards;
             z-index: 200;
+            pointer-events: none;
         }
 
         @keyframes confettiFall {
             0% { transform: translateY(0) rotate(0deg); opacity: 1; }
             100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Alerta de partida terminada */
+        .alerta-partida-terminada {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--card-bg);
+            border: 2px solid var(--gold);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 150;
+            animation: modalIn 0.3s;
+        }
+
+        @keyframes modalIn {
+            from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .alerta-partida-terminada h2 {
+            color: var(--gold);
+            margin-bottom: 10px;
         }
 
         /* Toast */
@@ -407,10 +543,12 @@
             color: white;
             padding: 12px 24px;
             border-radius: 25px;
-            font-size: 0.9em;
+            font-size: 0.85em;
             z-index: 300;
             opacity: 0;
             transition: all 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
         }
 
         .toast.show {
@@ -420,6 +558,26 @@
 
         .toast.success { background: var(--success); }
         .toast.error { background: var(--danger); }
+        .toast.warning { background: var(--warning); color: #1e293b; }
+
+        /* Ajustes responsive */
+        @media (max-width: 380px) {
+            .carton-cell {
+                font-size: 0.7em;
+                border-radius: 4px;
+            }
+            .carton-header-cell {
+                font-size: 0.75em;
+                padding: 6px 1px;
+            }
+            .ultima-bola {
+                width: 55px;
+                height: 55px;
+            }
+            .ultima-bola .numero {
+                font-size: 1.3em;
+            }
+        }
     </style>
 </head>
 <body>
@@ -427,26 +585,27 @@
         <!-- Header -->
         <div class="header">
             <h1>🎱 BINGO</h1>
-            <div class="sala-badge">
-                Sala: <span id="salaNombre">-</span>
+            <div class="sala-info">
+                🏠 <strong id="salaNombre">-</strong>
                 <span class="connection-dot online" id="connectionDot"></span>
+                <span id="connectionText">Conectado</span>
             </div>
         </div>
 
-        <!-- Pantalla de Login -->
+        <!-- Pantalla Login -->
         <div id="loginScreen" class="login-screen">
             <div class="icon">🎮</div>
             <h2>¡Bienvenido!</h2>
-            <p>Ingresa tu nombre para unirte a la partida</p>
+            <p>Ingresa tu nombre para unirte</p>
             <input type="text" id="nombreInput" class="input-nombre" placeholder="Tu nombre" maxlength="20" autocomplete="off">
-            <button class="btn btn-primary" onclick="unirseAlJuego()">🎯 UNIRME AL JUEGO</button>
+            <button class="btn btn-primary" onclick="unirseAlJuego()">🎯 UNIRME</button>
             <div id="loginError"></div>
         </div>
 
-        <!-- Pantalla de Juego -->
+        <!-- Pantalla Juego -->
         <div id="gameScreen" class="game-screen">
-            <!-- Info -->
-            <div class="game-info">
+            <!-- Info bar -->
+            <div class="info-bar">
                 <div class="info-card">
                     <div class="info-value" id="jugadoresCount">0</div>
                     <div class="info-label">Jugadores</div>
@@ -461,52 +620,59 @@
                 </div>
             </div>
 
-            <!-- Mensaje del admin -->
-            <div id="adminMensaje" class="admin-mensaje" style="display:none;"></div>
+            <!-- Mensaje admin -->
+            <div id="adminMensaje" class="admin-mensaje"></div>
 
-            <!-- Últimos números -->
-            <div class="ultimos-numeros" id="ultimosNumeros"></div>
-
-            <!-- Cartón -->
-            <div class="carton-container" id="cartonContainer">
-                <div class="carton-header">
-                    <div class="carton-header-cell">B</div>
-                    <div class="carton-header-cell">I</div>
-                    <div class="carton-header-cell">N</div>
-                    <div class="carton-header-cell">G</div>
-                    <div class="carton-header-cell">O</div>
+            <!-- Última bola GRANDE + últimas bolitas -->
+            <div class="ultima-bola-container">
+                <div class="ultima-bola-label">ÚLTIMA<br>BOLA</div>
+                <div class="ultima-bola" id="ultimaBolaGrande">
+                    <span class="letra">-</span>
+                    <span class="numero">--</span>
                 </div>
-                <div class="carton-grid" id="cartonGrid"></div>
+                <div class="ultimas-bolas" id="ultimasBolasChicas"></div>
             </div>
 
-            <!-- Botón BINGO -->
-            <div class="bingo-btn-container">
+            <!-- Cartones -->
+            <div class="cartones-container" id="cartonesContainer"></div>
+
+            <!-- Acciones -->
+            <div class="acciones-jugador">
                 <button class="btn btn-bingo" onclick="cantarBingo()">🎉 ¡BINGO!</button>
+                <button class="btn btn-outline" onclick="notificarAdmin()">⚠️ AVISAR ADMIN</button>
             </div>
 
-            <!-- Botón salir -->
-            <button class="btn btn-danger" onclick="salirDelJuego()" style="margin-top:10px;">🚪 Salir</button>
+            <button class="btn btn-danger" onclick="salirDelJuego()" style="margin-top:8px;">🚪 Salir</button>
         </div>
     </div>
 
-    <!-- Modal confirmación -->
+    <!-- Modal Confirmar Bingo -->
     <div class="modal-overlay" id="modalConfirmar">
         <div class="modal-content">
-            <h2>🎉 ¿Cantar BINGO?</h2>
+            <h2>🎉 ¿Confirmar BINGO?</h2>
             <p>¿Estás seguro de que completaste el patrón?</p>
             <div class="modal-buttons">
-                <button class="btn btn-success" onclick="confirmarBingo()">✅ Sí, BINGO</button>
-                <button class="btn btn-danger" onclick="cerrarModal()">❌ Cancelar</button>
+                <button class="btn btn-success" onclick="confirmarBingo()">✅ Sí</button>
+                <button class="btn btn-danger" onclick="cerrarModal('modalConfirmar')">❌ No</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal ganador -->
+    <!-- Modal Ganador -->
     <div class="modal-overlay" id="modalGanador">
         <div class="modal-content">
             <h2>🏆 ¡GANASTE!</h2>
             <p id="ganadorMensaje"></p>
-            <button class="btn btn-primary" onclick="cerrarModal()">🎉 Cerrar</button>
+            <button class="btn btn-primary" onclick="cerrarModal('modalGanador')">🎉 Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Alerta partida terminada -->
+    <div class="modal-overlay" id="modalPartidaTerminada">
+        <div class="alerta-partida-terminada">
+            <h2>🏁 Partida Terminada</h2>
+            <p id="partidaTerminadaMensaje">El administrador ha reiniciado la partida.</p>
+            <button class="btn btn-primary" onclick="limpiarParaNuevaPartida()">🔄 Nueva Partida</button>
         </div>
     </div>
 
@@ -514,7 +680,7 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // ============ CONFIGURACIÓN FIREBASE (MISMO PROYECTO QUE LA RULETA) ============
+        // ============ FIREBASE CONFIG ============
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
             authDomain: "bingofast.firebaseapp.com",
@@ -525,12 +691,11 @@
             appId: "1:473863283329:web:2c4bf96de167d105fa6380"
         };
 
-        // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         console.log('🔥 Firebase conectado');
 
-        // ============ OBTENER SALA DE LA URL ============
+        // ============ OBTENER SALA DE URL ============
         function obtenerSalaDeURL() {
             const params = new URLSearchParams(window.location.search);
             return params.get('sala') || null;
@@ -538,7 +703,6 @@
 
         const SALA_ID = obtenerSalaDeURL();
 
-        // Mostrar sala
         if (SALA_ID) {
             document.getElementById('salaNombre').textContent = SALA_ID;
         } else {
@@ -546,26 +710,27 @@
             document.getElementById('loginScreen').innerHTML = `
                 <div class="icon">⚠️</div>
                 <h2>Sala no encontrada</h2>
-                <p style="color:#94a3b8;">Solicita un enlace válido al administrador del juego.</p>
-                <div class="error-msg">La URL debe incluir ?sala=ID_SALA</div>
+                <p style="color:#94a3b8;">Solicita un enlace válido al administrador.</p>
+                <div class="error-msg">URL debe incluir ?sala=ID_SALA</div>
             `;
         }
 
         // ============ VARIABLES ============
         let miNombre = null;
-        let miCarton = null;
-        let miCartonId = null;
+        let misCartones = []; // Array de {id, carton, numero}
         let cantadosSet = new Set();
         let patronActual = [];
         let juegoConectado = false;
+        let ultimoEstadoPartida = null;
 
         // ============ CONEXIÓN ============
         function actualizarEstadoConexion(online) {
             const dot = document.getElementById('connectionDot');
+            const text = document.getElementById('connectionText');
             dot.className = 'connection-dot ' + (online ? 'online' : 'offline');
+            text.textContent = online ? 'Conectado' : 'Desconectado';
         }
 
-        // Monitorear conexión
         const connectedRef = db.ref('.info/connected');
         connectedRef.on('value', (snap) => {
             actualizarEstadoConexion(snap.val() === true);
@@ -586,103 +751,121 @@
                 return;
             }
 
-            // Verificar que el nombre no esté duplicado en esta sala
-            const cartonesSnapshot = await db.ref('salas/' + SALA_ID + '/cartones').once('value');
-            const cartones = cartonesSnapshot.val() || {};
-            
-            let nombreEnUso = false;
-            let cartonAsignado = null;
-            let cartonIdAsignado = null;
+            try {
+                const cartonesSnapshot = await db.ref('salas/' + SALA_ID + '/cartones').once('value');
+                const cartones = cartonesSnapshot.val() || {};
 
-            // Buscar si el jugador ya tiene un cartón asignado
-            Object.entries(cartones).forEach(([id, carton]) => {
-                if (carton.asignadoA === nombre) {
-                    nombreEnUso = true;
-                    cartonAsignado = carton;
-                    cartonIdAsignado = id;
-                }
-            });
-
-            if (!nombreEnUso) {
-                // Buscar un cartón no asignado para dárselo
-                let cartonLibre = null;
-                let cartonLibreId = null;
-
+                // Buscar cartones ya asignados a este jugador
+                let cartonesAsignados = [];
                 Object.entries(cartones).forEach(([id, carton]) => {
-                    if (!carton.asignadoA && !cartonLibre) {
-                        cartonLibre = carton;
-                        cartonLibreId = id;
+                    if (carton.asignadoA === nombre) {
+                        cartonesAsignados.push({ id, carton: carton.carton, numero: carton.numero });
                     }
                 });
 
-                if (cartonLibre) {
-                    // Asignar este cartón al jugador
-                    await db.ref('salas/' + SALA_ID + '/cartones/' + cartonLibreId).update({
-                        asignadoA: nombre,
-                        estado: 'asignado'
+                // Si no tiene, buscar cartones libres (máximo 2)
+                if (cartonesAsignados.length === 0) {
+                    Object.entries(cartones).forEach(([id, carton]) => {
+                        if (!carton.asignadoA && cartonesAsignados.length < 2) {
+                            cartonesAsignados.push({ id, carton: carton.carton, numero: carton.numero });
+                        }
                     });
-                    cartonAsignado = cartonLibre;
-                    cartonIdAsignado = cartonLibreId;
-                } else {
-                    errorDiv.innerHTML = '<div class="error-msg">No hay cartones disponibles. Contacta al administrador.</div>';
-                    return;
-                }
-            }
 
-            // Guardar datos
-            miNombre = nombre;
-            miCarton = cartonAsignado.carton;
-            miCartonId = cartonIdAsignado;
-            juegoConectado = true;
-
-            // Guardar en localStorage por si recarga
-            localStorage.setItem('bingo_jugador_nombre', nombre);
-            localStorage.setItem('bingo_jugador_sala', SALA_ID);
-            localStorage.setItem('bingo_jugador_cartonId', cartonIdAsignado);
-
-            // Mostrar juego
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('gameScreen').style.display = 'block';
-
-            // Inicializar
-            mostrarCarton(miCarton);
-            escucharPartida();
-            escucharChat();
-            mostrarToast('✅ Conectado como ' + nombre, 'success');
-        }
-
-        // ============ MOSTRAR CARTÓN ============
-        function mostrarCarton(carton) {
-            const grid = document.getElementById('cartonGrid');
-            grid.innerHTML = '';
-
-            const letras = ['B', 'I', 'N', 'G', 'O'];
-
-            for (let fila = 0; fila < 5; fila++) {
-                for (let col = 0; col < 5; col++) {
-                    const letra = letras[col];
-                    const valor = carton[letra][fila];
-                    const esCentro = (letra === 'N' && fila === 2);
-                    
-                    const cell = document.createElement('div');
-                    cell.className = 'carton-cell';
-                    cell.textContent = esCentro ? '⭐' : valor;
-                    cell.dataset.valor = valor;
-                    cell.dataset.letra = letra;
-                    cell.dataset.fila = fila;
-                    cell.dataset.col = col;
-                    cell.dataset.indice = fila * 5 + col;
-
-                    if (esCentro) {
-                        cell.classList.add('free', 'marked');
+                    if (cartonesAsignados.length === 0) {
+                        errorDiv.innerHTML = '<div class="error-msg">No hay cartones disponibles.</div>';
+                        return;
                     }
 
-                    cell.addEventListener('click', () => toggleCelda(cell));
-                    grid.appendChild(cell);
+                    // Asignar cartones
+                    for (const c of cartonesAsignados) {
+                        await db.ref('salas/' + SALA_ID + '/cartones/' + c.id).update({
+                            asignadoA: nombre,
+                            estado: 'asignado'
+                        });
+                    }
                 }
+
+                miNombre = nombre;
+                misCartones = cartonesAsignados;
+                juegoConectado = true;
+
+                // Guardar en localStorage
+                localStorage.setItem('bingo_jugador_nombre', nombre);
+                localStorage.setItem('bingo_jugador_sala', SALA_ID);
+                localStorage.setItem('bingo_jugador_cartones', JSON.stringify(cartonesAsignados.map(c => c.id)));
+
+                // Mostrar juego
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('gameScreen').style.display = 'block';
+
+                inicializarJuego();
+                mostrarToast('✅ Conectado con ' + cartonesAsignados.length + ' cartón(es)', 'success');
+
+            } catch (error) {
+                console.error('Error:', error);
+                errorDiv.innerHTML = '<div class="error-msg">Error al conectar</div>';
+            }
+        }
+
+        function inicializarJuego() {
+            mostrarCartones();
+            escucharPartida();
+        }
+
+        // ============ MOSTRAR CARTONES ============
+        function mostrarCartones() {
+            const container = document.getElementById('cartonesContainer');
+            container.innerHTML = '';
+            
+            if (misCartones.length === 2) {
+                container.classList.add('dos-cartones');
+            } else {
+                container.classList.remove('dos-cartones');
             }
 
-            actualizarCeldasPatron();
+            misCartones.forEach((cartonData, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'carton-wrapper';
+                wrapper.id = 'carton-' + index;
+                
+                let html = '<div class="carton-numero">CARTÓN #' + (cartonData.numero || (index + 1)) + '</div>';
+                html += '<div class="carton-header">';
+                ['B','I','N','G','O'].forEach(l => {
+                    html += '<div class="carton-header-cell">' + l + '</div>';
+                });
+                html += '</div><div class="carton-grid">';
+
+                for (let fila = 0; fila < 5; fila++) {
+                    ['B','I','N','G','O'].forEach(letra => {
+                        const valor = cartonData.carton[letra][fila];
+                        const esCentro = (letra === 'N' && fila === 2);
+                        const indice = fila * 5 + ['B','I','N','G','O'].indexOf(letra);
+                        
+                        html += '<div class="carton-cell' + 
+                            (esCentro ? ' free marked' : '') + 
+                            '" data-carton="' + index + 
+                            '" data-valor="' + valor + 
+                            '" data-letra="' + letra + 
+                            '" data-fila="' + fila + 
+                            '" data-indice="' + indice + 
+                            '" onclick="toggleCelda(this)">' + 
+                            (esCentro ? '⭐' : valor) + 
+                            '</div>';
+                    });
+                }
+                html += '</div>';
+                
+                wrapper.innerHTML = html;
+                container.appendChild(wrapper);
+            });
+
+            // Aplicar patrón si ya existe
+            if (patronActual.length > 0) {
+                aplicarPatronACartones();
+            }
+
+            // Marcar números ya cantados
+            cantadosSet.forEach(num => marcarNumeroEnCartones(num, false));
         }
 
         function toggleCelda(cell) {
@@ -694,14 +877,25 @@
             }
         }
 
-        function actualizarCeldasPatron() {
-            if (!patronActual || patronActual.length === 0) return;
-            
-            const celdas = document.querySelectorAll('.carton-cell');
-            celdas.forEach(cell => {
+        function aplicarPatronACartones() {
+            document.querySelectorAll('.carton-cell').forEach(cell => {
                 const indice = parseInt(cell.dataset.indice);
                 if (patronActual[indice] && !cell.classList.contains('free')) {
                     cell.classList.add('patron-cell');
+                } else {
+                    cell.classList.remove('patron-cell');
+                }
+            });
+        }
+
+        function marcarNumeroEnCartones(numero, animar = true) {
+            document.querySelectorAll('.carton-cell').forEach(cell => {
+                if (parseInt(cell.dataset.valor) === numero) {
+                    cell.classList.add('marked');
+                    if (animar) {
+                        cell.classList.add('ultima-cantada');
+                        setTimeout(() => cell.classList.remove('ultima-cantada'), 600);
+                    }
                 }
             });
         }
@@ -714,35 +908,58 @@
                 const data = snap.val();
                 if (!data) return;
 
-                // Actualizar números cantados
+                // Detectar reinicio de partida
+                if (data.estado === 'nueva_partida' || data.estado === 'terminado') {
+                    if (ultimoEstadoPartida && ultimoEstadoPartida !== 'nueva_partida' && ultimoEstadoPartida !== 'terminado') {
+                        // La partida se terminó/reinició
+                        mostrarPartidaTerminada(data);
+                    }
+                }
+
+                // Detectar si se reinició completamente (no hay datos)
+                if (!data.cantados || data.cantados.length === 0) {
+                    if (cantadosSet.size > 0) {
+                        // Se limpiaron los números, es un reinicio
+                        mostrarPartidaTerminada(data);
+                    }
+                }
+
+                ultimoEstadoPartida = data.estado;
+
+                // Números cantados
                 if (data.cantados && Array.isArray(data.cantados)) {
                     data.cantados.forEach(num => {
                         if (!cantadosSet.has(num)) {
                             cantadosSet.add(num);
-                            marcarNumeroEnCarton(num);
+                            marcarNumeroEnCartones(num, true);
                         }
                     });
                     document.getElementById('cantadosCount').textContent = data.cantados.length;
-                    actualizarUltimosNumeros(data.cantados);
+                    
+                    // Actualizar última bola grande
+                    if (data.cantados.length > 0) {
+                        const ultimo = data.cantados[data.cantados.length - 1];
+                        actualizarUltimaBolaGrande(ultimo);
+                    }
+                    
+                    // Actualizar bolitas chicas
+                    actualizarUltimasBolasChicas(data.cantados);
                 }
 
-                // Actualizar patrón
+                // Patrón
                 if (data.patron && Array.isArray(data.patron)) {
                     patronActual = data.patron;
-                    actualizarCeldasPatron();
+                    aplicarPatronACartones();
                 }
 
-                // Actualizar jugadores
+                // Jugadores
                 if (data.jugadoresActivos && Array.isArray(data.jugadoresActivos)) {
                     document.getElementById('jugadoresCount').textContent = data.jugadoresActivos.length;
                 }
 
-                // Mensaje del admin
+                // Mensaje admin
                 if (data.mensajeAdmin) {
-                    const msgDiv = document.getElementById('adminMensaje');
-                    msgDiv.style.display = 'block';
-                    msgDiv.textContent = '📢 ' + data.mensajeAdmin;
-                    setTimeout(() => { msgDiv.style.display = 'none'; }, 5000);
+                    mostrarMensajeAdmin(data.mensajeAdmin);
                 }
 
                 // Cronómetro
@@ -753,89 +970,129 @@
                         String(mins).padStart(2, '0') + ':' + String(segs).padStart(2, '0');
                 } else if (data.estado === 'jugando') {
                     document.getElementById('cronometroDisplay').textContent = '▶️';
+                } else if (data.estado === 'pausa') {
+                    document.getElementById('cronometroDisplay').textContent = '⏸️';
                 }
 
-                // Resultado de revisión
-                if (data.resultadoRevision) {
+                // Resultado revisión
+                if (data.resultadoRevision && data.resultadoRevision.jugador === miNombre) {
                     const revision = data.resultadoRevision;
-                    if (revision.jugador === miNombre) {
-                        if (revision.resultado === 'valido') {
-                            lanzarConfeti();
-                            document.getElementById('ganadorMensaje').textContent = 
-                                '¡Felicidades ' + miNombre + '! Tu BINGO fue validado 🎉';
-                            document.getElementById('modalGanador').classList.add('active');
-                        } else if (revision.resultado === 'errado') {
-                            mostrarToast('❌ BINGO ERRADO. Revisa tu cartón.', 'error');
-                        }
+                    if (revision.resultado === 'valido') {
+                        lanzarConfeti();
+                        document.getElementById('ganadorMensaje').textContent = 
+                            '¡Felicidades ' + miNombre + '! Tu BINGO fue validado 🎉';
+                        document.getElementById('modalGanador').classList.add('active');
+                    } else if (revision.resultado === 'errado') {
+                        mostrarToast('❌ BINGO ERRADO. Revisa tu cartón.', 'error');
                     }
                 }
-
-                // Revisando
-                if (data.revisando && data.revisando.activo && data.revisando.jugador === miNombre) {
-                    mostrarToast('🔍 El administrador está revisando tu cartón...', 'success');
-                }
-            });
-
-            // Escuchar bingos
-            db.ref('bingos/' + SALA_ID).on('child_added', (snap) => {
-                const bingo = snap.val();
-                // Verificar si es nuestro cartón
-                if (bingo.cartonId === miCartonId) {
-                    // Ya se procesa en resultadoRevision
-                }
             });
         }
 
-        function marcarNumeroEnCarton(numero) {
-            const celdas = document.querySelectorAll('.carton-cell');
-            celdas.forEach(cell => {
-                if (parseInt(cell.dataset.valor) === numero) {
-                    cell.classList.add('marked', 'ultima-cantada');
-                    setTimeout(() => cell.classList.remove('ultima-cantada'), 500);
-                }
-            });
+        function actualizarUltimaBolaGrande(numero) {
+            const bola = document.getElementById('ultimaBolaGrande');
+            const letra = obtenerLetra(numero);
+            bola.querySelector('.letra').textContent = letra;
+            bola.querySelector('.numero').textContent = numero;
+            // Re-animar
+            bola.style.animation = 'none';
+            bola.offsetHeight;
+            bola.style.animation = 'bolaGrande 0.5s ease-out';
         }
 
-        function actualizarUltimosNumeros(cantados) {
-            const container = document.getElementById('ultimosNumeros');
-            const ultimos = cantados.slice(-6).reverse();
+        function actualizarUltimasBolasChicas(cantados) {
+            const container = document.getElementById('ultimasBolasChicas');
+            const ultimos = cantados.slice(-5).reverse();
             
             container.innerHTML = '';
             ultimos.forEach(num => {
                 const bola = document.createElement('div');
-                bola.className = 'bola-numero';
+                bola.className = 'bola-chica';
                 bola.textContent = num;
                 container.appendChild(bola);
             });
         }
 
+        function mostrarMensajeAdmin(mensaje) {
+            const msgDiv = document.getElementById('adminMensaje');
+            msgDiv.textContent = '📢 ' + mensaje;
+            msgDiv.style.display = 'block';
+            
+            // Ocultar después de 8 segundos
+            clearTimeout(msgDiv._timeout);
+            msgDiv._timeout = setTimeout(() => {
+                msgDiv.style.display = 'none';
+            }, 8000);
+        }
+
+        function mostrarPartidaTerminada(data) {
+            const mensaje = data.mensajeAdmin || 'El administrador ha reiniciado la partida.';
+            document.getElementById('partidaTerminadaMensaje').textContent = mensaje;
+            document.getElementById('modalPartidaTerminada').classList.add('active');
+        }
+
+        function limpiarParaNuevaPartida() {
+            // Limpiar datos
+            cantadosSet.clear();
+            patronActual = [];
+            
+            // Limpiar UI
+            document.getElementById('cantadosCount').textContent = '0';
+            document.getElementById('cronometroDisplay').textContent = '--';
+            document.getElementById('adminMensaje').style.display = 'none';
+            document.getElementById('ultimaBolaGrande').querySelector('.letra').textContent = '-';
+            document.getElementById('ultimaBolaGrande').querySelector('.numero').textContent = '--';
+            document.getElementById('ultimasBolasChicas').innerHTML = '';
+            
+            // Limpiar marcas en cartones
+            document.querySelectorAll('.carton-cell').forEach(cell => {
+                cell.classList.remove('marked', 'ultima-cantada', 'patron-cell');
+            });
+            
+            // Re-aplicar celdas free
+            document.querySelectorAll('.carton-cell.free').forEach(cell => {
+                cell.classList.add('marked');
+            });
+            
+            document.getElementById('modalPartidaTerminada').classList.remove('active');
+            mostrarToast('🔄 Listo para nueva partida', 'success');
+        }
+
         // ============ VERIFICAR BINGO ============
         function verificarBingoLocal() {
-            if (!miCarton || !patronActual || patronActual.length === 0) return false;
+            if (misCartones.length === 0 || patronActual.length === 0) return false;
 
             const letras = ['B', 'I', 'N', 'G', 'O'];
             
-            for (let i = 0; i < 25; i++) {
-                if (!patronActual[i]) continue; // Esta celda no es parte del patrón
+            // Verificar cada cartón
+            for (let c = 0; c < misCartones.length; c++) {
+                const carton = misCartones[c].carton;
+                let bingo = true;
                 
-                if (i === 12) continue; // Centro libre
-                
-                const fila = Math.floor(i / 5);
-                const col = i % 5;
-                const letra = letras[col];
-                const valor = miCarton[letra][fila];
-                
-                if (!cantadosSet.has(valor)) {
-                    return false; // Falta este número
+                for (let i = 0; i < 25; i++) {
+                    if (!patronActual[i]) continue;
+                    if (i === 12) continue; // Centro libre
+                    
+                    const fila = Math.floor(i / 5);
+                    const col = i % 5;
+                    const letra = letras[col];
+                    const valor = carton[letra][fila];
+                    
+                    if (!cantadosSet.has(valor)) {
+                        bingo = false;
+                        break;
+                    }
                 }
+                
+                if (bingo) return true; // Al menos un cartón tiene bingo
             }
             
-            return true; // Todas las celdas del patrón están cantadas
+            return false;
         }
 
         function cantarBingo() {
             if (!verificarBingoLocal()) {
-                mostrarToast('❌ Aún no completas el patrón. Revisa tu cartón.', 'error');
+                mostrarToast('❌ Aún no completas el patrón', 'error');
                 return;
             }
             
@@ -843,68 +1100,83 @@
         }
 
         async function confirmarBingo() {
-            document.getElementById('modalConfirmar').classList.remove('active');
+            cerrarModal('modalConfirmar');
             
             try {
-                // Registrar bingo en Firebase
-                await db.ref('bingos/' + SALA_ID).push({
-                    cartonId: miCartonId,
-                    jugador: miNombre,
-                    timestamp: Date.now()
-                });
+                // Enviar todos los cartones como posibles bingos
+                for (const cartonData of misCartones) {
+                    await db.ref('bingos/' + SALA_ID).push({
+                        cartonId: cartonData.id,
+                        jugador: miNombre,
+                        timestamp: Date.now()
+                    });
+                }
 
                 mostrarToast('🎉 BINGO cantado. Esperando validación...', 'success');
             } catch (error) {
-                console.error('Error al cantar bingo:', error);
+                console.error('Error:', error);
                 mostrarToast('Error al cantar bingo', 'error');
             }
         }
 
-        function cerrarModal() {
-            document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
-        }
-
-        // ============ CHAT ============
-        function escucharChat() {
-            db.ref('partidas/' + SALA_ID + '/chat').limitToLast(20).on('value', () => {
-                // El chat se muestra en la ruleta, aquí solo escuchamos
-            });
-        }
-
-        // ============ SALIR ============
-        async function salirDelJuego() {
-            if (!juegoConectado) return;
+        // ============ NOTIFICAR ADMIN ============
+        function notificarAdmin() {
+            if (!miNombre) return;
             
-            if (confirm('¿Salir del juego?')) {
-                // Liberar cartón
-                if (miCartonId) {
-                    await db.ref('salas/' + SALA_ID + '/cartones/' + miCartonId).update({
-                        asignadoA: null,
-                        estado: 'disponible'
-                    });
+            db.ref('partidas/' + SALA_ID).update({
+                alertaJugador: {
+                    jugador: miNombre,
+                    mensaje: '⚠️ ' + miNombre + ' solicita atención',
+                    timestamp: Date.now()
                 }
+            });
+            
+            mostrarToast('⚠️ Aviso enviado al administrador', 'warning');
+        }
 
-                // Limpiar
-                juegoConectado = false;
-                miNombre = null;
-                miCarton = null;
-                miCartonId = null;
-                cantadosSet.clear();
-                localStorage.clear();
+        // ============ UTILIDADES ============
+        function obtenerLetra(n) {
+            if (n <= 15) return 'B';
+            if (n <= 30) return 'I';
+            if (n <= 45) return 'N';
+            if (n <= 60) return 'G';
+            return 'O';
+        }
 
-                document.getElementById('gameScreen').style.display = 'none';
-                document.getElementById('loginScreen').style.display = 'block';
-                document.getElementById('nombreInput').value = '';
-                document.getElementById('cartonGrid').innerHTML = '';
-                document.getElementById('ultimosNumeros').innerHTML = '';
+        function cerrarModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        async function salirDelJuego() {
+            if (!juegoConectado || !confirm('¿Salir del juego?')) return;
+
+            // Liberar cartones
+            for (const c of misCartones) {
+                await db.ref('salas/' + SALA_ID + '/cartones/' + c.id).update({
+                    asignadoA: null,
+                    estado: 'disponible'
+                });
             }
+
+            juegoConectado = false;
+            miNombre = null;
+            misCartones = [];
+            cantadosSet.clear();
+            localStorage.clear();
+
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'block';
+            document.getElementById('nombreInput').value = '';
+            document.getElementById('cartonesContainer').innerHTML = '';
+            document.getElementById('ultimasBolasChicas').innerHTML = '';
+            document.getElementById('adminMensaje').style.display = 'none';
         }
 
         // ============ EFECTOS ============
         function lanzarConfeti() {
             const colores = ['#FF6B6B', '#4ECDC4', '#FFD700', '#FF8C00', '#FF1493', '#10b981'];
             
-            for (let i = 0; i < 60; i++) {
+            for (let i = 0; i < 80; i++) {
                 setTimeout(() => {
                     const confetti = document.createElement('div');
                     confetti.className = 'confetti-piece';
@@ -916,9 +1188,8 @@
                     confetti.style.animationDelay = Math.random() * 0.5 + 's';
                     
                     document.body.appendChild(confetti);
-                    
                     setTimeout(() => confetti.remove(), 3500);
-                }, i * 15);
+                }, i * 12);
             }
         }
 
@@ -937,30 +1208,60 @@
         document.addEventListener('DOMContentLoaded', () => {
             console.log('🎱 Bingo Jugador - Sala:', SALA_ID);
             
-            // Intentar reconectar si ya estaba jugando
+            // Reconexión automática
             const nombreGuardado = localStorage.getItem('bingo_jugador_nombre');
             const salaGuardada = localStorage.getItem('bingo_jugador_sala');
-            const cartonIdGuardado = localStorage.getItem('bingo_jugador_cartonId');
+            const cartonesIds = JSON.parse(localStorage.getItem('bingo_jugador_cartones') || '[]');
             
-            if (nombreGuardado && salaGuardada === SALA_ID && cartonIdGuardado) {
-                // Reconectar automáticamente
+            if (nombreGuardado && salaGuardada === SALA_ID && cartonesIds.length > 0) {
                 document.getElementById('nombreInput').value = nombreGuardado;
-                // Cargar cartón desde Firebase
-                db.ref('salas/' + SALA_ID + '/cartones/' + cartonIdGuardado).once('value', (snap) => {
-                    const carton = snap.val();
-                    if (carton && carton.asignadoA === nombreGuardado) {
+                
+                // Cargar cartones
+                Promise.all(cartonesIds.map(id => 
+                    db.ref('salas/' + SALA_ID + '/cartones/' + id).once('value')
+                )).then(snapshots => {
+                    misCartones = [];
+                    snapshots.forEach((snap, i) => {
+                        const data = snap.val();
+                        if (data && data.asignadoA === nombreGuardado) {
+                            misCartones.push({
+                                id: cartonesIds[i],
+                                carton: data.carton,
+                                numero: data.numero
+                            });
+                        }
+                    });
+                    
+                    if (misCartones.length > 0) {
                         miNombre = nombreGuardado;
-                        miCarton = carton.carton;
-                        miCartonId = cartonIdGuardado;
                         juegoConectado = true;
                         
                         document.getElementById('loginScreen').style.display = 'none';
                         document.getElementById('gameScreen').style.display = 'block';
                         
-                        mostrarCarton(miCarton);
-                        escucharPartida();
-                        escucharChat();
-                        mostrarToast('✅ Reconectado como ' + miNombre, 'success');
+                        inicializarJuego();
+                        
+                        // Cargar estado actual
+                        db.ref('partidas/' + SALA_ID).once('value', (snap) => {
+                            const data = snap.val();
+                            if (data && data.cantados) {
+                                data.cantados.forEach(num => {
+                                    cantadosSet.add(num);
+                                    marcarNumeroEnCartones(num, false);
+                                });
+                                document.getElementById('cantadosCount').textContent = data.cantados.length;
+                                if (data.cantados.length > 0) {
+                                    actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
+                                }
+                                actualizarUltimasBolasChicas(data.cantados);
+                            }
+                            if (data && data.patron) {
+                                patronActual = data.patron;
+                                aplicarPatronACartones();
+                            }
+                        });
+                        
+                        mostrarToast('✅ Reconectado', 'success');
                     }
                 });
             }
@@ -974,16 +1275,20 @@
         // Cerrar modales al hacer clic fuera
         document.querySelectorAll('.modal-overlay').forEach(modal => {
             modal.addEventListener('click', function(e) {
-                if (e.target === this) cerrarModal();
+                if (e.target === this && this.id !== 'modalPartidaTerminada') {
+                    this.classList.remove('active');
+                }
             });
         });
 
-        // Manejar desconexión
+        // Liberar cartones al cerrar
         window.addEventListener('beforeunload', () => {
-            if (juegoConectado && miCartonId) {
-                db.ref('salas/' + SALA_ID + '/cartones/' + miCartonId).update({
-                    asignadoA: null,
-                    estado: 'disponible'
+            if (juegoConectado && misCartones.length > 0) {
+                misCartones.forEach(c => {
+                    db.ref('salas/' + SALA_ID + '/cartones/' + c.id).update({
+                        asignadoA: null,
+                        estado: 'disponible'
+                    });
                 });
             }
         });
