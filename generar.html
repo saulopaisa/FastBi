@@ -61,7 +61,14 @@
             <p class="placeholder">Genera o importa cartones para verlos aquí</p>
         </div>
     </div>
-
+    <!-- Buscador de cartones -->
+<div class="panel-card">
+    <h3>🔍 BUSCAR CARTÓN</h3>
+    <div class="input-row">
+        <input type="text" id="buscarCarton" placeholder="# número o nombre del jugador" oninput="buscarCarton()">
+    </div>
+    <div id="resultadosBusqueda" style="max-height:200px;overflow-y:auto;margin-top:8px;"></div>
+</div>
     <!-- Modal Link -->
     <div class="modal-overlay" id="modalLink">
         <div class="modal-content">
