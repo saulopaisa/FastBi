@@ -1,7 +1,7 @@
 // generar.js - Lógica principal del generador de cartones
 
 var cartonesGenerados = [];
-var cartonesSeleccionados = []; // Para los checkboxes del buscador
+var cartonesSeleccionados = [];
 
 // ============ GENERAR CARTÓN ============
 function generarCarton() {
@@ -43,22 +43,36 @@ function generarCartones() {
     }
     mostrarCartones();
     actualizarContadores();
-    actualizarListaJugadores();
+    guardarEnFirebase();
     mostrarToast('✅ ' + cantidad + ' cartones generados', 'success');
 }
 
 // ============ MOSTRAR CARTONES ============
-function mostrarCartones() {
+function mostrarCartones(filtrarTermino) {
     var grid = document.getElementById('cartonesGrid');
-    if (cartonesGenerados.length === 0) {
-        grid.innerHTML = '<p class="placeholder">No hay cartones. Genera o importa.</p>';
+    
+    var cartonesAMostrar = cartonesGenerados;
+    
+    // Si hay término de búsqueda, filtrar
+    if (filtrarTermino) {
+        var termino = filtrarTermino.toLowerCase();
+        cartonesAMostrar = cartonesGenerados.filter(function(c) {
+            var numStr = String(c.numero);
+            var nombre = (c.asignadoA || '').toLowerCase();
+            return numStr.includes(termino) || nombre.includes(termino);
+        });
+    }
+    
+    if (cartonesAMostrar.length === 0) {
+        grid.innerHTML = '<p class="placeholder">' + (filtrarTermino ? 'Sin resultados para "' + filtrarTermino + '"' : 'No hay cartones. Genera o importa.') + '</p>';
         return;
     }
 
     grid.innerHTML = '';
     var letras = ['B','I','N','G','O'];
 
-    cartonesGenerados.forEach(function(c, index) {
+    cartonesAMostrar.forEach(function(c) {
+        var index = cartonesGenerados.indexOf(c);
         var card = document.createElement('div');
         card.className = 'carton-card';
         card.id = 'cartonCard-' + index;
@@ -85,7 +99,7 @@ function mostrarCartones() {
         html += '</div>';
         
         html += '<div class="carton-acciones">';
-        html += '<button class="btn btn-asignar" onclick="asignarIndividual('+index+')">👤 Asignar</button>';
+        html += '<button class="btn btn-asignar" onclick="asignarIndividual('+index+')">👤</button>';
         html += '<button class="btn btn-eliminar" onclick="eliminarCarton('+index+')">🗑️</button>';
         html += '</div>';
         
@@ -94,50 +108,7 @@ function mostrarCartones() {
     });
 }
 
-// ============ ASIGNAR CARTONES ============
-function asignarCartones() {
-    var nombre = document.getElementById('nombreJugador').value.trim();
-    var cantidad = parseInt(document.getElementById('cantidadAsignar').value);
-    
-    if (!nombre) { mostrarToast('⚠️ Ingresa un nombre de jugador', 'error'); return; }
-    
-    var yaAsignados = cartonesGenerados.filter(function(c) { return c.asignadoA === nombre; }).length;
-    var maxPermitido = 2;
-    var faltantes = cantidad - yaAsignados;
-    
-    if (faltantes <= 0) {
-        mostrarToast('⚠️ ' + nombre + ' ya tiene ' + yaAsignados + ' cartones (máx ' + maxPermitido + ')', 'error');
-        return;
-    }
-    
-    if (yaAsignados + faltantes > maxPermitido) {
-        faltantes = maxPermitido - yaAsignados;
-        if (faltantes <= 0) {
-            mostrarToast('⚠️ ' + nombre + ' ya tiene el máximo de ' + maxPermitido + ' cartones', 'error');
-            return;
-        }
-    }
-    
-    var asignados = 0;
-    for (var i = 0; i < cartonesGenerados.length && asignados < faltantes; i++) {
-        if (!cartonesGenerados[i].asignadoA) {
-            cartonesGenerados[i].asignadoA = nombre;
-            cartonesGenerados[i].estado = 'asignado';
-            asignados++;
-        }
-    }
-    
-    if (asignados === 0) {
-        mostrarToast('⚠️ No hay cartones disponibles', 'error');
-        return;
-    }
-    
-    mostrarCartones();
-    actualizarContadores();
-    actualizarListaJugadores();
-    mostrarToast('✅ ' + asignados + ' cartones asignados a ' + nombre, 'success');
-}
-
+// ============ ASIGNAR INDIVIDUAL ============
 function asignarIndividual(index) {
     var carton = cartonesGenerados[index];
     var nombre = prompt('Nombre para cartón #' + carton.numero + ':');
@@ -154,6 +125,7 @@ function asignarIndividual(index) {
     mostrarCartones();
     actualizarContadores();
     actualizarListaJugadores();
+    guardarEnFirebase();
     mostrarToast('✅ Cartón #' + carton.numero + ' → ' + nombre, 'success');
 }
 
@@ -164,6 +136,7 @@ function eliminarCarton(index) {
         mostrarCartones();
         actualizarContadores();
         actualizarListaJugadores();
+        guardarEnFirebase();
         mostrarToast('🗑️ Cartón eliminado', 'error');
     }
 }
@@ -179,6 +152,7 @@ function borrarTodosCartones() {
         mostrarCartones();
         actualizarContadores();
         actualizarListaJugadores();
+        guardarEnFirebase();
         document.getElementById('resultadosBusqueda').innerHTML = '<p style="color:#94a3b8;text-align:center;font-size:0.8em;padding:10px;">Escribe para buscar cartones</p>';
         document.getElementById('seleccionadosInfo').style.display = 'none';
         mostrarToast('🗑️ Todos los cartones eliminados', 'error');
@@ -187,23 +161,28 @@ function borrarTodosCartones() {
 
 // ============ BUSCADOR CON CHECKBOXES ============
 function buscarCarton() {
-    var termino = document.getElementById('buscarCarton').value.trim().toLowerCase();
+    var termino = document.getElementById('buscarCarton').value.trim();
     var resultadosDiv = document.getElementById('resultadosBusqueda');
     var seleccionadosInfo = document.getElementById('seleccionadosInfo');
     
     if (!termino || termino.length < 1) {
         resultadosDiv.innerHTML = '<p style="color:#94a3b8;text-align:center;font-size:0.8em;padding:10px;">Escribe para buscar cartones</p>';
+        mostrarCartones(); // Mostrar todos
         if (cartonesSeleccionados.length === 0) {
             seleccionadosInfo.style.display = 'none';
         }
         return;
     }
     
+    var terminoLower = termino.toLowerCase();
     var resultados = cartonesGenerados.filter(function(c) {
         var numStr = String(c.numero);
         var nombre = (c.asignadoA || '').toLowerCase();
-        return numStr.includes(termino) || nombre.includes(termino);
+        return numStr.includes(terminoLower) || nombre.includes(terminoLower);
     });
+    
+    // También filtrar la grilla
+    mostrarCartones(termino);
     
     if (resultados.length === 0) {
         resultadosDiv.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:10px;font-size:0.8em;">❌ Sin resultados para "' + termino + '"</p>';
@@ -220,16 +199,21 @@ function buscarCarton() {
         div.className = 'resultado-busqueda';
         div.style.cursor = 'pointer';
         
+        var checkboxHtml = '<input type="checkbox" ' + (estaSeleccionado ? 'checked' : '') + ' ';
+        if (cartonesSeleccionados.length >= 2 && !estaSeleccionado) {
+            checkboxHtml += 'disabled ';
+        }
+        checkboxHtml += 'style="width:18px;height:18px;cursor:pointer;accent-color:#10b981;" onclick="event.stopPropagation();toggleSeleccionCarton(' + idx + ', this)">';
+        
         div.innerHTML = 
-            '<div class="info" style="display:flex;align-items:center;gap:8px;">' +
-            '<input type="checkbox" ' + (estaSeleccionado ? 'checked' : '') + ' ' +
-            (cartonesSeleccionados.length >= 2 && !estaSeleccionado ? 'disabled' : '') +
-            ' style="width:18px;height:18px;cursor:pointer;" onclick="event.stopPropagation();toggleSeleccionCarton(' + idx + ', this)">' +
+            '<div class="info" style="display:flex;align-items:center;gap:8px;flex:1;">' +
+            checkboxHtml +
             '<strong style="color:#ffca28;">#' + c.numero + '</strong>' +
-            '<span style="color:#94a3b8;">' + (c.asignadoA ? '👤 ' + c.asignadoA : '📋 Disponible') + '</span>' +
+            '<span style="color:#94a3b8;font-size:0.8em;">' + (c.asignadoA ? '👤 ' + c.asignadoA : '📋 Disponible') + '</span>' +
             '</div>';
         
-        div.onclick = function() {
+        div.onclick = function(e) {
+            if (e.target.tagName === 'INPUT') return;
             var cartonCard = document.getElementById('cartonCard-' + idx);
             if (cartonCard) {
                 cartonCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -245,7 +229,6 @@ function buscarCarton() {
         resultadosDiv.appendChild(div);
     });
     
-    // Actualizar info de seleccionados
     actualizarInfoSeleccionados();
 }
 
@@ -254,6 +237,7 @@ function toggleSeleccionCarton(index, checkbox) {
     
     if (pos !== -1) {
         cartonesSeleccionados.splice(pos, 1);
+        checkbox.checked = false;
     } else {
         if (cartonesSeleccionados.length >= 2) {
             mostrarToast('⚠️ Máximo 2 cartones para asignar', 'error');
@@ -261,21 +245,19 @@ function toggleSeleccionCarton(index, checkbox) {
             return;
         }
         cartonesSeleccionados.push(index);
+        checkbox.checked = true;
     }
     
     actualizarInfoSeleccionados();
-    buscarCarton(); // Refrescar para actualizar checkboxes
+    buscarCarton(); // Refrescar
 }
 
 function actualizarInfoSeleccionados() {
     var seleccionadosInfo = document.getElementById('seleccionadosInfo');
     var countEl = document.getElementById('countSeleccionados');
     
-    countEl.textContent = cartonesSeleccionados.length;
-    
     if (cartonesSeleccionados.length > 0) {
         seleccionadosInfo.style.display = 'block';
-        // Mostrar números seleccionados
         var numeros = cartonesSeleccionados.map(function(idx) {
             return '#' + cartonesGenerados[idx].numero;
         }).join(', ');
@@ -302,11 +284,10 @@ function asignarSeleccionados() {
     var totalDespues = yaAsignados + cartonesSeleccionados.length;
     
     if (totalDespues > 2) {
-        mostrarToast('⚠️ ' + nombre + ' ya tiene ' + yaAsignados + ' cartones. Solo puede tener 2 máximo.', 'error');
+        mostrarToast('⚠️ ' + nombre + ' ya tiene ' + yaAsignados + ' cartones. Máximo 2.', 'error');
         return;
     }
     
-    // Asignar los seleccionados
     cartonesSeleccionados.forEach(function(idx) {
         cartonesGenerados[idx].asignadoA = nombre;
         cartonesGenerados[idx].estado = 'asignado';
@@ -318,6 +299,7 @@ function asignarSeleccionados() {
     mostrarCartones();
     actualizarContadores();
     actualizarListaJugadores();
+    guardarEnFirebase();
     buscarCarton();
     document.getElementById('nombreAsignarSeleccionados').value = '';
     document.getElementById('seleccionadosInfo').style.display = 'none';
@@ -328,8 +310,8 @@ function asignarSeleccionados() {
 // ============ LISTA DE JUGADORES ============
 function actualizarListaJugadores() {
     var listaDiv = document.getElementById('listaJugadores');
+    if (!listaDiv) return;
     
-    // Obtener jugadores únicos y contar cartones
     var jugadoresMap = {};
     cartonesGenerados.forEach(function(c) {
         if (c.asignadoA) {
@@ -354,28 +336,87 @@ function actualizarListaJugadores() {
         div.className = 'jugador-item';
         div.innerHTML = 
             '<div class="jugador-info">' +
-            '<span style="font-size:1.2em;">👤</span>' +
-            '<div>' +
+            '<span style="font-size:1.5em;">👤</span>' +
+            '<div style="flex:1;">' +
             '<strong style="color:white;">' + nombre + '</strong>' +
             '<div style="color:#94a3b8;font-size:0.7em;">' + cartones.length + ' cartón(es): ' + cartones.map(function(n) { return '#' + n; }).join(', ') + '</div>' +
             '</div>' +
-            '</div>' +
-            '<button class="btn btn-link" style="font-size:0.65em;padding:4px 8px;flex:0;" onclick="generarLinkParaJugador(\'' + nombre + '\')">🔗</button>';
+            '<button class="btn btn-link" style="font-size:0.65em;padding:4px 8px;flex:0;white-space:nowrap;" onclick="generarLinkParaJugador(\'' + nombre.replace(/'/g, "\\'") + '\')">🔗 LINK</button>' +
+            '</div>';
         listaDiv.appendChild(div);
     });
 }
 
 function generarLinkParaJugador(nombre) {
-    document.getElementById('nombreJugador').value = nombre;
+    document.getElementById('nombreJugadorLink').value = nombre;
+    navegarA('jugadores');
     generarLinkJugador();
 }
 
 // ============ CONTADORES ============
 function actualizarContadores() {
-    document.getElementById('totalCartones').textContent = cartonesGenerados.length;
+    var totalEl = document.getElementById('totalCartones');
+    var asignadosEl = document.getElementById('totalAsignados');
+    var disponiblesEl = document.getElementById('totalDisponibles');
+    var configTotal = document.getElementById('configTotal');
+    
+    if (totalEl) totalEl.textContent = cartonesGenerados.length;
     var asignados = cartonesGenerados.filter(function(c) { return c.asignadoA; }).length;
-    document.getElementById('totalAsignados').textContent = asignados;
-    document.getElementById('totalDisponibles').textContent = cartonesGenerados.length - asignados;
+    if (asignadosEl) asignadosEl.textContent = asignados;
+    if (disponiblesEl) disponiblesEl.textContent = cartonesGenerados.length - asignados;
+    if (configTotal) configTotal.textContent = cartonesGenerados.length;
+}
+
+// ============ GUARDAR EN FIREBASE (AUTOMÁTICO) ============
+function guardarEnFirebase() {
+    if (cartonesGenerados.length === 0) {
+        db.ref('salas/' + SALA_ID + '/cartones').remove();
+        return;
+    }
+    
+    var updates = {};
+    cartonesGenerados.forEach(function(c) {
+        updates['salas/' + SALA_ID + '/cartones/' + c.id] = {
+            numero: c.numero,
+            carton: c.carton,
+            asignadoA: c.asignadoA || null,
+            estado: c.asignadoA ? 'asignado' : 'disponible'
+        };
+    });
+    
+    db.ref('salas/' + SALA_ID + '/cartones').set(updates).catch(function(err) {
+        console.error('Error al guardar:', err);
+    });
+}
+
+// ============ CARGAR DESDE FIREBASE (AL INICIAR) ============
+function cargarDesdeFirebase() {
+    db.ref('salas/' + SALA_ID + '/cartones').once('value').then(function(snap) {
+        var data = snap.val();
+        if (!data) return;
+        
+        cartonesGenerados = [];
+        Object.entries(data).forEach(function(entry) {
+            var id = entry[0], c = entry[1];
+            cartonesGenerados.push({
+                id: id,
+                numero: c.numero || 0,
+                carton: c.carton,
+                asignadoA: c.asignadoA || null,
+                estado: c.estado || (c.asignadoA ? 'asignado' : 'disponible')
+            });
+        });
+        
+        cartonesGenerados.sort(function(a, b) { return a.numero - b.numero; });
+        cartonesGenerados.forEach(function(c, i) { c.numero = i + 1; });
+        
+        mostrarCartones();
+        actualizarContadores();
+        actualizarListaJugadores();
+        console.log('✅ ' + cartonesGenerados.length + ' cartones cargados desde Firebase');
+    }).catch(function(err) {
+        console.error('Error al cargar:', err);
+    });
 }
 
 // ============ EXPORTAR / IMPORTAR JSON ============
@@ -411,22 +452,21 @@ function importarCartonesJSON() {
             try {
                 var data = JSON.parse(event.target.result);
                 if (Array.isArray(data) && data.length > 0 && data[0].carton) {
-                    if (confirm('¿Importar ' + data.length + ' cartones?\nEsto reemplazará los cartones actuales.')) {
+                    if (confirm('¿Importar ' + data.length + ' cartones?\nEsto reemplazará los actuales.')) {
                         cartonesGenerados = data;
                         cartonesSeleccionados = [];
-                        // Renumerar
                         cartonesGenerados.forEach(function(c, i) { c.numero = i + 1; });
                         mostrarCartones();
                         actualizarContadores();
                         actualizarListaJugadores();
+                        guardarEnFirebase();
                         mostrarToast('✅ ' + data.length + ' cartones importados', 'success');
                     }
                 } else {
                     mostrarToast('❌ Archivo JSON no válido', 'error');
                 }
             } catch (err) {
-                console.error('Error:', err);
-                mostrarToast('❌ Error al leer el archivo: ' + err.message, 'error');
+                mostrarToast('❌ Error al leer el archivo', 'error');
             }
         };
         reader.readAsText(file);
@@ -436,10 +476,10 @@ function importarCartonesJSON() {
 
 // ============ GENERAR LINK ============
 function generarLinkJugador() {
-    var nombre = document.getElementById('nombreJugador').value.trim();
+    var nombre = document.getElementById('nombreJugadorLink').value.trim();
     
     if (!nombre) { 
-        mostrarToast('⚠️ Ingresa un nombre de jugador primero', 'error'); 
+        mostrarToast('⚠️ Ingresa un nombre de jugador', 'error'); 
         return; 
     }
     
@@ -448,39 +488,66 @@ function generarLinkJugador() {
     });
     
     if (cartonesJugador.length === 0) { 
-        mostrarToast('⚠️ ' + nombre + ' no tiene cartones asignados', 'error'); 
+        mostrarToast('⚠️ ' + nombre + ' no tiene cartones', 'error'); 
         return; 
     }
     
     var link = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'jugador.html?sala=' + encodeURIComponent(SALA_ID);
-    document.getElementById('linkGenerado').textContent = link;
-    document.getElementById('linkGenerado').style.color = '#10b981';
-    document.getElementById('modalLink').classList.add('activo');
+    
+    var linkBox = document.getElementById('linkGenerado');
+    linkBox.textContent = link;
+    linkBox.style.display = 'block';
+    document.getElementById('btnCopiarLink').style.display = 'block';
 }
 
 function copiarLink() {
     var link = document.getElementById('linkGenerado').textContent;
     navigator.clipboard.writeText(link).then(function() {
-        mostrarToast('✅ Link copiado al portapapeles', 'success');
+        mostrarToast('✅ Link copiado', 'success');
     }).catch(function() {
-        prompt('📋 Copia este link manualmente:', link);
+        prompt('📋 Copia este link:', link);
     });
 }
 
-function cerrarModal(id) {
-    document.getElementById(id).classList.remove('activo');
+// ============ COPIAR LINK VER_TODO ============
+function copiarLinkVerTodo() {
+    var link = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'ver_todo.html?sala=' + encodeURIComponent(SALA_ID);
+    navigator.clipboard.writeText(link).then(function() {
+        mostrarToast('✅ Link de ver_todo copiado', 'success');
+    }).catch(function() {
+        prompt('📋 Copia este link para ver_todo:', link);
+    });
 }
 
 // ============ IMPRIMIR ============
 function imprimirCartones() {
     if (cartonesGenerados.length === 0) { 
-        mostrarToast('⚠️ No hay cartones para imprimir', 'error'); 
+        mostrarToast('⚠️ No hay cartones', 'error'); 
         return; 
     }
-    mostrarToast('🖨️ Abriendo vista de impresión...', 'success');
-    setTimeout(function() {
-        window.print();
-    }, 500);
+    mostrarToast('🖨️ Abriendo impresión...', 'success');
+    setTimeout(function() { window.print(); }, 500);
+}
+
+// ============ NAVEGACIÓN ============
+function navegarA(vista) {
+    // Ocultar todas
+    document.querySelectorAll('.vista-panel').forEach(function(v) { v.classList.remove('activo'); });
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('activo'); });
+    
+    // Mostrar seleccionada
+    if (vista === 'cartones') {
+        document.getElementById('vistaCartones').classList.add('activo');
+        document.getElementById('navCartones').classList.add('activo');
+    } else if (vista === 'jugadores') {
+        document.getElementById('vistaJugadores').classList.add('activo');
+        document.getElementById('navJugadores').classList.add('activo');
+        actualizarListaJugadores();
+    } else if (vista === 'config') {
+        document.getElementById('vistaConfig').classList.add('activo');
+        document.getElementById('navConfig').classList.add('activo');
+        actualizarContadores();
+    }
 }
 
 // ============ TOAST ============
