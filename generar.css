@@ -408,3 +408,98 @@ body {
         border: 1px solid #ccc;
     }
 }
+/* ============ DESKTOP: DISEÑO HORIZONTAL ============ */
+@media (min-width: 768px) {
+    body {
+        flex-direction: row;
+        padding-bottom: var(--nav-height);
+    }
+    
+    .app-header {
+        display: none; /* Ocultar header en desktop */
+    }
+    
+    .app-content {
+        display: flex;
+        gap: 15px;
+        padding: 15px;
+        padding-bottom: calc(var(--nav-height) + 15px);
+        flex: 1;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    /* En vista cartones, panel izquierdo + grid derecho */
+    #sectionCartones.activo {
+        display: flex;
+        gap: 15px;
+        flex: 1;
+    }
+    
+    #sectionCartones .panel-card {
+        flex: 0 0 350px;
+        max-width: 350px;
+        align-self: flex-start;
+        position: sticky;
+        top: 15px;
+    }
+    
+    #sectionCartones .info-bar {
+        flex: 0 0 350px;
+        max-width: 350px;
+    }
+    
+    #sectionCartones .cartones-grid {
+        flex: 1;
+        align-self: flex-start;
+    }
+    
+    /* Organizar paneles en columna izquierda */
+    #sectionCartones {
+        flex-wrap: wrap;
+    }
+    
+    #sectionCartones .panel-card:nth-child(1),
+    #sectionCartones .panel-card:nth-child(2),
+    #sectionCartones .info-bar {
+        order: 1;
+    }
+    
+    #sectionCartones .cartones-grid {
+        order: 2;
+        flex: 1;
+    }
+    
+    /* Vista jugadores */
+    #sectionJugadores.activo {
+        display: flex;
+        gap: 15px;
+        flex: 1;
+    }
+    
+    #sectionJugadores .panel-card {
+        flex: 1;
+        max-width: 500px;
+    }
+    
+    /* Vista config */
+    #sectionConfig.activo {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    .bottom-nav {
+        /* Siempre visible */
+    }
+}
+
+@media (min-width: 1024px) {
+    #sectionCartones .panel-card {
+        flex: 0 0 380px;
+        max-width: 380px;
+    }
+    
+    .cartones-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+}
