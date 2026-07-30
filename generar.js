@@ -46,6 +46,7 @@ function contarCartonesSimilares(carton) {
 }
 
 // ============ GENERAR MÚLTIPLES ============
+// ============ GENERAR MÚLTIPLES (AGREGAR SIN BORRAR) ============
 function generarCartones() {
     var cantidad = parseInt(document.getElementById('cantidadGenerar').value) || 10;
     if (cantidad < 1 || cantidad > 500) { 
@@ -53,20 +54,23 @@ function generarCartones() {
         return; 
     }
     
-    cartonesGenerados = [];
-    cartonesSeleccionados = [];
+    // Mantener los cartones existentes
+    var numeroInicial = cartonesGenerados.length;
     var intentos = 0;
     var maxIntentos = cantidad * 10;
+    var generados = 0;
     
     for (var i = 0; i < cantidad && intentos < maxIntentos; i++) {
         var nuevoCarton = generarCarton();
         
+        // Verificar que no exista ya
         if (cartonExiste(nuevoCarton)) {
             i--;
             intentos++;
             continue;
         }
         
+        // Verificar máximo de cartones similares
         var similares = contarCartonesSimilares(nuevoCarton);
         if (similares >= MAX_GANADORES_POR_NUMERO) {
             i--;
@@ -75,24 +79,31 @@ function generarCartones() {
         }
         
         cartonesGenerados.push({
-            id: 'carton_' + Date.now() + '_' + i,
-            numero: i + 1,
+            id: 'carton_' + Date.now() + '_' + (numeroInicial + generados),
+            numero: numeroInicial + generados + 1,
             carton: nuevoCarton,
             asignadoA: null,
             estado: 'disponible'
         });
         
+        generados++;
         intentos = 0;
     }
     
+    // Renumerar todos los cartones
+    cartonesGenerados.forEach(function(c, i) {
+        c.numero = i + 1;
+    });
+    
+    cartonesSeleccionados = [];
     mostrarCartones();
     actualizarContadores();
     guardarEnFirebase();
     
-    if (cartonesGenerados.length < cantidad) {
-        mostrarToast('⚠️ Solo se generaron ' + cartonesGenerados.length + ' de ' + cantidad + ' (límite de variedad)', 'error');
+    if (generados < cantidad) {
+        mostrarToast('⚠️ Solo se agregaron ' + generados + ' de ' + cantidad + ' (límite de variedad)', 'error');
     } else {
-        mostrarToast('✅ ' + cantidad + ' cartones generados (máx ' + MAX_GANADORES_POR_NUMERO + ' por número)', 'success');
+        mostrarToast('✅ ' + generados + ' cartones agregados (total: ' + cartonesGenerados.length + ')', 'success');
     }
 }
 
