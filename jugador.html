@@ -1502,47 +1502,71 @@
             return colores[letra] || '#6366f1';
         }
 
-        // ============ CHAT ============
-        function escucharChat() {
-            db.ref('partidas/' + SALA_ID + '/chat').limitToLast(50).on('value', (snap) => {
-                const contenedor = document.getElementById('chatMensajes');
-                if (!contenedor) return;
-                
-                if (!snap.exists()) {
-                    contenedor.innerHTML = '<p class="chat-vacio">No hay mensajes</p>';
-                    return;
-                }
-                
-                contenedor.innerHTML = '';
-                const mensajes = [];
-                snap.forEach(child => mensajes.push(child.val()));
-                mensajes.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-                
-                mensajes.forEach(msg => {
-                    const div = document.createElement('div');
-                    if (msg.sistema) {
-                        div.className = 'msg-item msg-sistema';
-                    } else {
-                        div.className = 'msg-item ' + (msg.admin ? 'msg-admin' : 'msg-jugador');
-                    }
-                    div.innerHTML = (msg.admin && !msg.sistema ? '📢 ' : '') + msg.mensaje + 
-                        '<div class="msg-timestamp">' + new Date(msg.timestamp).toLocaleTimeString() + '</div>';
-                    contenedor.appendChild(div);
-                });
-                
-                contenedor.scrollTop = contenedor.scrollHeight;
-                
-                const panel = document.getElementById('chatPanel');
-                if (!panel.classList.contains('activo') && mensajes.length > mensajesChat.length) {
-                    const nuevos = mensajes.length - mensajesChat.length;
-                    const badge = document.getElementById('chatBadge');
-                    badge.style.display = 'flex';
-                    badge.textContent = nuevos > 99 ? '99+' : nuevos;
-                }
-                
-                mensajesChat = mensajes;
-            });
+        // ============ CHAT (ESCUCHAR MENSAJES DEL ADMIN SIEMPRE) ============
+function escucharChat() {
+    db.ref('partidas/' + SALA_ID + '/chat').limitToLast(50).on('value', (snap) => {
+        const contenedor = document.getElementById('chatMensajes');
+        if (!contenedor) return;
+        
+        if (!snap.exists()) {
+            contenedor.innerHTML = '<p class="chat-vacio">No hay mensajes</p>';
+            return;
         }
+        
+        contenedor.innerHTML = '';
+        const mensajes = [];
+        snap.forEach(child => mensajes.push(child.val()));
+        mensajes.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        
+        mensajes.forEach(msg => {
+            const div = document.createElement('div');
+            if (msg.sistema) {
+                div.className = 'msg-item msg-sistema';
+            } else if (msg.admin) {
+                div.className = 'msg-item msg-admin';
+            } else {
+                div.className = 'msg-item msg-jugador';
+            }
+            div.innerHTML = (msg.admin && !msg.sistema ? '📢 ' : '') + msg.mensaje + 
+                '<div class="msg-timestamp">' + new Date(msg.timestamp).toLocaleTimeString() + '</div>';
+            contenedor.appendChild(div);
+        });
+        
+        contenedor.scrollTop = contenedor.scrollHeight;
+        
+        // Badge de mensajes nuevos
+        const panel = document.getElementById('chatPanel');
+        if (!panel.classList.contains('activo') && mensajes.length > mensajesChat.length) {
+            const nuevos = mensajes.length - mensajesChat.length;
+            const badge = document.getElementById('chatBadge');
+            badge.style.display = 'flex';
+            badge.textContent = nuevos > 99 ? '99+' : nuevos;
+        }
+        
+        mensajesChat = mensajes;
+        
+        // Mostrar último mensaje del admin en pantalla (debajo del header)
+        const ultimoAdmin = mensajes.filter(m => m.admin && !m.sistema).pop();
+        if (ultimoAdmin) {
+            mostrarMensajeAdmin(ultimoAdmin.mensaje);
+        }
+    });
+}
+
+// Mostrar mensaje del admin en la pantalla principal
+function mostrarMensajeAdmin(mensaje) {
+    const msgDiv = document.getElementById('adminMensaje');
+    if (!msgDiv) return;
+    
+    msgDiv.textContent = '📢 ' + mensaje;
+    msgDiv.style.display = 'block';
+    
+    // Ocultar después de 8 segundos
+    clearTimeout(msgDiv._timeout);
+    msgDiv._timeout = setTimeout(() => {
+        msgDiv.style.display = 'none';
+    }, 8000);
+}
 
         function toggleChat() {
             const panel = document.getElementById('chatPanel');
