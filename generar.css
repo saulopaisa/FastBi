@@ -439,6 +439,7 @@ body {
     display: flex;
     z-index: 150;
     padding-bottom: env(safe-area-inset-bottom, 0);
+    flex-shrink: 0;
 }
 
 .nav-item {
@@ -504,30 +505,35 @@ body {
     .nav-item .nav-label { font-size: 0.5rem; }
 }
 
-/* ============ DESKTOP: DISEÑO HORIZONTAL ============ */
+/* ============ DESKTOP: DISEÑO HORIZONTAL CON SCROLL ============ */
 @media (min-width: 768px) {
     body {
-        flex-direction: row;
-        flex-wrap: wrap;
+        flex-direction: column;
+        overflow: hidden;
     }
     
+    /* Header SIEMPRE VISIBLE arriba */
     .app-header {
         display: flex;
-        width: 100%;
         flex-shrink: 0;
+        width: 100%;
     }
     
+    /* Contenido con scroll */
     .app-content {
         display: flex;
         gap: 15px;
         padding: 15px;
         padding-bottom: calc(var(--nav-height) + 15px);
         flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
         max-width: 100%;
         margin: 0 auto;
         width: 100%;
     }
     
+    /* Vista cartones: panel izquierdo sticky + grid derecho */
     #sectionCartones.activo {
         display: flex;
         gap: 15px;
@@ -536,6 +542,7 @@ body {
         width: 100%;
     }
     
+    /* Columna izquierda fija */
     .cartones-left-col {
         flex: 0 0 340px;
         max-width: 340px;
@@ -544,14 +551,16 @@ body {
         flex-direction: column;
         gap: 12px;
         position: sticky;
-        top: 15px;
+        top: 0;
     }
     
+    /* Grid derecho con scroll propio si es necesario */
     .cartones-right-col {
         flex: 1;
         min-width: 0;
     }
     
+    /* Grid de cartones HORIZONTAL: muchas columnas */
     .cartones-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
@@ -562,6 +571,7 @@ body {
     .carton-bingo-cell { font-size: 0.72em; }
     .carton-bingo-header div { font-size: 0.68em; padding: 6px 2px; }
     
+    /* Info bar EN GRANDE */
     .info-bar {
         flex-direction: row;
         justify-content: space-around;
@@ -572,6 +582,7 @@ body {
     .info-value { font-size: 2.4em; }
     .info-label { font-size: 0.75em; }
     
+    /* Vista jugadores */
     #sectionJugadores.activo {
         display: flex;
         gap: 15px;
@@ -582,20 +593,24 @@ body {
     
     #sectionJugadores .panel-card { flex: 1; max-width: 500px; }
     
+    /* Vista config */
     #sectionConfig.activo {
         max-width: 500px;
         margin: 0 auto;
         width: 100%;
     }
     
+    /* Bottom nav siempre abajo */
     .bottom-nav {
         justify-content: center;
         width: 100%;
+        flex-shrink: 0;
     }
     
     .nav-item { max-width: 200px; }
 }
 
+/* ============ PANTALLAS GRANDES ============ */
 @media (min-width: 1024px) {
     .cartones-left-col { flex: 0 0 360px; max-width: 360px; }
     .cartones-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
