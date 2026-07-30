@@ -218,7 +218,9 @@ function enviarChat() {
     
     var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
     db.ref('partidas/' + salaId + '/chat').push({
-        mensaje: mensaje, timestamp: Date.now(), admin: true
+        mensaje: mensaje, 
+        timestamp: Date.now(), 
+        admin: true
     });
     input.value = '';
 }
@@ -245,7 +247,16 @@ function escucharChat() {
         
         mensajes.forEach(function(msg) {
             var div = document.createElement('div');
-            div.className = 'msg-item ' + (msg.admin ? 'msg-admin' : 'msg-jugador');
+            if (msg.sistema) {
+                div.className = 'msg-item';
+                div.style.background = '#fef3c7';
+                div.style.color = '#92400e';
+                div.style.textAlign = 'center';
+                div.style.margin = '4px auto';
+                div.style.fontStyle = 'italic';
+            } else {
+                div.className = 'msg-item ' + (msg.admin ? 'msg-admin' : 'msg-jugador');
+            }
             div.innerHTML = msg.mensaje + '<div class="msg-timestamp">' + new Date(msg.timestamp).toLocaleTimeString() + '</div>';
             contenedor.appendChild(div);
         });
@@ -259,6 +270,45 @@ function escucharChat() {
         }
     });
 }
+
+// ============ GESTIÓN DE CHAT DESDE MÓVIL ============
+window.abrirControlChat = function() {
+    var jugadores = window.jugadoresActivos || [];
+    if (jugadores.length === 0) {
+        alert('No hay jugadores activos');
+        return;
+    }
+    
+    var lista = 'JUGADORES:\n\n';
+    jugadores.forEach(function(j, i) {
+        lista += (i + 1) + '. ' + j + '\n';
+    });
+    
+    var jugador = prompt(lista + '\nEscribe el nombre del jugador para DESBLOQUEAR chat:');
+    if (jugador && jugadores.indexOf(jugador) !== -1) {
+        var minutos = prompt('¿Por cuántos minutos? (1-10):', '2');
+        minutos = parseInt(minutos) || 2;
+        if (minutos < 1) minutos = 1;
+        if (minutos > 10) minutos = 10;
+        
+        if (window.desbloquearChatJugador) {
+            window.desbloquearChatJugador(jugador, minutos);
+        }
+    }
+};
+
+// Agregar botón de gestión al chat
+setTimeout(function() {
+    var chatHeader = document.querySelector('.chat-header');
+    if (chatHeader) {
+        var btnGestion = document.createElement('button');
+        btnGestion.textContent = '🔓';
+        btnGestion.style.cssText = 'background:#10b981;border:none;color:white;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:0.7em;margin-left:8px;';
+        btnGestion.onclick = window.abrirControlChat;
+        btnGestion.title = 'Gestionar chat de jugadores';
+        chatHeader.appendChild(btnGestion);
+    }
+}, 500);
 
 // ============ COPIAR SALA ============
 function copiarSalaId() {
@@ -341,14 +391,6 @@ function inicializarTableroMovil() {
         if (window.cantados && window.cantados.indexOf(i) !== -1) div.classList.add('cantada');
         grid.appendChild(div);
     }
-}
-
-function obtenerLetra(n) {
-    if (n <= 15) return 'B';
-    if (n <= 30) return 'I';
-    if (n <= 45) return 'N';
-    if (n <= 60) return 'G';
-    return 'O';
 }
 
 // ============ INICIAR ============
