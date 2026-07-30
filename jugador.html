@@ -2,595 +2,1049 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>Bingo Pro - Jugador</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Multijugador - FastBi</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
     <style>
         :root {
-            --bg-dark: #0b0f1a; --sidebar-bg: #16213e; --text-white: #ffffff;
-            --text-gray: #94a3b8; --text-dark: #1e293b; --red: #ff4d4d;
-            --gold: #ffb703; --success: #10b981; --blue: #3b82f6; --danger: #ef4444;
-            --purple: #8b5cf6; --orange: #f59e0b;
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --dark: #2C3E50;
+            --light: #ECF0F1;
+            --success: #2ECC71;
+            --warning: #F39C12;
+            --danger: #E74C3C;
+            --bingo-gold: #FFD700;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg-dark); color: var(--text-white);
-            min-height: 100vh; padding: 10px; user-select: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
         }
 
-        .container { max-width: 1000px; margin: 0 auto; }
+        /* Modo oscuro */
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+        }
 
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        body.dark-mode .container {
+            background: rgba(30, 30, 50, 0.95);
+            color: #fff;
+        }
+
+        /* Header */
         .header {
-            text-align: center; padding: 12px;
-            background: linear-gradient(180deg, var(--sidebar-bg), #0f172a);
-            border-radius: 12px; margin-bottom: 10px; border: 2px solid #2d3436;
-        }
-        .header h1 { color: var(--red); font-size: 1.3rem; font-weight: 900; margin-bottom: 3px; }
-        .header .jugador-nombre { color: var(--success); font-size: 1rem; font-weight: bold; }
-
-        .cronometro-jugador {
-            text-align: center; padding: 8px; margin-bottom: 10px;
-            background: #000; border-radius: 10px; border: 1px solid #334155;
-        }
-        .cronometro-jugador .tiempo { font-family: 'Courier New', monospace; font-size: 2rem; color: var(--red); font-weight: bold; }
-        .cronometro-jugador .estado-cron { font-size: 0.7rem; color: var(--text-gray); }
-
-        .pausa-info {
-            text-align: center; padding: 10px; margin-bottom: 10px;
-            background: #f59e0b; color: #16213e; border-radius: 8px;
-            font-weight: bold; animation: pulse 1s infinite; display: none;
-        }
-        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.7;} }
-
-        /* ============ CHAT VISIBLE ============ */
-        .chat-jugador {
-            background: var(--sidebar-bg);
-            border-radius: 12px;
-            margin-bottom: 10px;
-            border: 1px solid #2d3436;
-            overflow: hidden;
-        }
-        .chat-jugador-header {
-            background: #6366f1;
-            padding: 8px 12px;
-            font-weight: bold;
-            font-size: 0.8rem;
             text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        /* Estado de conexión */
+        .connection-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        .connection-status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .connection-status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .online .status-dot {
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        .offline .status-dot {
+            background: #dc3545;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Panel de control */
+        .control-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .panel-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        body.dark-mode .panel-section {
+            background: #2d2d44;
+        }
+
+        .panel-section h2 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        /* Botones */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 600;
             cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,107,107,0.4);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #27ae60;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Input estilizado */
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--dark);
+            font-weight: 500;
+        }
+
+        body.dark-mode .input-group label {
+            color: #fff;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Cartón de Bingo */
+        .bingo-card {
+            background: white;
+            border-radius: 15px;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 500px;
+            margin: 0 auto;
+            transition: all 0.3s ease;
+        }
+
+        .bingo-card.winner {
+            animation: winGlow 1s infinite;
+            box-shadow: 0 0 30px gold;
+        }
+
+        @keyframes winGlow {
+            0%, 100% { box-shadow: 0 0 10px gold; }
+            50% { box-shadow: 0 0 30px gold, 0 0 60px gold; }
+        }
+
+        .bingo-header {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+
+        .bingo-header-cell {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.5em;
+            border-radius: 10px;
+        }
+
+        .bingo-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+        }
+
+        .bingo-cell {
+            aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
         }
-        .chat-jugador-header:hover { background: #4f46e5; }
-        .chat-jugador-mensajes {
-            max-height: 150px;
+
+        body.dark-mode .bingo-cell {
+            background: #3d3d5c;
+            border-color: #555;
+        }
+
+        .bingo-cell:hover {
+            background: #e3f2fd;
+            transform: scale(1.05);
+        }
+
+        .bingo-cell.marked {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .bingo-cell.marked::after {
+            content: '✓';
+            position: absolute;
+            font-size: 0.7em;
+            top: 5px;
+            right: 5px;
+        }
+
+        .bingo-cell.free {
+            background: var(--bingo-gold);
+            color: var(--dark);
+            font-weight: bold;
+        }
+
+        .bingo-cell.numero-cantado {
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Últimos números */
+        .last-numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .number-ball {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            animation: bounceIn 0.5s;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        /* Chat */
+        .chat-container {
+            margin-top: 20px;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        body.dark-mode .chat-container {
+            background: #2d2d44;
+        }
+
+        .chat-messages {
+            max-height: 300px;
             overflow-y: auto;
-            padding: 8px;
-            background: #0f172a;
-            min-height: 50px;
-            display: block;
-        }
-        .chat-jugador-mensajes::-webkit-scrollbar { width: 3px; }
-        .chat-jugador-mensajes::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 2px; }
-        .chat-jugador-vacio { color: #64748b; font-size: 0.7rem; text-align: center; padding: 15px; }
-
-        .msg-item { margin-bottom: 5px; padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; max-width: 90%; word-wrap: break-word; }
-        .msg-admin { background: #6366f1; color: white; margin-left: auto; text-align: right; }
-        .msg-jugador { background: #334155; color: white; }
-        .msg-timestamp { font-size: 0.55rem; color: rgba(255,255,255,0.6); margin-top: 2px; }
-
-        /* ============ NOTIFICACIONES ============ */
-        .notificacion {
-            padding: 10px 15px; border-radius: 10px; margin-bottom: 8px;
-            text-align: center; animation: slideDown 0.5s; font-weight: bold; font-size: 0.85rem;
-        }
-        .notificacion.alerta { background: #ef4444; color: white; }
-        .notificacion.revisando { background: #f59e0b; color: #16213e; }
-        .notificacion.ganador { background: #10b981; color: white; }
-        .notificacion.nueva-partida { background: #8b5cf6; color: white; }
-        .notificacion.info { background: #334155; color: white; }
-        .notificacion.bingo-manual { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; border-left: 4px solid #ffca28; }
-        .notificacion.mensaje-admin { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; border-left: 4px solid #ffca28; }
-        .notificacion.bingo-otro { background: #ef4444; color: white; border-left: 4px solid #ffca28; font-size: 1rem; animation: slideDown 0.5s, pulse 1s infinite; }
-        @keyframes slideDown { from{transform:translateY(-100%);opacity:0;} to{transform:translateY(0);opacity:1;} }
-
-        .numeros-section {
-            background: var(--sidebar-bg); border-radius: 12px; padding: 12px;
-            margin-bottom: 10px; border: 1px solid #2d3436;
-        }
-        .numeros-section h3 { color: var(--gold); font-size: 0.8rem; margin-bottom: 8px; text-align: center; }
-
-        .ultima-bola-jugador { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px; }
-        .bola-grande {
-            background: linear-gradient(135deg, #ff4d4d, #dc2626); color: white;
-            width: 70px; height: 70px; border-radius: 50%;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            box-shadow: 0 0 20px rgba(255,77,77,0.5); animation: pulse 1s infinite;
-        }
-        .bola-grande .letra { font-size: 1.1rem; font-weight: 900; line-height: 1; }
-        .bola-grande .numero { font-size: 1.8rem; font-weight: 900; line-height: 1; }
-
-        .ultimos-numeros { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; }
-        .num-chico {
-            background: white; color: var(--text-dark); padding: 3px 8px;
-            border-radius: 12px; font-weight: bold; font-size: 0.7rem; border: 2px solid #e2e8f0;
-        }
-        .num-chico.cantado { background: linear-gradient(135deg, #ffca28, #ffb300); color: #16213e; border-color: #f59e0b; }
-
-        .voz-control { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 6px 0; }
-        .btn-voz { padding: 5px 12px; border: none; border-radius: 15px; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
-        .btn-voz.activada { background: #10b981; color: white; }
-        .btn-voz.desactivada { background: #6b7280; color: white; }
-
-        .btn-ver-numeros {
-            display: block; margin: 6px auto; padding: 6px 15px;
-            background: #3b82f6; color: white; border: none; border-radius: 15px;
-            cursor: pointer; font-size: 0.75rem; font-weight: bold;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
         }
 
-        .controles-vista { display: flex; gap: 8px; justify-content: center; margin-bottom: 10px; }
-        .btn-vista { padding: 8px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.8rem; background: #334155; color: white; transition: all 0.2s; }
-        .btn-vista.activo { background: #3b82f6; }
-
-        .cartones-grid { display: grid; gap: 12px; margin-bottom: 12px; }
-        .cartones-grid.horizontal { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-        .cartones-grid.vertical { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-
-        .carton-card {
-            background: white; color: var(--text-dark); border-radius: 12px;
-            padding: 15px; cursor: pointer; transition: all 0.3s;
-            border: 3px solid #e2e8f0; position: relative;
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 15px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            animation: slideIn 0.3s;
         }
-        .carton-card:hover { transform: translateY(-2px); }
-        .carton-card.seleccionado { border-color: var(--success); box-shadow: 0 0 15px rgba(16,185,129,0.4); background: #f0fdf4; }
-        .carton-card .carton-check {
-            position: absolute; top: 8px; right: 8px; width: 26px; height: 26px;
-            border-radius: 50%; background: #e2e8f0; display: flex;
-            align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
-        .carton-card.seleccionado .carton-check { background: var(--success); color: white; }
-        .carton-numero { text-align: center; font-size: 1rem; font-weight: 900; color: var(--red); margin-bottom: 10px; }
 
-        .carton-tabla { width: 100%; border-collapse: collapse; }
-        .carton-tabla th { background: #ff4d4d; color: white; padding: 10px 6px; font-size: 0.9rem; border: 1px solid #e2e8f0; }
-        .carton-tabla td {
-            padding: 12px 4px; border: 1px solid #e2e8f0; text-align: center;
-            font-weight: bold; font-size: 1rem; cursor: pointer;
-            transition: all 0.2s; min-width: 35px; min-height: 40px;
-            -webkit-tap-highlight-color: transparent;
+        .chat-input {
+            display: flex;
+            gap: 10px;
         }
-        .carton-tabla td:active { transform: scale(0.95); }
-        .carton-tabla td.free { background: #fef3c7; font-size: 1.2rem; cursor: default; }
-        .carton-tabla td.marcado { background: #10b981 !important; color: white !important; }
-        .carton-tabla td.patron { border: 3px solid #f59e0b !important; }
 
-        .btn-bingo-container { text-align: center; margin-bottom: 12px; }
-        .btn-bingo {
-            background: linear-gradient(135deg, #ef4444, #dc2626); color: white;
-            border: none; padding: 16px 35px; border-radius: 15px; font-weight: 900;
-            cursor: pointer; font-size: 1.1rem; transition: all 0.3s;
-            box-shadow: 0 4px 20px rgba(239,68,68,0.4); animation: glowBingo 2s infinite;
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
         }
-        .btn-bingo:disabled { background: #6b7280 !important; opacity: 0.5; animation: none; }
-        @keyframes glowBingo { 0%,100%{box-shadow:0 4px 20px rgba(239,68,68,0.4);} 50%{box-shadow:0 4px 35px rgba(239,68,68,0.8);} }
 
-        .bingo-info { text-align: center; color: var(--text-gray); font-size: 0.75rem; margin-top: 5px; }
-        .oportunidades { text-align: center; margin-top: 5px; font-size: 0.75rem; }
-        .ganados-info { text-align: center; margin-top: 5px; font-size: 0.75rem; color: #10b981; }
+        /* Modal de confirmación */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
 
-        .estado-juego { text-align: center; padding: 8px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; font-size: 0.85rem; }
-        .estado-juego.esperando { background: #334155; color: #94a3b8; }
-        .estado-juego.jugando { background: #10b981; color: white; }
-        .estado-juego.terminado { background: #ef4444; color: white; }
-        .estado-juego.pausa { background: #f59e0b; color: #16213e; animation: pulse 1s infinite; }
+        .modal.active {
+            display: flex;
+        }
 
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; }
-        .modal-overlay.activo { display: flex; }
         .modal-content {
-            background: var(--sidebar-bg); padding: 20px; border-radius: 15px;
-            width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto;
-            border: 2px solid var(--gold); color: white;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            animation: modalIn 0.3s;
         }
-        .modal-content h3 { text-align: center; color: var(--gold); margin-bottom: 15px; }
-        .modal-numeros { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
-        .btn-cerrar-modal { display: block; margin: 15px auto 0; padding: 10px 25px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
-        @media (max-width: 600px) {
-            .cartones-grid.horizontal { grid-template-columns: 1fr; }
-            .cartones-grid.vertical { grid-template-columns: repeat(2, 1fr); }
-            .carton-tabla td { padding: 10px 3px; font-size: 0.85rem; min-width: 28px; }
-            .bola-grande { width: 55px; height: 55px; }
-            .bola-grande .numero { font-size: 1.4rem; }
+        @keyframes modalIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Confeti */
+        .confetti {
+            position: fixed;
+            top: -10px;
+            animation: confettiFall 3s linear;
+        }
+
+        @keyframes confettiFall {
+            to { transform: translateY(100vh) rotate(720deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .control-panel {
+                grid-template-columns: 1fr;
+            }
+            
+            .bingo-cell {
+                font-size: 1em;
+            }
+        }
+
+        .mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
         }
     </style>
 </head>
 <body>
+    <button class="btn mode-toggle" onclick="toggleDarkMode()">🌓</button>
+
     <div class="container">
+        <!-- Header -->
         <div class="header">
-            <h1>🎯 BINGO PRO</h1>
-            <div class="jugador-nombre" id="jugadorNombre">Cargando...</div>
-        </div>
-
-        <div class="cronometro-jugador" id="cronometroJugador">
-            <div class="tiempo" id="tiempoCron">--:--</div>
-            <div class="estado-cron" id="estadoCron">Esperando inicio...</div>
-        </div>
-
-        <div class="pausa-info" id="pausaInfo">⏸️ PAUSA - Verifica tus números</div>
-
-        <div class="estado-juego esperando" id="estadoJuego">⏳ Esperando que inicie el juego...</div>
-
-        <!-- CHAT VISIBLE -->
-        <div class="chat-jugador" id="chatJugador">
-            <div class="chat-jugador-header" onclick="toggleChatJugador()">
-                💬 MENSAJES DEL ADMIN <span style="font-size:0.6rem;">(click para mostrar/ocultar)</span>
-            </div>
-            <div class="chat-jugador-mensajes" id="chatJugadorMensajes">
-                <p class="chat-jugador-vacio">No hay mensajes</p>
+            <h1>🎱 BINGO MULTIJUGADOR</h1>
+            <div id="connection-status" class="connection-status">
+                <span class="status-dot"></span>
+                <span class="status-text">Conectando...</span>
             </div>
         </div>
 
-        <div id="notificacionContainer"></div>
-
-        <div class="numeros-section">
-            <h3>📊 ÚLTIMO NÚMERO</h3>
-            <div class="ultima-bola-jugador">
-                <div class="bola-grande" id="ultimaBolaJugador">
-                    <span class="letra">-</span><span class="numero">--</span>
+        <!-- Panel de Control -->
+        <div class="control-panel">
+            <!-- Sección de Conexión -->
+            <div class="panel-section" id="connection-section">
+                <h2>🎮 Unirse al Juego</h2>
+                <div class="input-group">
+                    <label for="sala-id">ID de la Sala:</label>
+                    <input type="text" id="sala-id" placeholder="Ingresa el ID de la sala">
                 </div>
-                <div style="text-align:center;">
-                    <div style="color:#94a3b8;font-size:0.7rem;">Total</div>
-                    <div style="font-size:1.3rem;font-weight:900;color:#ffca28;" id="totalCantados">0/75</div>
+                <div class="input-group">
+                    <label for="jugador-nombre">Tu Nombre:</label>
+                    <input type="text" id="jugador-nombre" placeholder="Ingresa tu nombre">
                 </div>
+                <button class="btn btn-primary" onclick="unirseASala()">Unirse a la Sala</button>
+                <button class="btn btn-warning" onclick="salirDeSala()" style="margin-top: 10px; display: none;" id="btn-salir">Salir de la Sala</button>
             </div>
-            <div class="voz-control">
-                <span style="font-size:0.7rem;color:#94a3b8;">🔊</span>
-                <button class="btn-voz activada" id="btnVoz" onclick="toggleVoz()">VOZ</button>
+
+            <!-- Sección del Juego -->
+            <div class="panel-section" id="game-section" style="display: none;">
+                <h2>🎯 Juego en Progreso</h2>
+                <p>Sala: <strong id="sala-actual"></strong></p>
+                <p>Jugadores: <strong id="jugadores-count">0</strong></p>
+                <button class="btn btn-success" onclick="cantarBingo()" id="btn-bingo">¡BINGO!</button>
             </div>
-            <button class="btn-ver-numeros" onclick="abrirModalNumeros()">📋 VER TODOS</button>
-            <div class="ultimos-numeros" id="ultimosNumeros"></div>
         </div>
 
-        <div class="controles-vista">
-            <button class="btn-vista activo" id="btnHorizontal" onclick="cambiarVista('horizontal')">📱 HORIZONTAL</button>
-            <button class="btn-vista" id="btnVertical" onclick="cambiarVista('vertical')">📱 VERTICAL</button>
+        <!-- Últimos números cantados -->
+        <div class="last-numbers" id="last-numbers"></div>
+
+        <!-- Cartón de Bingo -->
+        <div class="bingo-card" id="bingo-card-container" style="display: none;">
+            <div class="bingo-header">
+                <div class="bingo-header-cell">B</div>
+                <div class="bingo-header-cell">I</div>
+                <div class="bingo-header-cell">N</div>
+                <div class="bingo-header-cell">G</div>
+                <div class="bingo-header-cell">O</div>
+            </div>
+            <div class="bingo-grid" id="bingo-grid"></div>
         </div>
 
-        <div class="cartones-grid horizontal" id="cartonesGrid">
-            <p style="color:#94a3b8;text-align:center;grid-column:1/-1;padding:40px;">Cargando cartones...</p>
-        </div>
-
-        <div class="btn-bingo-container">
-            <button class="btn-bingo" id="btnBingo" disabled onclick="cantarBingo()">🚨 ¡BINGO!</button>
-            <div class="bingo-info" id="bingoInfo">Selecciona un cartón para cantar BINGO</div>
-            <div class="oportunidades" id="oportunidadesInfo"></div>
-            <div class="ganados-info" id="ganadosInfo"></div>
+        <!-- Chat -->
+        <div class="chat-container" id="chat-container" style="display: none;">
+            <h3>💬 Chat de la Sala</h3>
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="chat-input">
+                <input type="text" id="chat-input" placeholder="Escribe un mensaje...">
+                <button class="btn btn-primary" onclick="enviarMensaje()">Enviar</button>
+            </div>
         </div>
     </div>
 
-    <div class="modal-overlay" id="modalNumeros">
+    <!-- Modal de Confirmación -->
+    <div class="modal" id="confirm-modal">
         <div class="modal-content">
-            <h3>📋 TODOS LOS NÚMEROS</h3>
-            <div class="modal-numeros" id="modalNumerosList"></div>
-            <button class="btn-cerrar-modal" onclick="cerrarModalNumeros()">CERRAR</button>
+            <h2>🎉 ¿Confirmar BINGO?</h2>
+            <p>¿Estás seguro de que tienes BINGO?</p>
+            <button class="btn btn-success" onclick="confirmarBingo()">Sí, ¡BINGO!</button>
+            <button class="btn btn-primary" onclick="cerrarModal()">Cancelar</button>
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
-            authDomain: "bingofast.firebaseapp.com",
-            databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
-            projectId: "bingofast",
-            storageBucket: "bingofast.firebasestorage.app",
-            messagingSenderId: "473863283329",
-            appId: "1:473863283329:web:2c4bf96de167d105fa6380"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+    <!-- Modal de Ganador -->
+    <div class="modal" id="winner-modal">
+        <div class="modal-content">
+            <h2>🏆 ¡FELICIDADES!</h2>
+            <p id="winner-message"></p>
+            <button class="btn btn-primary" onclick="cerrarModal()">Cerrar</button>
+        </div>
+    </div>
 
-        const params = new URLSearchParams(window.location.search);
-        let NOMBRE_JUGADOR = 'Jugador', CARTONES_IDS = [], SALA_ID = 'sala-default';
-        const dc = params.get('d');
-        if (dc) {
-            try {
-                const d = JSON.parse(decodeURIComponent(atob(dc)));
-                NOMBRE_JUGADOR = d.n || 'Jugador'; CARTONES_IDS = d.c || []; SALA_ID = d.s || 'sala-default';
-                if ((Date.now() - (d.t || 0)) / 3600000 > 24) { document.body.innerHTML = '<div style="text-align:center;padding:50px;color:#ef4444;">❌ Link expirado</div>'; throw new Error('Expirado'); }
-            } catch(e) {}
+    <script>
+        // ============ CONFIGURACIÓN DE FIREBASE ============
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwlYlqRqoKWEAcPn5q8HdQZ0JYPyfZiUM",
+            authDomain: "todolist-70474.firebaseapp.com",
+            projectId: "todolist-70474",
+            storageBucket: "todolist-70474.appspot.com",
+            messagingSenderId: "648317201696",
+            appId: "1:648317201696:web:9c5a34e3e8a4c7e8c8c8c8"
+        };
+
+        // Inicializar Firebase
+        let app, db;
+        try {
+            app = firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore(app);
+            console.log('Firebase inicializado correctamente');
+        } catch (error) {
+            console.error('Error inicializando Firebase:', error);
         }
 
-        let cartonesJugador = [], numerosCantados = [], cartonSeleccionado = null;
-        let vozActivada = true, ultimoNumeroVoz = null;
-        let bingosErrados = parseInt(sessionStorage.getItem('bingos_errados_' + SALA_ID) || '0');
-        let bingosGanados = parseInt(sessionStorage.getItem('bingos_ganados_' + SALA_ID) || '0');
-        let descalificado = sessionStorage.getItem('descalificado_' + SALA_ID) === 'true';
-        let patronActual = Array(25).fill(false);
-        let tiempoRestante = 0;
-        let intervaloCron = null;
+        // ============ VARIABLES GLOBALES ============
+        let salaActual = null;
+        let jugadorActual = null;
+        let cartonActual = null;
+        let numerosCantados = new Set();
+        let unsubscribeNumeros = null;
+        let unsubscribeChat = null;
 
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('jugadorNombre').textContent = '👤 ' + NOMBRE_JUGADOR;
-            if (CARTONES_IDS.length === 0) { document.getElementById('cartonesGrid').innerHTML = '<p style="color:#ef4444;">❌ Link inválido</p>'; return; }
-            actualizarInfo();
-            if (descalificado || bingosGanados >= 2) descalificarJugador();
-            cargarCartones();
-            escucharTodo();
-            escucharChat();
-        });
-
-        // ============ CHAT ============
-        function toggleChatJugador() {
-            var mensajes = document.getElementById('chatJugadorMensajes');
-            if (mensajes.style.display === 'none') {
-                mensajes.style.display = 'block';
+        // ============ FUNCIONES DE CONEXIÓN ============
+        function actualizarEstadoConexion(online) {
+            const statusDiv = document.getElementById('connection-status');
+            if (online) {
+                statusDiv.className = 'connection-status online';
+                statusDiv.querySelector('.status-text').textContent = 'Conectado';
             } else {
-                mensajes.style.display = 'none';
+                statusDiv.className = 'connection-status offline';
+                statusDiv.querySelector('.status-text').textContent = 'Desconectado';
             }
         }
 
-        function escucharChat() {
-            db.ref('partidas/' + SALA_ID + '/chat').limitToLast(30).on('value', function(snap) {
-                var contenedor = document.getElementById('chatJugadorMensajes');
-                if (!contenedor) return;
-                
-                if (!snap.exists()) {
-                    contenedor.innerHTML = '<p class="chat-jugador-vacio">No hay mensajes</p>';
-                    return;
+        // Monitorear estado de conexión
+        window.addEventListener('online', () => actualizarEstadoConexion(true));
+        window.addEventListener('offline', () => actualizarEstadoConexion(false));
+        actualizarEstadoConexion(navigator.onLine);
+
+        // ============ FUNCIONES DEL JUEGO ============
+        async function unirseASala() {
+            const salaId = document.getElementById('sala-id').value.trim();
+            const nombre = document.getElementById('jugador-nombre').value.trim();
+
+            if (!salaId || !nombre) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+
+            try {
+                // Verificar si la sala existe
+                const salaRef = db.collection('salas').doc(salaId);
+                const salaDoc = await salaRef.get();
+
+                if (!salaDoc.exists) {
+                    // Crear la sala si no existe
+                    await salaRef.set({
+                        creada: firebase.firestore.FieldValue.serverTimestamp(),
+                        estado: 'activa'
+                    });
                 }
-                
-                contenedor.innerHTML = '';
-                var mensajes = [];
-                snap.forEach(function(child) { mensajes.push(child.val()); });
-                mensajes.sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
-                
-                mensajes.forEach(function(msg) {
-                    var div = document.createElement('div');
-                    div.className = 'msg-item ' + (msg.admin ? 'msg-admin' : 'msg-jugador');
-                    div.innerHTML = msg.mensaje + '<div class="msg-timestamp">' + new Date(msg.timestamp).toLocaleTimeString() + '</div>';
-                    contenedor.appendChild(div);
+
+                // Registrar jugador
+                const jugadorRef = salaRef.collection('jugadores').doc(nombre);
+                await jugadorRef.set({
+                    nombre: nombre,
+                    unido: firebase.firestore.FieldValue.serverTimestamp(),
+                    bingo: false
                 });
+
+                salaActual = salaId;
+                jugadorActual = nombre;
+
+                // Generar cartón
+                cartonActual = generarCarton();
+                guardarCartonLocal(cartonActual);
+                mostrarCarton(cartonActual);
+
+                // Mostrar secciones del juego
+                document.getElementById('game-section').style.display = 'block';
+                document.getElementById('bingo-card-container').style.display = 'block';
+                document.getElementById('chat-container').style.display = 'block';
+                document.getElementById('btn-salir').style.display = 'inline-block';
+                document.getElementById('sala-actual').textContent = salaId;
+
+                // Escuchar números cantados
+                escucharNumerosCantados(salaId);
                 
-                contenedor.scrollTop = contenedor.scrollHeight;
+                // Inicializar chat
+                inicializarChat(salaId);
                 
-                if (mensajes.length > 0) {
-                    var ultimo = mensajes[mensajes.length - 1];
-                    if (ultimo.admin && ultimo.timestamp > (parseInt(sessionStorage.getItem('lastMsg_' + SALA_ID) || '0'))) {
-                        sessionStorage.setItem('lastMsg_' + SALA_ID, ultimo.timestamp.toString());
-                        mostrarNotificacion('📝 Admin: ' + ultimo.mensaje, 'mensaje-admin');
+                // Escuchar jugadores
+                escucharJugadores(salaId);
+
+                actualizarEstadoConexion(true);
+                console.log(`Unido a la sala ${salaId} como ${nombre}`);
+            } catch (error) {
+                console.error('Error al unirse a la sala:', error);
+                alert('Error al unirse a la sala: ' + error.message);
+            }
+        }
+
+        async function salirDeSala() {
+            if (!salaActual || !jugadorActual) return;
+
+            try {
+                // Eliminar jugador de la sala
+                await db.collection('salas').doc(salaActual)
+                    .collection('jugadores').doc(jugadorActual).delete();
+
+                // Limpiar listeners
+                if (unsubscribeNumeros) unsubscribeNumeros();
+                if (unsubscribeChat) unsubscribeChat();
+
+                // Resetear estado
+                salaActual = null;
+                jugadorActual = null;
+                cartonActual = null;
+                numerosCantados.clear();
+
+                // Ocultar secciones del juego
+                document.getElementById('game-section').style.display = 'none';
+                document.getElementById('bingo-card-container').style.display = 'none';
+                document.getElementById('chat-container').style.display = 'none';
+                document.getElementById('btn-salir').style.display = 'none';
+                document.getElementById('last-numbers').innerHTML = '';
+                document.getElementById('bingo-grid').innerHTML = '';
+
+                console.log('Sala abandonada');
+            } catch (error) {
+                console.error('Error al salir de la sala:', error);
+            }
+        }
+
+        // ============ GENERACIÓN DE CARTÓN ============
+        function generarCarton() {
+            const rangos = [
+                [1, 15],   // B
+                [16, 30],  // I
+                [31, 45],  // N
+                [46, 60],  // G
+                [61, 75]   // O
+            ];
+
+            const carton = Array(5).fill().map(() => Array(5).fill(0));
+            const numerosUsados = new Set();
+
+            for (let col = 0; col < 5; col++) {
+                const [min, max] = rangos[col];
+                const columnaNumeros = [];
+
+                while (columnaNumeros.length < 5) {
+                    const num = Math.floor(Math.random() * (max - min + 1)) + min;
+                    if (!numerosUsados.has(num)) {
+                        numerosUsados.add(num);
+                        columnaNumeros.push(num);
+                    }
+                }
+
+                columnaNumeros.sort((a, b) => a - b);
+                
+                for (let row = 0; row < 5; row++) {
+                    if (col === 2 && row === 2) {
+                        carton[row][col] = 'FREE';
+                    } else {
+                        carton[row][col] = columnaNumeros[row];
+                    }
+                }
+            }
+
+            return carton;
+        }
+
+        function mostrarCarton(carton) {
+            const grid = document.getElementById('bingo-grid');
+            grid.innerHTML = '';
+
+            for (let i = 0; i < 5; i++) {
+                for (let j = 0; j < 5; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'bingo-cell';
+                    
+                    if (carton[i][j] === 'FREE') {
+                        cell.textContent = 'FREE';
+                        cell.classList.add('free', 'marked');
+                    } else {
+                        cell.textContent = carton[i][j];
+                        cell.onclick = () => marcarCelda(cell, carton[i][j]);
+                    }
+                    
+                    cell.dataset.numero = carton[i][j];
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        function marcarCelda(cell, numero) {
+            if (numerosCantados.has(numero)) {
+                cell.classList.toggle('marked');
+                verificarBingoAutomatico();
+            }
+        }
+
+        // ============ ESCUCHAR NÚMEROS CANTADOS ============
+        function escucharNumerosCantados(salaId) {
+            if (unsubscribeNumeros) unsubscribeNumeros();
+
+            unsubscribeNumeros = db.collection('salas').doc(salaId)
+                .collection('numeros_cantados')
+                .orderBy('timestamp', 'desc')
+                .limit(10)
+                .onSnapshot((snapshot) => {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === 'added') {
+                            const numero = change.doc.data().numero;
+                            numerosCantados.add(numero);
+                            mostrarNumeroCantado(numero);
+                            marcarNumeroEnCarton(numero);
+                        }
+                    });
+                }, (error) => {
+                    console.error('Error escuchando números:', error);
+                    actualizarEstadoConexion(false);
+                });
+        }
+
+        function mostrarNumeroCantado(numero) {
+            const container = document.getElementById('last-numbers');
+            
+            // Limitar a 10 números mostrados
+            if (container.children.length >= 10) {
+                container.removeChild(container.lastChild);
+            }
+
+            const ball = document.createElement('div');
+            ball.className = 'number-ball';
+            ball.textContent = numero;
+            container.insertBefore(ball, container.firstChild);
+
+            // Efecto de sonido (simulado con animación)
+            ball.style.animation = 'none';
+            ball.offsetHeight; // Trigger reflow
+            ball.style.animation = 'bounceIn 0.5s';
+        }
+
+        function marcarNumeroEnCarton(numero) {
+            const celdas = document.querySelectorAll('.bingo-cell');
+            celdas.forEach(celda => {
+                const cellNum = celda.dataset.numero;
+                if (cellNum && parseInt(cellNum) === numero) {
+                    celda.classList.add('marked', 'numero-cantado');
+                    
+                    // Remover animación después de que termine
+                    celda.addEventListener('animationend', () => {
+                        celda.classList.remove('numero-cantado');
+                    }, { once: true });
+                }
+            });
+        }
+
+        // ============ VERIFICACIÓN DE BINGO ============
+        function verificarBingoAutomatico() {
+            if (!cartonActual) return false;
+            
+            const celdas = document.querySelectorAll('.bingo-cell');
+            const marcadas = new Set();
+            
+            celdas.forEach(celda => {
+                if (celda.classList.contains('marked')) {
+                    const num = celda.dataset.numero;
+                    if (num && num !== 'FREE') {
+                        marcadas.add(parseInt(num));
                     }
                 }
             });
-        }
 
-        function cambiarVista(tipo) {
-            const grid = document.getElementById('cartonesGrid');
-            grid.classList.remove('horizontal', 'vertical'); grid.classList.add(tipo);
-            document.getElementById('btnHorizontal').classList.toggle('activo', tipo === 'horizontal');
-            document.getElementById('btnVertical').classList.toggle('activo', tipo === 'vertical');
-        }
-
-        function cargarCartones() {
-            db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) {
-                cartonesJugador = [];
-                CARTONES_IDS.forEach(function(id) { const c = snap.child(id).val(); if (c) cartonesJugador.push(c); });
-                mostrarCartones();
-            });
-        }
-
-        function toggleMarcar(cartonIndex, letra, fila, valor, evento) {
-            evento.stopPropagation();
-            if (letra === 'N' && fila === 2) return;
-            if (descalificado || bingosGanados >= 2) { alert('❌ No puedes jugar más'); return; }
-            const key = 'marcas_' + SALA_ID + '_' + cartonIndex;
-            let marcas = JSON.parse(localStorage.getItem(key) || '[]');
-            const celda = letra + '-' + fila;
-            if (marcas.includes(celda)) marcas = marcas.filter(m => m !== celda);
-            else marcas.push(celda);
-            localStorage.setItem(key, JSON.stringify(marcas));
-            mostrarCartones();
-        }
-
-        function estaMarcado(idx, l, f) { return (JSON.parse(localStorage.getItem('marcas_' + SALA_ID + '_' + idx) || '[]')).includes(l + '-' + f); }
-        function esPartePatron(letra, fila) { return patronActual[['B','I','N','G','O'].indexOf(letra) + fila * 5]; }
-
-        function mostrarCartones() {
-            const grid = document.getElementById('cartonesGrid'); grid.innerHTML = '';
-            cartonesJugador.forEach(function(c, index) {
-                const card = document.createElement('div'); card.className = 'carton-card';
-                if (cartonSeleccionado === index) card.classList.add('seleccionado');
-                card.onclick = function(e) { if (e.target.tagName !== 'TD') seleccionarCarton(index); };
-                let t = '<table class="carton-tabla"><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
-                if (c.carton) { for (let f=0;f<5;f++) { t+='<tr>'; ['B','I','N','G','O'].forEach(function(l){ const v=c.carton[l][f], centro=(l==='N'&&f===2); const marcado=centro||estaMarcado(index,l,f); const patron=esPartePatron(l,f); t+='<td class="'+(centro?'free':'')+(marcado?' marcado':'')+(patron?' patron':'')+'" onclick="toggleMarcar('+index+',\''+l+'\','+f+','+v+',event)" title="'+(centro?'FREE':(marcado?'Marcado':'Tocar'))+'">'+(centro?'⭐':v)+'</td>'; }); t+='</tr>'; } }
-                t += '</table>';
-                card.innerHTML = '<div class="carton-check">'+(cartonSeleccionado===index?'✓':'')+'</div><div class="carton-numero">Cartón #'+(c.numero||(index+1))+'</div>'+t;
-                grid.appendChild(card);
-            });
-            actualizarBtnBingo();
-        }
-
-        function seleccionarCarton(index) { cartonSeleccionado = (cartonSeleccionado === index) ? null : index; mostrarCartones(); }
-        function actualizarBtnBingo() {
-            const btn = document.getElementById('btnBingo'), info = document.getElementById('bingoInfo');
-            if (descalificado || bingosGanados >= 2) { btn.disabled = true; btn.textContent = bingosGanados >= 2 ? '🏆 MÁXIMO ALCANZADO' : '🚫 DESCALIFICADO'; }
-            else if (cartonSeleccionado !== null) { btn.disabled = false; info.textContent = 'Cartón #'+(cartonesJugador[cartonSeleccionado]?.numero||'?')+' seleccionado'; info.style.color = '#10b981'; }
-            else { btn.disabled = true; info.textContent = 'Selecciona un cartón'; info.style.color = '#94a3b8'; }
-        }
-        function actualizarInfo() {
-            const op = document.getElementById('oportunidadesInfo'), r = 2 - bingosErrados;
-            if (r <= 0) op.innerHTML = '<span style="color:#ef4444;">❌ Sin oportunidades</span>';
-            else if (r === 1) op.innerHTML = '<span style="color:#f59e0b;">⚠️ 1 oportunidad</span>';
-            else op.innerHTML = '<span style="color:#10b981;">✅ ' + r + ' oportunidades</span>';
-            document.getElementById('ganadosInfo').textContent = bingosGanados > 0 ? '🏆 Ganados: ' + bingosGanados + '/2' : '';
-        }
-        function descalificarJugador() { descalificado = true; sessionStorage.setItem('descalificado_' + SALA_ID, 'true'); actualizarBtnBingo(); mostrarCartones(); }
-        function cantarBingo() {
-            if (descalificado || bingosGanados >= 2 || cartonSeleccionado === null) return;
-            const carton = cartonesJugador[cartonSeleccionado];
-            if (confirm('¿Cantar BINGO con Cartón #'+(carton.numero||'?')+'?')) {
-                db.ref('bingos/' + SALA_ID).push({ jugador: NOMBRE_JUGADOR, cartonId: carton.id, cartonNumero: carton.numero, timestamp: Date.now() });
-                document.getElementById('btnBingo').disabled = true;
-                document.getElementById('btnBingo').textContent = '⏳ REVISANDO...';
-                mostrarNotificacion('🚨 Has cantado BINGO. El admin está revisando...', 'bingo-manual');
-            }
-        }
-
-        function reiniciarParaNuevaPartida() {
-    numerosCantados = [];
-    bingosErrados = 0;
-    bingosGanados = 0;
-    descalificado = false;
-    cartonSeleccionado = null;
-    patronActual = Array(25).fill(false);
-    
-    sessionStorage.removeItem('bingos_errados_' + SALA_ID);
-    sessionStorage.removeItem('bingos_ganados_' + SALA_ID);
-    sessionStorage.removeItem('descalificado_' + SALA_ID);
-    sessionStorage.removeItem('alerta_' + SALA_ID);
-    sessionStorage.removeItem('msg_' + SALA_ID);
-    sessionStorage.removeItem('lastMsg_' + SALA_ID);
-    sessionStorage.removeItem('bingo_cantado_' + SALA_ID);
-    
-    for (let i = 0; i < 4; i++) {
-        localStorage.removeItem('marcas_' + SALA_ID + '_' + i);
-    }
-    
-    const btnBingo = document.getElementById('btnBingo');
-    btnBingo.disabled = false;
-    btnBingo.textContent = '🚨 ¡BINGO!';
-    btnBingo.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
-    
-    document.getElementById('totalCantados').textContent = '0/75';
-    document.getElementById('estadoJuego').className = 'estado-juego esperando';
-    document.getElementById('estadoJuego').textContent = '⏳ Nueva partida...';
-    
-    const ub = document.getElementById('ultimaBolaJugador');
-    ub.querySelector('.letra').textContent = '-';
-    ub.querySelector('.numero').textContent = '--';
-    
-    document.getElementById('ultimosNumeros').innerHTML = '';
-    for (let i = 0; i < 5; i++) {
-        const s = document.createElement('span');
-        s.className = 'num-chico'; s.style.opacity = '0.3'; s.textContent = '--';
-        document.getElementById('ultimosNumeros').appendChild(s);
-    }
-    
-    document.getElementById('notificacionContainer').innerHTML = '';
-    document.getElementById('tiempoCron').textContent = '--:--';
-    document.getElementById('estadoCron').textContent = 'Esperando inicio...';
-    document.getElementById('pausaInfo').style.display = 'none';
-    
-    actualizarInfo();
-    document.getElementById('bingoInfo').textContent = 'Selecciona un cartón';
-    document.getElementById('bingoInfo').style.color = '#94a3b8';
-    
-    cargarCartones();
-    
-    // NOTIFICACIÓN VISUAL Y SONORA
-    mostrarNotificacion('🔄 ¡NUEVA PARTIDA! El admin ha reiniciado el juego. Todo limpio.', 'nueva-partida');
-    
-    if ('speechSynthesis' in window) {
-        const msg = new SpeechSynthesisUtterance('Nueva partida. El admin ha reiniciado el juego.');
-        msg.lang = 'es-ES';
-        window.speechSynthesis.speak(msg);
-    }
-}
-
-function escucharTodo() {
-    db.ref('partidas/' + SALA_ID).on('value', function(snap) {
-        const data = snap.val();
-        if (!data) return;
-        
-        // DETECTAR NUEVA PARTIDA
-        if (data.estado === 'nueva_partida') {
-            reiniciarParaNuevaPartida();
-            return;
-        }
-        
-        // DETECTAR TERMINADO
-        if (data.estado === 'terminado') {
-            document.getElementById('estadoJuego').className = 'estado-juego terminado';
-            document.getElementById('estadoJuego').textContent = '🏁 Terminado' + (data.ganador ? ' - Ganador: ' + data.ganador : '');
-            setTimeout(function() { document.getElementById('notificacionContainer').innerHTML = ''; }, 3000);
-            return;
-        }
-        
-        if (data.patron) patronActual = data.patron;
-        
-        const estadoEl = document.getElementById('estadoJuego');
-        if (data.estado === 'jugando') { estadoEl.className = 'estado-juego jugando'; estadoEl.textContent = '▶️ Juego en progreso'; }
-        else if (data.estado === 'pausa') { estadoEl.className = 'estado-juego pausa'; estadoEl.textContent = '⏸️ PAUSA'; document.getElementById('pausaInfo').style.display = 'block'; }
-        else if (data.estado === 'iniciando') { estadoEl.className = 'estado-juego jugando'; estadoEl.textContent = '🔔 ¡El juego va a comenzar!'; }
-        if (!data.pausa) document.getElementById('pausaInfo').style.display = 'none';
-        
-        if (data.mensajeAdmin && data.mensajeAdmin !== sessionStorage.getItem('msg_' + SALA_ID)) {
-            sessionStorage.setItem('msg_' + SALA_ID, data.mensajeAdmin);
-            mostrarNotificacion('📝 Admin: ' + data.mensajeAdmin, 'mensaje-admin');
-        }
-        
-        if (data.bingoCantado && data.bingoCantado !== sessionStorage.getItem('bingo_cantado_' + SALA_ID)) {
-            sessionStorage.setItem('bingo_cantado_' + SALA_ID, data.bingoCantado);
-            if (data.bingoCantado !== NOMBRE_JUGADOR) {
-                mostrarNotificacion('🚨 ¡' + data.bingoCantado + ' ha cantado BINGO!', 'bingo-otro');
-            }
-        }
-        
-        if (data.revisando && data.revisando.activo) {
-            if (data.revisando.jugador === NOMBRE_JUGADOR) { mostrarNotificacion('🔍 El admin está revisando TU bingo...', 'revisando'); }
-            else { mostrarNotificacion('🔍 Revisando bingo de ' + data.revisando.jugador, 'info'); }
-        }
-        
-        if (data.resultadoRevision && data.resultadoRevision.jugador === NOMBRE_JUGADOR) {
-            if (data.resultadoRevision.resultado === 'errado') {
-                bingosErrados++; sessionStorage.setItem('bingos_errados_' + SALA_ID, bingosErrados.toString()); actualizarInfo();
-                document.getElementById('btnBingo').disabled = false;
-                document.getElementById('btnBingo').textContent = '🚨 ¡BINGO!';
-                document.getElementById('btnBingo').style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
-                if (bingosErrados >= 2) descalificarJugador();
-            } else if (data.resultadoRevision.resultado === 'valido') {
-                bingosGanados++; sessionStorage.setItem('bingos_ganados_' + SALA_ID, bingosGanados.toString()); actualizarInfo();
-                if (bingosGanados >= 2) { document.getElementById('btnBingo').disabled = true; document.getElementById('btnBingo').textContent = '🏆 MÁXIMO ALCANZADO'; }
-                mostrarNotificacion('🎉 ¡BINGO VÁLIDO! Has ganado ' + bingosGanados + '/2', 'ganador');
-            }
-        }
-        
-        if (data.cantados && data.cantados.length > 0) {
-            if (data.cantados.length > numerosCantados.length && data.ultimaBola && data.ultimaBola !== ultimoNumeroVoz) {
-                ultimoNumeroVoz = data.ultimaBola;
-                if (vozActivada && 'speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                    const msg = new SpeechSynthesisUtterance(obtenerLetra(data.ultimaBola) + ' ' + data.ultimaBola);
-                    msg.lang = 'es-ES'; msg.rate = 0.8; window.speechSynthesis.speak(msg);
+            // Verificar filas
+            for (let i = 0; i < 5; i++) {
+                const fila = cartonActual[i].filter(n => n !== 'FREE');
+                if (fila.every(n => marcadas.has(n))) {
+                    return true;
                 }
             }
-            numerosCantados = data.cantados;
-            actualizarDisplay(data);
-            mostrarCartones();
-        }
-        
-        if (data.cronometro !== undefined) { tiempoRestante = data.cronometro; actualizarCronometro(); if (data.cronometro > 0 && !intervaloCron) iniciarCronometro(); }
-        if (data.alertaInicio && data.alertaInicio !== sessionStorage.getItem('alerta_' + SALA_ID)) {
-            sessionStorage.setItem('alerta_' + SALA_ID, data.alertaInicio);
-            if ('speechSynthesis' in window) { const msg = new SpeechSynthesisUtterance('¡Atención! El bingo va a comenzar.'); msg.lang = 'es-ES'; window.speechSynthesis.speak(msg); }
-            mostrarNotificacion('🔔 ¡El juego va a comenzar!', 'alerta');
-        }
-    });
-}
 
-        function iniciarCronometro() { if (intervaloCron) clearInterval(intervaloCron); intervaloCron = setInterval(function() { if (tiempoRestante > 0) tiempoRestante--; actualizarCronometro(); if (tiempoRestante <= 0 && intervaloCron) { clearInterval(intervaloCron); intervaloCron = null; } }, 1000); }
-        function actualizarCronometro() { const m = Math.floor(tiempoRestante/60), s = tiempoRestante%60; document.getElementById('tiempoCron').textContent = String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); document.getElementById('estadoCron').textContent = tiempoRestante > 0 ? '⏳ Tiempo para iniciar' : '▶️ Jugando'; }
-        function actualizarDisplay(data) { if (data && data.ultimaBola) { const c = document.getElementById('ultimaBolaJugador'); c.querySelector('.letra').textContent = obtenerLetra(data.ultimaBola); c.querySelector('.numero').textContent = data.ultimaBola; } document.getElementById('totalCantados').textContent = (numerosCantados.length||0)+'/75'; const ult = document.getElementById('ultimosNumeros'); ult.innerHTML = ''; numerosCantados.slice(-5).reverse().forEach(function(n){ const s=document.createElement('span'); s.className='num-chico cantado'; s.textContent=obtenerLetra(n)+'-'+n; ult.appendChild(s); }); }
-        function mostrarNotificacion(mensaje, tipo) { const cont = document.getElementById('notificacionContainer'); const notif = document.createElement('div'); notif.className = 'notificacion ' + (tipo || 'info'); notif.textContent = mensaje; cont.appendChild(notif); setTimeout(() => { notif.style.opacity = '0'; notif.style.transition = 'opacity 0.5s'; setTimeout(() => { if (notif.parentNode) notif.remove(); }, 500); }, 40000); }
-        function abrirModalNumeros() { document.getElementById('modalNumeros').classList.add('activo'); const lista = document.getElementById('modalNumerosList'); lista.innerHTML = numerosCantados.length === 0 ? '<p style="color:#94a3b8;">No hay números</p>' : ''; numerosCantados.slice().sort((a,b)=>a-b).forEach(function(n){ const s=document.createElement('span'); s.className='num-chico cantado'; s.textContent=obtenerLetra(n)+'-'+n; lista.appendChild(s); }); }
-        function cerrarModalNumeros() { document.getElementById('modalNumeros').classList.remove('activo'); }
-        function toggleVoz() { vozActivada = !vozActivada; const b = document.getElementById('btnVoz'); b.textContent = vozActivada ? 'VOZ ON' : 'VOZ OFF'; b.className = 'btn-voz ' + (vozActivada ? 'activada' : 'desactivada'); }
-        function obtenerLetra(n) { if (n <= 15) return 'B'; if (n <= 30) return 'I'; if (n <= 45) return 'N'; if (n <= 60) return 'G'; return 'O'; }
+            // Verificar columnas
+            for (let j = 0; j < 5; j++) {
+                const columna = [];
+                for (let i = 0; i < 5; i++) {
+                    if (cartonActual[i][j] !== 'FREE') {
+                        columna.push(cartonActual[i][j]);
+                    }
+                }
+                if (columna.every(n => marcadas.has(n))) {
+                    return true;
+                }
+            }
+
+            // Verificar diagonales
+            const diagonal1 = [];
+            const diagonal2 = [];
+            for (let i = 0; i < 5; i++) {
+                if (cartonActual[i][i] !== 'FREE') diagonal1.push(cartonActual[i][i]);
+                if (cartonActual[i][4-i] !== 'FREE') diagonal2.push(cartonActual[i][4-i]);
+            }
+            
+            if (diagonal1.every(n => marcadas.has(n)) || 
+                diagonal2.every(n => marcadas.has(n))) {
+                return true;
+            }
+
+            // Cartón lleno
+            const todosNumeros = cartonActual.flat().filter(n => n !== 'FREE');
+            if (todosNumeros.every(n => marcadas.has(n))) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function cantarBingo() {
+            if (!verificarBingoAutomatico()) {
+                alert('¡No tienes BINGO! Revisa tu cartón.');
+                return;
+            }
+            
+            document.getElementById('confirm-modal').classList.add('active');
+        }
+
+        async function confirmarBingo() {
+            if (!salaActual || !jugadorActual) return;
+
+            try {
+                // Verificar que nadie más haya cantado bingo
+                const salaRef = db.collection('salas').doc(salaActual);
+                const ganadoresSnapshot = await salaRef.collection('ganadores').get();
+                
+                if (!ganadoresSnapshot.empty) {
+                    alert('¡Alguien más ya cantó BINGO!');
+                    cerrarModal();
+                    return;
+                }
+
+                // Registrar ganador
+                await salaRef.collection('ganadores').add({
+                    jugador: jugadorActual,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Marcar jugador como ganador
+                await salaRef.collection('jugadores').doc(jugadorActual).update({
+                    bingo: true
+                });
+
+                // Efectos visuales
+                document.getElementById('bingo-card-container').classList.add('winner');
+                lanzarConfeti();
+                mostrarMensajeGanador(`¡${jugadorActual} ha ganado! 🎉`);
+                
+                cerrarModal();
+            } catch (error) {
+                console.error('Error al confirmar bingo:', error);
+                alert('Error al registrar el bingo');
+            }
+        }
+
+        // ============ CHAT ============
+        function inicializarChat(salaId) {
+            if (unsubscribeChat) unsubscribeChat();
+
+            unsubscribeChat = db.collection('salas').doc(salaId)
+                .collection('chat')
+                .orderBy('timestamp', 'asc')
+                .onSnapshot((snapshot) => {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === 'added') {
+                            const msg = change.doc.data();
+                            mostrarMensajeChat(msg.jugador, msg.texto);
+                        }
+                    });
+                });
+
+            // Enviar mensaje con Enter
+            document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    enviarMensaje();
+                }
+            });
+        }
+
+        async function enviarMensaje() {
+            const input = document.getElementById('chat-input');
+            const texto = input.value.trim();
+            
+            if (!texto || !salaActual || !jugadorActual) return;
+
+            try {
+                await db.collection('salas').doc(salaActual)
+                    .collection('chat').add({
+                        jugador: jugadorActual,
+                        texto: texto,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                
+                input.value = '';
+            } catch (error) {
+                console.error('Error enviando mensaje:', error);
+            }
+        }
+
+        function mostrarMensajeChat(jugador, texto) {
+            const messagesDiv = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message';
+            messageDiv.innerHTML = `<strong>${jugador}:</strong> ${texto}`;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // ============ JUGADORES EN SALA ============
+        function escucharJugadores(salaId) {
+            db.collection('salas').doc(salaId)
+                .collection('jugadores')
+                .onSnapshot((snapshot) => {
+                    document.getElementById('jugadores-count').textContent = snapshot.size;
+                });
+        }
+
+        // ============ EFECTOS VISUALES ============
+        function lanzarConfeti() {
+            const colors = ['#FF6B6B', '#4ECDC4', '#FFD700', '#FF8C00', '#FF1493'];
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.width = Math.random() * 10 + 5 + 'px';
+                    confetti.style.height = Math.random() * 10 + 5 + 'px';
+                    confetti.style.animationDuration = Math.random() * 2 + 2 + 's';
+                    
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 3000);
+                }, i * 20);
+            }
+        }
+
+        function mostrarMensajeGanador(mensaje) {
+            document.getElementById('winner-message').textContent = mensaje;
+            document.getElementById('winner-modal').classList.add('active');
+        }
+
+        function cerrarModal() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.classList.remove('active');
+            });
+        }
+
+        // ============ MODO OSCURO ============
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+        }
+
+        // Cargar preferencia de modo oscuro
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+
+        // ============ AUTO-GUARDADO ============
+        function guardarCartonLocal(carton) {
+            localStorage.setItem('bingo-carton-actual', JSON.stringify(carton));
+        }
+
+        function recuperarCartonLocal() {
+            const guardado = localStorage.getItem('bingo-carton-actual');
+            if (guardado && salaActual) {
+                cartonActual = JSON.parse(guardado);
+                mostrarCarton(cartonActual);
+            }
+        }
+
+        // ============ INICIALIZACIÓN ============
+        window.addEventListener('load', () => {
+            console.log('Bingo Multijugador cargado');
+            actualizarEstadoConexion(navigator.onLine);
+        });
+
+        // Manejar cierre de ventana
+        window.addEventListener('beforeunload', () => {
+            if (salaActual && jugadorActual) {
+                salirDeSala();
+            }
+        });
     </script>
 </body>
 </html>
