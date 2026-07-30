@@ -1,22 +1,12 @@
-// generar-movil.js - Funciones móviles y atajos
+// generar-movil.js - Inicialización
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎫 Generador listo - Sala:', SALA_ID);
     
-    // Cargar cartones al iniciar
-    if (typeof importarDesdeFirebase === 'function') {
-        importarDesdeFirebase();
-    }
+    // Cargar cartones desde Firebase
+    cargarDesdeFirebase();
     
-    // Enter en nombre asigna cartones
-    var nombreInput = document.getElementById('nombreJugador');
-    if (nombreInput) {
-        nombreInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') asignarCartones();
-        });
-    }
-    
-    // Enter en cantidad genera cartones
+    // Enter en cantidad genera
     var cantidadInput = document.getElementById('cantidadGenerar');
     if (cantidadInput) {
         cantidadInput.addEventListener('keypress', function(e) {
@@ -24,18 +14,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Cerrar modal al hacer clic fuera
-    var modalLink = document.getElementById('modalLink');
-    if (modalLink) {
-        modalLink.addEventListener('click', function(e) {
-            if (e.target === this) cerrarModal('modalLink');
+    // Enter en nombre asigna seleccionados
+    var nombreAsignar = document.getElementById('nombreAsignarSeleccionados');
+    if (nombreAsignar) {
+        nombreAsignar.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') asignarSeleccionados();
         });
     }
     
-    // Escape cierra modales
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            cerrarModal('modalLink');
-        }
-    });
+    // Enter en nombre jugador link
+    var nombreLink = document.getElementById('nombreJugadorLink');
+    if (nombreLink) {
+        nombreLink.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') generarLinkJugador();
+        });
+    }
 });
