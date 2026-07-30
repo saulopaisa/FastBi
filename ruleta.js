@@ -105,7 +105,7 @@ window.abrirModalPatron = function() { var modal = document.getElementById('moda
 window.confirmarPatron = function() { db.ref('partidas/' + SALA_ID + '/patron').set(window.patronBingo); window.etapaActual = 3; window.juegoActivo = true; guardarEstado(); actualizarEtapas(); cerrarModal('modalPatron'); mostrarToast('✅ Patrón confirmado', 'success'); };
 window.aplicarPredefinido = function(t) { if (t === 'lleno') window.patronBingo = Array(25).fill(true); if (t === 'limpiar') window.patronBingo = Array(25).fill(false); if (t === 'equis') { window.patronBingo = Array(25).fill(false); [0,4,6,8,12,16,18,20,24].forEach(function(p) { window.patronBingo[p] = true; }); } guardarEstado(); window.abrirModalPatron(); };
 
-// ============ TEMPORIZADOR (SOLO SE MUESTRA AL PROGRAMAR) ============
+// ============ TEMPORIZADOR ============
 window.programarJuego = function() {
     var inputMin = document.getElementById('minutosInicio') || document.getElementById('minutosInicioMobile');
     var min = parseInt(inputMin ? inputMin.value : 0) || 0;
@@ -119,8 +119,6 @@ window.programarJuego = function() {
     if (btnProg) { btnProg.textContent = '⏳ ESPERANDO...'; btnProg.disabled = true; }
     
     var tiempo = min * 60;
-    
-    // Mostrar cronómetro visual SOLO ahora
     var cronVisual = document.getElementById('cronometroVisual');
     var cronVisualRuleta = document.getElementById('cronometroVisualRuleta');
     if (cronVisual) cronVisual.style.display = 'block';
@@ -140,7 +138,6 @@ window.programarJuego = function() {
             clearInterval(window.intervaloTemporizador);
             window.intervaloTemporizador = null;
             if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; }
-            // Ocultar cronómetro visual
             if (cronVisual) cronVisual.style.display = 'none';
             if (cronVisualRuleta) cronVisualRuleta.style.display = 'none';
             db.ref('partidas/' + SALA_ID).update({ estado: 'jugando', cronometro: 0, mensajeAdmin: '▶️ ¡Juego iniciado!', timestamp: Date.now() });
@@ -215,17 +212,181 @@ function notificarBingo(c) { var aj = document.getElementById('alertaJugador'), 
 function notificarBingoManual(c) { var aj = document.getElementById('alertaJugador'), ac = document.getElementById('alertaCarton'), ab = document.getElementById('alertaBingo'); if (aj) aj.textContent = '👤 ' + (c.asignadoA||'Sin asignar'); if (ac) ac.textContent = '🎫 Cartón #' + (c.numero||'?'); if (ab) { ab.style.display = 'block'; ab.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)'; ab.style.border = '2px solid #ffca28'; document.querySelector('.alerta-titulo').textContent = '🚨 ¡BINGO! Jugador cantó BINGO'; } window.cartonEnAlerta = c; reproducirAudioBingoManual(c.asignadoA || 'Jugador'); mostrarToast('🚨 ¡BINGO cantado!', 'error'); db.ref('partidas/' + SALA_ID).update({ bingoCantado: c.asignadoA || 'Jugador', timestamp: Date.now() }); }
 function escucharBingosJugadores() { db.ref('bingos/' + SALA_ID).on('child_added', function(snap) { var bingo = snap.val(); db.ref('salas/' + SALA_ID + '/cartones/' + bingo.cartonId).once('value', function(cs) { var c = cs.val(); if (c) { notificarBingoManual(c); } }); }); }
 
+// ============ SISTEMA DE CHAT CONTROLADO ============
+function escucharSolicitudesChat() {
+    db.ref('partidas/' + SALA_ID + '/solicitudChat').on('value', function(snap) {
+        var data = snap.val();
+        if (!data) return;
+        
+        var notificacion = document.createElement('div');
+        notificacion.style.cssText = 'position:fixed;top:20px;right:20px;background:#f59e0b;color:#1e293b;padding:15px 20px;border-radius:12px;z-index:500;font-weight:bold;cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,0.3);animation:slideDown 0.3s;max-width:300px;';
+        notificacion.innerHTML = '🙋 ' + data.mensaje + '<br><small style="font-size:0.7em;">Click para desbloquear chat</small>';
+        
+        notificacion.onclick = function() {
+            window.desbloquearChatJugador(data.jugador);
+            notificacion.remove();
+        };
+        
+        document.body.appendChild(notificacion);
+        
+        setTimeout(function() {
+            if (notificacion.parentNode) notificacion.remove();
+        }, 10000);
+        
+        setTimeout(function() {
+            db.ref('partidas/' + SALA_ID + '/solicitudChat').remove();
+        }, 1000);
+    });
+}
+
+window.desbloquearChatJugador = function(jugador, duracion) {
+    duracion = duracion || 2;
+    
+    db.ref('partidas/' + SALA_ID + '/chatDesbloqueos/' + jugador).set({
+        desbloqueado: true,
+        duracion: duracion,
+        timestamp: Date.now()
+    });
+    
+    db.ref('partidas/' + SALA_ID + '/chat').push({
+        mensaje: '🔓 Admin desbloqueó el chat para ' + jugador + ' (' + duracion + ' min)',
+        timestamp: Date.now(),
+        admin: true,
+        sistema: true
+    });
+    
+    mostrarToast('🔓 Chat desbloqueado para ' + jugador, 'success');
+    
+    setTimeout(function() {
+        db.ref('partidas/' + SALA_ID + '/chatDesbloqueos/' + jugador).set({
+            desbloqueado: false,
+            timestamp: Date.now()
+        });
+        db.ref('partidas/' + SALA_ID + '/chat').push({
+            mensaje: '🔒 Chat bloqueado para ' + jugador + ' (tiempo agotado)',
+            timestamp: Date.now(),
+            admin: true,
+            sistema: true
+        });
+    }, duracion * 60 * 1000);
+};
+
+window.bloquearChatJugador = function(jugador) {
+    db.ref('partidas/' + SALA_ID + '/chatDesbloqueos/' + jugador).set({
+        desbloqueado: false,
+        timestamp: Date.now()
+    });
+    mostrarToast('🔒 Chat bloqueado para ' + jugador, 'error');
+};
+
 // ============ ALERTA ============
 window.cerrarAlerta = function() { var ab = document.getElementById('alertaBingo'); if (ab) { ab.style.display = 'none'; } window.cartonEnAlerta = null; };
-window.bingoValido = function() { var c = window.cartonEnAlerta || window.cartonActual; var nombre = c ? (c.asignadoA || 'Jugador') : 'Jugador'; if (window.ganadoresPartida >= 2) { mostrarToast('⚠️ Ya hay 2 ganadores', 'error'); return; } if (confirm('¿BINGO VÁLIDO para ' + nombre + '?')) { window.ganadoresPartida++; sessionStorage.setItem('ganadores_' + SALA_ID, window.ganadoresPartida.toString()); actualizarOnlineCount(); db.ref('partidas/' + SALA_ID).update({ ganadoresCount: window.ganadoresPartida }); finalizarRevision(nombre, 'valido'); window.cerrarAlerta(); reproducirAudioGanador(nombre); mostrarToast('🎉 ¡BINGO VÁLIDO!', 'success'); if (window.ganadoresPartida >= 2) { db.ref('partidas/' + SALA_ID).update({ estado: 'terminado', ganador: nombre, timestamp: Date.now() }); if (window.modoAutomatico) window.detenerBingoAutomatico(); setTimeout(function() { if (confirm('🎉 ¿NUEVA PARTIDA?')) iniciarNuevaPartida(); }, 1000); } else { db.ref('partidas/' + SALA_ID).update({ mensajeAdmin: '🎉 ¡BINGO! ' + nombre, timestamp: Date.now() }); window.bingoDetectado = false; window.cartonActual = null; window.cartonEnAlerta = null; var cont = document.getElementById('minicartonVerificador'); if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var contM = document.getElementById('minicartonMobile'); if (contM) contM.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; } } };
-window.bingoErrado = function() { var c = window.cartonEnAlerta || window.cartonActual; var nombre = c ? (c.asignadoA || 'Jugador') : 'Jugador'; if (confirm('¿BINGO ERRADO para ' + nombre + '?')) { finalizarRevision(nombre, 'errado'); db.ref('partidas/' + SALA_ID).update({ estado: 'jugando', mensaje: 'BINGO ERRADO', timestamp: Date.now() }); window.bingoDetectado = false; window.cerrarAlerta(); window.cartonActual = null; var cont = document.getElementById('minicartonVerificador'); if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var contM = document.getElementById('minicartonMobile'); if (contM) contM.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; mostrarToast('❌ BINGO ERRADO', 'error'); } };
+
+window.bingoValido = function() { 
+    var c = window.cartonEnAlerta || window.cartonActual; 
+    var nombre = c ? (c.asignadoA || 'Jugador') : 'Jugador'; 
+    if (window.ganadoresPartida >= 2) { mostrarToast('⚠️ Ya hay 2 ganadores', 'error'); return; } 
+    if (confirm('¿BINGO VÁLIDO para ' + nombre + '?')) { 
+        window.ganadoresPartida++; 
+        sessionStorage.setItem('ganadores_' + SALA_ID, window.ganadoresPartida.toString()); 
+        actualizarOnlineCount(); 
+        db.ref('partidas/' + SALA_ID).update({ ganadoresCount: window.ganadoresPartida }); 
+        finalizarRevision(nombre, 'valido');
+        
+        // Limpiar errores del jugador
+        db.ref('partidas/' + SALA_ID + '/erroresJugadores/' + nombre).remove();
+        
+        window.cerrarAlerta(); 
+        reproducirAudioGanador(nombre); 
+        mostrarToast('🎉 ¡BINGO VÁLIDO!', 'success'); 
+        if (window.ganadoresPartida >= 2) { 
+            db.ref('partidas/' + SALA_ID).update({ estado: 'terminado', ganador: nombre, timestamp: Date.now() }); 
+            if (window.modoAutomatico) window.detenerBingoAutomatico(); 
+            setTimeout(function() { if (confirm('🎉 ¿NUEVA PARTIDA?')) iniciarNuevaPartida(); }, 1000); 
+        } else { 
+            db.ref('partidas/' + SALA_ID).update({ mensajeAdmin: '🎉 ¡BINGO! ' + nombre, timestamp: Date.now() }); 
+            window.bingoDetectado = false; 
+            window.cartonActual = null; 
+            window.cartonEnAlerta = null; 
+            var cont = document.getElementById('minicartonVerificador'); 
+            if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; 
+            var contM = document.getElementById('minicartonMobile'); 
+            if (contM) contM.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; 
+        } 
+    } 
+};
+
+window.bingoErrado = function() {
+    var c = window.cartonEnAlerta || window.cartonActual;
+    var nombre = c ? (c.asignadoA || 'Jugador') : 'Jugador';
+    
+    db.ref('partidas/' + SALA_ID + '/erroresJugadores/' + nombre).once('value', function(snap) {
+        var errores = snap.val() || 0;
+        errores++;
+        
+        db.ref('partidas/' + SALA_ID + '/erroresJugadores/' + nombre).set(errores);
+        
+        if (errores >= 2) {
+            if (confirm('⚠️ ' + nombre + ' tiene ' + errores + ' errores.\n\n¿ELIMINAR jugador de la ronda?')) {
+                finalizarRevision(nombre, 'errado');
+                
+                db.ref('partidas/' + SALA_ID).update({
+                    estado: 'jugando',
+                    mensajeAdmin: '❌ ' + nombre + ' eliminado por 2 bingos errados',
+                    timestamp: Date.now()
+                });
+                
+                db.ref('partidas/' + SALA_ID + '/chat').push({
+                    mensaje: '❌ ' + nombre + ' ha sido eliminado por 2 bingos errados',
+                    timestamp: Date.now(),
+                    admin: true,
+                    sistema: true
+                });
+                
+                db.ref('partidas/' + SALA_ID + '/erroresJugadores/' + nombre).remove();
+                
+                window.bingoDetectado = false;
+                window.cerrarAlerta();
+                window.cartonActual = null;
+                
+                var cont = document.getElementById('minicartonVerificador');
+                if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>';
+                var contM = document.getElementById('minicartonMobile');
+                if (contM) contM.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>';
+                
+                mostrarToast('❌ ' + nombre + ' ELIMINADO', 'error');
+            }
+        } else {
+            if (confirm('⚠️ BINGO ERRADO para ' + nombre + ' (Error ' + errores + '/2)\n\n¿Confirmar?')) {
+                finalizarRevision(nombre, 'errado');
+                
+                db.ref('partidas/' + SALA_ID).update({
+                    estado: 'jugando',
+                    mensajeAdmin: '⚠️ BINGO ERRADO - ' + nombre + ' (' + errores + '/2)',
+                    timestamp: Date.now()
+                });
+                
+                window.bingoDetectado = false;
+                window.cerrarAlerta();
+                window.cartonActual = null;
+                
+                var cont = document.getElementById('minicartonVerificador');
+                if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>';
+                var contM = document.getElementById('minicartonMobile');
+                if (contM) contM.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>';
+                
+                mostrarToast('⚠️ BINGO ERRADO (' + errores + '/2)', 'error');
+            }
+        }
+    });
+};
 
 // ============ NUEVA PARTIDA ============
-function iniciarNuevaPartida() { window.cantados = []; window.bingoDetectado = false; window.cartonActual = null; window.cartonEnAlerta = null; window.ganadoresPartida = 0; window.enPausa = false; if (window.pausaTimeout) clearTimeout(window.pausaTimeout); if (window.modoAutomatico) window.detenerBingoAutomatico(); sessionStorage.setItem('ganadores_' + SALA_ID, '0'); localStorage.setItem('bingo_cantados_' + SALA_ID, JSON.stringify([])); db.ref('partidas/' + SALA_ID).set({ estado: 'nueva_partida', cantados: [], ultimaBola: null, mensajeAdmin: '🔄 Nueva partida', timestamp: Date.now(), patron: Array(25).fill(false), revisando: { activo: false }, resultadoRevision: null, pausa: false, cronometro: 0, ganadoresCount: 0 }); db.ref('bingos/' + SALA_ID).remove(); inicializarTablero75(); var cont = document.getElementById('minicartonVerificador'); if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var contM = document.getElementById('minicartonMobile'); if (contM) contM.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var notif = document.getElementById('notificacionesBingo'); if (notif) notif.innerHTML = ''; var alerta = document.getElementById('alertaBingo'); if (alerta) alerta.style.display = 'none'; var cronVisual = document.getElementById('cronometroVisual'); if (cronVisual) cronVisual.style.display = 'none'; var cronVisualR = document.getElementById('cronometroVisualRuleta'); if (cronVisualR) cronVisualR.style.display = 'none'; var cron = document.getElementById('cronometroBingo') || document.getElementById('cronometroBingoMobile'); if (cron) cron.textContent = '00:00'; var btnProg = document.getElementById('btnProgramar') || document.getElementById('btnProgramarMobile'); if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; } var btnAuto = document.getElementById('btnAutoBingo') || document.getElementById('btnAutoMobile'); if (btnAuto) { btnAuto.textContent = '🤖 BINGO AUTOMÁTICO'; btnAuto.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; btnAuto.onclick = window.iniciarBingoAutomatico; } actualizarEtapas(); actualizarOnlineCount(); mostrarToast('🔄 Nueva partida', 'success'); setTimeout(function() { db.ref('partidas/' + SALA_ID).update({ estado: 'jugando', cantados: [], timestamp: Date.now() }); }, 2000); }
+function iniciarNuevaPartida() { window.cantados = []; window.bingoDetectado = false; window.cartonActual = null; window.cartonEnAlerta = null; window.ganadoresPartida = 0; window.enPausa = false; if (window.pausaTimeout) clearTimeout(window.pausaTimeout); if (window.modoAutomatico) window.detenerBingoAutomatico(); sessionStorage.setItem('ganadores_' + SALA_ID, '0'); localStorage.setItem('bingo_cantados_' + SALA_ID, JSON.stringify([])); db.ref('partidas/' + SALA_ID).set({ estado: 'nueva_partida', cantados: [], ultimaBola: null, mensajeAdmin: '🔄 Nueva partida', timestamp: Date.now(), patron: Array(25).fill(false), revisando: { activo: false }, resultadoRevision: null, pausa: false, cronometro: 0, ganadoresCount: 0 }); db.ref('bingos/' + SALA_ID).remove(); db.ref('partidas/' + SALA_ID + '/erroresJugadores').remove(); inicializarTablero75(); var cont = document.getElementById('minicartonVerificador'); if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var contM = document.getElementById('minicartonMobile'); if (contM) contM.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var notif = document.getElementById('notificacionesBingo'); if (notif) notif.innerHTML = ''; var alerta = document.getElementById('alertaBingo'); if (alerta) alerta.style.display = 'none'; var cronVisual = document.getElementById('cronometroVisual'); if (cronVisual) cronVisual.style.display = 'none'; var cronVisualR = document.getElementById('cronometroVisualRuleta'); if (cronVisualR) cronVisualR.style.display = 'none'; var cron = document.getElementById('cronometroBingo') || document.getElementById('cronometroBingoMobile'); if (cron) cron.textContent = '00:00'; var btnProg = document.getElementById('btnProgramar') || document.getElementById('btnProgramarMobile'); if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; } var btnAuto = document.getElementById('btnAutoBingo') || document.getElementById('btnAutoMobile'); if (btnAuto) { btnAuto.textContent = '🤖 BINGO AUTOMÁTICO'; btnAuto.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; btnAuto.onclick = window.iniciarBingoAutomatico; } actualizarEtapas(); actualizarOnlineCount(); mostrarToast('🔄 Nueva partida', 'success'); setTimeout(function() { db.ref('partidas/' + SALA_ID).update({ estado: 'jugando', cantados: [], timestamp: Date.now() }); }, 2000); }
 
 // ============ REINICIAR ============
 var resetBtn = document.getElementById('resetBtn') || document.getElementById('btnReiniciarPartida');
-if (resetBtn) { resetBtn.addEventListener('click', function() { if (confirm('⚠️ ¿Reiniciar todo?')) { if (window.intervaloAutomatico) clearInterval(window.intervaloAutomatico); if (window.intervaloTemporizador) clearInterval(window.intervaloTemporizador); if (window.pausaTimeout) clearTimeout(window.pausaTimeout); window.cantados = []; window.patronBingo = Array(25).fill(false); window.jugadoresActivos = []; window.juegoActivo = false; window.modoAutomatico = false; window.bingoDetectado = false; window.etapaActual = 1; window.ganadoresPartida = 0; window.enPausa = false; sessionStorage.setItem('ganadores_' + SALA_ID, '0'); ['bingo_cantados_','bingo_patron_','bingo_jugadores_','bingo_activo_','bingo_etapa_'].forEach(function(k) { localStorage.removeItem(k + SALA_ID); }); db.ref('partidas/' + SALA_ID).remove(); db.ref('bingos/' + SALA_ID).remove(); inicializarTablero75(); actualizarEtapas(); var cont = document.getElementById('minicartonVerificador'); if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var contM = document.getElementById('minicartonMobile'); if (contM) contM.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var notif = document.getElementById('notificacionesBingo'); if (notif) notif.innerHTML = ''; var alerta = document.getElementById('alertaBingo'); if (alerta) alerta.style.display = 'none'; var cronVisual = document.getElementById('cronometroVisual'); if (cronVisual) cronVisual.style.display = 'none'; var cronVisualR = document.getElementById('cronometroVisualRuleta'); if (cronVisualR) cronVisualR.style.display = 'none'; var cron = document.getElementById('cronometroBingo') || document.getElementById('cronometroBingoMobile'); if (cron) cron.textContent = '00:00'; var bp = document.getElementById('btnProgramar') || document.getElementById('btnProgramarMobile'); if (bp) { bp.textContent = '⏰ PROGRAMAR'; bp.disabled = false; } var ba = document.getElementById('btnAutoBingo') || document.getElementById('btnAutoMobile'); if (ba) { ba.textContent = '🤖 BINGO AUTOMÁTICO'; ba.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; ba.onclick = window.iniciarBingoAutomatico; } actualizarOnlineCount(); mostrarToast('🔄 Reiniciado', 'success'); } }); }
+if (resetBtn) { resetBtn.addEventListener('click', function() { if (confirm('⚠️ ¿Reiniciar todo?')) { if (window.intervaloAutomatico) clearInterval(window.intervaloAutomatico); if (window.intervaloTemporizador) clearInterval(window.intervaloTemporizador); if (window.pausaTimeout) clearTimeout(window.pausaTimeout); window.cantados = []; window.patronBingo = Array(25).fill(false); window.jugadoresActivos = []; window.juegoActivo = false; window.modoAutomatico = false; window.bingoDetectado = false; window.etapaActual = 1; window.ganadoresPartida = 0; window.enPausa = false; sessionStorage.setItem('ganadores_' + SALA_ID, '0'); ['bingo_cantados_','bingo_patron_','bingo_jugadores_','bingo_activo_','bingo_etapa_'].forEach(function(k) { localStorage.removeItem(k + SALA_ID); }); db.ref('partidas/' + SALA_ID).remove(); db.ref('bingos/' + SALA_ID).remove(); db.ref('partidas/' + SALA_ID + '/erroresJugadores').remove(); inicializarTablero75(); actualizarEtapas(); var cont = document.getElementById('minicartonVerificador'); if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var contM = document.getElementById('minicartonMobile'); if (contM) contM.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var notif = document.getElementById('notificacionesBingo'); if (notif) notif.innerHTML = ''; var alerta = document.getElementById('alertaBingo'); if (alerta) alerta.style.display = 'none'; var cronVisual = document.getElementById('cronometroVisual'); if (cronVisual) cronVisual.style.display = 'none'; var cronVisualR = document.getElementById('cronometroVisualRuleta'); if (cronVisualR) cronVisualR.style.display = 'none'; var cron = document.getElementById('cronometroBingo') || document.getElementById('cronometroBingoMobile'); if (cron) cron.textContent = '00:00'; var bp = document.getElementById('btnProgramar') || document.getElementById('btnProgramarMobile'); if (bp) { bp.textContent = '⏰ PROGRAMAR'; bp.disabled = false; } var ba = document.getElementById('btnAutoBingo') || document.getElementById('btnAutoMobile'); if (ba) { ba.textContent = '🤖 BINGO AUTOMÁTICO'; ba.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; ba.onclick = window.iniciarBingoAutomatico; } actualizarOnlineCount(); mostrarToast('🔄 Reiniciado', 'success'); } }); }
 
 // ============ TECLAS ============
 document.addEventListener('keydown', function(e) {
@@ -236,7 +397,32 @@ document.addEventListener('keydown', function(e) {
 // ============ INICIAR ============
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎮 Panel iniciado - Sala:', SALA_ID);
-    inicializarTablero75(); escucharBingosJugadores(); actualizarEtapas(); actualizarOnlineCount(); sincronizarEstadoDesdeFirebase();
+    inicializarTablero75(); 
+    escucharBingosJugadores(); 
+    escucharSolicitudesChat(); 
+    actualizarEtapas(); 
+    actualizarOnlineCount(); 
+    sincronizarEstadoDesdeFirebase();
     if (window.juegoActivo && window.etapaActual === 3) actualizarEtapas();
-    db.ref('partidas/' + SALA_ID).on('value', function(snap) { var data = snap.val(); if (data && data.cantados && data.cantados.length > window.cantados.length) { window.cantados = data.cantados; guardarEstado(); inicializarTablero75(); if (window.cartonActual) { actualizarMinicartonEnAmbasVistas(window.cartonActual); verificarBingoAutomatico(window.cartonActual); } } if (data && data.pausa !== undefined && data.pausa !== window.enPausa) { window.enPausa = data.pausa; actualizarEtapas(); } if (data && data.ganadoresCount !== undefined && data.ganadoresCount !== window.ganadoresPartida) { window.ganadoresPartida = data.ganadoresCount; sessionStorage.setItem('ganadores_' + SALA_ID, window.ganadoresPartida.toString()); actualizarOnlineCount(); } });
+    db.ref('partidas/' + SALA_ID).on('value', function(snap) { 
+        var data = snap.val(); 
+        if (data && data.cantados && data.cantados.length > window.cantados.length) { 
+            window.cantados = data.cantados; 
+            guardarEstado(); 
+            inicializarTablero75(); 
+            if (window.cartonActual) { 
+                actualizarMinicartonEnAmbasVistas(window.cartonActual); 
+                verificarBingoAutomatico(window.cartonActual); 
+            } 
+        } 
+        if (data && data.pausa !== undefined && data.pausa !== window.enPausa) { 
+            window.enPausa = data.pausa; 
+            actualizarEtapas(); 
+        } 
+        if (data && data.ganadoresCount !== undefined && data.ganadoresCount !== window.ganadoresPartida) { 
+            window.ganadoresPartida = data.ganadoresCount; 
+            sessionStorage.setItem('ganadores_' + SALA_ID, window.ganadoresPartida.toString()); 
+            actualizarOnlineCount(); 
+        } 
+    });
 });
