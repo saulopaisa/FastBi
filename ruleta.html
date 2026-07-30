@@ -87,7 +87,6 @@
 
         <!-- SECCIÓN RULETA -->
         <div class="section-ruleta" id="sectionRuleta">
-            <!-- Alerta de Bingo flotante -->
             <div id="alertaBingoMobile" class="alerta-bingo-flotante" style="display:none;">
                 <div class="alerta-flotante-titulo">🚨 ¡BINGO CANTADO!</div>
                 <div class="alerta-flotante-jugador" id="alertaJugadorMobile">-</div>
@@ -99,7 +98,6 @@
                 </div>
             </div>
 
-            <!-- Cronómetro visual en ruleta -->
             <div id="cronometroVisualRuleta" class="cronometro-visual" style="display:none;">
                 <div class="cronometro-visual-tiempo" id="cronometroVisualRuletaTiempo">00:00</div>
                 <div class="cronometro-visual-barra">
@@ -111,7 +109,6 @@
             <!-- Última bola GRANDE + 5 pequeñas -->
             <div id="ultimaBolaRuletaContainer"></div>
 
-            <!-- Programar cronómetro -->
             <div class="programar-row">
                 <input type="text" id="minutosInicioMobile" placeholder="Ej: 2:30 o 5" class="input-minutos">
                 <button id="btnProgramarMobile" onclick="programarJuegoMobile()" class="btn-juego btn-programar-movil" disabled>
@@ -119,7 +116,6 @@
                 </button>
             </div>
 
-            <!-- Controles de juego -->
             <div class="controles-juego">
                 <button id="btnAutoMobile" onclick="iniciarAutoMobile()" class="btn-juego btn-auto" disabled>
                     🤖 AUTO
@@ -130,11 +126,10 @@
             </div>
 
             <!-- Botón REINICIAR en ruleta -->
-            <button onclick="reiniciarPartida()" class="btn-accion btn-reiniciar-partida" style="margin-bottom:10px;">
+            <button id="btnReiniciarRuleta" onclick="reiniciarPartida()" class="btn-accion btn-reiniciar-partida" style="display:none;margin-bottom:10px;">
                 🔄 REINICIAR PARTIDA
             </button>
 
-            <!-- Últimos cantados (texto) -->
             <div class="ultimos-movil" id="ultimosCantadosMobile">
                 <span class="num-chico-movil vacio">--</span>
                 <span class="num-chico-movil vacio">--</span>
@@ -143,7 +138,6 @@
                 <span class="num-chico-movil vacio">--</span>
             </div>
 
-            <!-- Tablero 1-75 -->
             <div class="tablero-container">
                 <div class="tablero-header">
                     <h3>📊 TABLERO (1-75)</h3>
@@ -225,7 +219,7 @@
         </div>
     </div>
 
-    <!-- BARRA DE NAVEGACIÓN INFERIOR (SIEMPRE VISIBLE) -->
+    <!-- BARRA DE NAVEGACIÓN INFERIOR -->
     <div class="bottom-nav">
         <div class="nav-item activo" onclick="navegarA('config')" id="navConfig">
             <span class="nav-icon">⚙️</span>
@@ -250,7 +244,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     
-    <!-- Cargar sala desde URL compartida -->
     <script>
         (function() {
             var params = new URLSearchParams(window.location.search);
@@ -262,7 +255,6 @@
         })();
     </script>
     
-    <!-- Configuración Firebase -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
@@ -276,7 +268,6 @@
         firebase.initializeApp(firebaseConfig);
         var db = firebase.database();
         
-        // Generar sala si no existe
         if (!localStorage.getItem('salaActiva') || !String(localStorage.getItem('salaActiva')).startsWith('bingo')) {
             var ahora = new Date();
             var fecha = ahora.getMonth() + 1 + '/' + ahora.getDate() + '/' + ahora.getFullYear().toString().slice(-2);
