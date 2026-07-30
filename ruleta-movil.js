@@ -7,7 +7,14 @@ var intervaloCronometroRuleta = null;
 // ============ NAVEGACIÓN ============
 function navegarA(seccion) {
     document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('activo'); });
-    document.getElementById('nav' + seccion.charAt(0).toUpperCase() + seccion.slice(1)).classList.add('activo');
+    
+    var navId = 'navConfig';
+    if (seccion === 'ruleta') navId = 'navRuleta';
+    else if (seccion === 'verificar') navId = 'navVerificar';
+    else if (seccion === 'chat') navId = 'navChat';
+    
+    var navEl = document.getElementById(navId);
+    if (navEl) navEl.classList.add('activo');
     
     document.querySelectorAll('.section-config, .section-ruleta').forEach(function(s) { s.classList.remove('activo'); });
     
@@ -23,9 +30,12 @@ function navegarA(seccion) {
 // ============ GENERAR LINK DE SALA ============
 function generarLinkSala() {
     var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
-    var link = location.origin + location.pathname + '?sala=' + encodeURIComponent(salaId);
+    // Asume que jugador.html está en la misma carpeta
+    var link = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'jugador.html?sala=' + encodeURIComponent(salaId);
     navigator.clipboard.writeText(link).then(function() {
-        alert('✅ Link copiado!\n\nPégalo en el otro dispositivo:\n\n' + link);
+        alert('✅ Link copiado!\n\nComparte con los jugadores:\n\n' + link);
+    }).catch(function() {
+        prompt('📋 Copia este link:', link);
     });
 }
 
@@ -43,9 +53,6 @@ function verificarPartidaVigente() {
         if (btnComenzar) btnComenzar.style.display = 'none';
         if (btnReiniciar) btnReiniciar.style.display = 'block';
         if (cronVisual) cronVisual.style.display = 'none';
-        if (window.intervaloTemporizador) {
-            document.getElementById('cronometroVisualRuleta').style.display = 'block';
-        }
     } else {
         if (aviso) aviso.style.display = 'none';
         if (btnComenzar) btnComenzar.style.display = 'block';
@@ -53,77 +60,41 @@ function verificarPartidaVigente() {
     }
 }
 
-// ============ COMENZAR PARTIDA ============
+// ============ COMENZAR PARTIDA (VA A RULETA) ============
 function comenzarPartida() {
     if (typeof window.juegoActivo === 'undefined') {
         alert('Error: ruleta.js no cargó. Recarga la página.');
         return;
     }
     
+    if (!window.juegoActivo || window.etapaActual < 3) {
+        alert('⚠️ Primero configura jugadores y patrón, luego presiona COMENZAR PARTIDA.');
+        return;
+    }
+    
     if (window.juegoActivo && window.etapaActual >= 3) {
-        alert('⚠️ Ya hay una partida vigente. Ve a la pestaña RULETA.');
+        // Ya está todo listo, ir a la ruleta
         navegarA('ruleta');
         return;
     }
     
-    var min = parseInt(document.getElementById('minutosInicioMobile').value) || 0;
+    // Iniciar juego
+    window.juegoActivo = true;
+    localStorage.setItem('bingo_activo_' + (localStorage.getItem('salaActiva')||'bingo-default'), 'true');
     
-    if (min <= 0) {
-        window.juegoActivo = true;
-        localStorage.setItem('bingo_activo_' + (localStorage.getItem('salaActiva')||'bingo-default'), 'true');
-        if (window.modoJuegoSeleccionado === 'automatico' && window.iniciarBingoAutomatico) {
-            window.iniciarBingoAutomatico();
-        }
-        navegarA('ruleta');
-        actualizarUIMovil();
-        verificarPartidaVigente();
-        return;
-    }
+    db.ref('partidas/' + SALA_ID).update({
+        estado: 'jugando',
+        mensajeAdmin: '▶️ ¡Partida iniciada!',
+        timestamp: Date.now()
+    });
     
-    var cronVisual = document.getElementById('cronometroVisual');
-    if (cronVisual) cronVisual.style.display = 'block';
-    document.getElementById('cronometroVisualRuleta').style.display = 'block';
-    
-    var tiempo = min * 60;
-    var tiempoTotal = tiempo;
-    
-    actualizarCronometroConfig(tiempo, tiempoTotal);
-    actualizarCronometroRuleta(tiempo, tiempoTotal);
-    
-    if (intervaloCronometroVisual) clearInterval(intervaloCronometroVisual);
-    if (intervaloCronometroRuleta) clearInterval(intervaloCronometroRuleta);
-    
-    intervaloCronometroVisual = setInterval(function() {
-        tiempo--;
-        actualizarCronometroConfig(tiempo, tiempoTotal);
-        actualizarCronometroRuleta(tiempo, tiempoTotal);
-        
-        if (tiempo <= 0) {
-            clearInterval(intervaloCronometroVisual);
-            clearInterval(intervaloCronometroRuleta);
-            intervaloCronometroVisual = null;
-            intervaloCronometroRuleta = null;
-            
-            if (cronVisual) cronVisual.style.display = 'none';
-            document.getElementById('cronometroVisualRuleta').style.display = 'none';
-            
-            window.juegoActivo = true;
-            localStorage.setItem('bingo_activo_' + (localStorage.getItem('salaActiva')||'bingo-default'), 'true');
-            
-            if (window.modoJuegoSeleccionado === 'automatico' && window.iniciarBingoAutomatico) {
-                window.iniciarBingoAutomatico();
-            }
-            
-            verificarPartidaVigente();
-            
-            if ('speechSynthesis' in window) {
-                var msg = new SpeechSynthesisUtterance('¡Es hora de empezar el bingo!');
-                msg.lang = 'es-ES'; window.speechSynthesis.speak(msg);
-            }
-        }
-    }, 1000);
+    navegarA('ruleta');
+    actualizarUIMovil();
+    verificarPartidaVigente();
+    mostrarToast('▶️ Partida iniciada', 'success');
 }
 
+// ============ CRONÓMETRO CON SEGUNDOS ============
 function actualizarCronometroConfig(tiempo, tiempoTotal) {
     var mins = Math.floor(tiempo / 60);
     var segs = tiempo % 60;
@@ -144,16 +115,113 @@ function actualizarCronometroRuleta(tiempo, tiempoTotal) {
     if (prog) prog.style.width = porcentaje + '%';
 }
 
-// ============ PROGRAMAR JUEGO MÓVIL ============
+// ============ PROGRAMAR JUEGO (CON SEGUNDOS) ============
 function programarJuegoMobile() {
-    var min = parseInt(document.getElementById('minutosInicioMobile').value) || 0;
-    if (min <= 0) { alert('Ingresa los minutos'); return; }
+    var inputEl = document.getElementById('minutosInicioMobile');
+    var valor = inputEl.value.trim();
     
-    var modo = confirm('⏰ Cronómetro de ' + min + ' min.\n\n¿Modo AUTOMÁTICO al llegar a 0?\n✅ Aceptar = Auto\n❌ Cancelar = Manual');
+    // Aceptar formato MM:SS o solo número (minutos)
+    var tiempoTotal;
+    if (valor.includes(':')) {
+        var partes = valor.split(':');
+        var mins = parseInt(partes[0]) || 0;
+        var segs = parseInt(partes[1]) || 0;
+        tiempoTotal = mins * 60 + segs;
+    } else {
+        var num = parseFloat(valor);
+        if (isNaN(num) || num <= 0) {
+            alert('Ingresa un tiempo válido\nEjemplos: 2:30 (2 min 30 seg) o 5 (5 minutos)');
+            return;
+        }
+        // Si tiene decimal, interpretar como minutos.segundos
+        if (valor.includes('.')) {
+            var partes = valor.split('.');
+            tiempoTotal = parseInt(partes[0]) * 60 + parseInt(partes[1] || '0');
+        } else {
+            tiempoTotal = Math.round(num * 60);
+        }
+    }
+    
+    if (tiempoTotal <= 0) {
+        alert('El tiempo debe ser mayor a 0');
+        return;
+    }
+    
+    var mins = Math.floor(tiempoTotal / 60);
+    var segs = tiempoTotal % 60;
+    var tiempoStr = mins > 0 ? mins + ' min ' + segs + ' seg' : segs + ' seg';
+    
+    var modo = confirm('⏰ Cronómetro: ' + tiempoStr + '\n\n¿Modo AUTOMÁTICO al llegar a 0?\n✅ Aceptar = Auto\n❌ Cancelar = Manual');
     window.modoJuegoSeleccionado = modo ? 'automatico' : 'manual';
     
-    if (window.programarJuego) window.programarJuego();
-    comenzarPartida();
+    // Iniciar cronómetro visual
+    var cronVisual = document.getElementById('cronometroVisual');
+    var cronVisualRuleta = document.getElementById('cronometroVisualRuleta');
+    
+    if (cronVisual) cronVisual.style.display = 'block';
+    if (cronVisualRuleta) cronVisualRuleta.style.display = 'block';
+    
+    var tiempo = tiempoTotal;
+    actualizarCronometroConfig(tiempo, tiempoTotal);
+    actualizarCronometroRuleta(tiempo, tiempoTotal);
+    
+    if (intervaloCronometroVisual) clearInterval(intervaloCronometroVisual);
+    if (intervaloCronometroRuleta) clearInterval(intervaloCronometroRuleta);
+    
+    // Actualizar Firebase
+    db.ref('partidas/' + SALA_ID).update({
+        cronometro: tiempo,
+        estado: 'iniciando',
+        mensajeAdmin: '⏰ Juego en ' + tiempoStr,
+        timestamp: Date.now()
+    });
+    
+    var btnProg = document.getElementById('btnProgramarMobile');
+    if (btnProg) { btnProg.textContent = '⏳ ESPERANDO...'; btnProg.disabled = true; }
+    
+    intervaloCronometroVisual = setInterval(function() {
+        tiempo--;
+        actualizarCronometroConfig(tiempo, tiempoTotal);
+        actualizarCronometroRuleta(tiempo, tiempoTotal);
+        db.ref('partidas/' + SALA_ID).update({ cronometro: tiempo });
+        
+        if (tiempo <= 0) {
+            clearInterval(intervaloCronometroVisual);
+            clearInterval(intervaloCronometroRuleta);
+            intervaloCronometroVisual = null;
+            intervaloCronometroRuleta = null;
+            
+            if (cronVisual) cronVisual.style.display = 'none';
+            if (cronVisualRuleta) cronVisualRuleta.style.display = 'none';
+            if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; }
+            
+            window.juegoActivo = true;
+            localStorage.setItem('bingo_activo_' + (localStorage.getItem('salaActiva')||'bingo-default'), 'true');
+            
+            db.ref('partidas/' + SALA_ID).update({
+                estado: 'jugando',
+                cronometro: 0,
+                mensajeAdmin: '▶️ ¡Juego iniciado!',
+                timestamp: Date.now()
+            });
+            
+            if (window.modoJuegoSeleccionado === 'automatico' && window.iniciarBingoAutomatico) {
+                window.iniciarBingoAutomatico();
+            }
+            
+            verificarPartidaVigente();
+            
+            if ('speechSynthesis' in window) {
+                var msg = new SpeechSynthesisUtterance('¡Es hora de empezar el bingo!');
+                msg.lang = 'es-ES';
+                window.speechSynthesis.speak(msg);
+            }
+            
+            mostrarToast('▶️ ¡Juego iniciado!', 'success');
+        }
+    }, 1000);
+    
+    mostrarToast('⏰ Cronómetro: ' + tiempoStr, 'success');
 }
 
 // ============ REINICIAR PARTIDA ============
@@ -162,10 +230,19 @@ function reiniciarPartida() {
         var resetBtn = document.getElementById('resetBtn');
         if (resetBtn) resetBtn.click();
         
-        document.getElementById('cronometroVisual').style.display = 'none';
-        document.getElementById('cronometroVisualRuleta').style.display = 'none';
+        var cronVisual = document.getElementById('cronometroVisual');
+        var cronVisualRuleta = document.getElementById('cronometroVisualRuleta');
+        if (cronVisual) cronVisual.style.display = 'none';
+        if (cronVisualRuleta) cronVisualRuleta.style.display = 'none';
+        
         if (intervaloCronometroVisual) clearInterval(intervaloCronometroVisual);
         if (intervaloCronometroRuleta) clearInterval(intervaloCronometroRuleta);
+        intervaloCronometroVisual = null;
+        intervaloCronometroRuleta = null;
+        
+        var btnProg = document.getElementById('btnProgramarMobile');
+        if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; }
+        
         verificarPartidaVigente();
         actualizarUIMovil();
         navegarA('config');
@@ -218,7 +295,7 @@ function enviarChat() {
     
     var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
     db.ref('partidas/' + salaId + '/chat').push({
-        mensaje: mensaje, 
+        mensaje: '📢 ' + mensaje, 
         timestamp: Date.now(), 
         admin: true
     });
@@ -254,6 +331,7 @@ function escucharChat() {
                 div.style.textAlign = 'center';
                 div.style.margin = '4px auto';
                 div.style.fontStyle = 'italic';
+                div.style.maxWidth = '95%';
             } else {
                 div.className = 'msg-item ' + (msg.admin ? 'msg-admin' : 'msg-jugador');
             }
@@ -271,20 +349,23 @@ function escucharChat() {
     });
 }
 
-// ============ GESTIÓN DE CHAT DESDE MÓVIL ============
-window.abrirControlChat = function() {
+// ============ GESTIÓN DE CHAT (NOTIFICACIÓN CUANDO JUGADOR PIDE) ============
+window.abrirControlChat = function(jugadorSugerido) {
     var jugadores = window.jugadoresActivos || [];
     if (jugadores.length === 0) {
         alert('No hay jugadores activos');
         return;
     }
     
-    var lista = 'JUGADORES:\n\n';
-    jugadores.forEach(function(j, i) {
-        lista += (i + 1) + '. ' + j + '\n';
-    });
+    var jugador = jugadorSugerido;
+    if (!jugador) {
+        var lista = 'JUGADORES:\n\n';
+        jugadores.forEach(function(j, i) {
+            lista += (i + 1) + '. ' + j + '\n';
+        });
+        jugador = prompt(lista + '\nEscribe el nombre del jugador para DESBLOQUEAR chat:');
+    }
     
-    var jugador = prompt(lista + '\nEscribe el nombre del jugador para DESBLOQUEAR chat:');
     if (jugador && jugadores.indexOf(jugador) !== -1) {
         var minutos = prompt('¿Por cuántos minutos? (1-10):', '2');
         minutos = parseInt(minutos) || 2;
@@ -304,7 +385,7 @@ setTimeout(function() {
         var btnGestion = document.createElement('button');
         btnGestion.textContent = '🔓';
         btnGestion.style.cssText = 'background:#10b981;border:none;color:white;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:0.7em;margin-left:8px;';
-        btnGestion.onclick = window.abrirControlChat;
+        btnGestion.onclick = function() { window.abrirControlChat(); };
         btnGestion.title = 'Gestionar chat de jugadores';
         chatHeader.appendChild(btnGestion);
     }
@@ -399,6 +480,12 @@ document.addEventListener('DOMContentLoaded', function() {
     inicializarTableroMovil();
     verificarPartidaVigente();
     
+    // Ocultar cronómetros al inicio
+    var cronVisual = document.getElementById('cronometroVisual');
+    var cronVisualRuleta = document.getElementById('cronometroVisualRuleta');
+    if (cronVisual) cronVisual.style.display = 'none';
+    if (cronVisualRuleta) cronVisualRuleta.style.display = 'none';
+    
     setInterval(function() {
         actualizarUIMovil();
         inicializarTableroMovil();
@@ -410,18 +497,16 @@ document.addEventListener('DOMContentLoaded', function() {
         var oc = document.getElementById('onlineCountMobile');
         if (oc && window.jugadoresActivos) oc.textContent = '👥 ' + window.jugadoresActivos.length;
         
-        var cronPC = document.getElementById('cronometroBingo');
-        var cronMobile = document.getElementById('cronometroBingoMobile');
-        if (cronPC && cronMobile) cronMobile.textContent = cronPC.textContent;
-        
         var alertaPC = document.getElementById('alertaBingo');
         var alertaMobile = document.getElementById('alertaBingoMobile');
-        if (alertaPC && alertaMobile && alertaPC.style.display === 'block') {
-            alertaMobile.style.display = 'block';
-            var ajPC = document.getElementById('alertaJugador');
-            var acPC = document.getElementById('alertaCarton');
-            if (ajPC) document.getElementById('alertaJugadorMobile').textContent = ajPC.textContent;
-            if (acPC) document.getElementById('alertaCartonMobile').textContent = acPC.textContent;
+        if (alertaPC && alertaMobile) {
+            if (alertaPC.style.display === 'block') {
+                alertaMobile.style.display = 'block';
+                var ajPC = document.getElementById('alertaJugador');
+                var acPC = document.getElementById('alertaCarton');
+                if (ajPC) document.getElementById('alertaJugadorMobile').textContent = ajPC.textContent;
+                if (acPC) document.getElementById('alertaCartonMobile').textContent = acPC.textContent;
+            }
         }
     }, 1000);
 });
