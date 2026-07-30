@@ -38,7 +38,7 @@
                 </button>
                 
                 <div class="partida-vigente" id="partidaVigente" style="display:none;">
-                    <span>⚠️ Ya hay una partida vigente</span>
+                    <span>⚠️ Partida en curso - Reinicia para modificar</span>
                 </div>
                 
                 <div class="config-status" id="statusJugadoresCard">
@@ -59,7 +59,7 @@
                     <span class="config-check" id="statusPatronCheck">❌</span>
                 </div>
 
-                <button onclick="window.abrirModalCartones()" class="btn-accion btn-jugadores">
+                <button onclick="window.abrirModalCartones()" class="btn-accion btn-jugadores" id="btnSeleccionarJugadores">
                     📋 SELECCIONAR JUGADORES
                 </button>
                 
@@ -68,7 +68,7 @@
                 </button>
 
                 <button id="btnComenzarPartida" onclick="comenzarPartida()" class="btn-accion btn-comenzar" disabled>
-                    🚀 COMENZAR PARTIDA
+                    🚀 INICIAR PARTIDA
                 </button>
                 
                 <button id="btnReiniciarPartida" onclick="reiniciarPartida()" class="btn-accion btn-reiniciar-partida" style="display:none;">
@@ -87,6 +87,7 @@
 
         <!-- SECCIÓN RULETA -->
         <div class="section-ruleta" id="sectionRuleta">
+            <!-- Alerta de Bingo flotante -->
             <div id="alertaBingoMobile" class="alerta-bingo-flotante" style="display:none;">
                 <div class="alerta-flotante-titulo">🚨 ¡BINGO CANTADO!</div>
                 <div class="alerta-flotante-jugador" id="alertaJugadorMobile">-</div>
@@ -98,8 +99,7 @@
                 </div>
             </div>
 
-            <div class="cronometro-movil" id="cronometroBingoMobile">00:00</div>
-
+            <!-- Cronómetro visual en ruleta -->
             <div id="cronometroVisualRuleta" class="cronometro-visual" style="display:none;">
                 <div class="cronometro-visual-tiempo" id="cronometroVisualRuletaTiempo">00:00</div>
                 <div class="cronometro-visual-barra">
@@ -108,13 +108,18 @@
                 <p class="cronometro-visual-texto">⏳ Iniciando partida...</p>
             </div>
 
+            <!-- Última bola GRANDE + 5 pequeñas -->
+            <div id="ultimaBolaRuletaContainer"></div>
+
+            <!-- Programar cronómetro -->
             <div class="programar-row">
-                <input type="number" id="minutosInicioMobile" placeholder="Min" min="1" max="60" class="input-minutos">
+                <input type="text" id="minutosInicioMobile" placeholder="Ej: 2:30 o 5" class="input-minutos">
                 <button id="btnProgramarMobile" onclick="programarJuegoMobile()" class="btn-juego btn-programar-movil" disabled>
                     ⏰ PROGRAMAR
                 </button>
             </div>
 
+            <!-- Controles de juego -->
             <div class="controles-juego">
                 <button id="btnAutoMobile" onclick="iniciarAutoMobile()" class="btn-juego btn-auto" disabled>
                     🤖 AUTO
@@ -124,6 +129,12 @@
                 </button>
             </div>
 
+            <!-- Botón REINICIAR en ruleta -->
+            <button onclick="reiniciarPartida()" class="btn-accion btn-reiniciar-partida" style="margin-bottom:10px;">
+                🔄 REINICIAR PARTIDA
+            </button>
+
+            <!-- Últimos cantados (texto) -->
             <div class="ultimos-movil" id="ultimosCantadosMobile">
                 <span class="num-chico-movil vacio">--</span>
                 <span class="num-chico-movil vacio">--</span>
@@ -132,6 +143,7 @@
                 <span class="num-chico-movil vacio">--</span>
             </div>
 
+            <!-- Tablero 1-75 -->
             <div class="tablero-container">
                 <div class="tablero-header">
                     <h3>📊 TABLERO (1-75)</h3>
@@ -147,8 +159,8 @@
         <button class="btn-chat" onclick="toggleChat()">💬</button>
         <div class="chat-panel" id="chatPanel">
             <div class="chat-header">
-                💬 CHAT CON JUGADORES
-                <button onclick="limpiarChat()" style="background:transparent;border:none;color:#ffca28;cursor:pointer;font-size:0.7rem;float:right;">🗑️</button>
+                💬 CHAT
+                <button onclick="limpiarChat()" style="background:transparent;border:none;color:#ffca28;cursor:pointer;font-size:0.7rem;">🗑️</button>
             </div>
             <div class="chat-mensajes" id="chatMensajes">
                 <p class="chat-vacio">No hay mensajes</p>
@@ -213,7 +225,7 @@
         </div>
     </div>
 
-    <!-- BARRA DE NAVEGACIÓN INFERIOR -->
+    <!-- BARRA DE NAVEGACIÓN INFERIOR (SIEMPRE VISIBLE) -->
     <div class="bottom-nav">
         <div class="nav-item activo" onclick="navegarA('config')" id="navConfig">
             <span class="nav-icon">⚙️</span>
@@ -250,7 +262,7 @@
         })();
     </script>
     
-    <!-- Configuración Firebase (SIN declarar SALA_ID) -->
+    <!-- Configuración Firebase -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
