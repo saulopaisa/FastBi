@@ -505,131 +505,6 @@ body {
 .toast.error { background: var(--danger); }
 .toast.warning { background: #f59e0b; color: #1e293b; }
 
-/* ============ DESKTOP: DISEÑO HORIZONTAL ============ */
-@media (min-width: 768px) {
-    body {
-        flex-direction: row;
-        padding-bottom: var(--nav-height);
-    }
-    
-    .app-header {
-        display: none;
-    }
-    
-    .app-content {
-        display: flex;
-        gap: 15px;
-        padding: 15px;
-        padding-bottom: calc(var(--nav-height) + 15px);
-        flex: 1;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
-    
-    /* Vista cartones: panel izquierdo fijo + grid derecho */
-    #sectionCartones.activo {
-        display: flex;
-        gap: 15px;
-        flex: 1;
-        align-items: flex-start;
-        width: 100%;
-    }
-    
-    /* Columna izquierda */
-    .cartones-left-col {
-        flex: 0 0 360px;
-        max-width: 360px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        position: sticky;
-        top: 15px;
-    }
-    
-    /* Grid derecho */
-    .cartones-right-col {
-        flex: 1;
-        min-width: 0;
-    }
-    
-    /* Info bar EN GRANDE para desktop */
-    .info-bar {
-        flex-direction: row;
-        justify-content: space-around;
-        gap: 20px;
-        padding: 18px 20px;
-    }
-    
-    .info-value {
-        font-size: 2.4em;
-    }
-    
-    .info-label {
-        font-size: 0.75em;
-    }
-    
-    /* Vista jugadores */
-    #sectionJugadores.activo {
-        display: flex;
-        gap: 15px;
-        flex: 1;
-        align-items: flex-start;
-        width: 100%;
-    }
-    
-    #sectionJugadores .panel-card {
-        flex: 1;
-        max-width: 500px;
-    }
-    
-    /* Vista config */
-    #sectionConfig.activo {
-        max-width: 500px;
-        margin: 0 auto;
-        width: 100%;
-    }
-    
-    .bottom-nav {
-        /* Siempre visible */
-        justify-content: center;
-        gap: 0;
-    }
-    
-    .nav-item {
-        max-width: 200px;
-    }
-}
-
-@media (min-width: 1024px) {
-    .cartones-left-col {
-        flex: 0 0 400px;
-        max-width: 400px;
-    }
-    
-    .cartones-grid {
-        grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-    }
-    
-    .info-value {
-        font-size: 2.8em;
-    }
-    
-    .info-label {
-        font-size: 0.8em;
-    }
-}
-
-@media (min-width: 1400px) {
-    .cartones-left-col {
-        flex: 0 0 420px;
-        max-width: 420px;
-    }
-    
-    .cartones-grid {
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    }
-}
-
 /* ============ RESPONSIVE MÓVIL ============ */
 @media (max-width: 600px) {
     .cartones-grid {
@@ -672,6 +547,191 @@ body {
     
     .nav-item .nav-icon { font-size: 1.1rem; }
     .nav-item .nav-label { font-size: 0.5rem; }
+}
+
+/* ============ DESKTOP: DISEÑO HORIZONTAL ============ */
+@media (min-width: 768px) {
+    body {
+        flex-direction: row;
+        padding-bottom: var(--nav-height);
+    }
+    
+    .app-header {
+        display: none;
+    }
+    
+    .app-content {
+        display: flex;
+        gap: 15px;
+        padding: 15px;
+        padding-bottom: calc(var(--nav-height) + 15px);
+        flex: 1;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+    
+    /* Vista cartones: panel izquierdo fijo + grid derecho */
+    #sectionCartones.activo {
+        display: flex;
+        gap: 15px;
+        flex: 1;
+        align-items: flex-start;
+        width: 100%;
+    }
+    
+    /* Columna izquierda */
+    .cartones-left-col {
+        flex: 0 0 340px;
+        max-width: 340px;
+        min-width: 300px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        position: sticky;
+        top: 15px;
+    }
+    
+    /* Grid derecho - MÁS COLUMNAS */
+    .cartones-right-col {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    /* Grid de cartones HORIZONTAL: más columnas */
+    .cartones-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+        gap: 10px;
+    }
+    
+    .carton-card {
+        padding: 8px;
+    }
+    
+    .carton-bingo-cell {
+        font-size: 0.72em;
+    }
+    
+    .carton-bingo-header div {
+        font-size: 0.68em;
+        padding: 6px 2px;
+    }
+    
+    /* Info bar EN GRANDE */
+    .info-bar {
+        flex-direction: row;
+        justify-content: space-around;
+        gap: 20px;
+        padding: 18px 20px;
+    }
+    
+    .info-value {
+        font-size: 2.4em;
+    }
+    
+    .info-label {
+        font-size: 0.75em;
+    }
+    
+    /* Vista jugadores */
+    #sectionJugadores.activo {
+        display: flex;
+        gap: 15px;
+        flex: 1;
+        align-items: flex-start;
+        width: 100%;
+    }
+    
+    #sectionJugadores .panel-card {
+        flex: 1;
+        max-width: 500px;
+    }
+    
+    /* Vista config */
+    #sectionConfig.activo {
+        max-width: 500px;
+        margin: 0 auto;
+        width: 100%;
+    }
+    
+    .bottom-nav {
+        justify-content: center;
+    }
+    
+    .nav-item {
+        max-width: 200px;
+    }
+}
+
+/* ============ PANTALLAS GRANDES: MÁS COLUMNAS ============ */
+@media (min-width: 1024px) {
+    .cartones-left-col {
+        flex: 0 0 360px;
+        max-width: 360px;
+    }
+    
+    /* Más columnas en pantallas grandes */
+    .cartones-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 12px;
+    }
+    
+    .carton-bingo-cell {
+        font-size: 0.75em;
+    }
+    
+    .carton-bingo-header div {
+        font-size: 0.7em;
+    }
+    
+    .info-value {
+        font-size: 2.8em;
+    }
+    
+    .info-label {
+        font-size: 0.8em;
+    }
+}
+
+@media (min-width: 1400px) {
+    .cartones-left-col {
+        flex: 0 0 380px;
+        max-width: 380px;
+    }
+    
+    /* Muchas columnas en pantallas muy grandes */
+    .cartones-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 14px;
+    }
+    
+    .carton-bingo-cell {
+        font-size: 0.78em;
+    }
+    
+    .carton-bingo-header div {
+        font-size: 0.72em;
+    }
+}
+
+@media (min-width: 1800px) {
+    .cartones-left-col {
+        flex: 0 0 400px;
+        max-width: 400px;
+    }
+    
+    .cartones-grid {
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 16px;
+    }
+    
+    .carton-bingo-cell {
+        font-size: 0.8em;
+    }
+    
+    .carton-bingo-header div {
+        font-size: 0.75em;
+    }
 }
 
 /* ============ IMPRESIÓN ============ */
