@@ -20,7 +20,6 @@
             --card-bg: #16213e;
             --text-white: #ffffff;
             --text-gray: #94a3b8;
-            --nav-height: 60px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -44,7 +43,7 @@
             padding-bottom: 30px;
         }
 
-        /* ========== HEADER FIJO ========== */
+        /* ========== HEADER FIJO (STICKY) ========== */
         .header-fijo {
             position: sticky;
             top: 0;
@@ -87,7 +86,7 @@
 
         @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
 
-        /* Barra de números cantados (sticky) */
+        /* Barra de números cantados (sticky dentro del header) */
         .numeros-bar {
             display: flex;
             align-items: center;
@@ -327,6 +326,12 @@
             color: var(--warning);
         }
 
+        .btn-outline.desbloqueado {
+            border-color: var(--success);
+            color: var(--success);
+            animation: pulse 1.5s infinite;
+        }
+
         .error-msg {
             background: var(--danger);
             color: white;
@@ -339,7 +344,7 @@
         /* ========== GAME SCREEN ========== */
         .game-screen { display: none; }
 
-        /* Cartones */
+        /* Cartones - SIEMPRE HORIZONTAL CUANDO SE SELECCIONA */
         .cartones-container {
             display: flex;
             flex-direction: column;
@@ -349,12 +354,16 @@
 
         .cartones-container.horizontal {
             flex-direction: row;
-            flex-wrap: wrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 10px;
+            gap: 12px;
         }
 
         .cartones-container.horizontal .carton-wrapper {
-            flex: 1;
-            min-width: 280px;
+            flex: 0 0 auto;
+            width: 320px;
+            min-width: 300px;
         }
 
         .carton-wrapper {
@@ -467,7 +476,26 @@
             padding: 10px;
         }
 
-        /* ========== CHAT FLOTANTE (COMO LA RULETA) ========== */
+        /* Indicador de chat desbloqueado */
+        .chat-status {
+            text-align: center;
+            font-size: 0.7em;
+            margin-top: 5px;
+            padding: 5px;
+            border-radius: 8px;
+        }
+
+        .chat-status.bloqueado {
+            color: var(--text-gray);
+        }
+
+        .chat-status.desbloqueado {
+            color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+            animation: pulse 2s infinite;
+        }
+
+        /* ========== CHAT FLOTANTE ========== */
         .chat-flotante {
             position: fixed;
             bottom: 20px;
@@ -489,6 +517,7 @@
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
+            position: relative;
         }
 
         .btn-chat:active { transform: scale(0.9); }
@@ -514,7 +543,7 @@
             bottom: 80px;
             right: 15px;
             width: 280px;
-            max-height: 350px;
+            max-height: 380px;
             background: var(--card-bg);
             border-radius: 15px;
             border: 2px solid #6366f1;
@@ -534,6 +563,9 @@
             font-weight: bold;
             font-size: 0.8em;
             text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .chat-mensajes {
@@ -575,6 +607,14 @@
             color: white;
         }
 
+        .msg-sistema {
+            background: #fef3c7;
+            color: #92400e;
+            text-align: center;
+            margin: 4px auto;
+            font-style: italic;
+        }
+
         .msg-timestamp {
             font-size: 0.55em;
             color: rgba(255,255,255,0.6);
@@ -599,6 +639,11 @@
             outline: none;
         }
 
+        .chat-input-area input:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
         .chat-input-area button {
             background: #6366f1;
             color: white;
@@ -611,6 +656,18 @@
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .chat-input-area button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .chat-bloqueado-aviso {
+            text-align: center;
+            font-size: 0.65em;
+            color: #64748b;
+            padding: 5px;
         }
 
         /* ========== MODALES ========== */
@@ -649,11 +706,6 @@
         }
 
         .modal-buttons .btn { flex: 1; }
-
-        .alerta-partida-terminada h2 {
-            color: var(--gold);
-            margin-bottom: 10px;
-        }
 
         /* Confeti */
         .confetti-piece {
@@ -705,18 +757,16 @@
             .ultima-bola-grande { width: 50px; height: 50px; }
             .ultima-bola-grande .numero { font-size: 1.2em; }
             .chat-panel { width: 250px; }
-        }
-
-        @media (min-width: 768px) {
             .cartones-container.horizontal .carton-wrapper {
-                max-width: 400px;
+                width: 280px;
+                min-width: 260px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- ========== HEADER FIJO (SIEMPRE VISIBLE) ========== -->
+        <!-- ========== HEADER FIJO ========== -->
         <div class="header-fijo" id="headerFijo">
             <div class="header-top">
                 <h1>🎱 BINGO</h1>
@@ -726,7 +776,6 @@
                     <span id="connectionText">Conectado</span>
                 </div>
             </div>
-            <!-- Barra de números (sticky) -->
             <div class="numeros-bar" id="numerosBar">
                 <div class="ultima-bola-grande" id="ultimaBolaGrande">
                     <span class="letra">-</span>
@@ -764,10 +813,10 @@
                 </div>
             </div>
 
-            <!-- Selector de vista -->
+            <!-- Selector de vista (siempre visible si hay 2 cartones) -->
             <div class="vista-selector" id="vistaSelector" style="display:none;">
                 <button onclick="cambiarVista('vertical')" id="btnVistaVertical" class="activo">📱 VERTICAL</button>
-                <button onclick="cambiarVista('horizontal')" id="btnVistaHorizontal">💻 HORIZONTAL</button>
+                <button onclick="cambiarVista('horizontal')" id="btnVistaHorizontal">📱↔ HORIZONTAL</button>
             </div>
 
             <!-- Cartones -->
@@ -776,7 +825,12 @@
             <!-- Acciones -->
             <div class="acciones-jugador">
                 <button class="btn btn-bingo" onclick="cantarBingo()">🎉 ¡BINGO!</button>
-                <button class="btn btn-outline" onclick="notificarAdmin()">⚠️ AVISAR ADMIN</button>
+                <button class="btn btn-outline" id="btnAvisarAdmin" onclick="solicitarDesbloquearChat()">🔒 PEDIR HABLAR</button>
+            </div>
+
+            <!-- Estado del chat -->
+            <div class="chat-status bloqueado" id="chatStatus">
+                🔒 Chat bloqueado. Usa "PEDIR HABLAR" si necesitas comunicarte.
             </div>
 
             <button class="btn btn-danger" onclick="salirDelJuego()" style="margin-top:8px;">🚪 Salir</button>
@@ -790,18 +844,24 @@
             <span class="chat-badge" id="chatBadge">0</span>
         </button>
         <div class="chat-panel" id="chatPanel">
-            <div class="chat-header">💬 CHAT</div>
+            <div class="chat-header">
+                <span>💬 CHAT</span>
+                <span id="chatHeaderStatus" style="font-size:0.7em;">🔒</span>
+            </div>
             <div class="chat-mensajes" id="chatMensajes">
                 <p class="chat-vacio">No hay mensajes</p>
             </div>
-            <div class="chat-input-area">
-                <input type="text" id="chatInput" placeholder="Escribe..." onkeypress="if(event.key==='Enter')enviarChat()">
-                <button onclick="enviarChat()">➤</button>
+            <div class="chat-input-area" id="chatInputArea">
+                <input type="text" id="chatInput" placeholder="Chat bloqueado..." disabled onkeypress="if(event.key==='Enter')enviarChat()">
+                <button onclick="enviarChat()" id="btnEnviarChat" disabled>➤</button>
+            </div>
+            <div class="chat-bloqueado-aviso" id="chatBloqueadoAviso">
+                🔒 Usa el botón "PEDIR HABLAR" para solicitar desbloqueo
             </div>
         </div>
     </div>
 
-    <!-- Modal Confirmar -->
+    <!-- Modal Confirmar Bingo -->
     <div class="modal-overlay" id="modalConfirmar">
         <div class="modal-content">
             <h2>🎉 ¿Confirmar BINGO?</h2>
@@ -824,7 +884,7 @@
 
     <!-- Modal Partida Terminada -->
     <div class="modal-overlay" id="modalPartidaTerminada">
-        <div class="modal-content alerta-partida-terminada">
+        <div class="modal-content">
             <h2>🏁 Partida Terminada</h2>
             <p id="partidaTerminadaMensaje">El administrador ha reiniciado la partida.</p>
             <button class="btn btn-primary" onclick="limpiarParaNuevaPartida()">🔄 Nueva Partida</button>
@@ -850,7 +910,7 @@
         const db = firebase.database();
         console.log('🔥 Firebase conectado');
 
-        // ============ OBTENER SALA ============
+        // ============ SALA ============
         function obtenerSalaDeURL() {
             const params = new URLSearchParams(window.location.search);
             return params.get('sala') || null;
@@ -879,6 +939,9 @@
         let ultimoEstadoPartida = null;
         let vistaActual = 'vertical';
         let mensajesChat = [];
+        let chatDesbloqueado = false;
+        let chatDesbloqueadoHasta = null;
+        let timeoutDesbloqueo = null;
 
         // ============ CONEXIÓN ============
         function actualizarEstadoConexion(online) {
@@ -905,6 +968,108 @@
             localStorage.setItem('bingo_vista', tipo);
         }
 
+        // ============ CHAT (BLOQUEADO POR DEFECTO) ============
+        function actualizarEstadoChat() {
+            const input = document.getElementById('chatInput');
+            const btnEnviar = document.getElementById('btnEnviarChat');
+            const aviso = document.getElementById('chatBloqueadoAviso');
+            const statusDiv = document.getElementById('chatStatus');
+            const btnAvisar = document.getElementById('btnAvisarAdmin');
+            const headerStatus = document.getElementById('chatHeaderStatus');
+            
+            if (chatDesbloqueado) {
+                input.disabled = false;
+                btnEnviar.disabled = false;
+                input.placeholder = 'Escribe tu mensaje...';
+                aviso.style.display = 'none';
+                statusDiv.textContent = '🔓 Chat desbloqueado. Puedes escribir.';
+                statusDiv.className = 'chat-status desbloqueado';
+                btnAvisar.textContent = '🔓 CHAT ABIERTO';
+                btnAvisar.className = 'btn btn-outline desbloqueado';
+                headerStatus.textContent = '🔓';
+                
+                // Verificar si expiró
+                if (chatDesbloqueadoHasta && Date.now() > chatDesbloqueadoHasta) {
+                    bloquearChat();
+                }
+            } else {
+                input.disabled = true;
+                btnEnviar.disabled = true;
+                input.placeholder = 'Chat bloqueado...';
+                aviso.style.display = 'block';
+                statusDiv.textContent = '🔒 Chat bloqueado. Usa "PEDIR HABLAR" si necesitas comunicarte.';
+                statusDiv.className = 'chat-status bloqueado';
+                btnAvisar.textContent = '🔒 PEDIR HABLAR';
+                btnAvisar.className = 'btn btn-outline';
+                headerStatus.textContent = '🔒';
+            }
+        }
+
+        function bloquearChat() {
+            chatDesbloqueado = false;
+            chatDesbloqueadoHasta = null;
+            if (timeoutDesbloqueo) clearTimeout(timeoutDesbloqueo);
+            timeoutDesbloqueo = null;
+            actualizarEstadoChat();
+            
+            // Notificar a Firebase
+            db.ref('partidas/' + SALA_ID + '/chatDesbloqueos/' + miNombre).set({
+                desbloqueado: false,
+                timestamp: Date.now()
+            });
+        }
+
+        function desbloquearChat(duracionMinutos = 2) {
+            chatDesbloqueado = true;
+            chatDesbloqueadoHasta = Date.now() + (duracionMinutos * 60 * 1000);
+            actualizarEstadoChat();
+            
+            if (timeoutDesbloqueo) clearTimeout(timeoutDesbloqueo);
+            timeoutDesbloqueo = setTimeout(() => {
+                bloquearChat();
+                mostrarToast('⏰ Tiempo de chat agotado', 'warning');
+            }, duracionMinutos * 60 * 1000);
+            
+            mostrarToast('🔓 Chat desbloqueado por ' + duracionMinutos + ' min', 'success');
+        }
+
+        function solicitarDesbloquearChat() {
+            if (chatDesbloqueado) {
+                mostrarToast('✅ El chat ya está desbloqueado', 'success');
+                return;
+            }
+            
+            if (!miNombre) return;
+            
+            // Enviar solicitud al admin
+            db.ref('partidas/' + SALA_ID).update({
+                solicitudChat: {
+                    jugador: miNombre,
+                    mensaje: '🙋 ' + miNombre + ' solicita desbloquear el chat',
+                    timestamp: Date.now()
+                }
+            });
+            
+            mostrarToast('📩 Solicitud enviada al administrador', 'warning');
+        }
+
+        // Escuchar si el admin desbloquea el chat
+        function escucharDesbloqueoChat() {
+            db.ref('partidas/' + SALA_ID + '/chatDesbloqueos/' + miNombre).on('value', (snap) => {
+                const data = snap.val();
+                if (data && data.desbloqueado === true) {
+                    if (!chatDesbloqueado) {
+                        desbloquearChat(data.duracion || 2);
+                    }
+                } else if (data && data.desbloqueado === false) {
+                    if (chatDesbloqueado) {
+                        bloquearChat();
+                        mostrarToast('🔒 Chat bloqueado por el administrador', 'warning');
+                    }
+                }
+            });
+        }
+
         // ============ UNIRSE ============
         async function unirseAlJuego() {
             const nombre = document.getElementById('nombreInput').value.trim();
@@ -926,14 +1091,12 @@
 
                 let cartonesAsignados = [];
                 
-                // Buscar ya asignados
                 Object.entries(cartones).forEach(([id, carton]) => {
                     if (carton.asignadoA === nombre) {
                         cartonesAsignados.push({ id, carton: carton.carton, numero: carton.numero });
                     }
                 });
 
-                // Si no tiene, buscar libres (máx 2)
                 if (cartonesAsignados.length === 0) {
                     Object.entries(cartones).forEach(([id, carton]) => {
                         if (!carton.asignadoA && cartonesAsignados.length < 2) {
@@ -964,9 +1127,8 @@
 
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('gameScreen').style.display = 'block';
-                
-                // Mostrar chat y selector de vista
                 document.getElementById('chatFlotante').style.display = 'block';
+                
                 if (misCartones.length === 2) {
                     document.getElementById('vistaSelector').style.display = 'flex';
                 }
@@ -984,8 +1146,9 @@
             mostrarCartones();
             escucharPartida();
             escucharChat();
+            escucharDesbloqueoChat();
+            actualizarEstadoChat();
             
-            // Restaurar vista
             const vistaGuardada = localStorage.getItem('bingo_vista');
             if (vistaGuardada) cambiarVista(vistaGuardada);
         }
@@ -1037,7 +1200,6 @@
         function toggleCelda(cell) {
             const valor = parseInt(cell.dataset.valor);
             if (isNaN(valor)) return;
-            
             if (cantadosSet.has(valor)) {
                 cell.classList.toggle('marked');
             }
@@ -1074,7 +1236,6 @@
                 const data = snap.val();
                 if (!data) return;
 
-                // Detectar reinicio
                 if (data.estado === 'nueva_partida' || data.estado === 'terminado') {
                     if (ultimoEstadoPartida && ultimoEstadoPartida !== 'nueva_partida' && ultimoEstadoPartida !== 'terminado') {
                         mostrarPartidaTerminada(data);
@@ -1089,7 +1250,6 @@
 
                 ultimoEstadoPartida = data.estado;
 
-                // Números cantados
                 if (data.cantados && Array.isArray(data.cantados)) {
                     data.cantados.forEach(num => {
                         if (!cantadosSet.has(num)) {
@@ -1098,25 +1258,21 @@
                         }
                     });
                     document.getElementById('cantadosCount').textContent = data.cantados.length;
-                    
                     if (data.cantados.length > 0) {
                         actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
                     }
                     actualizarUltimasBolasScroll(data.cantados);
                 }
 
-                // Patrón
                 if (data.patron && Array.isArray(data.patron)) {
                     patronActual = data.patron;
                     aplicarPatronACartones();
                 }
 
-                // Jugadores
                 if (data.jugadoresActivos && Array.isArray(data.jugadoresActivos)) {
                     document.getElementById('jugadoresCount').textContent = data.jugadoresActivos.length;
                 }
 
-                // Cronómetro
                 if (data.cronometro && data.cronometro > 0) {
                     const mins = Math.floor(data.cronometro / 60);
                     const segs = data.cronometro % 60;
@@ -1128,7 +1284,6 @@
                     document.getElementById('cronometroDisplay').textContent = '⏸️';
                 }
 
-                // Resultado revisión
                 if (data.resultadoRevision && data.resultadoRevision.jugador === miNombre) {
                     if (data.resultadoRevision.resultado === 'valido') {
                         lanzarConfeti();
@@ -1154,7 +1309,6 @@
         function actualizarUltimasBolasScroll(cantados) {
             const container = document.getElementById('ultimasBolasScroll');
             const ultimos = cantados.slice(-6).reverse();
-            
             container.innerHTML = '';
             ultimos.forEach((num, i) => {
                 const bola = document.createElement('div');
@@ -1165,29 +1319,26 @@
         }
 
         function mostrarPartidaTerminada(data) {
-            const mensaje = data.mensajeAdmin || 'El administrador ha reiniciado la partida.';
-            document.getElementById('partidaTerminadaMensaje').textContent = mensaje;
+            document.getElementById('partidaTerminadaMensaje').textContent = 
+                data.mensajeAdmin || 'El administrador ha reiniciado la partida.';
             document.getElementById('modalPartidaTerminada').classList.add('active');
+            bloquearChat();
         }
 
         function limpiarParaNuevaPartida() {
             cantadosSet.clear();
             patronActual = [];
-            
             document.getElementById('cantadosCount').textContent = '0';
             document.getElementById('cronometroDisplay').textContent = '--';
             document.getElementById('ultimaBolaGrande').querySelector('.letra').textContent = '-';
             document.getElementById('ultimaBolaGrande').querySelector('.numero').textContent = '--';
             document.getElementById('ultimasBolasScroll').innerHTML = '';
-            
             document.querySelectorAll('.carton-cell').forEach(cell => {
                 cell.classList.remove('marked', 'ultima-cantada', 'patron-cell');
             });
-            document.querySelectorAll('.carton-cell.free').forEach(cell => {
-                cell.classList.add('marked');
-            });
-            
+            document.querySelectorAll('.carton-cell.free').forEach(cell => cell.classList.add('marked'));
             document.getElementById('modalPartidaTerminada').classList.remove('active');
+            bloquearChat();
             mostrarToast('🔄 Listo para nueva partida', 'success');
         }
 
@@ -1209,15 +1360,18 @@
                 
                 mensajes.forEach(msg => {
                     const div = document.createElement('div');
-                    div.className = 'msg-item ' + (msg.admin ? 'msg-admin' : 'msg-jugador');
-                    div.innerHTML = (msg.admin ? '📢 ' : '') + msg.mensaje + 
+                    if (msg.sistema) {
+                        div.className = 'msg-item msg-sistema';
+                    } else {
+                        div.className = 'msg-item ' + (msg.admin ? 'msg-admin' : 'msg-jugador');
+                    }
+                    div.innerHTML = (msg.admin && !msg.sistema ? '📢 ' : '') + msg.mensaje + 
                         '<div class="msg-timestamp">' + new Date(msg.timestamp).toLocaleTimeString() + '</div>';
                     contenedor.appendChild(div);
                 });
                 
                 contenedor.scrollTop = contenedor.scrollHeight;
                 
-                // Badge si el chat está cerrado
                 const panel = document.getElementById('chatPanel');
                 if (!panel.classList.contains('activo') && mensajes.length > mensajesChat.length) {
                     const nuevos = mensajes.length - mensajesChat.length;
@@ -1235,11 +1389,18 @@
             panel.classList.toggle('activo');
             if (panel.classList.contains('activo')) {
                 document.getElementById('chatBadge').style.display = 'none';
-                document.getElementById('chatInput').focus();
+                if (chatDesbloqueado) {
+                    document.getElementById('chatInput').focus();
+                }
             }
         }
 
         function enviarChat() {
+            if (!chatDesbloqueado) {
+                mostrarToast('🔒 Chat bloqueado. Usa "PEDIR HABLAR"', 'warning');
+                return;
+            }
+            
             const input = document.getElementById('chatInput');
             const mensaje = input.value.trim();
             if (!mensaje || !miNombre) return;
@@ -1247,7 +1408,8 @@
             db.ref('partidas/' + SALA_ID + '/chat').push({
                 mensaje: miNombre + ': ' + mensaje,
                 timestamp: Date.now(),
-                admin: false
+                admin: false,
+                jugador: miNombre
             });
             input.value = '';
         }
@@ -1274,7 +1436,6 @@
                         break;
                     }
                 }
-                
                 if (bingo) return true;
             }
             return false;
@@ -1305,19 +1466,6 @@
             }
         }
 
-        // ============ NOTIFICAR ADMIN ============
-        function notificarAdmin() {
-            if (!miNombre) return;
-            db.ref('partidas/' + SALA_ID).update({
-                alertaJugador: {
-                    jugador: miNombre,
-                    mensaje: '⚠️ ' + miNombre + ' solicita atención',
-                    timestamp: Date.now()
-                }
-            });
-            mostrarToast('⚠️ Aviso enviado al administrador', 'warning');
-        }
-
         // ============ UTILIDADES ============
         function obtenerLetra(n) {
             if (n <= 15) return 'B';
@@ -1344,6 +1492,8 @@
             misCartones = [];
             cantadosSet.clear();
             mensajesChat = [];
+            chatDesbloqueado = false;
+            if (timeoutDesbloqueo) clearTimeout(timeoutDesbloqueo);
             localStorage.clear();
             
             document.getElementById('gameScreen').style.display = 'none';
@@ -1356,7 +1506,6 @@
             document.getElementById('chatMensajes').innerHTML = '<p class="chat-vacio">No hay mensajes</p>';
         }
 
-        // ============ EFECTOS ============
         function lanzarConfeti() {
             const colores = ['#FF6B6B', '#4ECDC4', '#FFD700', '#FF8C00', '#FF1493', '#10b981'];
             for (let i = 0; i < 80; i++) {
