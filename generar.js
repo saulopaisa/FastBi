@@ -98,7 +98,6 @@ function asignarCartones() {
     
     if (!nombre) { mostrarToast('⚠️ Ingresa un nombre de jugador', 'error'); return; }
     
-    // Contar cuántos ya tiene asignados
     var yaAsignados = cartonesGenerados.filter(function(c) { return c.asignadoA === nombre; }).length;
     var maxPermitido = 2;
     var faltantes = cantidad - yaAsignados;
@@ -126,24 +125,23 @@ function asignarCartones() {
     }
     
     if (asignados === 0) {
-        mostrarToast('⚠️ No hay cartones disponibles para asignar', 'error');
+        mostrarToast('⚠️ No hay cartones disponibles', 'error');
         return;
     }
     
     mostrarCartones();
     actualizarContadores();
-    mostrarToast('✅ ' + asignados + ' cartones asignados a ' + nombre + ' (total: ' + (yaAsignados+asignados) + ')', 'success');
+    mostrarToast('✅ ' + asignados + ' cartones asignados a ' + nombre, 'success');
 }
 
 function asignarIndividual(index) {
     var carton = cartonesGenerados[index];
-    var nombre = prompt('Nombre del jugador para cartón #' + carton.numero + ':');
+    var nombre = prompt('Nombre para cartón #' + carton.numero + ':');
     if (!nombre) return;
     
     var yaAsignados = cartonesGenerados.filter(function(c) { return c.asignadoA === nombre; }).length;
-    
     if (yaAsignados >= 2 && carton.asignadoA !== nombre) {
-        mostrarToast('⚠️ ' + nombre + ' ya tiene 2 cartones (máximo permitido)', 'error');
+        mostrarToast('⚠️ ' + nombre + ' ya tiene 2 cartones (máximo)', 'error');
         return;
     }
     
@@ -151,16 +149,13 @@ function asignarIndividual(index) {
     carton.estado = 'asignado';
     mostrarCartones();
     actualizarContadores();
-    mostrarToast('✅ Cartón #' + carton.numero + ' asignado a ' + nombre, 'success');
+    mostrarToast('✅ Cartón #' + carton.numero + ' → ' + nombre, 'success');
 }
 
 function eliminarCarton(index) {
     if (confirm('¿Eliminar cartón #' + cartonesGenerados[index].numero + '?')) {
         cartonesGenerados.splice(index, 1);
-        // Renumerar
-        cartonesGenerados.forEach(function(c, i) {
-            c.numero = i + 1;
-        });
+        cartonesGenerados.forEach(function(c, i) { c.numero = i + 1; });
         mostrarCartones();
         actualizarContadores();
         mostrarToast('🗑️ Cartón eliminado', 'error');
@@ -177,7 +172,6 @@ function buscarCarton() {
         return;
     }
     
-    // Buscar por número de cartón o nombre de jugador
     var resultados = cartonesGenerados.filter(function(c) {
         var numStr = String(c.numero);
         var nombre = (c.asignadoA || '').toLowerCase();
@@ -185,11 +179,10 @@ function buscarCarton() {
     });
     
     if (resultados.length === 0) {
-        resultadosDiv.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:10px;font-size:0.8em;">❌ Sin resultados para "' + termino + '"</p>';
+        resultadosDiv.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:10px;font-size:0.8em;">❌ Sin resultados</p>';
         return;
     }
     
-    // Limitar a 20 resultados para no sobrecargar
     resultados = resultados.slice(0, 20);
     
     resultadosDiv.innerHTML = '';
@@ -205,12 +198,10 @@ function buscarCarton() {
             '</div>' +
             '<button class="asignar-btn" onclick="event.stopPropagation();asignarDesdeBusqueda(' + idx + ')">👤 ASIGNAR</button>';
         
-        // Click en el resultado scrollea al cartón
         div.onclick = function() {
             var cartonCard = document.getElementById('cartonCard-' + idx);
             if (cartonCard) {
                 cartonCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // Highlight temporal
                 cartonCard.style.boxShadow = '0 0 25px #ffca28';
                 cartonCard.style.border = '2px solid #ffca28';
                 setTimeout(function() {
@@ -222,28 +213,16 @@ function buscarCarton() {
         
         resultadosDiv.appendChild(div);
     });
-    
-    // Mostrar contador de resultados
-    var contador = document.createElement('div');
-    contador.style.cssText = 'text-align:center;font-size:0.7em;color:#64748b;padding:5px;';
-    contador.textContent = 'Mostrando ' + resultados.length + ' de ' + 
-        cartonesGenerados.filter(function(c) {
-            var numStr = String(c.numero);
-            var nombre = (c.asignadoA || '').toLowerCase();
-            return numStr.includes(termino) || nombre.includes(termino);
-        }).length + ' resultados';
-    resultadosDiv.appendChild(contador);
 }
 
 function asignarDesdeBusqueda(index) {
     var carton = cartonesGenerados[index];
-    var nombre = prompt('Nombre del jugador para cartón #' + carton.numero + ' (' + (carton.asignadoA || 'Disponible') + '):');
+    var nombre = prompt('Nombre para cartón #' + carton.numero + ':');
     if (!nombre) return;
     
     var yaAsignados = cartonesGenerados.filter(function(c) { return c.asignadoA === nombre; }).length;
-    
     if (yaAsignados >= 2 && carton.asignadoA !== nombre) {
-        mostrarToast('⚠️ ' + nombre + ' ya tiene 2 cartones (máximo permitido)', 'error');
+        mostrarToast('⚠️ ' + nombre + ' ya tiene 2 cartones (máximo)', 'error');
         return;
     }
     
@@ -251,8 +230,8 @@ function asignarDesdeBusqueda(index) {
     carton.estado = 'asignado';
     mostrarCartones();
     actualizarContadores();
-    buscarCarton(); // Refrescar búsqueda
-    mostrarToast('✅ Cartón #' + carton.numero + ' asignado a ' + nombre, 'success');
+    buscarCarton();
+    mostrarToast('✅ Cartón #' + carton.numero + ' → ' + nombre, 'success');
 }
 
 // ============ CONTADORES ============
@@ -270,30 +249,31 @@ function guardarEnFirebase() {
         return; 
     }
     
-    if (!confirm('¿Guardar ' + cartonesGenerados.length + ' cartones en Firebase?\n\nSala: ' + SALA_ID + '\n\nEsto reemplazará los cartones existentes.')) {
+    if (!confirm('¿Guardar ' + cartonesGenerados.length + ' cartones en Firebase?\n\nSala: ' + SALA_ID)) {
         return;
     }
     
-    // Primero eliminar cartones anteriores
-    db.ref('salas/' + SALA_ID + '/cartones').remove().then(function() {
-        // Guardar nuevos
-        var updates = {};
-        cartonesGenerados.forEach(function(c) {
-            updates['salas/' + SALA_ID + '/cartones/' + c.id] = {
-                numero: c.numero,
-                carton: c.carton,
-                asignadoA: c.asignadoA || null,
-                estado: c.asignadoA ? 'asignado' : 'disponible'
-            };
-        });
-        
-        return db.ref().update(updates);
-    }).then(function() {
-        mostrarToast('✅ ' + cartonesGenerados.length + ' cartones guardados en Firebase', 'success');
-    }).catch(function(err) {
-        console.error('Error al guardar:', err);
-        mostrarToast('❌ Error al guardar: ' + err.message, 'error');
+    var updates = {};
+    cartonesGenerados.forEach(function(c) {
+        updates['salas/' + SALA_ID + '/cartones/' + c.id] = {
+            numero: c.numero,
+            carton: c.carton,
+            asignadoA: c.asignadoA || null,
+            estado: c.asignadoA ? 'asignado' : 'disponible'
+        };
     });
+    
+    db.ref('salas/' + SALA_ID + '/cartones').remove()
+        .then(function() {
+            return db.ref().update(updates);
+        })
+        .then(function() {
+            mostrarToast('✅ ' + cartonesGenerados.length + ' cartones guardados', 'success');
+        })
+        .catch(function(err) {
+            console.error('Error:', err);
+            mostrarToast('❌ Error: ' + err.message, 'error');
+        });
 }
 
 // ============ IMPORTAR DESDE FIREBASE ============
@@ -302,7 +282,7 @@ function importarDesdeFirebase() {
         var data = snap.val();
         
         if (!data) { 
-            mostrarToast('⚠️ No hay cartones guardados en esta sala', 'error'); 
+            mostrarToast('⚠️ No hay cartones en esta sala', 'error'); 
             return; 
         }
         
@@ -318,24 +298,19 @@ function importarDesdeFirebase() {
             });
         });
         
-        // Ordenar por número
         cartonesGenerados.sort(function(a, b) { return a.numero - b.numero; });
-        
-        // Renumerar si es necesario
-        cartonesGenerados.forEach(function(c, i) {
-            c.numero = i + 1;
-        });
+        cartonesGenerados.forEach(function(c, i) { c.numero = i + 1; });
         
         mostrarCartones();
         actualizarContadores();
         mostrarToast('✅ ' + cartonesGenerados.length + ' cartones importados', 'success');
     }).catch(function(err) {
-        console.error('Error al importar:', err);
-        mostrarToast('❌ Error al importar: ' + err.message, 'error');
+        console.error('Error:', err);
+        mostrarToast('❌ Error: ' + err.message, 'error');
     });
 }
 
-// ============ GENERAR LINK PARA JUGADOR ============
+// ============ GENERAR LINK ============
 function generarLinkJugador() {
     var nombre = document.getElementById('nombreJugador').value.trim();
     
@@ -355,22 +330,15 @@ function generarLinkJugador() {
     
     var link = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'jugador.html?sala=' + encodeURIComponent(SALA_ID);
     document.getElementById('linkGenerado').textContent = link;
-    document.getElementById('linkGenerado').style.color = '#10b981';
     document.getElementById('modalLink').classList.add('activo');
-    
-    // Mostrar info de cartones
-    var infoCartones = document.getElementById('infoCartonesJugador');
-    if (infoCartones) {
-        infoCartones.textContent = 'Cartones asignados: ' + cartonesJugador.map(function(c) { return '#' + c.numero; }).join(', ');
-    }
 }
 
 function copiarLink() {
     var link = document.getElementById('linkGenerado').textContent;
     navigator.clipboard.writeText(link).then(function() {
-        mostrarToast('✅ Link copiado al portapapeles', 'success');
+        mostrarToast('✅ Link copiado', 'success');
     }).catch(function() {
-        prompt('📋 Copia este link manualmente:', link);
+        prompt('📋 Copia este link:', link);
     });
 }
 
@@ -381,13 +349,10 @@ function cerrarModal(id) {
 // ============ IMPRIMIR ============
 function imprimirCartones() {
     if (cartonesGenerados.length === 0) { 
-        mostrarToast('⚠️ No hay cartones para imprimir', 'error'); 
+        mostrarToast('⚠️ No hay cartones', 'error'); 
         return; 
     }
-    mostrarToast('🖨️ Abriendo vista de impresión...', 'success');
-    setTimeout(function() {
-        window.print();
-    }, 500);
+    setTimeout(function() { window.print(); }, 300);
 }
 
 // ============ TOAST ============
@@ -397,58 +362,7 @@ function mostrarToast(mensaje, tipo) {
     
     toast.textContent = mensaje;
     toast.className = 'toast ' + (tipo || '');
-    
-    // Forzar reflow
     toast.offsetHeight;
-    
     setTimeout(function() { toast.classList.add('show'); }, 10);
-    setTimeout(function() { 
-        toast.classList.remove('show'); 
-    }, 2500);
-}
-
-// ============ EXPORTAR COPIAS DE SEGURIDAD ============
-function exportarCartones() {
-    if (cartonesGenerados.length === 0) {
-        mostrarToast('⚠️ No hay cartones para exportar', 'error');
-        return;
-    }
-    
-    var data = JSON.stringify(cartonesGenerados, null, 2);
-    var blob = new Blob([data], {type: 'application/json'});
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = 'cartones_' + SALA_ID + '_' + new Date().toISOString().slice(0,10) + '.json';
-    a.click();
-    URL.revokeObjectURL(url);
-    mostrarToast('✅ Copia de seguridad descargada', 'success');
-}
-
-// ============ IMPORTAR COPIA DE SEGURIDAD ============
-function importarCopiaSeguridad() {
-    var input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = function(e) {
-        var file = e.target.files[0];
-        var reader = new FileReader();
-        reader.onload = function(event) {
-            try {
-                var data = JSON.parse(event.target.result);
-                if (Array.isArray(data) && data.length > 0 && data[0].carton) {
-                    cartonesGenerados = data;
-                    mostrarCartones();
-                    actualizarContadores();
-                    mostrarToast('✅ ' + data.length + ' cartones importados del archivo', 'success');
-                } else {
-                    mostrarToast('❌ Archivo no válido', 'error');
-                }
-            } catch (err) {
-                mostrarToast('❌ Error al leer el archivo', 'error');
-            }
-        };
-        reader.readAsText(file);
-    };
-    input.click();
+    setTimeout(function() { toast.classList.remove('show'); }, 2500);
 }
