@@ -14,6 +14,7 @@
         <h1>🎫 CARTONES</h1>
         <div class="header-actions">
             <button class="btn-header-icon" onclick="location.href='ruleta.html'" title="Ruleta">🎲</button>
+            <button class="btn-header-icon" onclick="location.href='jugador.html'" title="Jugador">👤</button>
             <span class="online-badge" id="salaDisplay">-</span>
         </div>
     </div>
@@ -21,51 +22,64 @@
     <!-- CONTENIDO PRINCIPAL -->
     <div class="app-content" id="appContent">
         
-        <!-- VISTA 1: CARTONES -->
+        <!-- ========== VISTA 1: CARTONES ========== -->
         <div class="section-panel activo" id="sectionCartones">
             
-            <!-- Generar Cartones -->
-            <div class="panel-card">
-                <h3>🆕 GENERAR CARTONES</h3>
-                <div class="input-row">
-                    <input type="number" id="cantidadGenerar" value="10" min="1" max="500" placeholder="Cantidad">
-                    <button onclick="generarCartones()" class="btn btn-generar">🎲 GENERAR</button>
+            <!-- Columna izquierda (escritorio) -->
+            <div class="cartones-left-col">
+                
+                <!-- Generar Cartones -->
+                <div class="panel-card">
+                    <h3>🆕 GENERAR CARTONES</h3>
+                    <div class="input-row">
+                        <input type="number" id="cantidadGenerar" value="10" min="1" max="500" placeholder="Cantidad">
+                        <button onclick="generarCartones()" class="btn btn-generar">🎲 GENERAR</button>
+                    </div>
+                    <button onclick="borrarTodosCartones()" class="btn btn-eliminar" style="margin-top:6px;">🗑️ BORRAR TODOS</button>
                 </div>
-                <button onclick="borrarTodosCartones()" class="btn btn-eliminar" style="margin-top:6px;">🗑️ BORRAR TODOS LOS CARTONES</button>
-            </div>
 
-            <!-- Buscador con checkboxes -->
-            <div class="panel-card">
-                <h3>🔍 BUSCAR Y ASIGNAR</h3>
-                <div class="input-row">
-                    <input type="text" id="buscarCarton" placeholder="# número o nombre del jugador" oninput="buscarCarton()">
+                <!-- Buscador con checkboxes -->
+                <div class="panel-card">
+                    <h3>🔍 BUSCAR Y ASIGNAR</h3>
+                    <input type="text" id="buscarCarton" placeholder="# número o nombre del jugador" oninput="buscarCarton()" style="width:100%;padding:10px;border:2px solid #334155;border-radius:8px;background:#1e293b;color:white;font-size:0.9rem;outline:none;margin-bottom:8px;">
+                    <div id="resultadosBusqueda" style="max-height:200px;overflow-y:auto;">
+                        <p style="color:#94a3b8;text-align:center;font-size:0.8em;padding:10px;">Escribe para buscar cartones</p>
+                    </div>
+                    <div id="seleccionadosInfo" style="display:none;margin-top:8px;padding:8px;background:#0f172a;border-radius:8px;text-align:center;">
+                        <span style="color:#ffca28;font-size:0.8em;">Seleccionados: <strong id="countSeleccionados">0</strong>/2</span>
+                        <div class="input-row" style="margin-top:6px;">
+                            <input type="text" id="nombreAsignarSeleccionados" placeholder="Nombre del jugador">
+                            <button onclick="asignarSeleccionados()" class="btn btn-asignar">✅ ASIGNAR</button>
+                        </div>
+                    </div>
                 </div>
-                <div id="resultadosBusqueda" style="max-height:200px;overflow-y:auto;margin-top:8px;">
-                    <p style="color:#94a3b8;text-align:center;font-size:0.8em;padding:10px;">Escribe para buscar cartones</p>
-                </div>
-                <div id="seleccionadosInfo" style="display:none;margin-top:8px;padding:8px;background:#0f172a;border-radius:8px;text-align:center;">
-                    <span style="color:#ffca28;font-size:0.8em;">Seleccionados: <strong id="countSeleccionados">0</strong>/2</span>
-                    <div class="input-row" style="margin-top:6px;">
-                        <input type="text" id="nombreAsignarSeleccionados" placeholder="Nombre del jugador">
-                        <button onclick="asignarSeleccionados()" class="btn btn-asignar">✅ ASIGNAR</button>
+
+                <!-- Info Bar -->
+                <div class="info-bar">
+                    <div class="info-item">
+                        <span class="info-value" id="totalCartones">0</span>
+                        <span class="info-label">Total</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-value" id="totalAsignados">0</span>
+                        <span class="info-label">Asignados</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-value" id="totalDisponibles">0</span>
+                        <span class="info-label">Disponibles</span>
                     </div>
                 </div>
             </div>
-
-            <!-- Info Bar -->
-            <div class="info-bar">
-                <span>📋 Total: <strong id="totalCartones">0</strong></span>
-                <span>👤 Asignados: <strong id="totalAsignados">0</strong></span>
-                <span>📋 Disponibles: <strong id="totalDisponibles">0</strong></span>
-            </div>
-
-            <!-- Grid de Cartones -->
-            <div class="cartones-grid" id="cartonesGrid">
-                <p class="placeholder">Genera o importa cartones para verlos aquí</p>
+            
+            <!-- Columna derecha: Grid de cartones -->
+            <div class="cartones-right-col">
+                <div class="cartones-grid" id="cartonesGrid">
+                    <p class="placeholder">Genera o importa cartones para verlos aquí</p>
+                </div>
             </div>
         </div>
 
-        <!-- VISTA 2: JUGADORES -->
+        <!-- ========== VISTA 2: JUGADORES ========== -->
         <div class="section-panel" id="sectionJugadores">
             <div class="panel-card">
                 <h3>👥 JUGADORES REGISTRADOS</h3>
@@ -87,7 +101,7 @@
             </div>
         </div>
 
-        <!-- VISTA 3: CONFIGURACIÓN -->
+        <!-- ========== VISTA 3: CONFIGURACIÓN ========== -->
         <div class="section-panel" id="sectionConfig">
             <div class="panel-card">
                 <h3>⚙️ CONFIGURACIÓN</h3>
@@ -96,17 +110,20 @@
                 <button onclick="importarCartonesJSON()" class="btn btn-importar" style="margin-bottom:8px;">📥 IMPORTAR CARTONES (JSON)</button>
                 <button onclick="imprimirCartones()" class="btn btn-pdf" style="margin-bottom:8px;">🖨️ IMPRIMIR TODOS (PDF)</button>
                 <button onclick="copiarLinkVerTodo()" class="btn btn-ver" style="margin-bottom:8px;">🔗 COPIAR LINK VER_TODO</button>
+                <button onclick="copiarLinkRuleta()" class="btn btn-link" style="margin-bottom:8px;">🔗 COPIAR LINK RULETA</button>
                 
                 <div class="config-info" style="margin-top:15px;padding:12px;background:#0f172a;border-radius:8px;font-size:0.75em;color:#94a3b8;">
                     <p>📁 Sala activa: <strong style="color:#ffca28;" id="configSala">-</strong></p>
                     <p>📋 Total cartones: <strong style="color:#ffca28;" id="configTotal">0</strong></p>
+                    <p>👤 Cartones asignados: <strong style="color:#ffca28;" id="configAsignados">0</strong></p>
                     <p>💾 Guardado automático en Firebase</p>
+                    <p>🔢 Máx ganadores por número: <strong style="color:#ffca28;">3</strong></p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- BARRA DE NAVEGACIÓN INFERIOR (ESTILO RULETA) -->
+    <!-- BARRA DE NAVEGACIÓN INFERIOR -->
     <div class="bottom-nav">
         <div class="nav-item activo" onclick="navegarA('cartones')" id="navCartones">
             <span class="nav-icon">🎫</span>
