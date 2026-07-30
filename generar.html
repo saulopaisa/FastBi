@@ -4,23 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Bingo Pro - Generar Cartones</title>
     <link rel="stylesheet" href="generar.css">
 </head>
 <body>
-    <!-- HEADER -->
+    <!-- HEADER SUPERIOR -->
     <div class="app-header">
         <h1>🎫 CARTONES</h1>
         <div class="header-actions">
-            <span class="sala-badge" id="salaDisplay">-</span>
+            <button class="btn-header-icon" onclick="location.href='ruleta.html'" title="Ruleta">🎲</button>
+            <span class="online-badge" id="salaDisplay">-</span>
         </div>
     </div>
 
     <!-- CONTENIDO PRINCIPAL -->
-    <div class="app-content">
+    <div class="app-content" id="appContent">
         
         <!-- VISTA 1: CARTONES -->
-        <div class="vista-panel activo" id="vistaCartones">
+        <div class="section-panel activo" id="sectionCartones">
+            
+            <!-- Generar Cartones -->
+            <div class="panel-card">
+                <h3>🆕 GENERAR CARTONES</h3>
+                <div class="input-row">
+                    <input type="number" id="cantidadGenerar" value="10" min="1" max="500" placeholder="Cantidad">
+                    <button onclick="generarCartones()" class="btn btn-generar">🎲 GENERAR</button>
+                </div>
+                <button onclick="borrarTodosCartones()" class="btn btn-eliminar" style="margin-top:6px;">🗑️ BORRAR TODOS LOS CARTONES</button>
+            </div>
+
             <!-- Buscador con checkboxes -->
             <div class="panel-card">
                 <h3>🔍 BUSCAR Y ASIGNAR</h3>
@@ -33,20 +46,10 @@
                 <div id="seleccionadosInfo" style="display:none;margin-top:8px;padding:8px;background:#0f172a;border-radius:8px;text-align:center;">
                     <span style="color:#ffca28;font-size:0.8em;">Seleccionados: <strong id="countSeleccionados">0</strong>/2</span>
                     <div class="input-row" style="margin-top:6px;">
-                        <input type="text" id="nombreAsignarSeleccionados" placeholder="Nombre del jugador" style="flex:1;padding:8px;border-radius:6px;border:2px solid #334155;background:#1e293b;color:white;font-size:0.8em;">
-                        <button onclick="asignarSeleccionados()" class="btn btn-asignar" style="flex:0;white-space:nowrap;">✅ ASIGNAR</button>
+                        <input type="text" id="nombreAsignarSeleccionados" placeholder="Nombre del jugador">
+                        <button onclick="asignarSeleccionados()" class="btn btn-asignar">✅ ASIGNAR</button>
                     </div>
                 </div>
-            </div>
-
-            <!-- Generar -->
-            <div class="panel-card">
-                <h3>🆕 GENERAR</h3>
-                <div class="input-row">
-                    <input type="number" id="cantidadGenerar" value="10" min="1" max="500" placeholder="Cantidad">
-                    <button onclick="generarCartones()" class="btn btn-generar">🎲 GENERAR</button>
-                </div>
-                <button onclick="borrarTodosCartones()" class="btn btn-eliminar" style="margin-top:6px;">🗑️ BORRAR TODOS</button>
             </div>
 
             <!-- Info Bar -->
@@ -63,15 +66,13 @@
         </div>
 
         <!-- VISTA 2: JUGADORES -->
-        <div class="vista-panel" id="vistaJugadores">
+        <div class="section-panel" id="sectionJugadores">
             <div class="panel-card">
                 <h3>👥 JUGADORES REGISTRADOS</h3>
                 <div id="listaJugadores" style="max-height:400px;overflow-y:auto;">
-                    <p style="color:#94a3b8;text-align:center;font-size:0.8em;padding:10px;">No hay jugadores registrados</p>
+                    <p style="color:#94a3b8;text-align:center;font-size:0.8em;padding:10px;">Cargando jugadores...</p>
                 </div>
-                <div class="btn-row" style="margin-top:10px;">
-                    <button onclick="actualizarListaJugadores()" class="btn btn-actualizar">🔄 ACTUALIZAR</button>
-                </div>
+                <button onclick="actualizarListaJugadores()" class="btn btn-actualizar" style="margin-top:10px;">🔄 ACTUALIZAR LISTA</button>
             </div>
             
             <!-- Link para jugador -->
@@ -79,7 +80,7 @@
                 <h3>🔗 LINK PARA JUGADOR</h3>
                 <div class="input-row">
                     <input type="text" id="nombreJugadorLink" placeholder="Nombre del jugador">
-                    <button onclick="generarLinkJugador()" class="btn btn-link">🔗 GENERAR LINK</button>
+                    <button onclick="generarLinkJugador()" class="btn btn-link">🔗 GENERAR</button>
                 </div>
                 <div class="link-box" id="linkGenerado" style="display:none;margin-top:8px;"></div>
                 <button onclick="copiarLink()" class="btn btn-copiar" id="btnCopiarLink" style="display:none;margin-top:6px;">📋 COPIAR LINK</button>
@@ -87,7 +88,7 @@
         </div>
 
         <!-- VISTA 3: CONFIGURACIÓN -->
-        <div class="vista-panel" id="vistaConfig">
+        <div class="section-panel" id="sectionConfig">
             <div class="panel-card">
                 <h3>⚙️ CONFIGURACIÓN</h3>
                 
@@ -96,16 +97,16 @@
                 <button onclick="imprimirCartones()" class="btn btn-pdf" style="margin-bottom:8px;">🖨️ IMPRIMIR TODOS (PDF)</button>
                 <button onclick="copiarLinkVerTodo()" class="btn btn-ver" style="margin-bottom:8px;">🔗 COPIAR LINK VER_TODO</button>
                 
-                <div class="config-info" style="margin-top:10px;padding:10px;background:#0f172a;border-radius:8px;font-size:0.75em;color:#94a3b8;">
-                    <p>📁 Sala: <strong style="color:#ffca28;" id="configSala">-</strong></p>
-                    <p>📋 Cartones: <strong style="color:#ffca28;" id="configTotal">0</strong></p>
-                    <p>💾 Los cartones se guardan automáticamente en Firebase</p>
+                <div class="config-info" style="margin-top:15px;padding:12px;background:#0f172a;border-radius:8px;font-size:0.75em;color:#94a3b8;">
+                    <p>📁 Sala activa: <strong style="color:#ffca28;" id="configSala">-</strong></p>
+                    <p>📋 Total cartones: <strong style="color:#ffca28;" id="configTotal">0</strong></p>
+                    <p>💾 Guardado automático en Firebase</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- BARRA DE NAVEGACIÓN INFERIOR -->
+    <!-- BARRA DE NAVEGACIÓN INFERIOR (ESTILO RULETA) -->
     <div class="bottom-nav">
         <div class="nav-item activo" onclick="navegarA('cartones')" id="navCartones">
             <span class="nav-icon">🎫</span>
@@ -142,7 +143,7 @@
         var db = firebase.database();
         
         var SALA_ID = localStorage.getItem('salaActiva') || 'bingo-default';
-        document.getElementById('salaDisplay').textContent = SALA_ID;
+        document.getElementById('salaDisplay').textContent = '📁 ' + SALA_ID;
         document.getElementById('configSala').textContent = SALA_ID;
         console.log('🔥 Firebase listo - Sala:', SALA_ID);
     </script>
