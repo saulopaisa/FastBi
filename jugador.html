@@ -34,7 +34,6 @@
             padding: 20px;
         }
 
-        /* Modo oscuro */
         body.dark-mode {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: #fff;
@@ -66,6 +65,16 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 10px;
+        }
+
+        .sala-info {
+            background: var(--secondary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: inline-block;
+            font-size: 1.1em;
+            margin-top: 10px;
         }
 
         /* Estado de conexión */
@@ -109,6 +118,58 @@
             0% { transform: scale(1); }
             50% { transform: scale(1.2); }
             100% { transform: scale(1); }
+        }
+
+        /* Pantalla de inicio */
+        .join-screen {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 500px;
+            margin: 50px auto;
+        }
+
+        body.dark-mode .join-screen {
+            background: #2d2d44;
+        }
+
+        .join-screen h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .join-screen .welcome-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 1.2em;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255,107,107,0.2);
         }
 
         /* Panel de control */
@@ -175,40 +236,20 @@
             color: white;
         }
 
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-large {
+            padding: 15px 40px;
+            font-size: 1.3em;
+        }
+
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
             transform: none !important;
-        }
-
-        /* Input estilizado */
-        .input-group {
-            margin-bottom: 15px;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: var(--dark);
-            font-weight: 500;
-        }
-
-        body.dark-mode .input-group label {
-            color: #fff;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 1em;
-            transition: border-color 0.3s;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: var(--primary);
         }
 
         /* Cartón de Bingo */
@@ -387,7 +428,7 @@
             border-radius: 20px;
         }
 
-        /* Modal de confirmación */
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -429,6 +470,39 @@
             to { transform: translateY(100vh) rotate(720deg); }
         }
 
+        /* Información del juego */
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .info-card {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        body.dark-mode .info-card {
+            background: #2d2d44;
+        }
+
+        .info-card .info-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .info-card .info-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .container {
@@ -446,6 +520,10 @@
             .bingo-cell {
                 font-size: 1em;
             }
+            
+            .game-info {
+                flex-direction: column;
+            }
         }
 
         .mode-toggle {
@@ -453,6 +531,26 @@
             top: 20px;
             right: 20px;
             z-index: 100;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.5em;
+        }
+
+        .error-message {
+            background: var(--danger);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
         }
     </style>
 </head>
@@ -469,54 +567,83 @@
             </div>
         </div>
 
-        <!-- Panel de Control -->
-        <div class="control-panel">
-            <!-- Sección de Conexión -->
-            <div class="panel-section" id="connection-section">
-                <h2>🎮 Unirse al Juego</h2>
-                <div class="input-group">
-                    <label for="sala-id">ID de la Sala:</label>
-                    <input type="text" id="sala-id" placeholder="Ingresa el ID de la sala">
-                </div>
-                <div class="input-group">
-                    <label for="jugador-nombre">Tu Nombre:</label>
-                    <input type="text" id="jugador-nombre" placeholder="Ingresa tu nombre">
-                </div>
-                <button class="btn btn-primary" onclick="unirseASala()">Unirse a la Sala</button>
-                <button class="btn btn-warning" onclick="salirDeSala()" style="margin-top: 10px; display: none;" id="btn-salir">Salir de la Sala</button>
+        <!-- Pantalla de Unirse (solo nombre) -->
+        <div id="join-screen" class="join-screen">
+            <div class="welcome-icon">🎮</div>
+            <h2>¡Bienvenido al Bingo!</h2>
+            <p style="margin-bottom: 20px; color: #666;">Sala asignada: <strong id="sala-asignada">Cargando...</strong></p>
+            <div class="input-group">
+                <input type="text" id="jugador-nombre" placeholder="Ingresa tu nombre para jugar" maxlength="20">
             </div>
-
-            <!-- Sección del Juego -->
-            <div class="panel-section" id="game-section" style="display: none;">
-                <h2>🎯 Juego en Progreso</h2>
-                <p>Sala: <strong id="sala-actual"></strong></p>
-                <p>Jugadores: <strong id="jugadores-count">0</strong></p>
-                <button class="btn btn-success" onclick="cantarBingo()" id="btn-bingo">¡BINGO!</button>
-            </div>
+            <button class="btn btn-primary btn-large" onclick="unirseAJuego()">
+                🎯 ¡Unirme al Juego!
+            </button>
+            <div id="join-error" style="margin-top: 15px;"></div>
         </div>
 
-        <!-- Últimos números cantados -->
-        <div class="last-numbers" id="last-numbers"></div>
-
-        <!-- Cartón de Bingo -->
-        <div class="bingo-card" id="bingo-card-container" style="display: none;">
-            <div class="bingo-header">
-                <div class="bingo-header-cell">B</div>
-                <div class="bingo-header-cell">I</div>
-                <div class="bingo-header-cell">N</div>
-                <div class="bingo-header-cell">G</div>
-                <div class="bingo-header-cell">O</div>
+        <!-- Pantalla de Juego (inicialmente oculta) -->
+        <div id="game-screen" style="display: none;">
+            <!-- Información del juego -->
+            <div class="sala-info" style="text-align: center; margin-bottom: 20px;">
+                🏠 Sala: <strong id="sala-actual"></strong> | 
+                👤 Jugador: <strong id="jugador-actual"></strong>
             </div>
-            <div class="bingo-grid" id="bingo-grid"></div>
-        </div>
 
-        <!-- Chat -->
-        <div class="chat-container" id="chat-container" style="display: none;">
-            <h3>💬 Chat de la Sala</h3>
-            <div class="chat-messages" id="chat-messages"></div>
-            <div class="chat-input">
-                <input type="text" id="chat-input" placeholder="Escribe un mensaje...">
-                <button class="btn btn-primary" onclick="enviarMensaje()">Enviar</button>
+            <!-- Panel de Control -->
+            <div class="control-panel">
+                <div class="panel-section">
+                    <h2>📊 Estado del Juego</h2>
+                    <div class="game-info">
+                        <div class="info-card">
+                            <div class="info-value" id="jugadores-count">0</div>
+                            <div class="info-label">Jugadores</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-value" id="numeros-count">0</div>
+                            <div class="info-label">Números Cantados</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-value" id="tu-carton-label">1</div>
+                            <div class="info-label">Tu Cartón</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-success" onclick="cantarBingo()" id="btn-bingo" style="width: 100%; margin-top: 15px;">
+                        🎉 ¡BINGO!
+                    </button>
+                </div>
+            </div>
+
+            <!-- Últimos números cantados -->
+            <div style="text-align: center; margin: 20px 0;">
+                <h3 style="color: var(--primary);">Últimos Números</h3>
+                <div class="last-numbers" id="last-numbers"></div>
+            </div>
+
+            <!-- Cartón de Bingo -->
+            <div class="bingo-card" id="bingo-card-container">
+                <div class="bingo-header">
+                    <div class="bingo-header-cell">B</div>
+                    <div class="bingo-header-cell">I</div>
+                    <div class="bingo-header-cell">N</div>
+                    <div class="bingo-header-cell">G</div>
+                    <div class="bingo-header-cell">O</div>
+                </div>
+                <div class="bingo-grid" id="bingo-grid"></div>
+            </div>
+
+            <!-- Chat -->
+            <div class="chat-container" id="chat-container">
+                <h3>💬 Chat de la Sala</h3>
+                <div class="chat-messages" id="chat-messages"></div>
+                <div class="chat-input">
+                    <input type="text" id="chat-input" placeholder="Escribe un mensaje...">
+                    <button class="btn btn-primary" onclick="enviarMensaje()">Enviar</button>
+                </div>
+            </div>
+
+            <!-- Botón para salir -->
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-danger" onclick="salirDeJuego()">🚪 Salir del Juego</button>
             </div>
         </div>
     </div>
@@ -559,15 +686,43 @@
             console.log('Firebase inicializado correctamente');
         } catch (error) {
             console.error('Error inicializando Firebase:', error);
+            mostrarError('Error de conexión con el servidor');
+        }
+
+        // ============ OBTENER SALA DE LA URL ============
+        function obtenerSalaDeURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sala = urlParams.get('sala');
+            return sala;
+        }
+
+        const salaAsignada = obtenerSalaDeURL();
+
+        // Mostrar sala asignada o error si no hay
+        if (salaAsignada) {
+            document.getElementById('sala-asignada').textContent = salaAsignada;
+        } else {
+            document.getElementById('sala-asignada').textContent = 'No asignada';
+            document.getElementById('join-screen').innerHTML = `
+                <div class="welcome-icon">⚠️</div>
+                <h2>Sala no encontrada</h2>
+                <p style="color: #666; margin: 20px 0;">
+                    No se ha especificado una sala de juego.<br>
+                    Por favor, solicita un enlace válido al administrador.
+                </p>
+                <div class="error-message">
+                    La URL debe incluir el parámetro ?sala=ID_SALA
+                </div>
+            `;
         }
 
         // ============ VARIABLES GLOBALES ============
-        let salaActual = null;
         let jugadorActual = null;
         let cartonActual = null;
         let numerosCantados = new Set();
         let unsubscribeNumeros = null;
         let unsubscribeChat = null;
+        let juegoIniciado = false;
 
         // ============ FUNCIONES DE CONEXIÓN ============
         function actualizarEstadoConexion(online) {
@@ -586,99 +741,90 @@
         window.addEventListener('offline', () => actualizarEstadoConexion(false));
         actualizarEstadoConexion(navigator.onLine);
 
-        // ============ FUNCIONES DEL JUEGO ============
-        async function unirseASala() {
-            const salaId = document.getElementById('sala-id').value.trim();
+        // ============ FUNCIÓN PRINCIPAL: UNIRSE AL JUEGO ============
+        async function unirseAJuego() {
             const nombre = document.getElementById('jugador-nombre').value.trim();
+            const errorDiv = document.getElementById('join-error');
 
-            if (!salaId || !nombre) {
-                alert('Por favor completa todos los campos');
+            if (!nombre) {
+                errorDiv.innerHTML = '<div class="error-message">Por favor ingresa tu nombre</div>';
+                return;
+            }
+
+            if (!salaAsignada) {
+                errorDiv.innerHTML = '<div class="error-message">No hay una sala asignada. Recarga la página con un enlace válido.</div>';
                 return;
             }
 
             try {
                 // Verificar si la sala existe
-                const salaRef = db.collection('salas').doc(salaId);
+                const salaRef = db.collection('salas').doc(salaAsignada);
                 const salaDoc = await salaRef.get();
 
                 if (!salaDoc.exists) {
-                    // Crear la sala si no existe
-                    await salaRef.set({
-                        creada: firebase.firestore.FieldValue.serverTimestamp(),
-                        estado: 'activa'
-                    });
+                    errorDiv.innerHTML = '<div class="error-message">La sala no existe o ya no está disponible</div>';
+                    return;
                 }
 
-                // Registrar jugador
-                const jugadorRef = salaRef.collection('jugadores').doc(nombre);
-                await jugadorRef.set({
+                // Verificar que el nombre no esté en uso
+                const jugadorExistente = await salaRef.collection('jugadores').doc(nombre).get();
+                if (jugadorExistente.exists) {
+                    errorDiv.innerHTML = '<div class="error-message">Ese nombre ya está en uso. Elige otro.</div>';
+                    return;
+                }
+
+                // Registrar jugador en la sala
+                await salaRef.collection('jugadores').doc(nombre).set({
                     nombre: nombre,
                     unido: firebase.firestore.FieldValue.serverTimestamp(),
                     bingo: false
                 });
 
-                salaActual = salaId;
                 jugadorActual = nombre;
+                console.log(`✅ Jugador ${nombre} unido a la sala ${salaAsignada}`);
 
-                // Generar cartón
+                // Generar cartón único para este jugador
                 cartonActual = generarCarton();
-                guardarCartonLocal(cartonActual);
-                mostrarCarton(cartonActual);
-
-                // Mostrar secciones del juego
-                document.getElementById('game-section').style.display = 'block';
-                document.getElementById('bingo-card-container').style.display = 'block';
-                document.getElementById('chat-container').style.display = 'block';
-                document.getElementById('btn-salir').style.display = 'inline-block';
-                document.getElementById('sala-actual').textContent = salaId;
-
-                // Escuchar números cantados
-                escucharNumerosCantados(salaId);
                 
-                // Inicializar chat
-                inicializarChat(salaId);
-                
-                // Escuchar jugadores
-                escucharJugadores(salaId);
+                // Guardar cartón en Firestore
+                await salaRef.collection('jugadores').doc(nombre).update({
+                    carton: cartonActual
+                });
 
-                actualizarEstadoConexion(true);
-                console.log(`Unido a la sala ${salaId} como ${nombre}`);
+                // Iniciar la interfaz del juego
+                iniciarJuego();
+
             } catch (error) {
-                console.error('Error al unirse a la sala:', error);
-                alert('Error al unirse a la sala: ' + error.message);
+                console.error('Error al unirse al juego:', error);
+                errorDiv.innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
             }
         }
 
-        async function salirDeSala() {
-            if (!salaActual || !jugadorActual) return;
-
-            try {
-                // Eliminar jugador de la sala
-                await db.collection('salas').doc(salaActual)
-                    .collection('jugadores').doc(jugadorActual).delete();
-
-                // Limpiar listeners
-                if (unsubscribeNumeros) unsubscribeNumeros();
-                if (unsubscribeChat) unsubscribeChat();
-
-                // Resetear estado
-                salaActual = null;
-                jugadorActual = null;
-                cartonActual = null;
-                numerosCantados.clear();
-
-                // Ocultar secciones del juego
-                document.getElementById('game-section').style.display = 'none';
-                document.getElementById('bingo-card-container').style.display = 'none';
-                document.getElementById('chat-container').style.display = 'none';
-                document.getElementById('btn-salir').style.display = 'none';
-                document.getElementById('last-numbers').innerHTML = '';
-                document.getElementById('bingo-grid').innerHTML = '';
-
-                console.log('Sala abandonada');
-            } catch (error) {
-                console.error('Error al salir de la sala:', error);
-            }
+        function iniciarJuego() {
+            // Ocultar pantalla de join
+            document.getElementById('join-screen').style.display = 'none';
+            
+            // Mostrar pantalla de juego
+            document.getElementById('game-screen').style.display = 'block';
+            
+            // Actualizar información
+            document.getElementById('sala-actual').textContent = salaAsignada;
+            document.getElementById('jugador-actual').textContent = jugadorActual;
+            
+            // Mostrar cartón
+            mostrarCarton(cartonActual);
+            
+            // Configurar listeners
+            escucharNumerosCantados(salaAsignada);
+            inicializarChat(salaAsignada);
+            escucharJugadores(salaAsignada);
+            escucharEstadoJuego(salaAsignada);
+            
+            // Guardar cartón localmente como respaldo
+            localStorage.setItem(`bingo-carton-${salaAsignada}`, JSON.stringify(cartonActual));
+            
+            juegoIniciado = true;
+            actualizarEstadoConexion(true);
         }
 
         // ============ GENERACIÓN DE CARTÓN ============
@@ -738,6 +884,8 @@
                     }
                     
                     cell.dataset.numero = carton[i][j];
+                    cell.dataset.fila = i;
+                    cell.dataset.columna = j;
                     grid.appendChild(cell);
                 }
             }
@@ -757,14 +905,19 @@
             unsubscribeNumeros = db.collection('salas').doc(salaId)
                 .collection('numeros_cantados')
                 .orderBy('timestamp', 'desc')
-                .limit(10)
+                .limit(75) // Máximo 75 números en total
                 .onSnapshot((snapshot) => {
                     snapshot.docChanges().forEach((change) => {
                         if (change.type === 'added') {
                             const numero = change.doc.data().numero;
-                            numerosCantados.add(numero);
-                            mostrarNumeroCantado(numero);
-                            marcarNumeroEnCarton(numero);
+                            if (!numerosCantados.has(numero)) {
+                                numerosCantados.add(numero);
+                                mostrarNumeroCantado(numero);
+                                marcarNumeroEnCarton(numero);
+                                
+                                // Actualizar contador
+                                document.getElementById('numeros-count').textContent = numerosCantados.size;
+                            }
                         }
                     });
                 }, (error) => {
@@ -785,11 +938,6 @@
             ball.className = 'number-ball';
             ball.textContent = numero;
             container.insertBefore(ball, container.firstChild);
-
-            // Efecto de sonido (simulado con animación)
-            ball.style.animation = 'none';
-            ball.offsetHeight; // Trigger reflow
-            ball.style.animation = 'bounceIn 0.5s';
         }
 
         function marcarNumeroEnCarton(numero) {
@@ -799,7 +947,6 @@
                 if (cellNum && parseInt(cellNum) === numero) {
                     celda.classList.add('marked', 'numero-cantado');
                     
-                    // Remover animación después de que termine
                     celda.addEventListener('animationend', () => {
                         celda.classList.remove('numero-cantado');
                     }, { once: true });
@@ -826,7 +973,7 @@
             // Verificar filas
             for (let i = 0; i < 5; i++) {
                 const fila = cartonActual[i].filter(n => n !== 'FREE');
-                if (fila.every(n => marcadas.has(n))) {
+                if (fila.length > 0 && fila.every(n => marcadas.has(n))) {
                     return true;
                 }
             }
@@ -839,7 +986,7 @@
                         columna.push(cartonActual[i][j]);
                     }
                 }
-                if (columna.every(n => marcadas.has(n))) {
+                if (columna.length > 0 && columna.every(n => marcadas.has(n))) {
                     return true;
                 }
             }
@@ -852,14 +999,14 @@
                 if (cartonActual[i][4-i] !== 'FREE') diagonal2.push(cartonActual[i][4-i]);
             }
             
-            if (diagonal1.every(n => marcadas.has(n)) || 
-                diagonal2.every(n => marcadas.has(n))) {
+            if ((diagonal1.length > 0 && diagonal1.every(n => marcadas.has(n))) || 
+                (diagonal2.length > 0 && diagonal2.every(n => marcadas.has(n)))) {
                 return true;
             }
 
             // Cartón lleno
             const todosNumeros = cartonActual.flat().filter(n => n !== 'FREE');
-            if (todosNumeros.every(n => marcadas.has(n))) {
+            if (todosNumeros.length > 0 && todosNumeros.every(n => marcadas.has(n))) {
                 return true;
             }
 
@@ -876,11 +1023,11 @@
         }
 
         async function confirmarBingo() {
-            if (!salaActual || !jugadorActual) return;
+            if (!salaAsignada || !jugadorActual) return;
 
             try {
                 // Verificar que nadie más haya cantado bingo
-                const salaRef = db.collection('salas').doc(salaActual);
+                const salaRef = db.collection('salas').doc(salaAsignada);
                 const ganadoresSnapshot = await salaRef.collection('ganadores').get();
                 
                 if (!ganadoresSnapshot.empty) {
@@ -892,7 +1039,8 @@
                 // Registrar ganador
                 await salaRef.collection('ganadores').add({
                     jugador: jugadorActual,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    carton: cartonActual
                 });
 
                 // Marcar jugador como ganador
@@ -919,6 +1067,7 @@
             unsubscribeChat = db.collection('salas').doc(salaId)
                 .collection('chat')
                 .orderBy('timestamp', 'asc')
+                .limit(50) // Últimos 50 mensajes
                 .onSnapshot((snapshot) => {
                     snapshot.docChanges().forEach((change) => {
                         if (change.type === 'added') {
@@ -940,10 +1089,10 @@
             const input = document.getElementById('chat-input');
             const texto = input.value.trim();
             
-            if (!texto || !salaActual || !jugadorActual) return;
+            if (!texto || !salaAsignada || !jugadorActual) return;
 
             try {
-                await db.collection('salas').doc(salaActual)
+                await db.collection('salas').doc(salaAsignada)
                     .collection('chat').add({
                         jugador: jugadorActual,
                         texto: texto,
@@ -971,6 +1120,19 @@
                 .collection('jugadores')
                 .onSnapshot((snapshot) => {
                     document.getElementById('jugadores-count').textContent = snapshot.size;
+                });
+        }
+
+        function escucharEstadoJuego(salaId) {
+            db.collection('salas').doc(salaId)
+                .onSnapshot((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        if (data.estado === 'finalizado') {
+                            alert('El juego ha terminado');
+                            salirDeJuego();
+                        }
+                    }
                 });
         }
 
@@ -1002,10 +1164,49 @@
             document.getElementById('winner-modal').classList.add('active');
         }
 
+        function mostrarError(mensaje) {
+            const errorDiv = document.getElementById('join-error');
+            if (errorDiv) {
+                errorDiv.innerHTML = `<div class="error-message">${mensaje}</div>`;
+            }
+        }
+
         function cerrarModal() {
             document.querySelectorAll('.modal').forEach(modal => {
                 modal.classList.remove('active');
             });
+        }
+
+        // ============ SALIR DEL JUEGO ============
+        async function salirDeJuego() {
+            if (!salaAsignada || !jugadorActual) return;
+
+            try {
+                // Eliminar jugador de la sala
+                await db.collection('salas').doc(salaAsignada)
+                    .collection('jugadores').doc(jugadorActual).delete();
+
+                // Limpiar listeners
+                if (unsubscribeNumeros) unsubscribeNumeros();
+                if (unsubscribeChat) unsubscribeChat();
+
+                // Resetear estado
+                jugadorActual = null;
+                cartonActual = null;
+                numerosCantados.clear();
+                juegoIniciado = false;
+
+                // Volver a la pantalla de inicio
+                document.getElementById('game-screen').style.display = 'none';
+                document.getElementById('join-screen').style.display = 'block';
+                document.getElementById('jugador-nombre').value = '';
+                document.getElementById('join-error').innerHTML = '';
+                document.getElementById('last-numbers').innerHTML = '';
+                document.getElementById('bingo-grid').innerHTML = '';
+
+            } catch (error) {
+                console.error('Error al salir del juego:', error);
+            }
         }
 
         // ============ MODO OSCURO ============
@@ -1020,29 +1221,31 @@
             document.body.classList.add('dark-mode');
         }
 
-        // ============ AUTO-GUARDADO ============
-        function guardarCartonLocal(carton) {
-            localStorage.setItem('bingo-carton-actual', JSON.stringify(carton));
-        }
-
-        function recuperarCartonLocal() {
-            const guardado = localStorage.getItem('bingo-carton-actual');
-            if (guardado && salaActual) {
-                cartonActual = JSON.parse(guardado);
-                mostrarCarton(cartonActual);
-            }
-        }
-
         // ============ INICIALIZACIÓN ============
         window.addEventListener('load', () => {
-            console.log('Bingo Multijugador cargado');
+            console.log('🎱 Bingo Multijugador cargado');
+            console.log(`Sala asignada: ${salaAsignada || 'No especificada'}`);
             actualizarEstadoConexion(navigator.onLine);
+            
+            // Si hay sala, enfocar el input de nombre
+            if (salaAsignada) {
+                document.getElementById('jugador-nombre').focus();
+            }
+        });
+
+        // Permitir unirse con Enter
+        document.getElementById('jugador-nombre').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                unirseAJuego();
+            }
         });
 
         // Manejar cierre de ventana
         window.addEventListener('beforeunload', () => {
-            if (salaActual && jugadorActual) {
-                salirDeSala();
+            if (juegoIniciado && salaAsignada && jugadorActual) {
+                // Intentar eliminar al jugador (fire and forget)
+                db.collection('salas').doc(salaAsignada)
+                    .collection('jugadores').doc(jugadorActual).delete();
             }
         });
     </script>
