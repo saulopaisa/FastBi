@@ -19,7 +19,7 @@ window.ganadoresPartida = parseInt(sessionStorage.getItem('ganadores_' + SALA_ID
 window.enPausa = false;
 window.pausaTimeout = null;
 
-// ============ SISTEMA DE TOAST ============
+// ============ TOAST ============
 function mostrarToast(mensaje, tipo) {
     var anterior = document.querySelector('.toast-notification');
     if (anterior) anterior.remove();
@@ -33,7 +33,7 @@ function mostrarToast(mensaje, tipo) {
     setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { if (toast.parentNode) toast.remove(); }, 300); }, 2500);
 }
 
-// ============ SINCRONIZAR ESTADO ============
+// ============ SINCRONIZAR ============
 function sincronizarEstadoDesdeFirebase() {
     db.ref('partidas/' + SALA_ID).once('value', function(snap) {
         var data = snap.val(); if (!data) return;
@@ -48,40 +48,34 @@ function sincronizarEstadoDesdeFirebase() {
 }
 
 // ============ AUDIO ============
-function reproducirAudioBingo(nombreJugador) { if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); var msg = new SpeechSynthesisUtterance('¡Alerta! Posible Bingo de ' + nombreJugador); msg.lang = 'es-ES'; msg.rate = 0.85; window.speechSynthesis.speak(msg); } }
-function reproducirAudioBingoManual(nombreJugador) { if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); var msg = new SpeechSynthesisUtterance('¡Bingo! ' + nombreJugador + ' cantó Bingo'); msg.lang = 'es-ES'; msg.rate = 0.9; msg.pitch = 1.3; window.speechSynthesis.speak(msg); } }
-function reproducirAudioGanador(nombreJugador) { if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); var msg = new SpeechSynthesisUtterance('¡Ganador! ' + nombreJugador); msg.lang = 'es-ES'; msg.rate = 0.9; window.speechSynthesis.speak(msg); } }
+function reproducirAudioBingo(n) { if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); var m = new SpeechSynthesisUtterance('¡Alerta! Posible Bingo de ' + n); m.lang = 'es-ES'; m.rate = 0.85; window.speechSynthesis.speak(m); } }
+function reproducirAudioBingoManual(n) { if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); var m = new SpeechSynthesisUtterance('¡Bingo! ' + n + ' cantó Bingo'); m.lang = 'es-ES'; m.rate = 0.9; window.speechSynthesis.speak(m); } }
+function reproducirAudioGanador(n) { if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); var m = new SpeechSynthesisUtterance('¡Ganador! ' + n); m.lang = 'es-ES'; m.rate = 0.9; window.speechSynthesis.speak(m); } }
 
 // ============ TABLERO ============
 function inicializarTablero75() {
-    var grid = document.getElementById('historyGrid');
-    if (!grid) return;
+    var grid = document.getElementById('historyGrid'); if (!grid) return;
     grid.innerHTML = '';
-    for (var i = 1; i <= 75; i++) { var div = document.createElement('div'); div.className = 'celda-seguimiento'; div.id = 'seguimiento-' + i; div.textContent = i; if (window.cantados.indexOf(i) !== -1) div.classList.add('cantada'); grid.appendChild(div); }
+    for (var i = 1; i <= 75; i++) { var d = document.createElement('div'); d.className = 'celda-seguimiento'; d.id = 'seguimiento-' + i; d.textContent = i; if (window.cantados.indexOf(i) !== -1) d.classList.add('cantada'); grid.appendChild(d); }
     actualizarUltimaBola(); actualizarUltimosCantados(); inicializarTableroMovil();
 }
-
 function inicializarTableroMovil() {
-    var grid = document.getElementById('historyGridMobile');
-    if (!grid) return;
+    var grid = document.getElementById('historyGridMobile'); if (!grid) return;
     grid.innerHTML = '';
-    for (var i = 1; i <= 75; i++) { var div = document.createElement('div'); div.className = 'celda-movil'; div.textContent = i; if (window.cantados.indexOf(i) !== -1) div.classList.add('cantada'); grid.appendChild(div); }
+    for (var i = 1; i <= 75; i++) { var d = document.createElement('div'); d.className = 'celda-movil'; d.textContent = i; if (window.cantados.indexOf(i) !== -1) d.classList.add('cantada'); grid.appendChild(d); }
 }
-
 function actualizarUltimaBola() {
     var c = document.getElementById('ultimaBola');
     if (c) { if (window.cantados.length > 0) { var u = window.cantados[window.cantados.length - 1]; c.querySelector('.letra').textContent = obtenerLetra(u); c.querySelector('.numero').textContent = u; } else { c.querySelector('.letra').textContent = '-'; c.querySelector('.numero').textContent = '--'; } }
     var cm = document.getElementById('ultimaBolaMobile');
     if (cm) { if (window.cantados.length > 0) { var u = window.cantados[window.cantados.length - 1]; cm.querySelector('.letra').textContent = obtenerLetra(u); cm.querySelector('.numero').textContent = u; } else { cm.querySelector('.letra').textContent = '-'; cm.querySelector('.numero').textContent = '--'; } }
 }
-
 function actualizarUltimosCantados() {
     var c = document.getElementById('ultimosCantados');
     if (c) { c.innerHTML = ''; var u = window.cantados.slice(-5).reverse(); for (var i = 0; i < 5; i++) { var d = document.createElement('div'); d.className = i < u.length ? 'ultimo-item' : 'ultimo-item vacio'; d.innerHTML = i < u.length ? '<div class="letra-peq">' + obtenerLetra(u[i]) + '</div><div class="num-peq">' + u[i] + '</div>' : '<div class="letra-peq">-</div><div class="num-peq">--</div>'; c.appendChild(d); } }
     var cm = document.getElementById('ultimosCantadosMobile');
     if (cm) { cm.innerHTML = ''; var um = window.cantados.slice(-5).reverse(); for (var j = 0; j < 5; j++) { var s = document.createElement('span'); s.className = 'num-chico-movil'; if (j < um.length) { s.classList.add('cantado'); s.textContent = obtenerLetra(um[j]) + '-' + um[j]; } else { s.classList.add('vacio'); s.textContent = '--'; } cm.appendChild(s); } }
 }
-
 function obtenerLetra(n) { if (n <= 15) return 'B'; if (n <= 30) return 'I'; if (n <= 45) return 'N'; if (n <= 60) return 'G'; return 'O'; }
 function guardarEstado() { localStorage.setItem('bingo_cantados_' + SALA_ID, JSON.stringify(window.cantados)); localStorage.setItem('bingo_patron_' + SALA_ID, JSON.stringify(window.patronBingo)); localStorage.setItem('bingo_jugadores_' + SALA_ID, JSON.stringify(window.jugadoresActivos)); localStorage.setItem('bingo_activo_' + SALA_ID, window.juegoActivo.toString()); localStorage.setItem('bingo_etapa_' + SALA_ID, window.etapaActual.toString()); }
 function actualizarOnlineCount() { db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) { var count = 0; snap.forEach(function(child) { var c = child.val(); if (c.estado === 'asignado' && window.jugadoresActivos.indexOf(c.asignadoA) !== -1) count++; }); var el = document.getElementById('onlineCount'); if (el) el.innerHTML = '👥 JUGADORES: ' + count + ' | 🏆 Ganadores: ' + window.ganadoresPartida + '/2'; }); }
@@ -101,7 +95,7 @@ function abrirModal(id) { var m = document.getElementById(id); if (m) m.classLis
 function cerrarModal(id) { var m = document.getElementById(id); if (m) m.classList.remove('activo'); }
 
 // ============ ETAPA 1: JUGADORES ============
-window.abrirModalCartones = function() { var modal = document.getElementById('modalCartones'), lista = document.getElementById('listaCheckCartones'); if (!modal || !lista) return; abrirModal('modalCartones'); lista.innerHTML = "<p style='color:var(--gold);text-align:center;'>Cargando...</p>"; db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) { lista.innerHTML = ''; if (!snap.exists()) { lista.innerHTML = "<p style='color:white;text-align:center;'>No hay cartones</p>"; return; } var jugadoresUnicos = new Set(); snap.forEach(function(child) { var c = child.val(); if (c.asignadoA && !jugadoresUnicos.has(c.asignadoA)) { jugadoresUnicos.add(c.asignadoA); var item = document.createElement('div'); item.className = 'item-jugador'; item.setAttribute('data-jugador', c.asignadoA.toLowerCase()); if (window.jugadoresActivos.indexOf(c.asignadoA) !== -1) item.classList.add('seleccionado'); item.onclick = function() { var idx = window.jugadoresActivos.indexOf(c.asignadoA); if (idx !== -1) { window.jugadoresActivos.splice(idx, 1); item.classList.remove('seleccionado'); } else { window.jugadoresActivos.push(c.asignadoA); item.classList.add('seleccionado'); } guardarEstado(); }; var count = 0; snap.forEach(function(ch) { if (ch.val().asignadoA === c.asignadoA) count++; }); item.innerHTML = '<div style="font-size:1.5rem;">👤</div><div style="color:white;font-weight:bold;">' + c.asignadoA + '</div><div style="color:#ffca28;font-size:0.7rem;">' + count + ' cart.</div>'; lista.appendChild(item); } }); if (jugadoresUnicos.size === 0) lista.innerHTML = "<p style='color:white;text-align:center;'>No hay jugadores</p>"; }); };
+window.abrirModalCartones = function() { var modal = document.getElementById('modalCartones'), lista = document.getElementById('listaCheckCartones'); if (!modal || !lista) return; abrirModal('modalCartones'); lista.innerHTML = "<p style='color:var(--gold);'>Cargando...</p>"; db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) { lista.innerHTML = ''; if (!snap.exists()) { lista.innerHTML = "<p style='color:white;'>No hay cartones</p>"; return; } var jugadoresUnicos = new Set(); snap.forEach(function(child) { var c = child.val(); if (c.asignadoA && !jugadoresUnicos.has(c.asignadoA)) { jugadoresUnicos.add(c.asignadoA); var item = document.createElement('div'); item.className = 'item-jugador'; item.setAttribute('data-jugador', c.asignadoA.toLowerCase()); if (window.jugadoresActivos.indexOf(c.asignadoA) !== -1) item.classList.add('seleccionado'); item.onclick = function() { var idx = window.jugadoresActivos.indexOf(c.asignadoA); if (idx !== -1) { window.jugadoresActivos.splice(idx, 1); item.classList.remove('seleccionado'); } else { window.jugadoresActivos.push(c.asignadoA); item.classList.add('seleccionado'); } guardarEstado(); }; var count = 0; snap.forEach(function(ch) { if (ch.val().asignadoA === c.asignadoA) count++; }); item.innerHTML = '<div style="font-size:1.5rem;">👤</div><div style="color:white;font-weight:bold;">' + c.asignadoA + '</div><div style="color:#ffca28;font-size:0.7rem;">' + count + ' cart.</div>'; lista.appendChild(item); } }); if (jugadoresUnicos.size === 0) lista.innerHTML = "<p style='color:white;'>No hay jugadores</p>"; }); };
 window.buscarJugadorModal = function(t) { document.querySelectorAll('.item-jugador').forEach(function(i) { var j = i.getAttribute('data-jugador'); i.style.display = (j && j.indexOf(t.toLowerCase()) !== -1) ? '' : 'none'; }); };
 window.seleccionarTodosJugadores = function() { var items = document.querySelectorAll('.item-jugador'); var todos = Array.from(items).every(function(i) { return i.classList.contains('seleccionado'); }); if (todos) { window.jugadoresActivos = []; items.forEach(function(i) { i.classList.remove('seleccionado'); }); } else { var nombres = new Set(); db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) { snap.forEach(function(c) { if (c.val().asignadoA) nombres.add(c.val().asignadoA); }); window.jugadoresActivos = Array.from(nombres); items.forEach(function(i) { i.classList.add('seleccionado'); }); guardarEstado(); }); } };
 window.confirmarJugadores = function() { if (window.jugadoresActivos.length === 0) { mostrarToast('⚠️ Selecciona al menos un jugador', 'error'); return; } db.ref('partidas/' + SALA_ID + '/jugadoresActivos').set(window.jugadoresActivos); window.etapaActual = 2; guardarEstado(); actualizarEtapas(); actualizarOnlineCount(); cerrarModal('modalCartones'); mostrarToast('✅ Jugadores confirmados', 'success'); };
@@ -111,8 +105,67 @@ window.abrirModalPatron = function() { var modal = document.getElementById('moda
 window.confirmarPatron = function() { db.ref('partidas/' + SALA_ID + '/patron').set(window.patronBingo); window.etapaActual = 3; window.juegoActivo = true; guardarEstado(); actualizarEtapas(); cerrarModal('modalPatron'); mostrarToast('✅ Patrón confirmado', 'success'); };
 window.aplicarPredefinido = function(t) { if (t === 'lleno') window.patronBingo = Array(25).fill(true); if (t === 'limpiar') window.patronBingo = Array(25).fill(false); if (t === 'equis') { window.patronBingo = Array(25).fill(false); [0,4,6,8,12,16,18,20,24].forEach(function(p) { window.patronBingo[p] = true; }); } guardarEstado(); window.abrirModalPatron(); };
 
-// ============ TEMPORIZADOR ============
-window.programarJuego = function() { var inputMin = document.getElementById('minutosInicio') || document.getElementById('minutosInicioMobile'); var min = parseInt(inputMin ? inputMin.value : 0) || 0; if (min <= 0) { mostrarToast('⚠️ Ingresa los minutos', 'error'); return; } var modo = confirm('⏰ ' + min + ' min.\n\n¿Modo AUTOMÁTICO?\n✅ Aceptar = Auto\n❌ Cancelar = Manual'); window.modoJuegoSeleccionado = modo ? 'automatico' : 'manual'; if (window.intervaloTemporizador) clearInterval(window.intervaloTemporizador); var btnProg = document.getElementById('btnProgramar') || document.getElementById('btnProgramarMobile'); if (btnProg) { btnProg.textContent = '⏳ ESPERANDO...'; btnProg.disabled = true; } var tiempo = min * 60; var cron = document.getElementById('cronometroBingo') || document.getElementById('cronometroBingoMobile'); if (cron) cron.textContent = min + ':00'; db.ref('partidas/' + SALA_ID).update({ cronometro: tiempo, estado: 'iniciando', alertaInicio: 'inicio_' + Date.now(), mensajeAdmin: '⏰ Juego en ' + min + ' min', timestamp: Date.now() }); mostrarToast('⏰ Cronómetro: ' + min + ' min', 'success'); window.intervaloTemporizador = setInterval(function() { tiempo--; var mins = Math.floor(tiempo / 60), segs = tiempo % 60; if (cron) cron.textContent = String(mins).padStart(2,'0') + ':' + String(segs).padStart(2,'0'); db.ref('partidas/' + SALA_ID).update({ cronometro: tiempo }); if (tiempo <= 0) { clearInterval(window.intervaloTemporizador); window.intervaloTemporizador = null; if (cron) cron.textContent = '00:00'; if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; } db.ref('partidas/' + SALA_ID).update({ estado: 'jugando', cronometro: 0, mensajeAdmin: '▶️ ¡Juego iniciado!', timestamp: Date.now() }); if ('speechSynthesis' in window) { var msg = new SpeechSynthesisUtterance('¡Es hora!'); msg.lang = 'es-ES'; window.speechSynthesis.speak(msg); } mostrarToast('▶️ ¡Juego iniciado!', 'success'); if (window.modoJuegoSeleccionado === 'automatico') window.iniciarBingoAutomatico(); } }, 1000); };
+// ============ TEMPORIZADOR (SOLO SE MUESTRA AL PROGRAMAR) ============
+window.programarJuego = function() {
+    var inputMin = document.getElementById('minutosInicio') || document.getElementById('minutosInicioMobile');
+    var min = parseInt(inputMin ? inputMin.value : 0) || 0;
+    if (min <= 0) { mostrarToast('⚠️ Ingresa los minutos', 'error'); return; }
+    
+    var modo = confirm('⏰ ' + min + ' min.\n\n¿Modo AUTOMÁTICO al llegar a 0?\n✅ Aceptar = Auto\n❌ Cancelar = Manual');
+    window.modoJuegoSeleccionado = modo ? 'automatico' : 'manual';
+    if (window.intervaloTemporizador) clearInterval(window.intervaloTemporizador);
+    
+    var btnProg = document.getElementById('btnProgramar') || document.getElementById('btnProgramarMobile');
+    if (btnProg) { btnProg.textContent = '⏳ ESPERANDO...'; btnProg.disabled = true; }
+    
+    var tiempo = min * 60;
+    
+    // Mostrar cronómetro visual SOLO ahora
+    var cronVisual = document.getElementById('cronometroVisual');
+    var cronVisualRuleta = document.getElementById('cronometroVisualRuleta');
+    if (cronVisual) cronVisual.style.display = 'block';
+    if (cronVisualRuleta) cronVisualRuleta.style.display = 'block';
+    
+    actualizarCronometroVisual(tiempo, tiempo);
+    
+    db.ref('partidas/' + SALA_ID).update({ cronometro: tiempo, estado: 'iniciando', alertaInicio: 'inicio_' + Date.now(), mensajeAdmin: '⏰ Juego en ' + min + ' min', timestamp: Date.now() });
+    mostrarToast('⏰ Cronómetro: ' + min + ' min', 'success');
+    
+    window.intervaloTemporizador = setInterval(function() {
+        tiempo--;
+        actualizarCronometroVisual(tiempo, min * 60);
+        db.ref('partidas/' + SALA_ID).update({ cronometro: tiempo });
+        
+        if (tiempo <= 0) {
+            clearInterval(window.intervaloTemporizador);
+            window.intervaloTemporizador = null;
+            if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; }
+            // Ocultar cronómetro visual
+            if (cronVisual) cronVisual.style.display = 'none';
+            if (cronVisualRuleta) cronVisualRuleta.style.display = 'none';
+            db.ref('partidas/' + SALA_ID).update({ estado: 'jugando', cronometro: 0, mensajeAdmin: '▶️ ¡Juego iniciado!', timestamp: Date.now() });
+            if ('speechSynthesis' in window) { var msg = new SpeechSynthesisUtterance('¡Es hora!'); msg.lang = 'es-ES'; window.speechSynthesis.speak(msg); }
+            mostrarToast('▶️ ¡Juego iniciado!', 'success');
+            if (window.modoJuegoSeleccionado === 'automatico') window.iniciarBingoAutomatico();
+        }
+    }, 1000);
+};
+
+function actualizarCronometroVisual(tiempo, tiempoTotal) {
+    var mins = Math.floor(tiempo / 60), segs = tiempo % 60;
+    var tiempoStr = String(mins).padStart(2,'0') + ':' + String(segs).padStart(2,'0');
+    var porcentaje = ((tiempoTotal - tiempo) / tiempoTotal) * 100;
+    
+    var elConf = document.getElementById('cronometroVisualTiempo');
+    var elRul = document.getElementById('cronometroVisualRuletaTiempo');
+    var progConf = document.getElementById('cronometroVisualProgreso');
+    var progRul = document.getElementById('cronometroVisualRuletaProgreso');
+    
+    if (elConf) elConf.textContent = tiempoStr;
+    if (elRul) elRul.textContent = tiempoStr;
+    if (progConf) progConf.style.width = porcentaje + '%';
+    if (progRul) progRul.style.width = porcentaje + '%';
+}
 
 // ============ MENSAJES ============
 window.enviarMensajeJugador = function() { var mensaje = prompt('📝 Mensaje para TODOS:'); if (!mensaje || !mensaje.trim()) return; db.ref('partidas/' + SALA_ID).update({ mensajeAdmin: mensaje.trim(), timestamp: Date.now() }); mostrarToast('✅ Mensaje enviado', 'success'); };
@@ -145,7 +198,7 @@ function verificarTodosLosCartones() { if (window.bingoDetectado) return; db.ref
 function verificarBingoCarton(c) { if (!c || !c.carton || !window.patronBingo) return false; for (var i = 0; i < 25; i++) { if (!window.patronBingo[i]) continue; var f = Math.floor(i/5), col = i%5, l = ['B','I','N','G','O'][col]; if (i !== 12 && window.cantados.indexOf(c.carton[l][f]) === -1) return false; } return true; }
 
 // ============ VERIFICAR CARTÓN MANUAL ============
-window.revisarCartonManual = function() { var idB = document.getElementById('idABuscar') || document.getElementById('idABuscarMobile'); if (!idB) { mostrarToast('❌ Error', 'error'); return; } var id = idB.value.trim(); if (!id) { mostrarToast('⚠️ Ingresa un ID', 'error'); return; } var contD = document.getElementById('minicartonVerificador'), contM = document.getElementById('minicartonMobile'); if (contD) contD.innerHTML = '<p style="color:#94a3b8;text-align:center;">Buscando...</p>'; if (contM) contM.innerHTML = '<p style="color:#94a3b8;text-align:center;">Buscando...</p>'; db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) { var encontrado = false, cartonEncontrado = null; snap.forEach(function(child) { var c = child.val(); if ((c.numero == id || c.id === id) && !encontrado) { cartonEncontrado = c; encontrado = true; } }); if (encontrado && cartonEncontrado) { window.cartonActual = cartonEncontrado; actualizarMinicartonEnAmbasVistas(cartonEncontrado); verificarBingoAutomatico(cartonEncontrado); mostrarToast('✅ Cartón encontrado', 'success'); } else { if (contD) contD.innerHTML = '<p style="color:#ef4444;">❌ No encontrado</p>'; if (contM) contM.innerHTML = '<p style="color:#ef4444;">❌ No encontrado</p>'; mostrarToast('❌ No encontrado', 'error'); } }); };
+window.revisarCartonManual = function() { var idB = document.getElementById('idABuscar') || document.getElementById('idABuscarMobile'); if (!idB) { mostrarToast('❌ Error', 'error'); return; } var id = idB.value.trim(); if (!id) { mostrarToast('⚠️ Ingresa un ID', 'error'); return; } var contD = document.getElementById('minicartonVerificador'), contM = document.getElementById('minicartonMobile'); if (contD) contD.innerHTML = '<p style="color:#94a3b8;">Buscando...</p>'; if (contM) contM.innerHTML = '<p style="color:#94a3b8;">Buscando...</p>'; db.ref('salas/' + SALA_ID + '/cartones').once('value', function(snap) { var encontrado = false, cartonEncontrado = null; snap.forEach(function(child) { var c = child.val(); if ((c.numero == id || c.id === id) && !encontrado) { cartonEncontrado = c; encontrado = true; } }); if (encontrado && cartonEncontrado) { window.cartonActual = cartonEncontrado; actualizarMinicartonEnAmbasVistas(cartonEncontrado); verificarBingoAutomatico(cartonEncontrado); mostrarToast('✅ Cartón encontrado', 'success'); } else { if (contD) contD.innerHTML = '<p style="color:#ef4444;">❌ No encontrado</p>'; if (contM) contM.innerHTML = '<p style="color:#ef4444;">❌ No encontrado</p>'; mostrarToast('❌ No encontrado', 'error'); } }); };
 
 // ============ MINICARTÓN ============
 function generarHTMLMinicarton(c) { if (!c || !c.carton) return '<p>Error</p>'; var marcados = 0, html = '<div class="minicarton-info"><span><strong>#' + (c.numero||'?') + '</strong></span><span class="minicarton-estado" id="estadoMini">' + (c.asignadoA||'Sin asignar') + '</span></div>'; html += '<div style="text-align:center;font-size:0.6rem;color:#64748b;">Patrón: ' + obtenerNombrePatron() + '</div><table style="width:100%;border-collapse:collapse;"><tr style="background:#ff4d4d;color:white;"><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>'; for (var f = 0; f < 5; f++) { html += '<tr>'; ['B','I','N','G','O'].forEach(function(l) { var v = c.carton[l][f], centro = (l === 'N' && f === 2); var cantado = window.cantados.indexOf(v) !== -1; if (cantado && !centro) marcados++; var pi = f * 5 + ['B','I','N','G','O'].indexOf(l), ep = window.patronBingo[pi]; html += '<td style="padding:6px;border:1px solid #e2e8f0;text-align:center;font-weight:bold;font-size:0.8rem;'; if (centro) html += 'background:#fef3c7;'; if (cantado && !centro) html += 'background:#10b981;color:white;'; if (ep && !cantado && !centro) html += 'border:2px dashed #f59e0b;background:#fef3c7;'; html += '">' + (centro ? '⭐' : v) + '</td>'; }); html += '</tr>'; } html += '</table><div style="text-align:center;font-size:0.7rem;">Marcados: ' + marcados + '/24</div>'; return html; }
@@ -168,11 +221,11 @@ window.bingoValido = function() { var c = window.cartonEnAlerta || window.carton
 window.bingoErrado = function() { var c = window.cartonEnAlerta || window.cartonActual; var nombre = c ? (c.asignadoA || 'Jugador') : 'Jugador'; if (confirm('¿BINGO ERRADO para ' + nombre + '?')) { finalizarRevision(nombre, 'errado'); db.ref('partidas/' + SALA_ID).update({ estado: 'jugando', mensaje: 'BINGO ERRADO', timestamp: Date.now() }); window.bingoDetectado = false; window.cerrarAlerta(); window.cartonActual = null; var cont = document.getElementById('minicartonVerificador'); if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var contM = document.getElementById('minicartonMobile'); if (contM) contM.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; mostrarToast('❌ BINGO ERRADO', 'error'); } };
 
 // ============ NUEVA PARTIDA ============
-function iniciarNuevaPartida() { window.cantados = []; window.bingoDetectado = false; window.cartonActual = null; window.cartonEnAlerta = null; window.ganadoresPartida = 0; window.enPausa = false; if (window.pausaTimeout) clearTimeout(window.pausaTimeout); if (window.modoAutomatico) window.detenerBingoAutomatico(); sessionStorage.setItem('ganadores_' + SALA_ID, '0'); localStorage.setItem('bingo_cantados_' + SALA_ID, JSON.stringify([])); db.ref('partidas/' + SALA_ID).set({ estado: 'nueva_partida', cantados: [], ultimaBola: null, mensajeAdmin: '🔄 Nueva partida', timestamp: Date.now(), patron: Array(25).fill(false), revisando: { activo: false }, resultadoRevision: null, pausa: false, cronometro: 0, ganadoresCount: 0 }); db.ref('bingos/' + SALA_ID).remove(); inicializarTablero75(); var cont = document.getElementById('minicartonVerificador'); if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var contM = document.getElementById('minicartonMobile'); if (contM) contM.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var notif = document.getElementById('notificacionesBingo'); if (notif) notif.innerHTML = ''; var alerta = document.getElementById('alertaBingo'); if (alerta) alerta.style.display = 'none'; var cron = document.getElementById('cronometroBingo') || document.getElementById('cronometroBingoMobile'); if (cron) cron.textContent = '00:00'; var btnProg = document.getElementById('btnProgramar') || document.getElementById('btnProgramarMobile'); if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; } var btnAuto = document.getElementById('btnAutoBingo') || document.getElementById('btnAutoMobile'); if (btnAuto) { btnAuto.textContent = '🤖 BINGO AUTOMÁTICO'; btnAuto.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; btnAuto.onclick = window.iniciarBingoAutomatico; } actualizarEtapas(); actualizarOnlineCount(); mostrarToast('🔄 Nueva partida', 'success'); setTimeout(function() { db.ref('partidas/' + SALA_ID).update({ estado: 'jugando', cantados: [], timestamp: Date.now() }); }, 2000); }
+function iniciarNuevaPartida() { window.cantados = []; window.bingoDetectado = false; window.cartonActual = null; window.cartonEnAlerta = null; window.ganadoresPartida = 0; window.enPausa = false; if (window.pausaTimeout) clearTimeout(window.pausaTimeout); if (window.modoAutomatico) window.detenerBingoAutomatico(); sessionStorage.setItem('ganadores_' + SALA_ID, '0'); localStorage.setItem('bingo_cantados_' + SALA_ID, JSON.stringify([])); db.ref('partidas/' + SALA_ID).set({ estado: 'nueva_partida', cantados: [], ultimaBola: null, mensajeAdmin: '🔄 Nueva partida', timestamp: Date.now(), patron: Array(25).fill(false), revisando: { activo: false }, resultadoRevision: null, pausa: false, cronometro: 0, ganadoresCount: 0 }); db.ref('bingos/' + SALA_ID).remove(); inicializarTablero75(); var cont = document.getElementById('minicartonVerificador'); if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var contM = document.getElementById('minicartonMobile'); if (contM) contM.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var notif = document.getElementById('notificacionesBingo'); if (notif) notif.innerHTML = ''; var alerta = document.getElementById('alertaBingo'); if (alerta) alerta.style.display = 'none'; var cronVisual = document.getElementById('cronometroVisual'); if (cronVisual) cronVisual.style.display = 'none'; var cronVisualR = document.getElementById('cronometroVisualRuleta'); if (cronVisualR) cronVisualR.style.display = 'none'; var cron = document.getElementById('cronometroBingo') || document.getElementById('cronometroBingoMobile'); if (cron) cron.textContent = '00:00'; var btnProg = document.getElementById('btnProgramar') || document.getElementById('btnProgramarMobile'); if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; } var btnAuto = document.getElementById('btnAutoBingo') || document.getElementById('btnAutoMobile'); if (btnAuto) { btnAuto.textContent = '🤖 BINGO AUTOMÁTICO'; btnAuto.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; btnAuto.onclick = window.iniciarBingoAutomatico; } actualizarEtapas(); actualizarOnlineCount(); mostrarToast('🔄 Nueva partida', 'success'); setTimeout(function() { db.ref('partidas/' + SALA_ID).update({ estado: 'jugando', cantados: [], timestamp: Date.now() }); }, 2000); }
 
 // ============ REINICIAR ============
 var resetBtn = document.getElementById('resetBtn') || document.getElementById('btnReiniciarPartida');
-if (resetBtn) { resetBtn.addEventListener('click', function() { if (confirm('⚠️ ¿Reiniciar todo?')) { if (window.intervaloAutomatico) clearInterval(window.intervaloAutomatico); if (window.intervaloTemporizador) clearInterval(window.intervaloTemporizador); if (window.pausaTimeout) clearTimeout(window.pausaTimeout); window.cantados = []; window.patronBingo = Array(25).fill(false); window.jugadoresActivos = []; window.juegoActivo = false; window.modoAutomatico = false; window.bingoDetectado = false; window.etapaActual = 1; window.ganadoresPartida = 0; window.enPausa = false; sessionStorage.setItem('ganadores_' + SALA_ID, '0'); ['bingo_cantados_','bingo_patron_','bingo_jugadores_','bingo_activo_','bingo_etapa_'].forEach(function(k) { localStorage.removeItem(k + SALA_ID); }); db.ref('partidas/' + SALA_ID).remove(); db.ref('bingos/' + SALA_ID).remove(); inicializarTablero75(); actualizarEtapas(); var cont = document.getElementById('minicartonVerificador'); if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var contM = document.getElementById('minicartonMobile'); if (contM) contM.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var notif = document.getElementById('notificacionesBingo'); if (notif) notif.innerHTML = ''; var alerta = document.getElementById('alertaBingo'); if (alerta) alerta.style.display = 'none'; var cron = document.getElementById('cronometroBingo') || document.getElementById('cronometroBingoMobile'); if (cron) cron.textContent = '00:00'; var bp = document.getElementById('btnProgramar') || document.getElementById('btnProgramarMobile'); if (bp) { bp.textContent = '⏰ PROGRAMAR'; bp.disabled = false; } var ba = document.getElementById('btnAutoBingo') || document.getElementById('btnAutoMobile'); if (ba) { ba.textContent = '🤖 BINGO AUTOMÁTICO'; ba.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; ba.onclick = window.iniciarBingoAutomatico; } actualizarOnlineCount(); mostrarToast('🔄 Reiniciado', 'success'); } }); }
+if (resetBtn) { resetBtn.addEventListener('click', function() { if (confirm('⚠️ ¿Reiniciar todo?')) { if (window.intervaloAutomatico) clearInterval(window.intervaloAutomatico); if (window.intervaloTemporizador) clearInterval(window.intervaloTemporizador); if (window.pausaTimeout) clearTimeout(window.pausaTimeout); window.cantados = []; window.patronBingo = Array(25).fill(false); window.jugadoresActivos = []; window.juegoActivo = false; window.modoAutomatico = false; window.bingoDetectado = false; window.etapaActual = 1; window.ganadoresPartida = 0; window.enPausa = false; sessionStorage.setItem('ganadores_' + SALA_ID, '0'); ['bingo_cantados_','bingo_patron_','bingo_jugadores_','bingo_activo_','bingo_etapa_'].forEach(function(k) { localStorage.removeItem(k + SALA_ID); }); db.ref('partidas/' + SALA_ID).remove(); db.ref('bingos/' + SALA_ID).remove(); inicializarTablero75(); actualizarEtapas(); var cont = document.getElementById('minicartonVerificador'); if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var contM = document.getElementById('minicartonMobile'); if (contM) contM.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; var notif = document.getElementById('notificacionesBingo'); if (notif) notif.innerHTML = ''; var alerta = document.getElementById('alertaBingo'); if (alerta) alerta.style.display = 'none'; var cronVisual = document.getElementById('cronometroVisual'); if (cronVisual) cronVisual.style.display = 'none'; var cronVisualR = document.getElementById('cronometroVisualRuleta'); if (cronVisualR) cronVisualR.style.display = 'none'; var cron = document.getElementById('cronometroBingo') || document.getElementById('cronometroBingoMobile'); if (cron) cron.textContent = '00:00'; var bp = document.getElementById('btnProgramar') || document.getElementById('btnProgramarMobile'); if (bp) { bp.textContent = '⏰ PROGRAMAR'; bp.disabled = false; } var ba = document.getElementById('btnAutoBingo') || document.getElementById('btnAutoMobile'); if (ba) { ba.textContent = '🤖 BINGO AUTOMÁTICO'; ba.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; ba.onclick = window.iniciarBingoAutomatico; } actualizarOnlineCount(); mostrarToast('🔄 Reiniciado', 'success'); } }); }
 
 // ============ TECLAS ============
 document.addEventListener('keydown', function(e) {
