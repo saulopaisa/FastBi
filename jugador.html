@@ -20,6 +20,7 @@
             --card-bg: #16213e;
             --text-white: #ffffff;
             --text-gray: #94a3b8;
+            --nav-height: 60px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -30,25 +31,35 @@
             color: var(--text-white);
             min-height: 100vh;
             min-height: 100dvh;
-            padding: 10px;
             -webkit-tap-highlight-color: transparent;
             -webkit-user-select: none;
             user-select: none;
+            padding-bottom: 20px;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
+            padding: 10px;
+            padding-bottom: 30px;
         }
 
-        /* ========== HEADER ========== */
-        .header {
+        /* ========== HEADER FIJO ========== */
+        .header-fijo {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--dark);
+            padding: 8px 0;
+            border-bottom: 2px solid #2d3436;
+        }
+
+        .header-top {
             text-align: center;
-            padding: 10px 0;
         }
 
-        .header h1 {
-            font-size: 1.8em;
+        .header-top h1 {
+            font-size: 1.5em;
             background: linear-gradient(45deg, var(--primary), var(--gold));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -60,10 +71,9 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            flex-wrap: wrap;
-            font-size: 0.75em;
+            font-size: 0.7em;
             color: var(--text-gray);
-            margin-top: 5px;
+            flex-wrap: wrap;
         }
 
         .connection-dot {
@@ -75,9 +85,137 @@
         .connection-dot.online { background: var(--success); animation: pulse 2s infinite; }
         .connection-dot.offline { background: var(--danger); }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+
+        /* Barra de números cantados (sticky) */
+        .numeros-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .ultima-bola-grande {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--danger), #b91c1c);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.5);
+            flex-shrink: 0;
+        }
+
+        .ultima-bola-grande .letra {
+            font-size: 0.65em;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .ultima-bola-grande .numero {
+            font-size: 1.4em;
+            line-height: 1;
+        }
+
+        .ultimas-bolas-scroll {
+            display: flex;
+            gap: 5px;
+            overflow-x: auto;
+            flex: 1;
+            padding: 4px 0;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .ultimas-bolas-scroll::-webkit-scrollbar { height: 2px; }
+        .ultimas-bolas-scroll::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+
+        .bola-chica {
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 2px solid var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.75em;
+            animation: popIn 0.3s ease-out;
+        }
+
+        .bola-chica.ultima {
+            background: #fbbf24;
+            color: #1e293b;
+            border-color: #f59e0b;
+            animation: popIn 0.4s ease-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            70% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Info bar */
+        .info-bar {
+            display: flex;
+            gap: 6px;
+            margin: 8px 0;
+            flex-wrap: wrap;
+        }
+
+        .info-card {
+            background: var(--card-bg);
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-align: center;
+            flex: 1;
+            min-width: 55px;
+            border: 1px solid #2d3436;
+        }
+
+        .info-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: var(--gold);
+        }
+
+        .info-label {
+            font-size: 0.6em;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Selector de vista */
+        .vista-selector {
+            display: flex;
+            gap: 6px;
+            margin: 8px 0;
+        }
+
+        .vista-selector button {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-gray);
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8em;
+            transition: all 0.2s;
+        }
+
+        .vista-selector button.activo {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: #1e293b;
         }
 
         /* ========== LOGIN ========== */
@@ -88,7 +226,7 @@
             border-radius: 16px;
             border: 1px solid #2d3436;
             max-width: 400px;
-            margin: 20px auto;
+            margin: 40px auto;
         }
 
         .login-screen .icon {
@@ -98,8 +236,8 @@
         }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-12px); }
+            0%,100%{transform:translateY(0);}
+            50%{transform:translateY(-12px);}
         }
 
         .login-screen h2 {
@@ -133,18 +271,18 @@
         }
 
         .btn {
-            padding: 14px 24px;
+            padding: 12px 20px;
             border: none;
             border-radius: 12px;
             font-weight: bold;
-            font-size: 0.95em;
+            font-size: 0.9em;
             cursor: pointer;
             transition: all 0.2s;
             width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .btn:active { transform: scale(0.97); }
@@ -152,7 +290,6 @@
         .btn-primary {
             background: linear-gradient(135deg, #6366f1, #4f46e5);
             color: white;
-            font-size: 1.05em;
         }
 
         .btn-success {
@@ -163,15 +300,15 @@
         .btn-bingo {
             background: linear-gradient(135deg, #10b981, #059669) !important;
             color: white;
-            font-size: 1.2em !important;
-            padding: 16px !important;
+            font-size: 1.1em !important;
+            padding: 14px !important;
             animation: glowBingo 1.5s infinite;
             box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
         }
 
         @keyframes glowBingo {
-            0%, 100% { box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); }
-            50% { box-shadow: 0 4px 35px rgba(16, 185, 129, 0.8); }
+            0%,100%{box-shadow:0 4px 20px rgba(16,185,129,0.4);}
+            50%{box-shadow:0 4px 35px rgba(16,185,129,0.8);}
         }
 
         .btn-warning {
@@ -200,183 +337,62 @@
         }
 
         /* ========== GAME SCREEN ========== */
-        .game-screen {
-            display: none;
-        }
-
-        /* Info bar */
-        .info-bar {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-        }
-
-        .info-card {
-            background: var(--card-bg);
-            padding: 10px 14px;
-            border-radius: 10px;
-            text-align: center;
-            flex: 1;
-            min-width: 60px;
-            border: 1px solid #2d3436;
-        }
-
-        .info-value {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: var(--gold);
-        }
-
-        .info-label {
-            font-size: 0.6em;
-            color: var(--text-gray);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* Mensaje admin */
-        .admin-mensaje {
-            background: linear-gradient(135deg, #1e3a5f, #0f172a);
-            border-left: 4px solid var(--gold);
-            padding: 10px 14px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            font-size: 0.85em;
-            animation: slideDown 0.3s;
-            display: none;
-        }
-
-        @keyframes slideDown {
-            from { transform: translateY(-10px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        /* Última bola (GRANDE) */
-        .ultima-bola-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 10px;
-            padding: 10px;
-            background: var(--card-bg);
-            border-radius: 14px;
-            border: 1px solid #2d3436;
-        }
-
-        .ultima-bola-label {
-            font-size: 0.7em;
-            color: var(--text-gray);
-        }
-
-        .ultima-bola {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--danger), #b91c1c);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.5);
-            animation: bolaGrande 0.5s ease-out;
-        }
-
-        @keyframes bolaGrande {
-            0% { transform: scale(0) rotate(-180deg); }
-            70% { transform: scale(1.1) rotate(10deg); }
-            100% { transform: scale(1) rotate(0); }
-        }
-
-        .ultima-bola .letra {
-            font-size: 0.7em;
-            color: rgba(255,255,255,0.8);
-        }
-
-        .ultima-bola .numero {
-            font-size: 1.6em;
-            line-height: 1;
-        }
-
-        .ultimas-bolas {
-            display: flex;
-            gap: 4px;
-            flex-wrap: wrap;
-        }
-
-        .bola-chica {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--card-bg);
-            border: 1.5px solid var(--gold);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.7em;
-            animation: popIn 0.3s ease-out;
-        }
-
-        @keyframes popIn {
-            0% { transform: scale(0); }
-            70% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
+        .game-screen { display: none; }
 
         /* Cartones */
         .cartones-container {
-            display: grid;
-            grid-template-columns: 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 12px;
-            margin-bottom: 12px;
+            margin: 10px 0;
         }
 
-        @media (min-width: 600px) {
-            .cartones-container.dos-cartones {
-                grid-template-columns: 1fr 1fr;
-            }
+        .cartones-container.horizontal {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .cartones-container.horizontal .carton-wrapper {
+            flex: 1;
+            min-width: 280px;
         }
 
         .carton-wrapper {
             background: white;
-            border-radius: 14px;
+            border-radius: 12px;
             padding: 6px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
         }
 
         .carton-numero {
             text-align: center;
             font-size: 0.65em;
             color: #64748b;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
             font-weight: bold;
         }
 
         .carton-header {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 3px;
-            margin-bottom: 3px;
+            gap: 2px;
+            margin-bottom: 2px;
         }
 
         .carton-header-cell {
             background: var(--primary);
             color: white;
-            padding: 8px 2px;
+            padding: 7px 2px;
             text-align: center;
             font-weight: 900;
-            font-size: 0.9em;
-            border-radius: 6px;
+            font-size: 0.8em;
+            border-radius: 5px;
         }
 
         .carton-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 3px;
+            gap: 2px;
         }
 
         .carton-cell {
@@ -386,9 +402,9 @@
             justify-content: center;
             background: #f1f5f9;
             border: 2px solid #e2e8f0;
-            border-radius: 6px;
+            border-radius: 5px;
             font-weight: 700;
-            font-size: 0.85em;
+            font-size: 0.8em;
             color: #1e293b;
             cursor: pointer;
             transition: all 0.15s;
@@ -410,13 +426,13 @@
             position: absolute;
             top: 1px;
             right: 2px;
-            font-size: 0.5em;
+            font-size: 0.45em;
         }
 
         .carton-cell.free {
             background: #fef3c7 !important;
             border-color: var(--gold) !important;
-            font-size: 0.65em;
+            font-size: 0.6em;
             cursor: default;
         }
 
@@ -433,12 +449,12 @@
         }
 
         @keyframes popCell {
-            0% { transform: scale(0.6); }
-            60% { transform: scale(1.2); }
-            100% { transform: scale(1); }
+            0%{transform:scale(0.6);}
+            60%{transform:scale(1.2);}
+            100%{transform:scale(1);}
         }
 
-        /* Botones de acción */
+        /* Acciones */
         .acciones-jugador {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -448,24 +464,168 @@
 
         .acciones-jugador .btn {
             font-size: 0.8em;
-            padding: 12px;
+            padding: 10px;
         }
 
-        /* Modal */
+        /* ========== CHAT FLOTANTE (COMO LA RULETA) ========== */
+        .chat-flotante {
+            position: fixed;
+            bottom: 20px;
+            right: 15px;
+            z-index: 200;
+        }
+
+        .btn-chat {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #6366f1;
+            color: white;
+            border: none;
+            font-size: 1.3em;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(99,102,241,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-chat:active { transform: scale(0.9); }
+
+        .chat-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.55em;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-panel {
+            display: none;
+            position: fixed;
+            bottom: 80px;
+            right: 15px;
+            width: 280px;
+            max-height: 350px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            border: 2px solid #6366f1;
+            z-index: 199;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+        }
+
+        .chat-panel.activo {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background: #6366f1;
+            padding: 10px;
+            font-weight: bold;
+            font-size: 0.8em;
+            text-align: center;
+        }
+
+        .chat-mensajes {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            max-height: 250px;
+            min-height: 100px;
+            background: #0f172a;
+        }
+
+        .chat-mensajes::-webkit-scrollbar { width: 3px; }
+        .chat-mensajes::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 2px; }
+
+        .chat-vacio {
+            color: #64748b;
+            font-size: 0.7em;
+            text-align: center;
+        }
+
+        .msg-item {
+            margin-bottom: 6px;
+            padding: 6px 10px;
+            border-radius: 10px;
+            font-size: 0.7em;
+            max-width: 90%;
+            word-wrap: break-word;
+        }
+
+        .msg-admin {
+            background: #6366f1;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .msg-jugador {
+            background: #334155;
+            color: white;
+        }
+
+        .msg-timestamp {
+            font-size: 0.55em;
+            color: rgba(255,255,255,0.6);
+            margin-top: 2px;
+        }
+
+        .chat-input-area {
+            display: flex;
+            padding: 8px;
+            gap: 5px;
+            background: #0f172a;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            padding: 8px;
+            border-radius: 20px;
+            border: 1px solid #334155;
+            background: #1e293b;
+            color: white;
+            font-size: 0.75em;
+            outline: none;
+        }
+
+        .chat-input-area button {
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ========== MODALES ========== */
         .modal-overlay {
             display: none;
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.85);
-            z-index: 100;
+            z-index: 300;
             align-items: center;
             justify-content: center;
             padding: 20px;
         }
 
-        .modal-overlay.active {
-            display: flex;
-        }
+        .modal-overlay.active { display: flex; }
 
         .modal-content {
             background: var(--card-bg);
@@ -488,8 +648,11 @@
             margin-top: 15px;
         }
 
-        .modal-buttons .btn {
-            flex: 1;
+        .modal-buttons .btn { flex: 1; }
+
+        .alerta-partida-terminada h2 {
+            color: var(--gold);
+            margin-bottom: 10px;
         }
 
         /* Confeti */
@@ -499,38 +662,13 @@
             height: 10px;
             top: -20px;
             animation: confettiFall 3s linear forwards;
-            z-index: 200;
+            z-index: 400;
             pointer-events: none;
         }
 
         @keyframes confettiFall {
-            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-        }
-
-        /* Alerta de partida terminada */
-        .alerta-partida-terminada {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--card-bg);
-            border: 2px solid var(--gold);
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
-            z-index: 150;
-            animation: modalIn 0.3s;
-        }
-
-        @keyframes modalIn {
-            from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
-            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        }
-
-        .alerta-partida-terminada h2 {
-            color: var(--gold);
-            margin-bottom: 10px;
+            0%{transform:translateY(0) rotate(0deg); opacity:1;}
+            100%{transform:translateY(100vh) rotate(720deg); opacity:0;}
         }
 
         /* Toast */
@@ -544,7 +682,7 @@
             padding: 12px 24px;
             border-radius: 25px;
             font-size: 0.85em;
-            z-index: 300;
+            z-index: 500;
             opacity: 0;
             transition: all 0.3s;
             pointer-events: none;
@@ -560,39 +698,45 @@
         .toast.error { background: var(--danger); }
         .toast.warning { background: var(--warning); color: #1e293b; }
 
-        /* Ajustes responsive */
+        /* ========== RESPONSIVE ========== */
         @media (max-width: 380px) {
-            .carton-cell {
-                font-size: 0.7em;
-                border-radius: 4px;
-            }
-            .carton-header-cell {
-                font-size: 0.75em;
-                padding: 6px 1px;
-            }
-            .ultima-bola {
-                width: 55px;
-                height: 55px;
-            }
-            .ultima-bola .numero {
-                font-size: 1.3em;
+            .carton-cell { font-size: 0.65em; border-radius: 3px; }
+            .carton-header-cell { font-size: 0.7em; padding: 5px 1px; }
+            .ultima-bola-grande { width: 50px; height: 50px; }
+            .ultima-bola-grande .numero { font-size: 1.2em; }
+            .chat-panel { width: 250px; }
+        }
+
+        @media (min-width: 768px) {
+            .cartones-container.horizontal .carton-wrapper {
+                max-width: 400px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <h1>🎱 BINGO</h1>
-            <div class="sala-info">
-                🏠 <strong id="salaNombre">-</strong>
-                <span class="connection-dot online" id="connectionDot"></span>
-                <span id="connectionText">Conectado</span>
+        <!-- ========== HEADER FIJO (SIEMPRE VISIBLE) ========== -->
+        <div class="header-fijo" id="headerFijo">
+            <div class="header-top">
+                <h1>🎱 BINGO</h1>
+                <div class="sala-info">
+                    🏠 <strong id="salaNombre">-</strong>
+                    <span class="connection-dot online" id="connectionDot"></span>
+                    <span id="connectionText">Conectado</span>
+                </div>
+            </div>
+            <!-- Barra de números (sticky) -->
+            <div class="numeros-bar" id="numerosBar">
+                <div class="ultima-bola-grande" id="ultimaBolaGrande">
+                    <span class="letra">-</span>
+                    <span class="numero">--</span>
+                </div>
+                <div class="ultimas-bolas-scroll" id="ultimasBolasScroll"></div>
             </div>
         </div>
 
-        <!-- Pantalla Login -->
+        <!-- Login -->
         <div id="loginScreen" class="login-screen">
             <div class="icon">🎮</div>
             <h2>¡Bienvenido!</h2>
@@ -602,9 +746,9 @@
             <div id="loginError"></div>
         </div>
 
-        <!-- Pantalla Juego -->
+        <!-- Juego -->
         <div id="gameScreen" class="game-screen">
-            <!-- Info bar -->
+            <!-- Info -->
             <div class="info-bar">
                 <div class="info-card">
                     <div class="info-value" id="jugadoresCount">0</div>
@@ -620,21 +764,14 @@
                 </div>
             </div>
 
-            <!-- Mensaje admin -->
-            <div id="adminMensaje" class="admin-mensaje"></div>
-
-            <!-- Última bola GRANDE + últimas bolitas -->
-            <div class="ultima-bola-container">
-                <div class="ultima-bola-label">ÚLTIMA<br>BOLA</div>
-                <div class="ultima-bola" id="ultimaBolaGrande">
-                    <span class="letra">-</span>
-                    <span class="numero">--</span>
-                </div>
-                <div class="ultimas-bolas" id="ultimasBolasChicas"></div>
+            <!-- Selector de vista -->
+            <div class="vista-selector" id="vistaSelector" style="display:none;">
+                <button onclick="cambiarVista('vertical')" id="btnVistaVertical" class="activo">📱 VERTICAL</button>
+                <button onclick="cambiarVista('horizontal')" id="btnVistaHorizontal">💻 HORIZONTAL</button>
             </div>
 
             <!-- Cartones -->
-            <div class="cartones-container" id="cartonesContainer"></div>
+            <div class="cartones-container vertical" id="cartonesContainer"></div>
 
             <!-- Acciones -->
             <div class="acciones-jugador">
@@ -646,7 +783,25 @@
         </div>
     </div>
 
-    <!-- Modal Confirmar Bingo -->
+    <!-- ========== CHAT FLOTANTE ========== -->
+    <div class="chat-flotante" id="chatFlotante" style="display:none;">
+        <button class="btn-chat" onclick="toggleChat()">
+            💬
+            <span class="chat-badge" id="chatBadge">0</span>
+        </button>
+        <div class="chat-panel" id="chatPanel">
+            <div class="chat-header">💬 CHAT</div>
+            <div class="chat-mensajes" id="chatMensajes">
+                <p class="chat-vacio">No hay mensajes</p>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" placeholder="Escribe..." onkeypress="if(event.key==='Enter')enviarChat()">
+                <button onclick="enviarChat()">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmar -->
     <div class="modal-overlay" id="modalConfirmar">
         <div class="modal-content">
             <h2>🎉 ¿Confirmar BINGO?</h2>
@@ -667,9 +822,9 @@
         </div>
     </div>
 
-    <!-- Alerta partida terminada -->
+    <!-- Modal Partida Terminada -->
     <div class="modal-overlay" id="modalPartidaTerminada">
-        <div class="alerta-partida-terminada">
+        <div class="modal-content alerta-partida-terminada">
             <h2>🏁 Partida Terminada</h2>
             <p id="partidaTerminadaMensaje">El administrador ha reiniciado la partida.</p>
             <button class="btn btn-primary" onclick="limpiarParaNuevaPartida()">🔄 Nueva Partida</button>
@@ -680,7 +835,7 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // ============ FIREBASE CONFIG ============
+        // ============ FIREBASE ============
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
             authDomain: "bingofast.firebaseapp.com",
@@ -695,7 +850,7 @@
         const db = firebase.database();
         console.log('🔥 Firebase conectado');
 
-        // ============ OBTENER SALA DE URL ============
+        // ============ OBTENER SALA ============
         function obtenerSalaDeURL() {
             const params = new URLSearchParams(window.location.search);
             return params.get('sala') || null;
@@ -717,11 +872,13 @@
 
         // ============ VARIABLES ============
         let miNombre = null;
-        let misCartones = []; // Array de {id, carton, numero}
+        let misCartones = [];
         let cantadosSet = new Set();
         let patronActual = [];
         let juegoConectado = false;
         let ultimoEstadoPartida = null;
+        let vistaActual = 'vertical';
+        let mensajesChat = [];
 
         // ============ CONEXIÓN ============
         function actualizarEstadoConexion(online) {
@@ -731,12 +888,24 @@
             text.textContent = online ? 'Conectado' : 'Desconectado';
         }
 
-        const connectedRef = db.ref('.info/connected');
-        connectedRef.on('value', (snap) => {
+        db.ref('.info/connected').on('value', (snap) => {
             actualizarEstadoConexion(snap.val() === true);
         });
 
-        // ============ UNIRSE AL JUEGO ============
+        // ============ VISTA ============
+        function cambiarVista(tipo) {
+            vistaActual = tipo;
+            const container = document.getElementById('cartonesContainer');
+            container.classList.remove('vertical', 'horizontal');
+            container.classList.add(tipo);
+            
+            document.getElementById('btnVistaVertical').classList.toggle('activo', tipo === 'vertical');
+            document.getElementById('btnVistaHorizontal').classList.toggle('activo', tipo === 'horizontal');
+            
+            localStorage.setItem('bingo_vista', tipo);
+        }
+
+        // ============ UNIRSE ============
         async function unirseAlJuego() {
             const nombre = document.getElementById('nombreInput').value.trim();
             const errorDiv = document.getElementById('loginError');
@@ -755,15 +924,16 @@
                 const cartonesSnapshot = await db.ref('salas/' + SALA_ID + '/cartones').once('value');
                 const cartones = cartonesSnapshot.val() || {};
 
-                // Buscar cartones ya asignados a este jugador
                 let cartonesAsignados = [];
+                
+                // Buscar ya asignados
                 Object.entries(cartones).forEach(([id, carton]) => {
                     if (carton.asignadoA === nombre) {
                         cartonesAsignados.push({ id, carton: carton.carton, numero: carton.numero });
                     }
                 });
 
-                // Si no tiene, buscar cartones libres (máximo 2)
+                // Si no tiene, buscar libres (máx 2)
                 if (cartonesAsignados.length === 0) {
                     Object.entries(cartones).forEach(([id, carton]) => {
                         if (!carton.asignadoA && cartonesAsignados.length < 2) {
@@ -776,7 +946,6 @@
                         return;
                     }
 
-                    // Asignar cartones
                     for (const c of cartonesAsignados) {
                         await db.ref('salas/' + SALA_ID + '/cartones/' + c.id).update({
                             asignadoA: nombre,
@@ -789,14 +958,18 @@
                 misCartones = cartonesAsignados;
                 juegoConectado = true;
 
-                // Guardar en localStorage
                 localStorage.setItem('bingo_jugador_nombre', nombre);
                 localStorage.setItem('bingo_jugador_sala', SALA_ID);
                 localStorage.setItem('bingo_jugador_cartones', JSON.stringify(cartonesAsignados.map(c => c.id)));
 
-                // Mostrar juego
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('gameScreen').style.display = 'block';
+                
+                // Mostrar chat y selector de vista
+                document.getElementById('chatFlotante').style.display = 'block';
+                if (misCartones.length === 2) {
+                    document.getElementById('vistaSelector').style.display = 'flex';
+                }
 
                 inicializarJuego();
                 mostrarToast('✅ Conectado con ' + cartonesAsignados.length + ' cartón(es)', 'success');
@@ -810,18 +983,18 @@
         function inicializarJuego() {
             mostrarCartones();
             escucharPartida();
+            escucharChat();
+            
+            // Restaurar vista
+            const vistaGuardada = localStorage.getItem('bingo_vista');
+            if (vistaGuardada) cambiarVista(vistaGuardada);
         }
 
         // ============ MOSTRAR CARTONES ============
         function mostrarCartones() {
             const container = document.getElementById('cartonesContainer');
             container.innerHTML = '';
-            
-            if (misCartones.length === 2) {
-                container.classList.add('dos-cartones');
-            } else {
-                container.classList.remove('dos-cartones');
-            }
+            container.classList.add(vistaActual);
 
             misCartones.forEach((cartonData, index) => {
                 const wrapper = document.createElement('div');
@@ -845,8 +1018,6 @@
                             (esCentro ? ' free marked' : '') + 
                             '" data-carton="' + index + 
                             '" data-valor="' + valor + 
-                            '" data-letra="' + letra + 
-                            '" data-fila="' + fila + 
                             '" data-indice="' + indice + 
                             '" onclick="toggleCelda(this)">' + 
                             (esCentro ? '⭐' : valor) + 
@@ -859,12 +1030,7 @@
                 container.appendChild(wrapper);
             });
 
-            // Aplicar patrón si ya existe
-            if (patronActual.length > 0) {
-                aplicarPatronACartones();
-            }
-
-            // Marcar números ya cantados
+            if (patronActual.length > 0) aplicarPatronACartones();
             cantadosSet.forEach(num => marcarNumeroEnCartones(num, false));
         }
 
@@ -908,18 +1074,15 @@
                 const data = snap.val();
                 if (!data) return;
 
-                // Detectar reinicio de partida
+                // Detectar reinicio
                 if (data.estado === 'nueva_partida' || data.estado === 'terminado') {
                     if (ultimoEstadoPartida && ultimoEstadoPartida !== 'nueva_partida' && ultimoEstadoPartida !== 'terminado') {
-                        // La partida se terminó/reinició
                         mostrarPartidaTerminada(data);
                     }
                 }
 
-                // Detectar si se reinició completamente (no hay datos)
                 if (!data.cantados || data.cantados.length === 0) {
                     if (cantadosSet.size > 0) {
-                        // Se limpiaron los números, es un reinicio
                         mostrarPartidaTerminada(data);
                     }
                 }
@@ -936,14 +1099,10 @@
                     });
                     document.getElementById('cantadosCount').textContent = data.cantados.length;
                     
-                    // Actualizar última bola grande
                     if (data.cantados.length > 0) {
-                        const ultimo = data.cantados[data.cantados.length - 1];
-                        actualizarUltimaBolaGrande(ultimo);
+                        actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
                     }
-                    
-                    // Actualizar bolitas chicas
-                    actualizarUltimasBolasChicas(data.cantados);
+                    actualizarUltimasBolasScroll(data.cantados);
                 }
 
                 // Patrón
@@ -955,11 +1114,6 @@
                 // Jugadores
                 if (data.jugadoresActivos && Array.isArray(data.jugadoresActivos)) {
                     document.getElementById('jugadoresCount').textContent = data.jugadoresActivos.length;
-                }
-
-                // Mensaje admin
-                if (data.mensajeAdmin) {
-                    mostrarMensajeAdmin(data.mensajeAdmin);
                 }
 
                 // Cronómetro
@@ -976,13 +1130,12 @@
 
                 // Resultado revisión
                 if (data.resultadoRevision && data.resultadoRevision.jugador === miNombre) {
-                    const revision = data.resultadoRevision;
-                    if (revision.resultado === 'valido') {
+                    if (data.resultadoRevision.resultado === 'valido') {
                         lanzarConfeti();
                         document.getElementById('ganadorMensaje').textContent = 
                             '¡Felicidades ' + miNombre + '! Tu BINGO fue validado 🎉';
                         document.getElementById('modalGanador').classList.add('active');
-                    } else if (revision.resultado === 'errado') {
+                    } else if (data.resultadoRevision.resultado === 'errado') {
                         mostrarToast('❌ BINGO ERRADO. Revisa tu cartón.', 'error');
                     }
                 }
@@ -991,38 +1144,24 @@
 
         function actualizarUltimaBolaGrande(numero) {
             const bola = document.getElementById('ultimaBolaGrande');
-            const letra = obtenerLetra(numero);
-            bola.querySelector('.letra').textContent = letra;
+            bola.querySelector('.letra').textContent = obtenerLetra(numero);
             bola.querySelector('.numero').textContent = numero;
-            // Re-animar
             bola.style.animation = 'none';
             bola.offsetHeight;
             bola.style.animation = 'bolaGrande 0.5s ease-out';
         }
 
-        function actualizarUltimasBolasChicas(cantados) {
-            const container = document.getElementById('ultimasBolasChicas');
-            const ultimos = cantados.slice(-5).reverse();
+        function actualizarUltimasBolasScroll(cantados) {
+            const container = document.getElementById('ultimasBolasScroll');
+            const ultimos = cantados.slice(-6).reverse();
             
             container.innerHTML = '';
-            ultimos.forEach(num => {
+            ultimos.forEach((num, i) => {
                 const bola = document.createElement('div');
-                bola.className = 'bola-chica';
+                bola.className = 'bola-chica' + (i === 0 ? ' ultima' : '');
                 bola.textContent = num;
                 container.appendChild(bola);
             });
-        }
-
-        function mostrarMensajeAdmin(mensaje) {
-            const msgDiv = document.getElementById('adminMensaje');
-            msgDiv.textContent = '📢 ' + mensaje;
-            msgDiv.style.display = 'block';
-            
-            // Ocultar después de 8 segundos
-            clearTimeout(msgDiv._timeout);
-            msgDiv._timeout = setTimeout(() => {
-                msgDiv.style.display = 'none';
-            }, 8000);
         }
 
         function mostrarPartidaTerminada(data) {
@@ -1032,24 +1171,18 @@
         }
 
         function limpiarParaNuevaPartida() {
-            // Limpiar datos
             cantadosSet.clear();
             patronActual = [];
             
-            // Limpiar UI
             document.getElementById('cantadosCount').textContent = '0';
             document.getElementById('cronometroDisplay').textContent = '--';
-            document.getElementById('adminMensaje').style.display = 'none';
             document.getElementById('ultimaBolaGrande').querySelector('.letra').textContent = '-';
             document.getElementById('ultimaBolaGrande').querySelector('.numero').textContent = '--';
-            document.getElementById('ultimasBolasChicas').innerHTML = '';
+            document.getElementById('ultimasBolasScroll').innerHTML = '';
             
-            // Limpiar marcas en cartones
             document.querySelectorAll('.carton-cell').forEach(cell => {
                 cell.classList.remove('marked', 'ultima-cantada', 'patron-cell');
             });
-            
-            // Re-aplicar celdas free
             document.querySelectorAll('.carton-cell.free').forEach(cell => {
                 cell.classList.add('marked');
             });
@@ -1058,25 +1191,83 @@
             mostrarToast('🔄 Listo para nueva partida', 'success');
         }
 
-        // ============ VERIFICAR BINGO ============
+        // ============ CHAT ============
+        function escucharChat() {
+            db.ref('partidas/' + SALA_ID + '/chat').limitToLast(50).on('value', (snap) => {
+                const contenedor = document.getElementById('chatMensajes');
+                if (!contenedor) return;
+                
+                if (!snap.exists()) {
+                    contenedor.innerHTML = '<p class="chat-vacio">No hay mensajes</p>';
+                    return;
+                }
+                
+                contenedor.innerHTML = '';
+                const mensajes = [];
+                snap.forEach(child => mensajes.push(child.val()));
+                mensajes.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+                
+                mensajes.forEach(msg => {
+                    const div = document.createElement('div');
+                    div.className = 'msg-item ' + (msg.admin ? 'msg-admin' : 'msg-jugador');
+                    div.innerHTML = (msg.admin ? '📢 ' : '') + msg.mensaje + 
+                        '<div class="msg-timestamp">' + new Date(msg.timestamp).toLocaleTimeString() + '</div>';
+                    contenedor.appendChild(div);
+                });
+                
+                contenedor.scrollTop = contenedor.scrollHeight;
+                
+                // Badge si el chat está cerrado
+                const panel = document.getElementById('chatPanel');
+                if (!panel.classList.contains('activo') && mensajes.length > mensajesChat.length) {
+                    const nuevos = mensajes.length - mensajesChat.length;
+                    const badge = document.getElementById('chatBadge');
+                    badge.style.display = 'flex';
+                    badge.textContent = nuevos > 99 ? '99+' : nuevos;
+                }
+                
+                mensajesChat = mensajes;
+            });
+        }
+
+        function toggleChat() {
+            const panel = document.getElementById('chatPanel');
+            panel.classList.toggle('activo');
+            if (panel.classList.contains('activo')) {
+                document.getElementById('chatBadge').style.display = 'none';
+                document.getElementById('chatInput').focus();
+            }
+        }
+
+        function enviarChat() {
+            const input = document.getElementById('chatInput');
+            const mensaje = input.value.trim();
+            if (!mensaje || !miNombre) return;
+            
+            db.ref('partidas/' + SALA_ID + '/chat').push({
+                mensaje: miNombre + ': ' + mensaje,
+                timestamp: Date.now(),
+                admin: false
+            });
+            input.value = '';
+        }
+
+        // ============ BINGO ============
         function verificarBingoLocal() {
             if (misCartones.length === 0 || patronActual.length === 0) return false;
-
             const letras = ['B', 'I', 'N', 'G', 'O'];
             
-            // Verificar cada cartón
             for (let c = 0; c < misCartones.length; c++) {
                 const carton = misCartones[c].carton;
                 let bingo = true;
                 
                 for (let i = 0; i < 25; i++) {
                     if (!patronActual[i]) continue;
-                    if (i === 12) continue; // Centro libre
+                    if (i === 12) continue;
                     
                     const fila = Math.floor(i / 5);
                     const col = i % 5;
-                    const letra = letras[col];
-                    const valor = carton[letra][fila];
+                    const valor = carton[letras[col]][fila];
                     
                     if (!cantadosSet.has(valor)) {
                         bingo = false;
@@ -1084,9 +1275,8 @@
                     }
                 }
                 
-                if (bingo) return true; // Al menos un cartón tiene bingo
+                if (bingo) return true;
             }
-            
             return false;
         }
 
@@ -1095,15 +1285,12 @@
                 mostrarToast('❌ Aún no completas el patrón', 'error');
                 return;
             }
-            
             document.getElementById('modalConfirmar').classList.add('active');
         }
 
         async function confirmarBingo() {
             cerrarModal('modalConfirmar');
-            
             try {
-                // Enviar todos los cartones como posibles bingos
                 for (const cartonData of misCartones) {
                     await db.ref('bingos/' + SALA_ID).push({
                         cartonId: cartonData.id,
@@ -1111,7 +1298,6 @@
                         timestamp: Date.now()
                     });
                 }
-
                 mostrarToast('🎉 BINGO cantado. Esperando validación...', 'success');
             } catch (error) {
                 console.error('Error:', error);
@@ -1122,7 +1308,6 @@
         // ============ NOTIFICAR ADMIN ============
         function notificarAdmin() {
             if (!miNombre) return;
-            
             db.ref('partidas/' + SALA_ID).update({
                 alertaJugador: {
                     jugador: miNombre,
@@ -1130,7 +1315,6 @@
                     timestamp: Date.now()
                 }
             });
-            
             mostrarToast('⚠️ Aviso enviado al administrador', 'warning');
         }
 
@@ -1149,33 +1333,32 @@
 
         async function salirDelJuego() {
             if (!juegoConectado || !confirm('¿Salir del juego?')) return;
-
-            // Liberar cartones
             for (const c of misCartones) {
                 await db.ref('salas/' + SALA_ID + '/cartones/' + c.id).update({
                     asignadoA: null,
                     estado: 'disponible'
                 });
             }
-
             juegoConectado = false;
             miNombre = null;
             misCartones = [];
             cantadosSet.clear();
+            mensajesChat = [];
             localStorage.clear();
-
+            
             document.getElementById('gameScreen').style.display = 'none';
             document.getElementById('loginScreen').style.display = 'block';
             document.getElementById('nombreInput').value = '';
             document.getElementById('cartonesContainer').innerHTML = '';
-            document.getElementById('ultimasBolasChicas').innerHTML = '';
-            document.getElementById('adminMensaje').style.display = 'none';
+            document.getElementById('ultimasBolasScroll').innerHTML = '';
+            document.getElementById('chatFlotante').style.display = 'none';
+            document.getElementById('vistaSelector').style.display = 'none';
+            document.getElementById('chatMensajes').innerHTML = '<p class="chat-vacio">No hay mensajes</p>';
         }
 
         // ============ EFECTOS ============
         function lanzarConfeti() {
             const colores = ['#FF6B6B', '#4ECDC4', '#FFD700', '#FF8C00', '#FF1493', '#10b981'];
-            
             for (let i = 0; i < 80; i++) {
                 setTimeout(() => {
                     const confetti = document.createElement('div');
@@ -1185,8 +1368,6 @@
                     confetti.style.width = Math.random() * 12 + 6 + 'px';
                     confetti.style.height = Math.random() * 12 + 6 + 'px';
                     confetti.style.animationDuration = Math.random() * 2 + 2 + 's';
-                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
-                    
                     document.body.appendChild(confetti);
                     setTimeout(() => confetti.remove(), 3500);
                 }, i * 12);
@@ -1197,18 +1378,14 @@
             const toast = document.getElementById('toast');
             toast.textContent = mensaje;
             toast.className = 'toast ' + (tipo || '');
-            
             setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2500);
+            setTimeout(() => toast.classList.remove('show'), 2500);
         }
 
         // ============ INICIALIZACIÓN ============
         document.addEventListener('DOMContentLoaded', () => {
             console.log('🎱 Bingo Jugador - Sala:', SALA_ID);
             
-            // Reconexión automática
             const nombreGuardado = localStorage.getItem('bingo_jugador_nombre');
             const salaGuardada = localStorage.getItem('bingo_jugador_sala');
             const cartonesIds = JSON.parse(localStorage.getItem('bingo_jugador_cartones') || '[]');
@@ -1216,7 +1393,6 @@
             if (nombreGuardado && salaGuardada === SALA_ID && cartonesIds.length > 0) {
                 document.getElementById('nombreInput').value = nombreGuardado;
                 
-                // Cargar cartones
                 Promise.all(cartonesIds.map(id => 
                     db.ref('salas/' + SALA_ID + '/cartones/' + id).once('value')
                 )).then(snapshots => {
@@ -1224,11 +1400,7 @@
                     snapshots.forEach((snap, i) => {
                         const data = snap.val();
                         if (data && data.asignadoA === nombreGuardado) {
-                            misCartones.push({
-                                id: cartonesIds[i],
-                                carton: data.carton,
-                                numero: data.numero
-                            });
+                            misCartones.push({ id: cartonesIds[i], carton: data.carton, numero: data.numero });
                         }
                     });
                     
@@ -1238,10 +1410,13 @@
                         
                         document.getElementById('loginScreen').style.display = 'none';
                         document.getElementById('gameScreen').style.display = 'block';
+                        document.getElementById('chatFlotante').style.display = 'block';
+                        if (misCartones.length === 2) {
+                            document.getElementById('vistaSelector').style.display = 'flex';
+                        }
                         
                         inicializarJuego();
                         
-                        // Cargar estado actual
                         db.ref('partidas/' + SALA_ID).once('value', (snap) => {
                             const data = snap.val();
                             if (data && data.cantados) {
@@ -1253,7 +1428,7 @@
                                 if (data.cantados.length > 0) {
                                     actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
                                 }
-                                actualizarUltimasBolasChicas(data.cantados);
+                                actualizarUltimasBolasScroll(data.cantados);
                             }
                             if (data && data.patron) {
                                 patronActual = data.patron;
@@ -1266,13 +1441,11 @@
                 });
             }
 
-            // Enter para unirse
             document.getElementById('nombreInput').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') unirseAlJuego();
             });
         });
 
-        // Cerrar modales al hacer clic fuera
         document.querySelectorAll('.modal-overlay').forEach(modal => {
             modal.addEventListener('click', function(e) {
                 if (e.target === this && this.id !== 'modalPartidaTerminada') {
@@ -1281,7 +1454,6 @@
             });
         });
 
-        // Liberar cartones al cerrar
         window.addEventListener('beforeunload', () => {
             if (juegoConectado && misCartones.length > 0) {
                 misCartones.forEach(c => {
