@@ -531,21 +531,31 @@ function imprimirCartones() {
 
 // ============ NAVEGACIÓN ============
 function navegarA(vista) {
-    // Ocultar todas
-    document.querySelectorAll('.vista-panel').forEach(function(v) { v.classList.remove('activo'); });
-    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('activo'); });
+    // Ocultar todas las secciones
+    var secciones = document.querySelectorAll('.section-panel');
+    secciones.forEach(function(s) { s.classList.remove('activo'); });
     
-    // Mostrar seleccionada
+    // Quitar activo de todos los nav
+    var navs = document.querySelectorAll('.nav-item');
+    navs.forEach(function(n) { n.classList.remove('activo'); });
+    
+    // Mostrar la seleccionada
     if (vista === 'cartones') {
-        document.getElementById('vistaCartones').classList.add('activo');
-        document.getElementById('navCartones').classList.add('activo');
+        var el = document.getElementById('sectionCartones');
+        if (el) el.classList.add('activo');
+        var nav = document.getElementById('navCartones');
+        if (nav) nav.classList.add('activo');
     } else if (vista === 'jugadores') {
-        document.getElementById('vistaJugadores').classList.add('activo');
-        document.getElementById('navJugadores').classList.add('activo');
+        var el = document.getElementById('sectionJugadores');
+        if (el) el.classList.add('activo');
+        var nav = document.getElementById('navJugadores');
+        if (nav) nav.classList.add('activo');
         actualizarListaJugadores();
     } else if (vista === 'config') {
-        document.getElementById('vistaConfig').classList.add('activo');
-        document.getElementById('navConfig').classList.add('activo');
+        var el = document.getElementById('sectionConfig');
+        if (el) el.classList.add('activo');
+        var nav = document.getElementById('navConfig');
+        if (nav) nav.classList.add('activo');
         actualizarContadores();
     }
 }
