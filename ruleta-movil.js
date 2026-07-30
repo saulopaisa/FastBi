@@ -25,18 +25,50 @@ function navegarA(seccion) {
     }
     
     pestanaActual = seccion;
+    
+    // Si va a configuración y ya hay números cantados, mostrar advertencia
+    if (seccion === 'config' && window.cantados && window.cantados.length > 0) {
+        actualizarEstadoConfigBloqueada();
+    }
 }
 
 // ============ GENERAR LINK DE SALA ============
 function generarLinkSala() {
     var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
-    // Asume que jugador.html está en la misma carpeta
     var link = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'jugador.html?sala=' + encodeURIComponent(salaId);
     navigator.clipboard.writeText(link).then(function() {
         alert('✅ Link copiado!\n\nComparte con los jugadores:\n\n' + link);
     }).catch(function() {
         prompt('📋 Copia este link:', link);
     });
+}
+
+// ============ BLOQUEAR CONFIGURACIÓN SI YA HAY NÚMEROS ============
+function actualizarEstadoConfigBloqueada() {
+    var hayNumeros = window.cantados && window.cantados.length > 0;
+    var btnJugadores = document.querySelector('.btn-jugadores');
+    var btnPatron = document.querySelector('.btn-patron');
+    var btnEtapa2 = document.getElementById('btnEtapa2Mobile');
+    var aviso = document.getElementById('partidaVigente');
+    
+    if (hayNumeros && btnJugadores && btnPatron && btnEtapa2) {
+        btnJugadores.disabled = true;
+        btnJugadores.style.opacity = '0.4';
+        btnJugadores.title = 'Debes reiniciar la partida para cambiar';
+        btnPatron.disabled = true;
+        btnPatron.style.opacity = '0.4';
+        btnPatron.title = 'Debes reiniciar la partida para cambiar';
+        btnEtapa2.disabled = true;
+        btnEtapa2.style.opacity = '0.4';
+        if (aviso) {
+            aviso.style.display = 'block';
+            aviso.textContent = '⚠️ Partida en curso - Reinicia para modificar';
+        }
+    } else if (!hayNumeros) {
+        if (btnJugadores) { btnJugadores.disabled = false; btnJugadores.style.opacity = '1'; }
+        if (btnPatron) { btnPatron.disabled = false; btnPatron.style.opacity = '1'; }
+        if (btnEtapa2) { btnEtapa2.disabled = false; btnEtapa2.style.opacity = '1'; }
+    }
 }
 
 // ============ VERIFICAR PARTIDA VIGENTE ============
@@ -58,6 +90,8 @@ function verificarPartidaVigente() {
         if (btnComenzar) btnComenzar.style.display = 'block';
         if (btnReiniciar) btnReiniciar.style.display = 'none';
     }
+    
+    actualizarEstadoConfigBloqueada();
 }
 
 // ============ COMENZAR PARTIDA (VA A RULETA) ============
@@ -72,19 +106,10 @@ function comenzarPartida() {
         return;
     }
     
-    if (window.juegoActivo && window.etapaActual >= 3) {
-        // Ya está todo listo, ir a la ruleta
-        navegarA('ruleta');
-        return;
-    }
-    
-    // Iniciar juego
-    window.juegoActivo = true;
-    localStorage.setItem('bingo_activo_' + (localStorage.getItem('salaActiva')||'bingo-default'), 'true');
-    
+    // Enviar mensaje a jugadores
     db.ref('partidas/' + SALA_ID).update({
         estado: 'jugando',
-        mensajeAdmin: '▶️ ¡Partida iniciada!',
+        mensajeAdmin: '▶️ ¡Partida iniciada! Espera los números...',
         timestamp: Date.now()
     });
     
@@ -120,7 +145,6 @@ function programarJuegoMobile() {
     var inputEl = document.getElementById('minutosInicioMobile');
     var valor = inputEl.value.trim();
     
-    // Aceptar formato MM:SS o solo número (minutos)
     var tiempoTotal;
     if (valor.includes(':')) {
         var partes = valor.split(':');
@@ -133,7 +157,6 @@ function programarJuegoMobile() {
             alert('Ingresa un tiempo válido\nEjemplos: 2:30 (2 min 30 seg) o 5 (5 minutos)');
             return;
         }
-        // Si tiene decimal, interpretar como minutos.segundos
         if (valor.includes('.')) {
             var partes = valor.split('.');
             tiempoTotal = parseInt(partes[0]) * 60 + parseInt(partes[1] || '0');
@@ -154,7 +177,7 @@ function programarJuegoMobile() {
     var modo = confirm('⏰ Cronómetro: ' + tiempoStr + '\n\n¿Modo AUTOMÁTICO al llegar a 0?\n✅ Aceptar = Auto\n❌ Cancelar = Manual');
     window.modoJuegoSeleccionado = modo ? 'automatico' : 'manual';
     
-    // Iniciar cronómetro visual
+    // Mostrar cronómetros
     var cronVisual = document.getElementById('cronometroVisual');
     var cronVisualRuleta = document.getElementById('cronometroVisualRuleta');
     
@@ -168,11 +191,11 @@ function programarJuegoMobile() {
     if (intervaloCronometroVisual) clearInterval(intervaloCronometroVisual);
     if (intervaloCronometroRuleta) clearInterval(intervaloCronometroRuleta);
     
-    // Actualizar Firebase
+    // Actualizar Firebase - esto hará que el jugador vea el cronómetro
     db.ref('partidas/' + SALA_ID).update({
         cronometro: tiempo,
         estado: 'iniciando',
-        mensajeAdmin: '⏰ Juego en ' + tiempoStr,
+        mensajeAdmin: '⏰ La partida comienza en ' + tiempoStr,
         timestamp: Date.now()
     });
     
@@ -224,9 +247,9 @@ function programarJuegoMobile() {
     mostrarToast('⏰ Cronómetro: ' + tiempoStr, 'success');
 }
 
-// ============ REINICIAR PARTIDA ============
+// ============ REINICIAR PARTIDA (DESDE RULETA) ============
 function reiniciarPartida() {
-    if (confirm('⚠️ ¿Reiniciar la partida? Se limpiarán los números cantados.')) {
+    if (confirm('⚠️ ¿Reiniciar la partida?\n\nSe limpiarán todos los números cantados y la configuración.')) {
         var resetBtn = document.getElementById('resetBtn');
         if (resetBtn) resetBtn.click();
         
@@ -349,7 +372,7 @@ function escucharChat() {
     });
 }
 
-// ============ GESTIÓN DE CHAT (NOTIFICACIÓN CUANDO JUGADOR PIDE) ============
+// ============ GESTIÓN DE CHAT ============
 window.abrirControlChat = function(jugadorSugerido) {
     var jugadores = window.jugadoresActivos || [];
     if (jugadores.length === 0) {
@@ -444,6 +467,7 @@ function actualizarUIMovil() {
     }
     
     verificarPartidaVigente();
+    actualizarEstadoConfigBloqueada();
 }
 
 function setDisabled(id, state) {
