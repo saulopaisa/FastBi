@@ -4,118 +4,82 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>Bingo Pro - Generador de Cartones</title>
+    <title>Bingo Pro - Generar Cartones</title>
     <link rel="stylesheet" href="generar.css">
 </head>
 <body>
     <!-- HEADER -->
     <div class="app-header">
-        <h1>🎯 BINGO PRO</h1>
+        <h1>🎫 GENERAR CARTONES</h1>
         <div class="header-actions">
-            <a href="ruleta.html" class="btn-header-icon">🎮</a>
+            <button class="btn-header-icon" onclick="location.href='ruleta.html'">🎲</button>
+            <span class="sala-badge" id="salaDisplay">-</span>
         </div>
     </div>
 
     <!-- CONTENIDO -->
     <div class="app-content">
-        <!-- SECCIÓN 1: GENERAR -->
-        <div class="section activo" id="sectionGenerar">
-            <div class="contador" id="contadorCartones">🎫 CARTONES: 0</div>
-
-            <div class="generar-row">
-                <input type="number" id="cantidadGenerar" placeholder="Cantidad" min="1" max="100" value="1">
-                <button class="btn btn-generar" onclick="generarLote()">⚡ GENERAR</button>
+        <!-- Panel Generar -->
+        <div class="panel-card">
+            <h3>🆕 GENERAR</h3>
+            <div class="input-row">
+                <input type="number" id="cantidadGenerar" value="10" min="1" max="500" placeholder="Cantidad">
+                <button onclick="generarCartones()" class="btn btn-generar">🎲 GENERAR</button>
             </div>
-
-            <div class="tools-grid">
-                <button class="btn-tool" onclick="exportarJSON()">💾 Guardar</button>
-                <button class="btn-tool" onclick="document.getElementById('fileIn').click()">📂 Abrir</button>
-                <button class="btn-tool pdf" onclick="exportarPDF()">📄 PDF</button>
-                <button class="btn-tool links" onclick="verLinks()">🔗 Links</button>
-                <button class="btn-tool jugadores" onclick="verJugadores()">👥 Jug.</button>
-                <button class="btn-tool danger" onclick="borrarTodo()">🗑️ Borrar</button>
+            <div class="btn-row">
+                <button onclick="guardarEnFirebase()" class="btn btn-guardar">💾 GUARDAR</button>
+                <button onclick="importarDesdeFirebase()" class="btn btn-importar">📥 IMPORTAR</button>
             </div>
-
-            <input type="file" id="fileIn" style="display:none" accept=".json" onchange="importarJSON(event)">
-
-            <button class="btn btn-asignar" id="btnAsignar" onclick="asignarAJugador()">
-                👤 ASIGNAR A JUGADOR
-            </button>
-
-            <div class="buscador">
-                <input type="text" id="buscadorCartones" placeholder="🔍 Buscar cartón..." oninput="filtrarCartones(this.value)">
-            </div>
-
-            <div class="lista-cartones" id="listaCartones">
-                <p style="color:#94a3b8;text-align:center;padding:20px;">No hay cartones generados aún</p>
-            </div>
-
-            <button class="btn btn-ir-juego" onclick="location.href='ruleta.html'">
-                🎮 IR AL JUEGO →
-            </button>
         </div>
 
-        <!-- SECCIÓN 2: VER Y ASIGNAR -->
-        <div class="section" id="sectionVer">
-            <div class="stats-row" id="statsContainer">
-                <div class="stat-item" onclick="filtrarVer('todos')">
-                    <div class="stat-numero" id="statTotal">0</div>
-                    <div class="stat-label">Total</div>
-                </div>
-                <div class="stat-item" onclick="filtrarVer('disponible')">
-                    <div class="stat-numero" id="statDisponibles">0</div>
-                    <div class="stat-label">🟢 Disp.</div>
-                </div>
-                <div class="stat-item" onclick="filtrarVer('asignado')">
-                    <div class="stat-numero" id="statAsignados">0</div>
-                    <div class="stat-label">🟡 Asig.</div>
-                </div>
-                <div class="stat-item" onclick="filtrarVer('usado')">
-                    <div class="stat-numero" id="statUsados">0</div>
-                    <div class="stat-label">🔴 Usados</div>
-                </div>
-            </div>
-
-            <!-- BOTÓN ASIGNAR EN VISTA 2 -->
-            <button class="btn btn-asignar-ver" id="btnAsignarVer" onclick="asignarDesdeVistaVer()" disabled>
-                👤 ASIGNAR SELECCIONADOS A JUGADOR
-            </button>
-
-            <div class="filtros-row">
-                <input type="text" id="buscarVer" placeholder="🔍 Buscar..." oninput="filtrarVer()">
-                <select id="filtroVer" onchange="filtrarVer()">
-                    <option value="todos">Todos</option>
-                    <option value="disponible">🟢 Disponibles</option>
-                    <option value="asignado">🟡 Asignados</option>
-                    <option value="usado">🔴 Usados</option>
+        <!-- Panel Asignar -->
+        <div class="panel-card">
+            <h3>👤 ASIGNAR</h3>
+            <div class="input-row">
+                <input type="text" id="nombreJugador" placeholder="Nombre del jugador">
+                <select id="cantidadAsignar">
+                    <option value="1">1 cartón</option>
+                    <option value="2">2 cartones</option>
                 </select>
+                <button onclick="asignarCartones()" class="btn btn-asignar">✅</button>
             </div>
+            <div class="btn-row">
+                <button onclick="generarLinkJugador()" class="btn btn-link">🔗 LINK JUGADOR</button>
+                <button onclick="imprimirCartones()" class="btn btn-pdf">🖨️ IMPRIMIR</button>
+            </div>
+        </div>
 
-            <div class="cartones-grid" id="cartonesGridVer">
-                <p style="color:#94a3b8;text-align:center;grid-column:1/-1;padding:40px;">Cargando...</p>
-            </div>
+        <!-- Info -->
+        <div class="info-bar">
+            <span>Total: <strong id="totalCartones">0</strong> cartones</span>
+            <span>Asignados: <strong id="totalAsignados">0</strong></span>
+            <span>Disponibles: <strong id="totalDisponibles">0</strong></span>
+        </div>
+
+        <!-- Grid de cartones -->
+        <div class="cartones-grid" id="cartonesGrid">
+            <p class="placeholder">Genera o importa cartones para verlos aquí</p>
         </div>
     </div>
 
-    <!-- BARRA DE NAVEGACIÓN -->
-    <div class="bottom-nav">
-        <div class="nav-item activo" onclick="cambiarPestana('generar')" id="navGenerar">
-            <span class="nav-icon">📝</span>
-            <span class="nav-label">GENERAR</span>
-        </div>
-        <div class="nav-item" onclick="cambiarPestana('ver')" id="navVer">
-            <span class="nav-icon">👁️</span>
-            <span class="nav-label">VER/ASIG.</span>
-        </div>
-        <div class="nav-item" onclick="location.href='ruleta.html'">
-            <span class="nav-icon">🎮</span>
-            <span class="nav-label">RULETA</span>
+    <!-- Modal Link -->
+    <div class="modal-overlay" id="modalLink">
+        <div class="modal-content">
+            <h3>🔗 LINK PARA JUGADOR</h3>
+            <p style="font-size:0.8em;color:#94a3b8;">Comparte este enlace con el jugador</p>
+            <div class="link-box" id="linkGenerado"></div>
+            <button onclick="copiarLink()" class="btn btn-link">📋 COPIAR</button>
+            <button onclick="cerrarModal('modalLink')" class="btn btn-cerrar">CERRAR</button>
         </div>
     </div>
 
-    <!-- SCRIPTS -->
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
@@ -129,14 +93,10 @@
         firebase.initializeApp(firebaseConfig);
         var db = firebase.database();
         
-        if (!localStorage.getItem('salaActiva') || !String(localStorage.getItem('salaActiva')).startsWith('bingo')) {
-            var ahora = new Date();
-            var fecha = ahora.getMonth() + 1 + '/' + ahora.getDate() + '/' + ahora.getFullYear().toString().slice(-2);
-            localStorage.setItem('salaActiva', 'bingo' + fecha);
-        }
-        
-        console.log('🔥 Firebase listo');
+        var SALA_ID = localStorage.getItem('salaActiva') || 'bingo-default';
+        document.getElementById('salaDisplay').textContent = SALA_ID;
     </script>
+    
     <script src="generar.js"></script>
     <script src="generar-movil.js"></script>
 </body>
