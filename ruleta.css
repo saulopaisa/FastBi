@@ -177,8 +177,9 @@ body {
     margin-top: 5px !important;
 }
 
-/* ============ CRONÓMETRO VISUAL ============ */
+/* ============ CRONÓMETRO VISUAL (OCULTO POR DEFECTO) ============ */
 .cronometro-visual {
+    display: none; /* OCULTO por defecto, solo se muestra al programar */
     margin-top: 15px;
     padding: 15px;
     background: #0f172a;
@@ -220,6 +221,84 @@ body {
 }
 
 /* ============ SECCIÓN RULETA ============ */
+
+/* Última bola GRANDE + 5 pequeñas */
+.ultima-bola-ruleta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 10px 0;
+    padding: 12px 15px;
+    background: var(--sidebar-bg);
+    border-radius: 15px;
+    border: 1px solid #2d3436;
+}
+
+.bola-grande {
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    box-shadow: 0 6px 25px rgba(239, 68, 68, 0.5);
+    animation: bolaEntrada 0.5s ease-out;
+}
+
+@keyframes bolaEntrada {
+    0% { transform: scale(0) rotate(-180deg); }
+    70% { transform: scale(1.1) rotate(10deg); }
+    100% { transform: scale(1) rotate(0); }
+}
+
+.bola-grande .bola-letra {
+    font-size: 0.8em;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.bola-grande .bola-numero {
+    font-size: 2em;
+    line-height: 1;
+}
+
+.bolas-chicas-ruleta {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+    justify-content: center;
+}
+
+.bola-mini {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--sidebar-bg2);
+    border: 2px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.8em;
+    color: var(--gold);
+}
+
+.bola-mini.ultima-mini {
+    background: #fbbf24;
+    color: #1e293b;
+    border-color: #f59e0b;
+}
+
+/* Quitar cronómetro fijo de la ruleta */
+.cronometro-movil {
+    display: none; /* OCULTO - solo se muestra con el visual */
+}
+
 .tablero-container {
     background: white; border-radius: 15px; padding: 10px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.2); margin-bottom: 15px;
@@ -278,17 +357,13 @@ body {
 .btn-manual { background: linear-gradient(135deg, var(--blue), #2563eb); }
 .btn-programar-movil { background: linear-gradient(135deg, #ffca28, #ffb300); color: #16213e; }
 
-.cronometro-movil {
-    background: #000; color: var(--red); font-family: 'Courier New', monospace;
-    font-size: 1.4rem; text-align: center; padding: 8px; border-radius: 8px;
-    margin-bottom: 10px; border: 1px solid #334155;
-}
-
 .programar-row { display: flex; gap: 5px; margin-bottom: 10px; }
 .input-minutos {
-    width: 50px; padding: 8px; border-radius: 8px; border: 2px solid #2d3748;
+    flex: 1; padding: 8px 10px; border-radius: 8px; border: 2px solid #2d3748;
     background: #1e293b; color: white; text-align: center; font-weight: bold;
+    font-size: 0.85rem;
 }
+.input-minutos::placeholder { color: #64748b; font-size: 0.7rem; }
 
 .ultimos-movil { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
 .num-chico-movil {
@@ -317,7 +392,7 @@ body {
 .chat-panel.activo { display: flex; flex-direction: column; }
 .chat-header {
     background: #6366f1; padding: 10px; font-weight: bold;
-    font-size: 0.8rem; text-align: center;
+    font-size: 0.8rem; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;
 }
 .chat-mensajes { flex: 1; overflow-y: auto; padding: 10px; max-height: 250px; min-height: 100px; }
 .chat-mensajes::-webkit-scrollbar { width: 3px; }
@@ -393,7 +468,7 @@ body {
 .btn-flotante-errado { background: #6b7280; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 .btn-flotante-cerrar { background: transparent; color: white; border: 1px solid rgba(255,255,255,0.3); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
 
-/* ============ BARRA DE NAVEGACIÓN INFERIOR ============ */
+/* ============ BARRA DE NAVEGACIÓN INFERIOR (SIEMPRE VISIBLE) ============ */
 .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-height);
     background: var(--sidebar-bg); border-top: 2px solid var(--border-color);
@@ -447,40 +522,7 @@ body {
 }
 .btn-predefinido:hover { background: #475569; }
 
-/* ============ DESKTOP ============ */
-@media (min-width: 768px) {
-    body { flex-direction: row; }
-    .app-header { display: none; }
-    .bottom-nav { display: none; }
-    .app-content {
-        display: flex; gap: 15px; padding: 15px; padding-bottom: 15px;
-    }
-    .section-config, .section-ruleta { display: block !important; flex: 1; }
-    .section-config { max-width: 350px; }
-    .chat-flotante { bottom: 20px; right: 20px; }
-    .chat-panel { bottom: 80px; right: 20px; }
-}
-
-/* ============ RESPONSIVE ============ */
-@media (max-width: 480px) {
-    .celda-movil { font-size: 0.6rem; padding: 5px 1px; }
-    .celda-movil.cantada { font-size: 0.65rem; }
-    .history-grid-movil { gap: 2px; }
-    .btn-accion { padding: 10px; font-size: 0.8rem; }
-    .grid-seleccion-cartones { grid-template-columns: repeat(2, 1fr); }
-    .cronometro-visual-tiempo { font-size: 2rem; }
-    .chat-panel { width: 260px; }
-}
-
-@media (max-width: 380px) {
-    .celda-movil { font-size: 0.5rem; padding: 4px 0px; border-radius: 2px; }
-    .celda-movil.cantada { font-size: 0.55rem; }
-    .history-grid-movil { gap: 1px; }
-    .tablero-container { padding: 5px; }
-    .nav-item .nav-icon { font-size: 1.1rem; }
-    .nav-item .nav-label { font-size: 0.5rem; }
-}
-/* ============ TOAST NOTIFICATIONS (TIPO ANDROID) ============ */
+/* ============ TOAST NOTIFICATIONS ============ */
 .toast-notification {
     position: fixed;
     bottom: 100px;
@@ -514,3 +556,47 @@ body {
     background: #10b981;
 }
 
+/* ============ DESKTOP (BARRA NAV SIEMPRE VISIBLE) ============ */
+@media (min-width: 768px) {
+    body { 
+        flex-direction: row; 
+        padding-bottom: var(--nav-height); /* Espacio para la barra */
+    }
+    .app-header { display: none; }
+    /* .bottom-nav { display: none; } */ /* ← COMENTADO: SIEMPRE VISIBLE */
+    .app-content {
+        display: flex; 
+        gap: 15px; 
+        padding: 15px; 
+        padding-bottom: calc(var(--nav-height) + 15px); /* Espacio extra abajo */
+    }
+    .section-config, .section-ruleta { display: block !important; flex: 1; }
+    .section-config { max-width: 350px; }
+    .chat-flotante { bottom: calc(var(--nav-height) + 20px); right: 20px; }
+    .chat-panel { bottom: calc(var(--nav-height) + 70px); right: 20px; }
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 480px) {
+    .celda-movil { font-size: 0.6rem; padding: 5px 1px; }
+    .celda-movil.cantada { font-size: 0.65rem; }
+    .history-grid-movil { gap: 2px; }
+    .btn-accion { padding: 10px; font-size: 0.8rem; }
+    .grid-seleccion-cartones { grid-template-columns: repeat(2, 1fr); }
+    .cronometro-visual-tiempo { font-size: 2rem; }
+    .chat-panel { width: 260px; }
+    .bola-grande { width: 65px; height: 65px; min-width: 65px; }
+    .bola-grande .bola-numero { font-size: 1.6em; }
+    .bola-mini { width: 32px; height: 32px; font-size: 0.7em; }
+}
+
+@media (max-width: 380px) {
+    .celda-movil { font-size: 0.5rem; padding: 4px 0px; border-radius: 2px; }
+    .celda-movil.cantada { font-size: 0.55rem; }
+    .history-grid-movil { gap: 1px; }
+    .tablero-container { padding: 5px; }
+    .nav-item .nav-icon { font-size: 1.1rem; }
+    .nav-item .nav-label { font-size: 0.5rem; }
+    .bola-grande { width: 55px; height: 55px; min-width: 55px; }
+    .bola-grande .bola-numero { font-size: 1.3em; }
+}
