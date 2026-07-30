@@ -2,6 +2,7 @@
 
 var cartonesGenerados = [];
 var cartonesSeleccionados = [];
+var MAX_GANADORES_POR_NUMERO = 3; // Máximo de cartones con el mismo número
 
 // ============ GENERAR CARTÓN ============
 function generarCarton() {
@@ -25,26 +26,74 @@ function generarCarton() {
     return carton;
 }
 
+// ============ VERIFICAR DUPLICADOS ============
+function cartonExiste(carton) {
+    return cartonesGenerados.some(function(c) {
+        var letras = ['B','I','N','G','O'];
+        return letras.every(function(l) {
+            return c.carton[l].every(function(num, i) {
+                return num === carton[l][i];
+            });
+        });
+    });
+}
+
+function contarCartonesSimilares(carton) {
+    var ref = carton.B.join(',');
+    return cartonesGenerados.filter(function(c) {
+        return c.carton.B.join(',') === ref;
+    }).length;
+}
+
 // ============ GENERAR MÚLTIPLES ============
 function generarCartones() {
     var cantidad = parseInt(document.getElementById('cantidadGenerar').value) || 10;
-    if (cantidad < 1 || cantidad > 500) { mostrarToast('⚠️ Cantidad entre 1 y 500', 'error'); return; }
+    if (cantidad < 1 || cantidad > 500) { 
+        mostrarToast('⚠️ Cantidad entre 1 y 500', 'error'); 
+        return; 
+    }
     
     cartonesGenerados = [];
     cartonesSeleccionados = [];
-    for (var i = 0; i < cantidad; i++) {
+    var intentos = 0;
+    var maxIntentos = cantidad * 10;
+    
+    for (var i = 0; i < cantidad && intentos < maxIntentos; i++) {
+        var nuevoCarton = generarCarton();
+        
+        if (cartonExiste(nuevoCarton)) {
+            i--;
+            intentos++;
+            continue;
+        }
+        
+        var similares = contarCartonesSimilares(nuevoCarton);
+        if (similares >= MAX_GANADORES_POR_NUMERO) {
+            i--;
+            intentos++;
+            continue;
+        }
+        
         cartonesGenerados.push({
             id: 'carton_' + Date.now() + '_' + i,
             numero: i + 1,
-            carton: generarCarton(),
+            carton: nuevoCarton,
             asignadoA: null,
             estado: 'disponible'
         });
+        
+        intentos = 0;
     }
+    
     mostrarCartones();
     actualizarContadores();
     guardarEnFirebase();
-    mostrarToast('✅ ' + cantidad + ' cartones generados', 'success');
+    
+    if (cartonesGenerados.length < cantidad) {
+        mostrarToast('⚠️ Solo se generaron ' + cartonesGenerados.length + ' de ' + cantidad + ' (límite de variedad)', 'error');
+    } else {
+        mostrarToast('✅ ' + cantidad + ' cartones generados (máx ' + MAX_GANADORES_POR_NUMERO + ' por número)', 'success');
+    }
 }
 
 // ============ MOSTRAR CARTONES ============
@@ -53,7 +102,6 @@ function mostrarCartones(filtrarTermino) {
     
     var cartonesAMostrar = cartonesGenerados;
     
-    // Si hay término de búsqueda, filtrar
     if (filtrarTermino) {
         var termino = filtrarTermino.toLowerCase();
         cartonesAMostrar = cartonesGenerados.filter(function(c) {
@@ -81,7 +129,7 @@ function mostrarCartones(filtrarTermino) {
         html += '<span class="carton-num">#' + c.numero + '</span>';
         html += c.asignadoA ? 
             '<span class="carton-asignado">👤 ' + c.asignadoA + '</span>' : 
-            '<span class="carton-disponible">Disponible</span>';
+            '<span class="carton-disponible">📋 Disponible</span>';
         html += '</div>';
         
         html += '<div class="carton-bingo-header">';
@@ -99,8 +147,8 @@ function mostrarCartones(filtrarTermino) {
         html += '</div>';
         
         html += '<div class="carton-acciones">';
-        html += '<button class="btn btn-asignar" onclick="asignarIndividual('+index+')">👤</button>';
-        html += '<button class="btn btn-eliminar" onclick="eliminarCarton('+index+')">🗑️</button>';
+        html += '<button class="btn btn-asignar" onclick="asignarIndividual('+index+')">👤 Asignar</button>';
+        html += '<button class="btn btn-eliminar" onclick="eliminarCarton('+index+')">🗑️ Eliminar</button>';
         html += '</div>';
         
         card.innerHTML = html;
@@ -111,7 +159,7 @@ function mostrarCartones(filtrarTermino) {
 // ============ ASIGNAR INDIVIDUAL ============
 function asignarIndividual(index) {
     var carton = cartonesGenerados[index];
-    var nombre = prompt('Nombre para cartón #' + carton.numero + ':');
+    var nombre = prompt('Nombre del jugador para cartón #' + carton.numero + ':');
     if (!nombre) return;
     
     var yaAsignados = cartonesGenerados.filter(function(c) { return c.asignadoA === nombre; }).length;
@@ -129,6 +177,7 @@ function asignarIndividual(index) {
     mostrarToast('✅ Cartón #' + carton.numero + ' → ' + nombre, 'success');
 }
 
+// ============ ELIMINAR CARTÓN ============
 function eliminarCarton(index) {
     if (confirm('¿Eliminar cartón #' + cartonesGenerados[index].numero + '?')) {
         cartonesGenerados.splice(index, 1);
@@ -167,7 +216,7 @@ function buscarCarton() {
     
     if (!termino || termino.length < 1) {
         resultadosDiv.innerHTML = '<p style="color:#94a3b8;text-align:center;font-size:0.8em;padding:10px;">Escribe para buscar cartones</p>';
-        mostrarCartones(); // Mostrar todos
+        mostrarCartones();
         if (cartonesSeleccionados.length === 0) {
             seleccionadosInfo.style.display = 'none';
         }
@@ -181,7 +230,6 @@ function buscarCarton() {
         return numStr.includes(terminoLower) || nombre.includes(terminoLower);
     });
     
-    // También filtrar la grilla
     mostrarCartones(termino);
     
     if (resultados.length === 0) {
@@ -249,7 +297,7 @@ function toggleSeleccionCarton(index, checkbox) {
     }
     
     actualizarInfoSeleccionados();
-    buscarCarton(); // Refrescar
+    buscarCarton();
 }
 
 function actualizarInfoSeleccionados() {
@@ -325,7 +373,7 @@ function actualizarListaJugadores() {
     var jugadores = Object.keys(jugadoresMap).sort();
     
     if (jugadores.length === 0) {
-        listaDiv.innerHTML = '<p style="color:#94a3b8;text-align:center;font-size:0.8em;padding:10px;">No hay jugadores registrados</p>';
+        listaDiv.innerHTML = '<p style="color:#94a3b8;text-align:center;font-size:0.8em;padding:20px;">No hay jugadores registrados</p>';
         return;
     }
     
@@ -337,11 +385,11 @@ function actualizarListaJugadores() {
         div.innerHTML = 
             '<div class="jugador-info">' +
             '<span style="font-size:1.5em;">👤</span>' +
-            '<div style="flex:1;">' +
+            '<div style="flex:1;min-width:0;">' +
             '<strong style="color:white;">' + nombre + '</strong>' +
             '<div style="color:#94a3b8;font-size:0.7em;">' + cartones.length + ' cartón(es): ' + cartones.map(function(n) { return '#' + n; }).join(', ') + '</div>' +
             '</div>' +
-            '<button class="btn btn-link" style="font-size:0.65em;padding:4px 8px;flex:0;white-space:nowrap;" onclick="generarLinkParaJugador(\'' + nombre.replace(/'/g, "\\'") + '\')">🔗 LINK</button>' +
+            '<button class="btn btn-link" style="font-size:0.65em;padding:5px 10px;flex:0;white-space:nowrap;" onclick="generarLinkParaJugador(\'' + nombre.replace(/'/g, "\\'") + '\')">🔗 LINK</button>' +
             '</div>';
         listaDiv.appendChild(div);
     });
@@ -350,7 +398,9 @@ function actualizarListaJugadores() {
 function generarLinkParaJugador(nombre) {
     document.getElementById('nombreJugadorLink').value = nombre;
     navegarA('jugadores');
-    generarLinkJugador();
+    setTimeout(function() {
+        generarLinkJugador();
+    }, 200);
 }
 
 // ============ CONTADORES ============
@@ -359,24 +409,31 @@ function actualizarContadores() {
     var asignadosEl = document.getElementById('totalAsignados');
     var disponiblesEl = document.getElementById('totalDisponibles');
     var configTotal = document.getElementById('configTotal');
+    var configAsignados = document.getElementById('configAsignados');
     
-    if (totalEl) totalEl.textContent = cartonesGenerados.length;
+    var total = cartonesGenerados.length;
     var asignados = cartonesGenerados.filter(function(c) { return c.asignadoA; }).length;
+    var disponibles = total - asignados;
+    
+    if (totalEl) totalEl.textContent = total;
     if (asignadosEl) asignadosEl.textContent = asignados;
-    if (disponiblesEl) disponiblesEl.textContent = cartonesGenerados.length - asignados;
-    if (configTotal) configTotal.textContent = cartonesGenerados.length;
+    if (disponiblesEl) disponiblesEl.textContent = disponibles;
+    if (configTotal) configTotal.textContent = total;
+    if (configAsignados) configAsignados.textContent = asignados;
 }
 
 // ============ GUARDAR EN FIREBASE (AUTOMÁTICO) ============
 function guardarEnFirebase() {
     if (cartonesGenerados.length === 0) {
-        db.ref('salas/' + SALA_ID + '/cartones').remove();
+        db.ref('salas/' + SALA_ID + '/cartones').remove().catch(function(err) {
+            console.error('Error al limpiar:', err);
+        });
         return;
     }
     
     var updates = {};
     cartonesGenerados.forEach(function(c) {
-        updates['salas/' + SALA_ID + '/cartones/' + c.id] = {
+        updates[c.id] = {
             numero: c.numero,
             carton: c.carton,
             asignadoA: c.asignadoA || null,
@@ -384,7 +441,9 @@ function guardarEnFirebase() {
         };
     });
     
-    db.ref('salas/' + SALA_ID + '/cartones').set(updates).catch(function(err) {
+    db.ref('salas/' + SALA_ID + '/cartones').set(updates).then(function() {
+        console.log('✅ Cartones guardados en Firebase');
+    }).catch(function(err) {
         console.error('Error al guardar:', err);
     });
 }
@@ -393,18 +452,23 @@ function guardarEnFirebase() {
 function cargarDesdeFirebase() {
     db.ref('salas/' + SALA_ID + '/cartones').once('value').then(function(snap) {
         var data = snap.val();
-        if (!data) return;
+        if (!data) {
+            console.log('📋 No hay cartones en Firebase');
+            return;
+        }
         
         cartonesGenerados = [];
         Object.entries(data).forEach(function(entry) {
             var id = entry[0], c = entry[1];
-            cartonesGenerados.push({
-                id: id,
-                numero: c.numero || 0,
-                carton: c.carton,
-                asignadoA: c.asignadoA || null,
-                estado: c.estado || (c.asignadoA ? 'asignado' : 'disponible')
-            });
+            if (c && c.carton) {
+                cartonesGenerados.push({
+                    id: id,
+                    numero: c.numero || 0,
+                    carton: c.carton,
+                    asignadoA: c.asignadoA || null,
+                    estado: c.estado || (c.asignadoA ? 'asignado' : 'disponible')
+                });
+            }
         });
         
         cartonesGenerados.sort(function(a, b) { return a.numero - b.numero; });
@@ -419,14 +483,23 @@ function cargarDesdeFirebase() {
     });
 }
 
-// ============ EXPORTAR / IMPORTAR JSON ============
+// ============ EXPORTAR JSON ============
 function exportarCartonesJSON() {
     if (cartonesGenerados.length === 0) {
         mostrarToast('⚠️ No hay cartones para exportar', 'error');
         return;
     }
     
-    var data = JSON.stringify(cartonesGenerados, null, 2);
+    var datosExportar = cartonesGenerados.map(function(c) {
+        return {
+            numero: c.numero,
+            carton: c.carton,
+            asignadoA: c.asignadoA,
+            estado: c.estado
+        };
+    });
+    
+    var data = JSON.stringify(datosExportar, null, 2);
     var blob = new Blob([data], {type: 'application/json'});
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
@@ -439,6 +512,7 @@ function exportarCartonesJSON() {
     mostrarToast('✅ ' + cartonesGenerados.length + ' cartones exportados', 'success');
 }
 
+// ============ IMPORTAR JSON ============
 function importarCartonesJSON() {
     var input = document.createElement('input');
     input.type = 'file';
@@ -452,10 +526,17 @@ function importarCartonesJSON() {
             try {
                 var data = JSON.parse(event.target.result);
                 if (Array.isArray(data) && data.length > 0 && data[0].carton) {
-                    if (confirm('¿Importar ' + data.length + ' cartones?\nEsto reemplazará los actuales.')) {
-                        cartonesGenerados = data;
+                    if (confirm('¿Importar ' + data.length + ' cartones?\n\nEsto reemplazará los cartones actuales.')) {
+                        cartonesGenerados = data.map(function(c, i) {
+                            return {
+                                id: 'carton_imp_' + Date.now() + '_' + i,
+                                numero: i + 1,
+                                carton: c.carton,
+                                asignadoA: c.asignadoA || null,
+                                estado: c.asignadoA ? 'asignado' : 'disponible'
+                            };
+                        });
                         cartonesSeleccionados = [];
-                        cartonesGenerados.forEach(function(c, i) { c.numero = i + 1; });
                         mostrarCartones();
                         actualizarContadores();
                         actualizarListaJugadores();
@@ -466,6 +547,7 @@ function importarCartonesJSON() {
                     mostrarToast('❌ Archivo JSON no válido', 'error');
                 }
             } catch (err) {
+                console.error('Error:', err);
                 mostrarToast('❌ Error al leer el archivo', 'error');
             }
         };
@@ -474,7 +556,7 @@ function importarCartonesJSON() {
     input.click();
 }
 
-// ============ GENERAR LINK ============
+// ============ GENERAR LINK JUGADOR ============
 function generarLinkJugador() {
     var nombre = document.getElementById('nombreJugadorLink').value.trim();
     
@@ -488,7 +570,7 @@ function generarLinkJugador() {
     });
     
     if (cartonesJugador.length === 0) { 
-        mostrarToast('⚠️ ' + nombre + ' no tiene cartones', 'error'); 
+        mostrarToast('⚠️ ' + nombre + ' no tiene cartones asignados', 'error'); 
         return; 
     }
     
@@ -502,14 +584,18 @@ function generarLinkJugador() {
 
 function copiarLink() {
     var link = document.getElementById('linkGenerado').textContent;
+    if (!link) {
+        mostrarToast('⚠️ Genera un link primero', 'error');
+        return;
+    }
     navigator.clipboard.writeText(link).then(function() {
-        mostrarToast('✅ Link copiado', 'success');
+        mostrarToast('✅ Link copiado al portapapeles', 'success');
     }).catch(function() {
-        prompt('📋 Copia este link:', link);
+        prompt('📋 Copia este link manualmente:', link);
     });
 }
 
-// ============ COPIAR LINK VER_TODO ============
+// ============ COPIAR LINKS ============
 function copiarLinkVerTodo() {
     var link = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'ver_todo.html?sala=' + encodeURIComponent(SALA_ID);
     navigator.clipboard.writeText(link).then(function() {
@@ -519,14 +605,25 @@ function copiarLinkVerTodo() {
     });
 }
 
+function copiarLinkRuleta() {
+    var link = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'ruleta.html?sala=' + encodeURIComponent(SALA_ID);
+    navigator.clipboard.writeText(link).then(function() {
+        mostrarToast('✅ Link de ruleta copiado', 'success');
+    }).catch(function() {
+        prompt('📋 Copia este link para ruleta:', link);
+    });
+}
+
 // ============ IMPRIMIR ============
 function imprimirCartones() {
     if (cartonesGenerados.length === 0) { 
-        mostrarToast('⚠️ No hay cartones', 'error'); 
+        mostrarToast('⚠️ No hay cartones para imprimir', 'error'); 
         return; 
     }
-    mostrarToast('🖨️ Abriendo impresión...', 'success');
-    setTimeout(function() { window.print(); }, 500);
+    mostrarToast('🖨️ Abriendo vista de impresión...', 'success');
+    setTimeout(function() {
+        window.print();
+    }, 500);
 }
 
 // ============ NAVEGACIÓN ============
