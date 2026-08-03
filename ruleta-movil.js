@@ -46,58 +46,6 @@ function generarLinkSala() {
     });
 }
 
-// ============ COMENZAR PARTIDA ============
-function comenzarPartida() {
-    if (typeof window.juegoActivo === 'undefined') {
-        alert('Error: ruleta.js no cargó. Recarga la página.');
-        return;
-    }
-    
-    if (window.etapaActual < 3) {
-        alert('⚠️ Primero configura jugadores y patrón.');
-        return;
-    }
-    
-    // Deshabilitar botón INICIAR PARTIDA
-    var btnComenzar = document.getElementById('btnComenzarPartida');
-    if (btnComenzar) {
-        btnComenzar.disabled = true;
-        btnComenzar.textContent = '✅ PARTIDA INICIADA';
-        btnComenzar.style.animation = 'none';
-        btnComenzar.style.boxShadow = 'none';
-    }
-    
-    // Habilitar controles de ruleta
-    window.partidaIniciada = true;
-    
-    var btnAuto = document.getElementById('btnAutoMobile');
-    var btnManual = document.getElementById('drawBtnMobile');
-    var btnProg = document.getElementById('btnProgramarMobile');
-    var btnReiniciar = document.getElementById('btnReiniciarRuleta');
-    
-    if (btnAuto) btnAuto.disabled = false;
-    if (btnManual) { btnManual.disabled = false; btnManual.style.opacity = '1'; btnManual.style.pointerEvents = 'all'; }
-    if (btnProg) btnProg.disabled = false;
-    if (btnReiniciar) btnReiniciar.style.display = 'block';
-    
-    // Actualizar Firebase
-    db.ref('partidas/' + SALA_ID).update({
-        estado: 'jugando',
-        partidaIniciada: true,
-        mensajeAdmin: '▶️ ¡Partida iniciada! Espera los números...',
-        timestamp: Date.now()
-    });
-    
-    // Actualizar UI
-    actualizarEtapas();
-    verificarPartidaVigente();
-    
-    // Navegar a la ruleta
-    navegarA('ruleta');
-    
-    mostrarToast('▶️ Partida iniciada', 'success');
-}
-
 // ============ VERIFICAR PARTIDA VIGENTE ============
 function verificarPartidaVigente() {
     if (typeof window.juegoActivo === 'undefined') return;
@@ -120,12 +68,123 @@ function verificarPartidaVigente() {
     } else {
         if (aviso) aviso.style.display = 'none';
         if (btnComenzar) {
-            btnComenzar.disabled = false;
+            btnComenzar.disabled = (window.etapaActual < 3);
             btnComenzar.textContent = '🚀 INICIAR PARTIDA';
             btnComenzar.style.animation = 'glowComenzar 2s infinite';
             btnComenzar.style.boxShadow = '0 4px 20px rgba(16, 185, 129, 0.4)';
         }
         if (btnReiniciarConfig) btnReiniciarConfig.style.display = 'none';
+    }
+}
+
+// ============ COMENZAR PARTIDA ============
+function comenzarPartida() {
+    if (typeof window.juegoActivo === 'undefined') {
+        alert('Error: ruleta.js no cargó. Recarga la página.');
+        return;
+    }
+    
+    if (window.etapaActual < 3) {
+        alert('⚠️ Primero configura jugadores y patrón.');
+        return;
+    }
+    
+    // Actualizar variable global
+    window.partidaIniciada = true;
+    
+    // Deshabilitar botón INICIAR PARTIDA
+    var btnComenzar = document.getElementById('btnComenzarPartida');
+    if (btnComenzar) {
+        btnComenzar.disabled = true;
+        btnComenzar.textContent = '✅ PARTIDA INICIADA';
+        btnComenzar.style.animation = 'none';
+        btnComenzar.style.boxShadow = 'none';
+    }
+    
+    // Habilitar controles de ruleta
+    var btnAuto = document.getElementById('btnAutoMobile');
+    var btnManual = document.getElementById('drawBtnMobile');
+    var btnProg = document.getElementById('btnProgramarMobile');
+    var btnReiniciar = document.getElementById('btnReiniciarRuleta');
+    
+    if (btnAuto) btnAuto.disabled = false;
+    if (btnManual) { btnManual.disabled = false; btnManual.style.opacity = '1'; btnManual.style.pointerEvents = 'all'; }
+    if (btnProg) btnProg.disabled = false;
+    if (btnReiniciar) btnReiniciar.style.display = 'block';
+    
+    // Mostrar botón reiniciar en config también
+    var btnReiniciarConfig = document.getElementById('btnReiniciarPartida');
+    if (btnReiniciarConfig) btnReiniciarConfig.style.display = 'block';
+    
+    // Actualizar Firebase
+    db.ref('partidas/' + SALA_ID).update({
+        estado: 'jugando',
+        partidaIniciada: true,
+        mensajeAdmin: '▶️ ¡Partida iniciada! Espera los números...',
+        timestamp: Date.now()
+    });
+    
+    // Actualizar UI
+    if (typeof actualizarEtapas === 'function') actualizarEtapas();
+    verificarPartidaVigente();
+    
+    // Navegar a la ruleta
+    navegarA('ruleta');
+    
+    mostrarToast('▶️ Partida iniciada', 'success');
+}
+
+// ============ REINICIAR PARTIDA (DESDE RULETA) ============
+function reiniciarPartida() {
+    if (confirm('⚠️ ¿Reiniciar la partida?\n\nSe limpiarán todos los números cantados.')) {
+        // Llamar a la función global de ruleta.js
+        if (window.reiniciarPartidaGlobal) {
+            window.reiniciarPartidaGlobal();
+        } else {
+            // Fallback si no existe la función global
+            if (window.intervaloAutomatico) clearInterval(window.intervaloAutomatico);
+            if (window.intervaloTemporizador) clearInterval(window.intervaloTemporizador);
+            window.cantados = [];
+            window.partidaIniciada = false;
+            window.bingoDetectado = false;
+            window.modoAutomatico = false;
+            inicializarTablero75();
+            actualizarUltimaBolaGrande();
+            actualizarUltimasBolasChicas();
+            db.ref('partidas/' + SALA_ID).update({ 
+                estado: 'nueva_partida', 
+                cantados: [], 
+                partidaIniciada: false,
+                cronometro: 0,
+                mensajeAdmin: '🔄 Partida reiniciada',
+                timestamp: Date.now() 
+            });
+        }
+        
+        var cronVisual = document.getElementById('cronometroVisual');
+        var cronVisualRuleta = document.getElementById('cronometroVisualRuleta');
+        if (cronVisual) cronVisual.style.display = 'none';
+        if (cronVisualRuleta) cronVisualRuleta.style.display = 'none';
+        
+        if (intervaloCronometroVisual) clearInterval(intervaloCronometroVisual);
+        if (intervaloCronometroRuleta) clearInterval(intervaloCronometroRuleta);
+        intervaloCronometroVisual = null;
+        intervaloCronometroRuleta = null;
+        
+        var btnProg = document.getElementById('btnProgramarMobile');
+        if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; }
+        
+        var btnReiniciarRuleta = document.getElementById('btnReiniciarRuleta');
+        if (btnReiniciarRuleta) btnReiniciarRuleta.style.display = 'none';
+        
+        var btnReiniciarConfig = document.getElementById('btnReiniciarPartida');
+        if (btnReiniciarConfig) btnReiniciarConfig.style.display = 'none';
+        
+        verificarPartidaVigente();
+        actualizarUIMovil();
+        navegarA('config');
+        
+        mostrarToast('🔄 Partida reiniciada', 'success');
     }
 }
 
@@ -253,37 +312,6 @@ function programarJuegoMobile() {
     }, 1000);
     
     mostrarToast('⏰ Cronómetro: ' + tiempoStr, 'success');
-}
-
-// ============ REINICIAR PARTIDA (DESDE RULETA) ============
-function reiniciarPartida() {
-    if (confirm('⚠️ ¿Reiniciar la partida?\n\nSe limpiarán todos los números cantados.')) {
-        var resetBtn = document.getElementById('resetBtn');
-        if (resetBtn) resetBtn.click();
-        
-        var cronVisual = document.getElementById('cronometroVisual');
-        var cronVisualRuleta = document.getElementById('cronometroVisualRuleta');
-        if (cronVisual) cronVisual.style.display = 'none';
-        if (cronVisualRuleta) cronVisualRuleta.style.display = 'none';
-        
-        if (intervaloCronometroVisual) clearInterval(intervaloCronometroVisual);
-        if (intervaloCronometroRuleta) clearInterval(intervaloCronometroRuleta);
-        intervaloCronometroVisual = null;
-        intervaloCronometroRuleta = null;
-        
-        var btnProg = document.getElementById('btnProgramarMobile');
-        if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; }
-        
-        // Ocultar botón reiniciar en ruleta
-        var btnReiniciarRuleta = document.getElementById('btnReiniciarRuleta');
-        if (btnReiniciarRuleta) btnReiniciarRuleta.style.display = 'none';
-        
-        verificarPartidaVigente();
-        actualizarUIMovil();
-        navegarA('config');
-        
-        mostrarToast('🔄 Partida reiniciada', 'success');
-    }
 }
 
 // ============ INICIAR AUTO MÓVIL ============
