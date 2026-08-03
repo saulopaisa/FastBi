@@ -21,15 +21,18 @@ function navegarA(seccion) {
     if (seccion === 'config') {
         document.getElementById('sectionConfig').classList.add('activo');
     } else if (seccion === 'ruleta') {
-        document.getElementById('sectionRuleta').classList.add('activo');
+        // Solo permite ir a ruleta si la partida está configurada
+        if (window.etapaActual >= 3) {
+            document.getElementById('sectionRuleta').classList.add('activo');
+        } else {
+            mostrarToast('⚠️ Configura la partida primero', 'error');
+            document.getElementById('sectionConfig').classList.add('activo');
+            document.getElementById('navConfig').classList.add('activo');
+            return;
+        }
     }
     
     pestanaActual = seccion;
-    
-    // Si va a configuración y ya hay números cantados, mostrar advertencia
-    if (seccion === 'config' && window.cantados && window.cantados.length > 0) {
-        actualizarEstadoConfigBloqueada();
-    }
 }
 
 // ============ GENERAR LINK DE SALA ============
@@ -43,32 +46,56 @@ function generarLinkSala() {
     });
 }
 
-// ============ BLOQUEAR CONFIGURACIÓN SI YA HAY NÚMEROS ============
-function actualizarEstadoConfigBloqueada() {
-    var hayNumeros = window.cantados && window.cantados.length > 0;
-    var btnJugadores = document.querySelector('.btn-jugadores');
-    var btnPatron = document.querySelector('.btn-patron');
-    var btnEtapa2 = document.getElementById('btnEtapa2Mobile');
-    var aviso = document.getElementById('partidaVigente');
-    
-    if (hayNumeros && btnJugadores && btnPatron && btnEtapa2) {
-        btnJugadores.disabled = true;
-        btnJugadores.style.opacity = '0.4';
-        btnJugadores.title = 'Debes reiniciar la partida para cambiar';
-        btnPatron.disabled = true;
-        btnPatron.style.opacity = '0.4';
-        btnPatron.title = 'Debes reiniciar la partida para cambiar';
-        btnEtapa2.disabled = true;
-        btnEtapa2.style.opacity = '0.4';
-        if (aviso) {
-            aviso.style.display = 'block';
-            aviso.textContent = '⚠️ Partida en curso - Reinicia para modificar';
-        }
-    } else if (!hayNumeros) {
-        if (btnJugadores) { btnJugadores.disabled = false; btnJugadores.style.opacity = '1'; }
-        if (btnPatron) { btnPatron.disabled = false; btnPatron.style.opacity = '1'; }
-        if (btnEtapa2) { btnEtapa2.disabled = false; btnEtapa2.style.opacity = '1'; }
+// ============ COMENZAR PARTIDA ============
+function comenzarPartida() {
+    if (typeof window.juegoActivo === 'undefined') {
+        alert('Error: ruleta.js no cargó. Recarga la página.');
+        return;
     }
+    
+    if (window.etapaActual < 3) {
+        alert('⚠️ Primero configura jugadores y patrón.');
+        return;
+    }
+    
+    // Deshabilitar botón INICIAR PARTIDA
+    var btnComenzar = document.getElementById('btnComenzarPartida');
+    if (btnComenzar) {
+        btnComenzar.disabled = true;
+        btnComenzar.textContent = '✅ PARTIDA INICIADA';
+        btnComenzar.style.animation = 'none';
+        btnComenzar.style.boxShadow = 'none';
+    }
+    
+    // Habilitar controles de ruleta
+    window.partidaIniciada = true;
+    
+    var btnAuto = document.getElementById('btnAutoMobile');
+    var btnManual = document.getElementById('drawBtnMobile');
+    var btnProg = document.getElementById('btnProgramarMobile');
+    var btnReiniciar = document.getElementById('btnReiniciarRuleta');
+    
+    if (btnAuto) btnAuto.disabled = false;
+    if (btnManual) { btnManual.disabled = false; btnManual.style.opacity = '1'; btnManual.style.pointerEvents = 'all'; }
+    if (btnProg) btnProg.disabled = false;
+    if (btnReiniciar) btnReiniciar.style.display = 'block';
+    
+    // Actualizar Firebase
+    db.ref('partidas/' + SALA_ID).update({
+        estado: 'jugando',
+        partidaIniciada: true,
+        mensajeAdmin: '▶️ ¡Partida iniciada! Espera los números...',
+        timestamp: Date.now()
+    });
+    
+    // Actualizar UI
+    actualizarEtapas();
+    verificarPartidaVigente();
+    
+    // Navegar a la ruleta
+    navegarA('ruleta');
+    
+    mostrarToast('▶️ Partida iniciada', 'success');
 }
 
 // ============ VERIFICAR PARTIDA VIGENTE ============
@@ -77,46 +104,29 @@ function verificarPartidaVigente() {
     
     var aviso = document.getElementById('partidaVigente');
     var btnComenzar = document.getElementById('btnComenzarPartida');
-    var btnReiniciar = document.getElementById('btnReiniciarPartida');
+    var btnReiniciarConfig = document.getElementById('btnReiniciarPartida');
     var cronVisual = document.getElementById('cronometroVisual');
     
-    if (window.juegoActivo && window.etapaActual >= 3) {
+    if (window.partidaIniciada) {
         if (aviso) aviso.style.display = 'block';
-        if (btnComenzar) btnComenzar.style.display = 'none';
-        if (btnReiniciar) btnReiniciar.style.display = 'block';
+        if (btnComenzar) {
+            btnComenzar.disabled = true;
+            btnComenzar.textContent = '✅ PARTIDA INICIADA';
+            btnComenzar.style.animation = 'none';
+            btnComenzar.style.boxShadow = 'none';
+        }
+        if (btnReiniciarConfig) btnReiniciarConfig.style.display = 'block';
         if (cronVisual) cronVisual.style.display = 'none';
     } else {
         if (aviso) aviso.style.display = 'none';
-        if (btnComenzar) btnComenzar.style.display = 'block';
-        if (btnReiniciar) btnReiniciar.style.display = 'none';
+        if (btnComenzar) {
+            btnComenzar.disabled = false;
+            btnComenzar.textContent = '🚀 INICIAR PARTIDA';
+            btnComenzar.style.animation = 'glowComenzar 2s infinite';
+            btnComenzar.style.boxShadow = '0 4px 20px rgba(16, 185, 129, 0.4)';
+        }
+        if (btnReiniciarConfig) btnReiniciarConfig.style.display = 'none';
     }
-    
-    actualizarEstadoConfigBloqueada();
-}
-
-// ============ COMENZAR PARTIDA (VA A RULETA) ============
-function comenzarPartida() {
-    if (typeof window.juegoActivo === 'undefined') {
-        alert('Error: ruleta.js no cargó. Recarga la página.');
-        return;
-    }
-    
-    if (!window.juegoActivo || window.etapaActual < 3) {
-        alert('⚠️ Primero configura jugadores y patrón, luego presiona COMENZAR PARTIDA.');
-        return;
-    }
-    
-    // Enviar mensaje a jugadores
-    db.ref('partidas/' + SALA_ID).update({
-        estado: 'jugando',
-        mensajeAdmin: '▶️ ¡Partida iniciada! Espera los números...',
-        timestamp: Date.now()
-    });
-    
-    navegarA('ruleta');
-    actualizarUIMovil();
-    verificarPartidaVigente();
-    mostrarToast('▶️ Partida iniciada', 'success');
 }
 
 // ============ CRONÓMETRO CON SEGUNDOS ============
@@ -142,6 +152,11 @@ function actualizarCronometroRuleta(tiempo, tiempoTotal) {
 
 // ============ PROGRAMAR JUEGO (CON SEGUNDOS) ============
 function programarJuegoMobile() {
+    if (!window.partidaIniciada) {
+        alert('⚠️ Primero inicia la partida con INICIAR PARTIDA');
+        return;
+    }
+    
     var inputEl = document.getElementById('minutosInicioMobile');
     var valor = inputEl.value.trim();
     
@@ -177,7 +192,6 @@ function programarJuegoMobile() {
     var modo = confirm('⏰ Cronómetro: ' + tiempoStr + '\n\n¿Modo AUTOMÁTICO al llegar a 0?\n✅ Aceptar = Auto\n❌ Cancelar = Manual');
     window.modoJuegoSeleccionado = modo ? 'automatico' : 'manual';
     
-    // Mostrar cronómetros
     var cronVisual = document.getElementById('cronometroVisual');
     var cronVisualRuleta = document.getElementById('cronometroVisualRuleta');
     
@@ -191,7 +205,6 @@ function programarJuegoMobile() {
     if (intervaloCronometroVisual) clearInterval(intervaloCronometroVisual);
     if (intervaloCronometroRuleta) clearInterval(intervaloCronometroRuleta);
     
-    // Actualizar Firebase - esto hará que el jugador vea el cronómetro
     db.ref('partidas/' + SALA_ID).update({
         cronometro: tiempo,
         estado: 'iniciando',
@@ -218,9 +231,6 @@ function programarJuegoMobile() {
             if (cronVisualRuleta) cronVisualRuleta.style.display = 'none';
             if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; }
             
-            window.juegoActivo = true;
-            localStorage.setItem('bingo_activo_' + (localStorage.getItem('salaActiva')||'bingo-default'), 'true');
-            
             db.ref('partidas/' + SALA_ID).update({
                 estado: 'jugando',
                 cronometro: 0,
@@ -231,8 +241,6 @@ function programarJuegoMobile() {
             if (window.modoJuegoSeleccionado === 'automatico' && window.iniciarBingoAutomatico) {
                 window.iniciarBingoAutomatico();
             }
-            
-            verificarPartidaVigente();
             
             if ('speechSynthesis' in window) {
                 var msg = new SpeechSynthesisUtterance('¡Es hora de empezar el bingo!');
@@ -249,7 +257,7 @@ function programarJuegoMobile() {
 
 // ============ REINICIAR PARTIDA (DESDE RULETA) ============
 function reiniciarPartida() {
-    if (confirm('⚠️ ¿Reiniciar la partida?\n\nSe limpiarán todos los números cantados y la configuración.')) {
+    if (confirm('⚠️ ¿Reiniciar la partida?\n\nSe limpiarán todos los números cantados.')) {
         var resetBtn = document.getElementById('resetBtn');
         if (resetBtn) resetBtn.click();
         
@@ -266,14 +274,24 @@ function reiniciarPartida() {
         var btnProg = document.getElementById('btnProgramarMobile');
         if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; }
         
+        // Ocultar botón reiniciar en ruleta
+        var btnReiniciarRuleta = document.getElementById('btnReiniciarRuleta');
+        if (btnReiniciarRuleta) btnReiniciarRuleta.style.display = 'none';
+        
         verificarPartidaVigente();
         actualizarUIMovil();
         navegarA('config');
+        
+        mostrarToast('🔄 Partida reiniciada', 'success');
     }
 }
 
 // ============ INICIAR AUTO MÓVIL ============
 function iniciarAutoMobile() {
+    if (!window.partidaIniciada) {
+        alert('⚠️ Inicia la partida primero');
+        return;
+    }
     if (window.iniciarBingoAutomatico) window.iniciarBingoAutomatico();
 }
 
@@ -308,6 +326,7 @@ function toggleChat() {
     if (panel.classList.contains('activo')) {
         document.getElementById('chatBadge').style.display = 'none';
         document.getElementById('chatBadge').textContent = '0';
+        document.getElementById('chatInput').focus();
     }
 }
 
@@ -318,24 +337,26 @@ function enviarChat() {
     
     var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
     db.ref('partidas/' + salaId + '/chat').push({
-        mensaje: '📢 ' + mensaje, 
-        timestamp: Date.now(), 
+        mensaje: '📢 ' + mensaje,
+        timestamp: Date.now(),
         admin: true
     });
     input.value = '';
+    input.style.height = 'auto';
 }
 
 function limpiarChat() {
-    if (confirm('¿Borrar toda la conversación?')) {
+    if (confirm('¿Borrar toda la conversación del chat?')) {
         var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
         db.ref('partidas/' + salaId + '/chat').remove();
-        document.getElementById('chatMensajes').innerHTML = '<p class="chat-vacio">No hay mensajes</p>';
+        document.getElementById('chatMensajes').innerHTML = '<p class="chat-vacio">Chat limpio</p>';
+        mostrarToast('🗑️ Chat borrado', 'success');
     }
 }
 
 function escucharChat() {
     var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
-    db.ref('partidas/' + salaId + '/chat').limitToLast(30).on('value', function(snap) {
+    db.ref('partidas/' + salaId + '/chat').limitToLast(50).on('value', function(snap) {
         var contenedor = document.getElementById('chatMensajes');
         if (!contenedor) return;
         if (!snap.exists()) { contenedor.innerHTML = '<p class="chat-vacio">No hay mensajes</p>'; return; }
@@ -348,13 +369,7 @@ function escucharChat() {
         mensajes.forEach(function(msg) {
             var div = document.createElement('div');
             if (msg.sistema) {
-                div.className = 'msg-item';
-                div.style.background = '#fef3c7';
-                div.style.color = '#92400e';
-                div.style.textAlign = 'center';
-                div.style.margin = '4px auto';
-                div.style.fontStyle = 'italic';
-                div.style.maxWidth = '95%';
+                div.className = 'msg-item msg-sistema';
             } else {
                 div.className = 'msg-item ' + (msg.admin ? 'msg-admin' : 'msg-jugador');
             }
@@ -372,48 +387,6 @@ function escucharChat() {
     });
 }
 
-// ============ GESTIÓN DE CHAT ============
-window.abrirControlChat = function(jugadorSugerido) {
-    var jugadores = window.jugadoresActivos || [];
-    if (jugadores.length === 0) {
-        alert('No hay jugadores activos');
-        return;
-    }
-    
-    var jugador = jugadorSugerido;
-    if (!jugador) {
-        var lista = 'JUGADORES:\n\n';
-        jugadores.forEach(function(j, i) {
-            lista += (i + 1) + '. ' + j + '\n';
-        });
-        jugador = prompt(lista + '\nEscribe el nombre del jugador para DESBLOQUEAR chat:');
-    }
-    
-    if (jugador && jugadores.indexOf(jugador) !== -1) {
-        var minutos = prompt('¿Por cuántos minutos? (1-10):', '2');
-        minutos = parseInt(minutos) || 2;
-        if (minutos < 1) minutos = 1;
-        if (minutos > 10) minutos = 10;
-        
-        if (window.desbloquearChatJugador) {
-            window.desbloquearChatJugador(jugador, minutos);
-        }
-    }
-};
-
-// Agregar botón de gestión al chat
-setTimeout(function() {
-    var chatHeader = document.querySelector('.chat-header');
-    if (chatHeader) {
-        var btnGestion = document.createElement('button');
-        btnGestion.textContent = '🔓';
-        btnGestion.style.cssText = 'background:#10b981;border:none;color:white;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:0.7em;margin-left:8px;';
-        btnGestion.onclick = function() { window.abrirControlChat(); };
-        btnGestion.title = 'Gestionar chat de jugadores';
-        chatHeader.appendChild(btnGestion);
-    }
-}, 500);
-
 // ============ COPIAR SALA ============
 function copiarSalaId() {
     var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
@@ -424,6 +397,10 @@ function copiarSalaId() {
 
 // ============ SORTEO MANUAL ============
 function sortearManualMobile() {
+    if (!window.partidaIniciada) {
+        alert('⚠️ Inicia la partida primero');
+        return;
+    }
     var btnPC = document.getElementById('drawBtn');
     if (btnPC) btnPC.click();
 }
@@ -432,9 +409,9 @@ function sortearManualMobile() {
 function actualizarUIMovil() {
     if (typeof window.etapaActual === 'undefined') return;
     
-    var configLista = window.etapaActual >= 2;
     var juegoListo = window.etapaActual >= 3;
     var enPausa = window.enPausa || false;
+    var partidaIniciada = window.partidaIniciada || false;
     
     if (window.jugadoresActivos && window.jugadoresActivos.length > 0) {
         var txt = document.getElementById('statusJugadoresTexto');
@@ -454,20 +431,23 @@ function actualizarUIMovil() {
         if (card) { card.classList.add('completado'); card.classList.remove('pendiente'); }
     }
     
-    setDisabled('btnEtapa2Mobile', !configLista);
-    setDisabled('btnComenzarPartida', !juegoListo);
-    setDisabled('btnProgramarMobile', !juegoListo || enPausa);
-    setDisabled('btnAutoMobile', !juegoListo || enPausa);
-    setDisabled('drawBtnMobile', !juegoListo || enPausa);
+    setDisabled('btnEtapa2Mobile', !(window.etapaActual >= 2));
+    setDisabled('btnProgramarMobile', !juegoListo || enPausa || !partidaIniciada);
+    setDisabled('btnAutoMobile', !juegoListo || enPausa || !partidaIniciada);
+    setDisabled('drawBtnMobile', !juegoListo || enPausa || !partidaIniciada);
     
     var navRuleta = document.getElementById('navRuleta');
-    if (navRuleta && juegoListo) {
-        navRuleta.style.opacity = '1';
-        navRuleta.style.pointerEvents = 'all';
+    if (navRuleta) {
+        if (juegoListo) {
+            navRuleta.style.opacity = '1';
+            navRuleta.style.pointerEvents = 'all';
+        } else {
+            navRuleta.style.opacity = '0.5';
+            navRuleta.style.pointerEvents = 'none';
+        }
     }
     
     verificarPartidaVigente();
-    actualizarEstadoConfigBloqueada();
 }
 
 function setDisabled(id, state) {
@@ -498,13 +478,24 @@ function inicializarTableroMovil() {
     }
 }
 
+// ============ AUTO-AJUSTAR TEXTAREA DEL CHAT ============
+function autoAjustarTextarea() {
+    var textarea = document.getElementById('chatInput');
+    if (!textarea) return;
+    
+    textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+    });
+}
+
 // ============ INICIAR ============
 document.addEventListener('DOMContentLoaded', function() {
     escucharChat();
     inicializarTableroMovil();
     verificarPartidaVigente();
+    autoAjustarTextarea();
     
-    // Ocultar cronómetros al inicio
     var cronVisual = document.getElementById('cronometroVisual');
     var cronVisualRuleta = document.getElementById('cronometroVisualRuleta');
     if (cronVisual) cronVisual.style.display = 'none';
