@@ -54,17 +54,17 @@
                     </div>
                 </div>
 
-                <!-- Info Bar -->
+                <!-- Info Bar Clickeable -->
                 <div class="info-bar">
-                    <div class="info-item">
+                    <div class="info-item active-filter" onclick="filtrarCartones('todos')" id="infoTodos">
                         <span class="info-value" id="totalCartones">0</span>
                         <span class="info-label">Total</span>
                     </div>
-                    <div class="info-item">
+                    <div class="info-item" onclick="filtrarCartones('asignados')" id="infoAsignados">
                         <span class="info-value" id="totalAsignados">0</span>
                         <span class="info-label">Asignados</span>
                     </div>
-                    <div class="info-item">
+                    <div class="info-item" onclick="filtrarCartones('disponibles')" id="infoDisponibles">
                         <span class="info-value" id="totalDisponibles">0</span>
                         <span class="info-label">Disponibles</span>
                     </div>
