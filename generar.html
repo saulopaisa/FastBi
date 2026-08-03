@@ -10,9 +10,8 @@
 </head>
 <body>
     <!-- HEADER SUPERIOR -->
-    <div class="nav-item activo" onclick="navegarA('cartones')" id="navCartones">
-    <img src="logo.png" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" alt="Logo">
-    <span class="nav-label">CARTONES</span>
+    <div class="app-header">
+        <h1>🎫 CARTONES</h1>
         <div class="header-actions">
             <button class="btn-header-icon" onclick="location.href='ruleta.html'" title="Ruleta">🎲</button>
             <button class="btn-header-icon" onclick="location.href='jugador.html'" title="Jugador">👤</button>
@@ -80,27 +79,27 @@
             </div>
         </div>
 
-      <!-- ========== VISTA 2: JUGADORES ========== -->
-<div class="section-panel" id="sectionJugadores">
-    
-    <!-- Buscador de jugadores -->
-    <div class="panel-card">
-        <h3>🔍 BUSCAR JUGADOR</h3>
-        <input type="text" id="buscarJugador" placeholder="Nombre del jugador..." oninput="buscarJugadores()" style="width:100%;padding:10px;border:2px solid #334155;border-radius:8px;background:#1e293b;color:white;font-size:0.9rem;outline:none;margin-bottom:8px;">
-        <div id="resultadosJugadores" style="max-height:300px;overflow-y:auto;">
-            <p style="color:#94a3b8;text-align:center;font-size:0.8em;padding:10px;">Escribe para buscar jugadores</p>
+        <!-- ========== VISTA 2: JUGADORES ========== -->
+        <div class="section-panel" id="sectionJugadores">
+            
+            <!-- Buscador de jugadores -->
+            <div class="panel-card">
+                <h3>🔍 BUSCAR JUGADOR</h3>
+                <input type="text" id="buscarJugador" placeholder="Nombre del jugador..." oninput="buscarJugadores()" style="width:100%;padding:10px;border:2px solid #334155;border-radius:8px;background:#1e293b;color:white;font-size:0.9rem;outline:none;margin-bottom:8px;">
+                <div id="resultadosJugadores" style="max-height:300px;overflow-y:auto;">
+                    <p style="color:#94a3b8;text-align:center;font-size:0.8em;padding:10px;">Escribe para buscar jugadores</p>
+                </div>
+            </div>
+            
+            <!-- Lista completa de jugadores -->
+            <div class="panel-card">
+                <h3>👥 TODOS LOS JUGADORES</h3>
+                <div id="listaJugadores" style="max-height:350px;overflow-y:auto;">
+                    <p style="color:#94a3b8;text-align:center;font-size:0.8em;padding:10px;">Cargando jugadores...</p>
+                </div>
+                <button onclick="actualizarListaJugadores()" class="btn btn-actualizar" style="margin-top:10px;">🔄 ACTUALIZAR LISTA</button>
+            </div>
         </div>
-    </div>
-    
-    <!-- Lista completa de jugadores -->
-    <div class="panel-card">
-        <h3>👥 TODOS LOS JUGADORES</h3>
-        <div id="listaJugadores" style="max-height:350px;overflow-y:auto;">
-            <p style="color:#94a3b8;text-align:center;font-size:0.8em;padding:10px;">Cargando jugadores...</p>
-        </div>
-        <button onclick="actualizarListaJugadores()" class="btn btn-actualizar" style="margin-top:10px;">🔄 ACTUALIZAR LISTA</button>
-    </div>
-</div>
 
         <!-- ========== VISTA 3: CONFIGURACIÓN ========== -->
         <div class="section-panel" id="sectionConfig">
@@ -124,10 +123,10 @@
         </div>
     </div>
 
-    <!-- BARRA DE NAVEGACIÓN INFERIOR -->
+    <!-- BARRA DE NAVEGACIÓN INFERIOR (SIEMPRE VISIBLE) -->
     <div class="bottom-nav">
         <div class="nav-item activo" onclick="navegarA('cartones')" id="navCartones">
-            <span class="nav-icon">🎫</span>
+            <img src="logo.png" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" alt="Logo">
             <span class="nav-label">CARTONES</span>
         </div>
         <div class="nav-item" onclick="navegarA('jugadores')" id="navJugadores">
