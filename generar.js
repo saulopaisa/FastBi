@@ -3,6 +3,7 @@
 var cartonesGenerados = [];
 var cartonesSeleccionados = [];
 var MAX_GANADORES_POR_NUMERO = 3;
+var filtroActual = 'todos';
 
 // ============ GENERAR CARTÓN ============
 function generarCarton() {
@@ -45,7 +46,6 @@ function contarCartonesSimilares(carton) {
     }).length;
 }
 
-// ============ GENERAR MÚLTIPLES ============
 // ============ GENERAR MÚLTIPLES (AGREGAR SIN BORRAR) ============
 function generarCartones() {
     var cantidad = parseInt(document.getElementById('cantidadGenerar').value) || 10;
@@ -54,7 +54,6 @@ function generarCartones() {
         return; 
     }
     
-    // Mantener los cartones existentes
     var numeroInicial = cartonesGenerados.length;
     var intentos = 0;
     var maxIntentos = cantidad * 10;
@@ -63,14 +62,12 @@ function generarCartones() {
     for (var i = 0; i < cantidad && intentos < maxIntentos; i++) {
         var nuevoCarton = generarCarton();
         
-        // Verificar que no exista ya
         if (cartonExiste(nuevoCarton)) {
             i--;
             intentos++;
             continue;
         }
         
-        // Verificar máximo de cartones similares
         var similares = contarCartonesSimilares(nuevoCarton);
         if (similares >= MAX_GANADORES_POR_NUMERO) {
             i--;
@@ -90,13 +87,12 @@ function generarCartones() {
         intentos = 0;
     }
     
-    // Renumerar todos los cartones
     cartonesGenerados.forEach(function(c, i) {
         c.numero = i + 1;
     });
     
     cartonesSeleccionados = [];
-    mostrarCartones();
+    filtrarCartones('todos');
     actualizarContadores();
     guardarEnFirebase();
     
@@ -109,8 +105,16 @@ function generarCartones() {
 
 // ============ MOSTRAR CARTONES ============
 function mostrarCartones(filtrarTermino) {
-    var grid = document.getElementById('cartonesGrid');
+    if (!filtrarTermino) {
+        document.querySelectorAll('.info-item').forEach(function(item) {
+            item.classList.remove('active-filter');
+        });
+        var infoTodos = document.getElementById('infoTodos');
+        if (infoTodos) infoTodos.classList.add('active-filter');
+        filtroActual = 'todos';
+    }
     
+    var grid = document.getElementById('cartonesGrid');
     var cartonesAMostrar = cartonesGenerados;
     
     if (filtrarTermino) {
@@ -167,6 +171,84 @@ function mostrarCartones(filtrarTermino) {
     });
 }
 
+// ============ FILTRAR CARTONES POR ESTADO ============
+function filtrarCartones(filtro) {
+    filtroActual = filtro;
+    
+    document.querySelectorAll('.info-item').forEach(function(item) {
+        item.classList.remove('active-filter');
+    });
+    
+    if (filtro === 'todos') {
+        var el = document.getElementById('infoTodos');
+        if (el) el.classList.add('active-filter');
+        mostrarCartones();
+    } else if (filtro === 'asignados') {
+        var el = document.getElementById('infoAsignados');
+        if (el) el.classList.add('active-filter');
+        mostrarCartonesFiltrados('asignados');
+    } else if (filtro === 'disponibles') {
+        var el = document.getElementById('infoDisponibles');
+        if (el) el.classList.add('active-filter');
+        mostrarCartonesFiltrados('disponibles');
+    }
+}
+
+function mostrarCartonesFiltrados(estado) {
+    var grid = document.getElementById('cartonesGrid');
+    
+    var cartonesFiltrados;
+    if (estado === 'asignados') {
+        cartonesFiltrados = cartonesGenerados.filter(function(c) { return c.asignadoA; });
+    } else if (estado === 'disponibles') {
+        cartonesFiltrados = cartonesGenerados.filter(function(c) { return !c.asignadoA; });
+    }
+    
+    if (cartonesFiltrados.length === 0) {
+        grid.innerHTML = '<p class="placeholder">No hay cartones ' + estado + '</p>';
+        return;
+    }
+    
+    grid.innerHTML = '';
+    var letras = ['B','I','N','G','O'];
+    
+    cartonesFiltrados.forEach(function(c) {
+        var index = cartonesGenerados.indexOf(c);
+        var card = document.createElement('div');
+        card.className = 'carton-card';
+        card.id = 'cartonCard-' + index;
+        
+        var html = '<div class="carton-header-info">';
+        html += '<span class="carton-num">#' + c.numero + '</span>';
+        html += c.asignadoA ? 
+            '<span class="carton-asignado">👤 ' + c.asignadoA + '</span>' : 
+            '<span class="carton-disponible">📋 Disponible</span>';
+        html += '</div>';
+        
+        html += '<div class="carton-bingo-header">';
+        letras.forEach(function(l) { html += '<div>' + l + '</div>'; });
+        html += '</div>';
+        
+        html += '<div class="carton-bingo-grid">';
+        for (var f = 0; f < 5; f++) {
+            letras.forEach(function(l) {
+                var v = c.carton[l][f];
+                var centro = (l==='N' && f===2);
+                html += '<div class="carton-bingo-cell'+(centro?' free':'')+'">'+(centro?'⭐':v)+'</div>';
+            });
+        }
+        html += '</div>';
+        
+        html += '<div class="carton-acciones">';
+        html += '<button class="btn btn-asignar" onclick="asignarIndividual('+index+')">👤 Asignar</button>';
+        html += '<button class="btn btn-eliminar" onclick="eliminarCarton('+index+')">🗑️ Eliminar</button>';
+        html += '</div>';
+        
+        card.innerHTML = html;
+        grid.appendChild(card);
+    });
+}
+
 // ============ ASIGNAR INDIVIDUAL ============
 function asignarIndividual(index) {
     var carton = cartonesGenerados[index];
@@ -181,7 +263,12 @@ function asignarIndividual(index) {
     
     carton.asignadoA = nombre;
     carton.estado = 'asignado';
-    mostrarCartones();
+    
+    if (filtroActual !== 'todos') {
+        filtrarCartones(filtroActual);
+    } else {
+        mostrarCartones();
+    }
     actualizarContadores();
     actualizarListaJugadores();
     guardarEnFirebase();
@@ -193,7 +280,12 @@ function eliminarCarton(index) {
     if (confirm('¿Eliminar cartón #' + cartonesGenerados[index].numero + '?')) {
         cartonesGenerados.splice(index, 1);
         cartonesGenerados.forEach(function(c, i) { c.numero = i + 1; });
-        mostrarCartones();
+        
+        if (filtroActual !== 'todos') {
+            filtrarCartones(filtroActual);
+        } else {
+            mostrarCartones();
+        }
         actualizarContadores();
         actualizarListaJugadores();
         guardarEnFirebase();
@@ -227,7 +319,11 @@ function buscarCarton() {
     
     if (!termino || termino.length < 1) {
         resultadosDiv.innerHTML = '<p style="color:#94a3b8;text-align:center;font-size:0.8em;padding:10px;">Escribe para buscar cartones</p>';
-        mostrarCartones();
+        if (filtroActual !== 'todos') {
+            filtrarCartones(filtroActual);
+        } else {
+            mostrarCartones();
+        }
         if (cartonesSeleccionados.length === 0) {
             seleccionadosInfo.style.display = 'none';
         }
@@ -355,7 +451,11 @@ function asignarSeleccionados() {
     var count = cartonesSeleccionados.length;
     cartonesSeleccionados = [];
     
-    mostrarCartones();
+    if (filtroActual !== 'todos') {
+        filtrarCartones(filtroActual);
+    } else {
+        mostrarCartones();
+    }
     actualizarContadores();
     actualizarListaJugadores();
     guardarEnFirebase();
@@ -499,7 +599,7 @@ function actualizarListaJugadores() {
     });
 }
 
-// ============ COPIAR LINK DEL JUGADOR (AUTOMÁTICO) ============
+// ============ COPIAR LINK DEL JUGADOR ============
 function copiarLinkJugador(nombre) {
     var link = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'jugador.html?sala=' + encodeURIComponent(SALA_ID);
     
@@ -525,7 +625,11 @@ function eliminarJugador(nombre) {
             c.estado = 'disponible';
         });
         
-        mostrarCartones();
+        if (filtroActual !== 'todos') {
+            filtrarCartones(filtroActual);
+        } else {
+            mostrarCartones();
+        }
         actualizarContadores();
         actualizarListaJugadores();
         buscarJugadores();
@@ -545,7 +649,11 @@ function quitarCartonJugador(index) {
         carton.asignadoA = null;
         carton.estado = 'disponible';
         
-        mostrarCartones();
+        if (filtroActual !== 'todos') {
+            filtrarCartones(filtroActual);
+        } else {
+            mostrarCartones();
+        }
         actualizarContadores();
         actualizarListaJugadores();
         buscarJugadores();
@@ -585,7 +693,11 @@ function renombrarJugador(nombreViejo) {
         c.asignadoA = nombreNuevo;
     });
     
-    mostrarCartones();
+    if (filtroActual !== 'todos') {
+        filtrarCartones(filtroActual);
+    } else {
+        mostrarCartones();
+    }
     actualizarContadores();
     actualizarListaJugadores();
     buscarJugadores();
