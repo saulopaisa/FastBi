@@ -159,14 +159,19 @@ function actualizarEtapas() {
     var btnComenzar = document.getElementById('btnComenzarPartida');
     
     if (window.etapaActual >= 2) {
-        document.getElementById('statusJugadoresCheck').textContent = '✅';
-        document.getElementById('statusJugadoresCard').classList.add('completado');
-        document.getElementById('btnEtapa2Mobile').disabled = false;
+        var checkJ = document.getElementById('statusJugadoresCheck');
+        var cardJ = document.getElementById('statusJugadoresCard');
+        if (checkJ) checkJ.textContent = '✅';
+        if (cardJ) cardJ.classList.add('completado');
+        var btnEtapa2 = document.getElementById('btnEtapa2Mobile');
+        if (btnEtapa2) btnEtapa2.disabled = false;
     }
     
     if (window.etapaActual >= 3) {
-        document.getElementById('statusPatronCheck').textContent = '✅';
-        document.getElementById('statusPatronCard').classList.add('completado');
+        var checkP = document.getElementById('statusPatronCheck');
+        var cardP = document.getElementById('statusPatronCard');
+        if (checkP) checkP.textContent = '✅';
+        if (cardP) cardP.classList.add('completado');
         
         if (btnComenzar) {
             btnComenzar.disabled = window.partidaIniciada;
@@ -778,50 +783,66 @@ function iniciarNuevaPartida() {
     setTimeout(function() { db.ref('partidas/' + SALA_ID).update({ estado: 'jugando', cantados: [], timestamp: Date.now() }); }, 2000); 
 }
 
-// ============ REINICIAR ============
-var resetBtn = document.getElementById('resetBtn') || document.getElementById('btnReiniciarPartida');
-if (resetBtn) { 
-    resetBtn.addEventListener('click', function() { 
-        if (confirm('⚠️ ¿Reiniciar todo?\n\nSe borrarán números, patrón y jugadores.')) { 
-            if (window.intervaloAutomatico) clearInterval(window.intervaloAutomatico); 
-            if (window.intervaloTemporizador) clearInterval(window.intervaloTemporizador); 
-            if (window.pausaTimeout) clearTimeout(window.pausaTimeout); 
-            window.cantados = []; window.patronBingo = Array(25).fill(false); window.jugadoresActivos = []; 
-            window.juegoActivo = false; window.modoAutomatico = false; window.bingoDetectado = false; 
-            window.etapaActual = 1; window.ganadoresPartida = 0; window.enPausa = false; window.partidaIniciada = false;
-            sessionStorage.setItem('ganadores_' + SALA_ID, '0'); 
-            ['bingo_cantados_','bingo_patron_','bingo_jugadores_','bingo_activo_','bingo_etapa_'].forEach(function(k) { localStorage.removeItem(k + SALA_ID); }); 
-            db.ref('partidas/' + SALA_ID).remove(); db.ref('bingos/' + SALA_ID).remove(); db.ref('partidas/' + SALA_ID + '/erroresJugadores').remove(); 
-            inicializarTablero75(); actualizarEtapas(); 
-            actualizarUltimaBolaGrande(); actualizarUltimasBolasChicas();
-            var cont = document.getElementById('minicartonVerificador'); if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; 
-            var contM = document.getElementById('minicartonMobile'); if (contM) contM.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; 
-            var alerta = document.getElementById('alertaBingo'); if (alerta) alerta.style.display = 'none'; 
-            var cronVisual = document.getElementById('cronometroVisual'); if (cronVisual) cronVisual.style.display = 'none'; 
-            var cronVisualR = document.getElementById('cronometroVisualRuleta'); if (cronVisualR) cronVisualR.style.display = 'none'; 
-            var bp = document.getElementById('btnProgramarMobile'); if (bp) { bp.textContent = '⏰ PROGRAMAR'; bp.disabled = true; } 
-            var ba = document.getElementById('btnAutoMobile'); if (ba) { ba.textContent = '🤖 AUTO'; ba.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; ba.disabled = true; } 
-            var bm = document.getElementById('drawBtnMobile'); if (bm) { bm.disabled = true; bm.style.opacity = '0.5'; } 
-            var btnReiniciar = document.getElementById('btnReiniciarRuleta'); if (btnReiniciar) btnReiniciar.style.display = 'none';
-            var btnComenzar = document.getElementById('btnComenzarPartida');
-            if (btnComenzar) {
-                btnComenzar.disabled = true;
-                btnComenzar.textContent = '🚀 INICIAR PARTIDA';
-                btnComenzar.style.animation = 'glowComenzar 2s infinite';
-                btnComenzar.style.boxShadow = '0 4px 20px rgba(16, 185, 129, 0.4)';
-            }
-            document.getElementById('statusJugadoresCheck').textContent = '❌';
-            document.getElementById('statusJugadoresCard').classList.remove('completado');
-            document.getElementById('statusJugadoresTexto').textContent = 'No seleccionados';
-            document.getElementById('statusPatronCheck').textContent = '❌';
-            document.getElementById('statusPatronCard').classList.remove('completado');
-            document.getElementById('statusPatronTexto').textContent = 'No configurado';
-            document.getElementById('btnEtapa2Mobile').disabled = true;
-            actualizarOnlineCount(); 
-            mostrarToast('🔄 Todo reiniciado', 'success'); 
-            if (typeof navegarA === 'function') navegarA('config');
-        } 
-    }); 
+// ============ REINICIAR PARTIDA (FUNCIÓN GLOBAL) ============
+window.reiniciarPartidaGlobal = function() {
+    if (confirm('⚠️ ¿Reiniciar todo?\n\nSe borrarán números, patrón y jugadores.')) { 
+        if (window.intervaloAutomatico) clearInterval(window.intervaloAutomatico); 
+        if (window.intervaloTemporizador) clearInterval(window.intervaloTemporizador); 
+        if (window.pausaTimeout) clearTimeout(window.pausaTimeout); 
+        window.cantados = []; window.patronBingo = Array(25).fill(false); window.jugadoresActivos = []; 
+        window.juegoActivo = false; window.modoAutomatico = false; window.bingoDetectado = false; 
+        window.etapaActual = 1; window.ganadoresPartida = 0; window.enPausa = false; window.partidaIniciada = false;
+        sessionStorage.setItem('ganadores_' + SALA_ID, '0'); 
+        ['bingo_cantados_','bingo_patron_','bingo_jugadores_','bingo_activo_','bingo_etapa_'].forEach(function(k) { localStorage.removeItem(k + SALA_ID); }); 
+        db.ref('partidas/' + SALA_ID).remove(); db.ref('bingos/' + SALA_ID).remove(); db.ref('partidas/' + SALA_ID + '/erroresJugadores').remove(); 
+        inicializarTablero75(); actualizarEtapas(); 
+        actualizarUltimaBolaGrande(); actualizarUltimasBolasChicas();
+        var cont = document.getElementById('minicartonVerificador'); if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; 
+        var contM = document.getElementById('minicartonMobile'); if (contM) contM.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; 
+        var alerta = document.getElementById('alertaBingo'); if (alerta) alerta.style.display = 'none'; 
+        var cronVisual = document.getElementById('cronometroVisual'); if (cronVisual) cronVisual.style.display = 'none'; 
+        var cronVisualR = document.getElementById('cronometroVisualRuleta'); if (cronVisualR) cronVisualR.style.display = 'none'; 
+        var bp = document.getElementById('btnProgramarMobile'); if (bp) { bp.textContent = '⏰ PROGRAMAR'; bp.disabled = true; } 
+        var ba = document.getElementById('btnAutoMobile'); if (ba) { ba.textContent = '🤖 AUTO'; ba.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; ba.disabled = true; } 
+        var bm = document.getElementById('drawBtnMobile'); if (bm) { bm.disabled = true; bm.style.opacity = '0.5'; bm.style.pointerEvents = 'none'; } 
+        var btnReiniciarRuleta = document.getElementById('btnReiniciarRuleta'); if (btnReiniciarRuleta) btnReiniciarRuleta.style.display = 'none';
+        var btnReiniciarConfig = document.getElementById('btnReiniciarPartida'); if (btnReiniciarConfig) btnReiniciarConfig.style.display = 'none';
+        var btnComenzar = document.getElementById('btnComenzarPartida');
+        if (btnComenzar) {
+            btnComenzar.disabled = true;
+            btnComenzar.textContent = '🚀 INICIAR PARTIDA';
+            btnComenzar.style.animation = 'glowComenzar 2s infinite';
+            btnComenzar.style.boxShadow = '0 4px 20px rgba(16, 185, 129, 0.4)';
+        }
+        var checkJ = document.getElementById('statusJugadoresCheck');
+        var cardJ = document.getElementById('statusJugadoresCard');
+        var textoJ = document.getElementById('statusJugadoresTexto');
+        if (checkJ) checkJ.textContent = '❌';
+        if (cardJ) cardJ.classList.remove('completado');
+        if (textoJ) textoJ.textContent = 'No seleccionados';
+        var checkP = document.getElementById('statusPatronCheck');
+        var cardP = document.getElementById('statusPatronCard');
+        var textoP = document.getElementById('statusPatronTexto');
+        if (checkP) checkP.textContent = '❌';
+        if (cardP) cardP.classList.remove('completado');
+        if (textoP) textoP.textContent = 'No configurado';
+        var btnEtapa2 = document.getElementById('btnEtapa2Mobile');
+        if (btnEtapa2) btnEtapa2.disabled = true;
+        actualizarOnlineCount(); 
+        mostrarToast('🔄 Todo reiniciado', 'success'); 
+        if (typeof navegarA === 'function') navegarA('config');
+    }
+};
+
+// Asignar eventos a los botones de reiniciar
+var btnReiniciarConfig = document.getElementById('btnReiniciarPartida');
+if (btnReiniciarConfig) {
+    btnReiniciarConfig.addEventListener('click', window.reiniciarPartidaGlobal);
+}
+
+var btnReiniciarRuleta = document.getElementById('btnReiniciarRuleta');
+if (btnReiniciarRuleta) {
+    btnReiniciarRuleta.addEventListener('click', window.reiniciarPartidaGlobal);
 }
 
 // ============ TECLAS ============
