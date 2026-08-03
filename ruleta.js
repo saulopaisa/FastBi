@@ -156,6 +156,7 @@ function actualizarEtapas() {
     var btnProg = document.getElementById('btnProgramarMobile');
     var btnReiniciarRuleta = document.getElementById('btnReiniciarRuleta');
     var navRuleta = document.getElementById('navRuleta');
+    var btnComenzar = document.getElementById('btnComenzarPartida');
     
     if (window.etapaActual >= 2) {
         document.getElementById('statusJugadoresCheck').textContent = '✅';
@@ -166,7 +167,19 @@ function actualizarEtapas() {
     if (window.etapaActual >= 3) {
         document.getElementById('statusPatronCheck').textContent = '✅';
         document.getElementById('statusPatronCard').classList.add('completado');
-        document.getElementById('btnComenzarPartida').disabled = window.partidaIniciada;
+        
+        if (btnComenzar) {
+            btnComenzar.disabled = window.partidaIniciada;
+            if (window.partidaIniciada) {
+                btnComenzar.textContent = '✅ PARTIDA INICIADA';
+                btnComenzar.style.animation = 'none';
+                btnComenzar.style.boxShadow = 'none';
+            } else {
+                btnComenzar.textContent = '🚀 INICIAR PARTIDA';
+                btnComenzar.style.animation = 'glowComenzar 2s infinite';
+                btnComenzar.style.boxShadow = '0 4px 20px rgba(16, 185, 129, 0.4)';
+            }
+        }
         
         if (btnAuto) { btnAuto.disabled = window.enPausa || !window.partidaIniciada; }
         if (btnManual) { btnManual.disabled = window.enPausa || !window.partidaIniciada; btnManual.style.pointerEvents = (window.enPausa || !window.partidaIniciada) ? 'none' : 'all'; }
@@ -179,6 +192,8 @@ function actualizarEtapas() {
         
         if (window.partidaIniciada) {
             if (btnReiniciarRuleta) btnReiniciarRuleta.style.display = 'block';
+        } else {
+            if (btnReiniciarRuleta) btnReiniciarRuleta.style.display = 'none';
         }
     } else {
         if (navRuleta) {
@@ -751,7 +766,13 @@ function iniciarNuevaPartida() {
     var btnAuto = document.getElementById('btnAutoMobile'); if (btnAuto) { btnAuto.textContent = '🤖 AUTO'; btnAuto.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; btnAuto.disabled = true; } 
     var btnManual = document.getElementById('drawBtnMobile'); if (btnManual) { btnManual.disabled = true; btnManual.style.opacity = '0.5'; } 
     var btnReiniciar = document.getElementById('btnReiniciarRuleta'); if (btnReiniciar) btnReiniciar.style.display = 'none';
-    document.getElementById('btnComenzarPartida').disabled = false;
+    var btnComenzar = document.getElementById('btnComenzarPartida');
+    if (btnComenzar) {
+        btnComenzar.disabled = false;
+        btnComenzar.textContent = '🚀 INICIAR PARTIDA';
+        btnComenzar.style.animation = 'glowComenzar 2s infinite';
+        btnComenzar.style.boxShadow = '0 4px 20px rgba(16, 185, 129, 0.4)';
+    }
     actualizarEtapas(); actualizarOnlineCount(); 
     mostrarToast('🔄 Nueva partida', 'success'); 
     setTimeout(function() { db.ref('partidas/' + SALA_ID).update({ estado: 'jugando', cantados: [], timestamp: Date.now() }); }, 2000); 
@@ -782,11 +803,20 @@ if (resetBtn) {
             var ba = document.getElementById('btnAutoMobile'); if (ba) { ba.textContent = '🤖 AUTO'; ba.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; ba.disabled = true; } 
             var bm = document.getElementById('drawBtnMobile'); if (bm) { bm.disabled = true; bm.style.opacity = '0.5'; } 
             var btnReiniciar = document.getElementById('btnReiniciarRuleta'); if (btnReiniciar) btnReiniciar.style.display = 'none';
-            document.getElementById('btnComenzarPartida').disabled = true;
+            var btnComenzar = document.getElementById('btnComenzarPartida');
+            if (btnComenzar) {
+                btnComenzar.disabled = true;
+                btnComenzar.textContent = '🚀 INICIAR PARTIDA';
+                btnComenzar.style.animation = 'glowComenzar 2s infinite';
+                btnComenzar.style.boxShadow = '0 4px 20px rgba(16, 185, 129, 0.4)';
+            }
             document.getElementById('statusJugadoresCheck').textContent = '❌';
             document.getElementById('statusJugadoresCard').classList.remove('completado');
+            document.getElementById('statusJugadoresTexto').textContent = 'No seleccionados';
             document.getElementById('statusPatronCheck').textContent = '❌';
             document.getElementById('statusPatronCard').classList.remove('completado');
+            document.getElementById('statusPatronTexto').textContent = 'No configurado';
+            document.getElementById('btnEtapa2Mobile').disabled = true;
             actualizarOnlineCount(); 
             mostrarToast('🔄 Todo reiniciado', 'success'); 
             if (typeof navegarA === 'function') navegarA('config');
@@ -797,7 +827,7 @@ if (resetBtn) {
 // ============ TECLAS ============
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') { cerrarModal('modalCartones'); cerrarModal('modalPatron'); }
-    if (e.code === 'Space' && window.etapaActual === 3 && !window.modoAutomatico && !window.enPausa && window.partidaIniciata) { 
+    if (e.code === 'Space' && window.etapaActual === 3 && !window.modoAutomatico && !window.enPausa && window.partidaIniciada) { 
         var tag = (e.target.tagName || '').toLowerCase(); 
         if (tag !== 'input' && tag !== 'textarea' && tag !== 'select' && !e.target.isContentEditable) { 
             e.preventDefault(); 
