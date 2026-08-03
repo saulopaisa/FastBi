@@ -22,7 +22,8 @@
 
     <!-- CONTENIDO PRINCIPAL -->
     <div class="app-content" id="appContent">
-        <!-- SECCIÓN CONFIGURACIÓN -->
+        
+        <!-- ========== SECCIÓN CONFIGURACIÓN (PANTALLA 1) ========== -->
         <div class="section-config activo" id="sectionConfig">
             <div class="config-card">
                 <h3>⚙️ CONFIGURAR PARTIDA</h3>
@@ -38,7 +39,7 @@
                 </button>
                 
                 <div class="partida-vigente" id="partidaVigente" style="display:none;">
-                    <span>⚠️ Partida en curso - Reinicia para modificar</span>
+                    <span>⚠️ Partida en curso</span>
                 </div>
                 
                 <div class="config-status" id="statusJugadoresCard">
@@ -71,10 +72,6 @@
                     🚀 INICIAR PARTIDA
                 </button>
                 
-                <button id="btnReiniciarPartida" onclick="reiniciarPartida()" class="btn-accion btn-reiniciar-partida" style="display:none;">
-                    🔄 REINICIAR PARTIDA
-                </button>
-                
                 <div id="cronometroVisual" class="cronometro-visual" style="display:none;">
                     <div class="cronometro-visual-tiempo" id="cronometroVisualTiempo">00:00</div>
                     <div class="cronometro-visual-barra">
@@ -85,8 +82,10 @@
             </div>
         </div>
 
-        <!-- SECCIÓN RULETA -->
+        <!-- ========== SECCIÓN RULETA (PANTALLA 2 - OCULTA HASTA CONFIGURAR) ========== -->
         <div class="section-ruleta" id="sectionRuleta">
+            
+            <!-- Alerta de Bingo flotante -->
             <div id="alertaBingoMobile" class="alerta-bingo-flotante" style="display:none;">
                 <div class="alerta-flotante-titulo">🚨 ¡BINGO CANTADO!</div>
                 <div class="alerta-flotante-jugador" id="alertaJugadorMobile">-</div>
@@ -98,6 +97,7 @@
                 </div>
             </div>
 
+            <!-- Cronómetro visual en ruleta -->
             <div id="cronometroVisualRuleta" class="cronometro-visual" style="display:none;">
                 <div class="cronometro-visual-tiempo" id="cronometroVisualRuletaTiempo">00:00</div>
                 <div class="cronometro-visual-barra">
@@ -106,9 +106,24 @@
                 <p class="cronometro-visual-texto">⏳ Iniciando partida...</p>
             </div>
 
-            <!-- Última bola GRANDE + 5 pequeñas -->
-            <div id="ultimaBolaRuletaContainer"></div>
+            <!-- Última bola GRANDE + 5 pequeñas (SIEMPRE VISIBLE) -->
+            <div id="ultimaBolaRuletaContainer">
+                <div class="ultima-bola-ruleta">
+                    <div class="bola-grande">
+                        <span class="bola-letra">-</span>
+                        <span class="bola-numero">--</span>
+                    </div>
+                    <div class="bolas-chicas-ruleta" id="bolasChicasRuleta">
+                        <div class="bola-mini" style="opacity:0.3;">--</div>
+                        <div class="bola-mini" style="opacity:0.3;">--</div>
+                        <div class="bola-mini" style="opacity:0.3;">--</div>
+                        <div class="bola-mini" style="opacity:0.3;">--</div>
+                        <div class="bola-mini" style="opacity:0.3;">--</div>
+                    </div>
+                </div>
+            </div>
 
+            <!-- Programar cronómetro -->
             <div class="programar-row">
                 <input type="text" id="minutosInicioMobile" placeholder="Ej: 2:30 o 5" class="input-minutos">
                 <button id="btnProgramarMobile" onclick="programarJuegoMobile()" class="btn-juego btn-programar-movil" disabled>
@@ -116,6 +131,7 @@
                 </button>
             </div>
 
+            <!-- Controles de juego -->
             <div class="controles-juego">
                 <button id="btnAutoMobile" onclick="iniciarAutoMobile()" class="btn-juego btn-auto" disabled>
                     🤖 AUTO
@@ -126,18 +142,11 @@
             </div>
 
             <!-- Botón REINICIAR en ruleta -->
-            <button id="btnReiniciarRuleta" onclick="reiniciarPartida()" class="btn-accion btn-reiniciar-partida" style="display:none;margin-bottom:10px;">
+            <button id="btnReiniciarRuleta" onclick="reiniciarPartida()" class="btn-accion btn-reiniciar-partida" style="display:none;">
                 🔄 REINICIAR PARTIDA
             </button>
 
-            <div class="ultimos-movil" id="ultimosCantadosMobile">
-                <span class="num-chico-movil vacio">--</span>
-                <span class="num-chico-movil vacio">--</span>
-                <span class="num-chico-movil vacio">--</span>
-                <span class="num-chico-movil vacio">--</span>
-                <span class="num-chico-movil vacio">--</span>
-            </div>
-
+            <!-- Tablero 1-75 -->
             <div class="tablero-container">
                 <div class="tablero-header">
                     <h3>📊 TABLERO (1-75)</h3>
@@ -148,19 +157,19 @@
         </div>
     </div>
 
-    <!-- CHAT FLOTANTE -->
+    <!-- CHAT FLOTANTE (MÁS GRANDE) -->
     <div class="chat-flotante">
         <button class="btn-chat" onclick="toggleChat()">💬</button>
         <div class="chat-panel" id="chatPanel">
             <div class="chat-header">
-                💬 CHAT
+                💬 CHAT GRUPAL
                 <button onclick="limpiarChat()" style="background:transparent;border:none;color:#ffca28;cursor:pointer;font-size:0.7rem;">🗑️</button>
             </div>
             <div class="chat-mensajes" id="chatMensajes">
                 <p class="chat-vacio">No hay mensajes</p>
             </div>
             <div class="chat-input-area">
-                <input type="text" id="chatInput" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter')enviarChat()">
+                <textarea id="chatInput" placeholder="Escribe un mensaje..." onkeypress="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();enviarChat();}" rows="1"></textarea>
                 <button onclick="enviarChat()">➤</button>
             </div>
         </div>
@@ -240,7 +249,7 @@
         </div>
     </div>
 
-    <!-- SCRIPTS -->
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     
