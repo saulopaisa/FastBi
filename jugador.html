@@ -38,7 +38,6 @@
 
         .container { max-width: 900px; margin: 0 auto; padding: 10px; padding-bottom: 30px; }
 
-        /* Header sticky */
         .header-fijo {
             position: sticky; top: 0; z-index: 50;
             background: var(--dark); padding: 8px 0;
@@ -53,13 +52,11 @@
         }
 
         .sala-info { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.7em; color: var(--text-gray); flex-wrap: wrap; }
-
         .connection-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
         .connection-dot.online { background: var(--success); animation: pulse 2s infinite; }
         .connection-dot.offline { background: var(--danger); }
         @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
 
-        /* Barra de números */
         .numeros-bar { display: flex; align-items: center; gap: 8px; padding: 8px 0; flex-wrap: wrap; justify-content: center; }
 
         .ultima-bola-grande {
@@ -85,19 +82,16 @@
         .bola-chica.ultima { background: #fbbf24; color: #1e293b; border-color: #f59e0b; }
         @keyframes popIn { 0%{transform:scale(0);} 70%{transform:scale(1.2);} 100%{transform:scale(1);} }
 
-        /* Info bar */
         .info-bar { display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
         .info-card { background: var(--card-bg); padding: 8px 12px; border-radius: 8px; text-align: center; flex: 1; min-width: 55px; border: 1px solid #2d3436; }
         .info-value { font-size: 1.3em; font-weight: bold; color: var(--gold); }
         .info-label { font-size: 0.6em; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1px; }
 
-        /* Errores */
         .errores-indicator { text-align: center; font-size: 0.75em; margin: 5px 0; padding: 5px; border-radius: 8px; }
         .errores-indicator.clean { color: var(--success); }
         .errores-indicator.warning { color: var(--warning); background: rgba(245,158,11,0.1); animation: pulse 2s infinite; }
         .errores-indicator.eliminado { color: var(--danger); background: rgba(239,68,68,0.1); }
 
-        /* Selector vista */
         .vista-selector { display: flex; gap: 6px; margin: 8px 0; }
         .vista-selector button {
             flex: 1; padding: 8px; border: 2px solid #334155; border-radius: 8px;
@@ -106,15 +100,6 @@
         }
         .vista-selector button.activo { border-color: var(--gold); color: var(--gold); background: #1e293b; }
 
-        /* Login */
-        .login-screen { text-align: center; padding: 30px 20px; background: var(--card-bg); border-radius: 16px; border: 1px solid #2d3436; max-width: 400px; margin: 40px auto; }
-        .login-screen .icon { font-size: 4em; margin-bottom: 15px; animation: float 3s ease-in-out infinite; }
-        @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
-        .login-screen h2 { color: var(--gold); margin-bottom: 8px; font-size: 1.3em; }
-        .login-screen p { color: var(--text-gray); margin-bottom: 20px; font-size: 0.85em; }
-        .input-nombre { width: 100%; padding: 14px; border: 2px solid #334155; border-radius: 12px; background: #1e293b; color: white; font-size: 1.1em; text-align: center; margin-bottom: 12px; transition: border-color 0.3s; }
-        .input-nombre:focus { outline: none; border-color: var(--gold); }
-
         .btn { padding: 12px 20px; border: none; border-radius: 12px; font-weight: bold; font-size: 0.9em; cursor: pointer; transition: all 0.2s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .btn:active { transform: scale(0.97); }
         .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
@@ -122,17 +107,13 @@
         .btn-success { background: linear-gradient(135deg, var(--success), #059669); color: white; }
         .btn-bingo { background: linear-gradient(135deg, #10b981, #059669) !important; color: white; font-size: 1.1em !important; padding: 14px !important; animation: glowBingo 1.5s infinite; box-shadow: 0 4px 20px rgba(16,185,129,0.4); }
         @keyframes glowBingo { 0%,100%{box-shadow:0 4px 20px rgba(16,185,129,0.4);} 50%{box-shadow:0 4px 35px rgba(16,185,129,0.8);} }
-        .btn-warning { background: linear-gradient(135deg, var(--warning), #d97706); color: #1e293b; }
         .btn-danger { background: linear-gradient(135deg, var(--danger), #b91c1c); color: white; }
         .btn-outline { background: transparent; border: 2px solid var(--warning); color: var(--warning); }
         .btn-outline.desbloqueado { border-color: var(--success); color: var(--success); animation: pulse 1.5s infinite; }
         .btn-ver-numeros { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; font-size: 0.8em; padding: 10px; }
-        .error-msg { background: var(--danger); color: white; padding: 10px; border-radius: 10px; margin-top: 10px; font-size: 0.85em; }
 
-        /* Game screen */
         .game-screen { display: none; }
 
-        /* Cartones */
         .cartones-container { display: flex; flex-direction: column; gap: 12px; margin: 10px 0; }
         .cartones-container.horizontal { flex-direction: row; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 10px; gap: 12px; }
         .cartones-container.horizontal .carton-wrapper { flex: 0 0 auto; width: 320px; min-width: 300px; }
@@ -158,19 +139,15 @@
         .carton-cell.ultima-cantada { animation: popCell 0.4s ease-out; background: #fbbf24 !important; color: #1e293b !important; border-color: #f59e0b !important; }
         @keyframes popCell { 0%{transform:scale(0.6);} 60%{transform:scale(1.2);} 100%{transform:scale(1);} }
 
-        /* Acciones */
         .acciones-jugador { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .acciones-jugador .btn { font-size: 0.8em; padding: 10px; }
 
-        /* Chat status */
         .chat-status { text-align: center; font-size: 0.7em; margin-top: 5px; padding: 5px; border-radius: 8px; }
         .chat-status.bloqueado { color: var(--text-gray); }
         .chat-status.desbloqueado { color: var(--success); background: rgba(16,185,129,0.1); animation: pulse 2s infinite; }
 
-        /* Admin mensaje */
         .admin-mensaje { background: linear-gradient(135deg, #1e3a5f, #0f172a); border-left: 4px solid var(--gold); padding: 10px 14px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85em; display: none; }
 
-        /* Chat flotante */
         .chat-flotante { position: fixed; bottom: 20px; right: 15px; z-index: 200; }
         .btn-chat { width: 50px; height: 50px; border-radius: 50%; background: #6366f1; color: white; border: none; font-size: 1.3em; cursor: pointer; box-shadow: 0 4px 15px rgba(99,102,241,0.5); display: flex; align-items: center; justify-content: center; transition: all 0.2s; position: relative; }
         .btn-chat:active { transform: scale(0.9); }
@@ -196,7 +173,6 @@
         .chat-input-area button:disabled { opacity: 0.4; cursor: not-allowed; }
         .chat-bloqueado-aviso { text-align: center; font-size: 0.65em; color: #64748b; padding: 5px; }
 
-        /* Modal */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 300; align-items: center; justify-content: center; padding: 20px; }
         .modal-overlay.active { display: flex; }
         .modal-content { background: var(--card-bg); padding: 25px; border-radius: 16px; text-align: center; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; border: 2px solid var(--gold); }
@@ -204,7 +180,6 @@
         .modal-buttons { display: flex; gap: 10px; margin-top: 15px; }
         .modal-buttons .btn { flex: 1; }
 
-        /* Mini ruleta */
         .miniruleta-container { display: flex; flex-direction: column; gap: 10px; }
         .miniruleta-letra { background: var(--primary); color: white; padding: 8px; border-radius: 8px 8px 0 0; font-weight: bold; font-size: 1.1em; text-align: center; }
         .miniruleta-numeros { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 8px; background: #0f172a; border-radius: 0 0 8px 8px; min-height: 40px; }
@@ -212,16 +187,20 @@
         .miniruleta-numero.cantado { background: var(--success); color: white; border-color: #059669; }
         .miniruleta-total { text-align: center; margin-top: 10px; color: var(--text-gray); font-size: 0.8em; }
 
-        /* Confeti */
         .confetti-piece { position: fixed; width: 10px; height: 10px; top: -20px; animation: confettiFall 3s linear forwards; z-index: 400; pointer-events: none; }
         @keyframes confettiFall { 0%{transform:translateY(0) rotate(0deg); opacity:1;} 100%{transform:translateY(100vh) rotate(720deg); opacity:0;} }
 
-        /* Toast */
         .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #333; color: white; padding: 12px 24px; border-radius: 25px; font-size: 0.85em; z-index: 500; opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap; }
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         .toast.success { background: var(--success); }
         .toast.error { background: var(--danger); }
         .toast.warning { background: var(--warning); color: #1e293b; }
+
+        /* Loading */
+        .loading-screen { text-align: center; padding: 40px 20px; background: var(--card-bg); border-radius: 16px; border: 1px solid #2d3436; max-width: 400px; margin: 40px auto; }
+        .loading-screen .icon { font-size: 4em; animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
+        .loading-screen h2 { color: var(--gold); margin-top: 15px; }
 
         @media (max-width: 380px) {
             .carton-cell { font-size: 0.65em; border-radius: 3px; }
@@ -234,33 +213,27 @@
 </head>
 <body>
     <div class="container">
-        <!-- HEADER FIJO -->
         <div class="header-fijo" id="headerFijo">
             <div class="header-top">
                 <h1>🎱 BINGO</h1>
                 <div class="sala-info">
-                    🏠 <strong id="salaNombre">-</strong>
+                    🏠 <strong id="salaNombre">-</strong> | 👤 <strong id="jugadorNombre">-</strong>
                     <span class="connection-dot online" id="connectionDot"></span>
-                    <span id="connectionText">Conectado</span>
                 </div>
             </div>
             <div class="numeros-bar" id="numerosBar">
-                <div class="ultima-bola-grande" id="ultimaBolaGrande" onclick="abrirMiniRuleta()" title="Ver todos los números">
-                    <span class="letra">-</span>
-                    <span class="numero">--</span>
+                <div class="ultima-bola-grande" id="ultimaBolaGrande" onclick="abrirMiniRuleta()">
+                    <span class="letra">-</span><span class="numero">--</span>
                 </div>
                 <div class="ultimas-bolas-scroll" id="ultimasBolasScroll"></div>
             </div>
         </div>
 
-        <!-- Login -->
-        <div id="loginScreen" class="login-screen">
-            <div class="icon">🎮</div>
-            <h2>¡Bienvenido!</h2>
-            <p>Ingresa tu nombre para unirte</p>
-            <input type="text" id="nombreInput" class="input-nombre" placeholder="Tu nombre" maxlength="20" autocomplete="off">
-            <button class="btn btn-primary" onclick="unirseAlJuego()">🎯 UNIRME</button>
-            <div id="loginError"></div>
+        <!-- Loading -->
+        <div id="loadingScreen" class="loading-screen">
+            <div class="icon">🎫</div>
+            <h2>Cargando cartones...</h2>
+            <p style="color:#94a3b8;font-size:0.85em;">Conectando con la sala</p>
         </div>
 
         <!-- Juego -->
@@ -270,33 +243,26 @@
                 <div class="info-card"><div class="info-value" id="cantadosCount">0</div><div class="info-label">Cantados</div></div>
                 <div class="info-card"><div class="info-value" id="cronometroDisplay">--</div><div class="info-label">Tiempo</div></div>
             </div>
-
             <div id="adminMensaje" class="admin-mensaje"></div>
-
             <div class="errores-indicator clean" id="erroresIndicator">✅ 0/2 errores de BINGO</div>
-
             <div class="vista-selector" id="vistaSelector" style="display:none;">
                 <button onclick="cambiarVista('vertical')" id="btnVistaVertical" class="activo">📱 VERTICAL</button>
                 <button onclick="cambiarVista('horizontal')" id="btnVistaHorizontal">📱↔ HORIZONTAL</button>
             </div>
-
             <div class="cartones-container vertical" id="cartonesContainer"></div>
-
             <div class="acciones-jugador">
                 <button class="btn btn-bingo" id="btnCantarBingo" onclick="cantarBingo()">🎉 ¡BINGO!</button>
                 <button class="btn btn-ver-numeros" onclick="abrirMiniRuleta()">🔢 VER NÚMEROS</button>
             </div>
-
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
                 <button class="btn btn-outline" id="btnAvisarAdmin" onclick="solicitarDesbloquearChat()">🔒 PEDIR HABLAR</button>
                 <button class="btn btn-danger" onclick="salirDelJuego()">🚪 Salir</button>
             </div>
-
-            <div class="chat-status bloqueado" id="chatStatus">🔒 Chat bloqueado. Usa "PEDIR HABLAR" si necesitas comunicarte.</div>
+            <div class="chat-status bloqueado" id="chatStatus">🔒 Chat bloqueado</div>
         </div>
     </div>
 
-    <!-- MODAL MINI RULETA -->
+    <!-- MODALES -->
     <div class="modal-overlay" id="modalMiniRuleta">
         <div class="modal-content">
             <h2>🔢 NÚMEROS CANTADOS</h2>
@@ -306,7 +272,6 @@
         </div>
     </div>
 
-    <!-- CHAT FLOTANTE -->
     <div class="chat-flotante" id="chatFlotante" style="display:none;">
         <button class="btn-chat" onclick="toggleChat()">💬<span class="chat-badge" id="chatBadge">0</span></button>
         <div class="chat-panel" id="chatPanel">
@@ -316,33 +281,29 @@
                 <input type="text" id="chatInput" placeholder="Chat bloqueado..." disabled onkeypress="if(event.key==='Enter')enviarChat()">
                 <button onclick="enviarChat()" id="btnEnviarChat" disabled>➤</button>
             </div>
-            <div class="chat-bloqueado-aviso" id="chatBloqueadoAviso">🔒 Usa "PEDIR HABLAR" para solicitar desbloqueo</div>
+            <div class="chat-bloqueado-aviso" id="chatBloqueadoAviso">🔒 Usa "PEDIR HABLAR"</div>
         </div>
     </div>
 
-    <!-- Modal Confirmar -->
     <div class="modal-overlay" id="modalConfirmar">
         <div class="modal-content">
             <h2>🎉 ¿Confirmar BINGO?</h2>
-            <p>Recuerda: tienes máximo 2 intentos. Si fallas 2 veces, quedarás eliminado.</p>
+            <p>Máximo 2 intentos. Si fallas 2 veces, quedarás eliminado.</p>
             <div class="modal-buttons">
-                <button class="btn btn-success" onclick="confirmarBingo()">✅ Sí, BINGO</button>
-                <button class="btn btn-danger" onclick="cerrarModal('modalConfirmar')">❌ Cancelar</button>
+                <button class="btn btn-success" onclick="confirmarBingo()">✅ Sí</button>
+                <button class="btn btn-danger" onclick="cerrarModal('modalConfirmar')">❌ No</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal Ganador -->
     <div class="modal-overlay" id="modalGanador">
         <div class="modal-content"><h2>🏆 ¡GANASTE!</h2><p id="ganadorMensaje"></p><button class="btn btn-primary" onclick="cerrarModal('modalGanador')">🎉 Cerrar</button></div>
     </div>
 
-    <!-- Modal Eliminado -->
     <div class="modal-overlay" id="modalEliminado">
-        <div class="modal-content"><h2>❌ ELIMINADO</h2><p>Has cantado BINGO erróneo 2 veces.</p><button class="btn btn-danger" onclick="salirDelJuego()">🚪 Salir</button></div>
+        <div class="modal-content"><h2>❌ ELIMINADO</h2><p>2 bingos errados.</p><button class="btn btn-danger" onclick="salirDelJuego()">🚪 Salir</button></div>
     </div>
 
-    <!-- Modal Partida Terminada -->
     <div class="modal-overlay" id="modalPartidaTerminada">
         <div class="modal-content"><h2>🏁 Partida Terminada</h2><p id="partidaTerminadaMensaje"></p><button class="btn btn-primary" onclick="limpiarParaNuevaPartida()">🔄 Nueva Partida</button></div>
     </div>
@@ -350,7 +311,6 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // ============ FIREBASE ============
         const firebaseConfig = {
             apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
             authDomain: "bingofast.firebaseapp.com",
@@ -363,19 +323,24 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        function obtenerSalaDeURL() { const p = new URLSearchParams(window.location.search); return p.get('sala') || null; }
-        const SALA_ID = obtenerSalaDeURL();
-        if (SALA_ID) { document.getElementById('salaNombre').textContent = SALA_ID; }
-        else { document.getElementById('salaNombre').textContent = 'No asignada'; document.getElementById('loginScreen').innerHTML = '<div class="icon">⚠️</div><h2>Sala no encontrada</h2><p style="color:#94a3b8;">Solicita un enlace válido.</p><div class="error-msg">URL debe incluir ?sala=ID_SALA</div>'; }
+        function obtenerParametro(nombre) { const p = new URLSearchParams(window.location.search); return p.get(nombre) || null; }
+        const SALA_ID = obtenerParametro('sala');
+        const JUGADOR_NOMBRE = obtenerParametro('jugador');
 
-        let miNombre = null, misCartones = [], cantadosSet = new Set(), patronActual = [];
+        if (!SALA_ID || !JUGADOR_NOMBRE) {
+            document.getElementById('loadingScreen').innerHTML = '<div class="icon">⚠️</div><h2>Link inválido</h2><p style="color:#94a3b8;">Solicita un enlace válido al administrador.</p>';
+        } else {
+            document.getElementById('salaNombre').textContent = SALA_ID;
+            document.getElementById('jugadorNombre').textContent = JUGADOR_NOMBRE;
+        }
+
+        let miNombre = JUGADOR_NOMBRE, misCartones = [], cantadosSet = new Set(), patronActual = [];
         let juegoConectado = false, ultimoEstadoPartida = null, vistaActual = 'vertical';
         let mensajesChat = [], chatDesbloqueado = false, erroresBingo = 0, eliminado = false;
 
         function actualizarEstadoConexion(online) {
-            const d = document.getElementById('connectionDot'), t = document.getElementById('connectionText');
+            const d = document.getElementById('connectionDot');
             d.className = 'connection-dot ' + (online ? 'online' : 'offline');
-            t.textContent = online ? 'Conectado' : 'Desconectado';
         }
         db.ref('.info/connected').on('value', (snap) => actualizarEstadoConexion(snap.val() === true));
 
@@ -398,14 +363,13 @@
                 btnAvisar.textContent = '🔓 CHAT ABIERTO'; btnAvisar.className = 'btn btn-outline desbloqueado'; headerStatus.textContent = '🔓';
             } else {
                 input.disabled = true; btnEnviar.disabled = true; input.placeholder = 'Chat bloqueado...'; aviso.style.display = 'block';
-                statusDiv.textContent = '🔒 Chat bloqueado. Usa "PEDIR HABLAR"'; statusDiv.className = 'chat-status bloqueado';
+                statusDiv.textContent = '🔒 Chat bloqueado'; statusDiv.className = 'chat-status bloqueado';
                 btnAvisar.textContent = '🔒 PEDIR HABLAR'; btnAvisar.className = 'btn btn-outline'; headerStatus.textContent = '🔒';
             }
         }
 
         function solicitarDesbloquearChat() {
-            if (chatDesbloqueado) { mostrarToast('✅ El chat ya está desbloqueado', 'success'); return; }
-            if (!miNombre) return;
+            if (chatDesbloqueado) { mostrarToast('✅ Chat ya desbloqueado', 'success'); return; }
             const mensaje = prompt('📝 ¿Qué quieres comunicar al administrador?');
             if (!mensaje) return;
             db.ref('partidas/' + SALA_ID).update({ solicitudChat: { jugador: miNombre, mensaje: mensaje, timestamp: Date.now() } });
@@ -415,35 +379,31 @@
         function escucharDesbloqueoChat() {
             db.ref('partidas/' + SALA_ID + '/chatDesbloqueos/' + miNombre).on('value', (snap) => {
                 const data = snap.val();
-                if (data && data.desbloqueado === true) { chatDesbloqueado = true; actualizarEstadoChat(); mostrarToast('🔓 Chat desbloqueado', 'success'); }
+                if (data && data.desbloqueado === true) { chatDesbloqueado = true; actualizarEstadoChat(); }
                 else if (data && data.desbloqueado === false) { chatDesbloqueado = false; actualizarEstadoChat(); }
             });
         }
 
-        async function unirseAlJuego() {
-            const nombre = document.getElementById('nombreInput').value.trim();
-            const errorDiv = document.getElementById('loginError');
-            if (!nombre) { errorDiv.innerHTML = '<div class="error-msg">Ingresa tu nombre</div>'; return; }
-            if (!SALA_ID) { errorDiv.innerHTML = '<div class="error-msg">No hay sala asignada</div>'; return; }
+        async function cargarCartones() {
+            if (!SALA_ID || !miNombre) return;
             try {
                 const snap = await db.ref('salas/' + SALA_ID + '/cartones').once('value');
                 const cartones = snap.val() || {};
-                let cartonesAsignados = [];
-                Object.entries(cartones).forEach(([id, c]) => { if (c.asignadoA === nombre) cartonesAsignados.push({ id, carton: c.carton, numero: c.numero }); });
-                if (cartonesAsignados.length === 0) {
-                    Object.entries(cartones).forEach(([id, c]) => { if (!c.asignadoA && cartonesAsignados.length < 2) cartonesAsignados.push({ id, carton: c.carton, numero: c.numero }); });
-                    if (cartonesAsignados.length === 0) { errorDiv.innerHTML = '<div class="error-msg">No hay cartones disponibles.</div>'; return; }
-                    for (const c of cartonesAsignados) { await db.ref('salas/' + SALA_ID + '/cartones/' + c.id).update({ asignadoA: nombre, estado: 'asignado' }); }
+                misCartones = [];
+                Object.entries(cartones).forEach(([id, c]) => { if (c.asignadoA === miNombre) misCartones.push({ id, carton: c.carton, numero: c.numero }); });
+                if (misCartones.length === 0) {
+                    document.getElementById('loadingScreen').innerHTML = '<div class="icon">⚠️</div><h2>Sin cartones</h2><p style="color:#94a3b8;">No tienes cartones asignados.</p>';
+                    return;
                 }
-                miNombre = nombre; misCartones = cartonesAsignados; juegoConectado = true; erroresBingo = 0; eliminado = false;
-                localStorage.setItem('bingo_jugador_nombre', nombre); localStorage.setItem('bingo_jugador_sala', SALA_ID);
-                localStorage.setItem('bingo_jugador_cartones', JSON.stringify(cartonesAsignados.map(c => c.id)));
-                document.getElementById('loginScreen').style.display = 'none'; document.getElementById('gameScreen').style.display = 'block';
+                juegoConectado = true; erroresBingo = 0; eliminado = false;
+                localStorage.setItem('bingo_jugador_nombre', miNombre); localStorage.setItem('bingo_jugador_sala', SALA_ID);
+                localStorage.setItem('bingo_jugador_cartones', JSON.stringify(misCartones.map(c => c.id)));
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('gameScreen').style.display = 'block';
                 document.getElementById('chatFlotante').style.display = 'block';
                 if (misCartones.length === 2) document.getElementById('vistaSelector').style.display = 'flex';
                 inicializarJuego(); actualizarIndicadorErrores();
-                mostrarToast('✅ Conectado con ' + cartonesAsignados.length + ' cartón(es)', 'success');
-            } catch (error) { console.error(error); errorDiv.innerHTML = '<div class="error-msg">Error al conectar</div>'; }
+            } catch (error) { console.error(error); document.getElementById('loadingScreen').innerHTML = '<div class="icon">❌</div><h2>Error</h2><p style="color:#94a3b8;">No se pudo conectar.</p>'; }
         }
 
         function inicializarJuego() { mostrarCartones(); escucharPartida(); escucharChat(); escucharDesbloqueoChat(); actualizarEstadoChat(); const v = localStorage.getItem('bingo_vista'); if (v) cambiarVista(v); }
@@ -477,9 +437,9 @@
 
         function actualizarIndicadorErrores() {
             const indicador = document.getElementById('erroresIndicator'), btnBingo = document.getElementById('btnCantarBingo');
-            if (eliminado) { indicador.textContent = '❌ ELIMINADO - 2/2 errores'; indicador.className = 'errores-indicator eliminado'; btnBingo.disabled = true; btnBingo.textContent = '❌ ELIMINADO'; }
-            else if (erroresBingo === 0) { indicador.textContent = '✅ 0/2 errores'; indicador.className = 'errores-indicator clean'; btnBingo.disabled = false; btnBingo.textContent = '🎉 ¡BINGO!'; }
-            else if (erroresBingo === 1) { indicador.textContent = '⚠️ 1/2 errores - ¡Cuidado!'; indicador.className = 'errores-indicator warning'; btnBingo.disabled = false; btnBingo.textContent = '🎉 ¡BINGO! (último)'; }
+            if (eliminado) { indicador.textContent = '❌ ELIMINADO'; indicador.className = 'errores-indicator eliminado'; btnBingo.disabled = true; }
+            else if (erroresBingo === 0) { indicador.textContent = '✅ 0/2 errores'; indicador.className = 'errores-indicator clean'; btnBingo.disabled = false; }
+            else if (erroresBingo === 1) { indicador.textContent = '⚠️ 1/2 errores'; indicador.className = 'errores-indicator warning'; btnBingo.disabled = false; }
         }
 
         function escucharPartida() {
@@ -501,7 +461,7 @@
                 else if (data.estado === 'pausa') document.getElementById('cronometroDisplay').textContent = '⏸️';
                 if (data.resultadoRevision && data.resultadoRevision.jugador === miNombre) {
                     if (data.resultadoRevision.resultado === 'valido') { lanzarConfeti(); document.getElementById('ganadorMensaje').textContent = '¡Felicidades ' + miNombre + '! BINGO validado 🎉'; document.getElementById('modalGanador').classList.add('active'); erroresBingo = 0; eliminado = false; actualizarIndicadorErrores(); }
-                    else if (data.resultadoRevision.resultado === 'errado') { erroresBingo++; actualizarIndicadorErrores(); if (erroresBingo >= 2) { eliminado = true; actualizarIndicadorErrores(); document.getElementById('modalEliminado').classList.add('active'); } else { mostrarToast('❌ BINGO ERRADO. Te queda 1 oportunidad.', 'error'); } }
+                    else if (data.resultadoRevision.resultado === 'errado') { erroresBingo++; actualizarIndicadorErrores(); if (erroresBingo >= 2) { eliminado = true; actualizarIndicadorErrores(); document.getElementById('modalEliminado').classList.add('active'); } else { mostrarToast('❌ BINGO ERRADO. 1 oportunidad restante.', 'error'); } }
                 }
             });
         }
@@ -563,22 +523,13 @@
         function obtenerLetra(n) { if (n <= 15) return 'B'; if (n <= 30) return 'I'; if (n <= 45) return 'N'; if (n <= 60) return 'G'; return 'O'; }
         function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
 
-        async function salirDelJuego() { if (!juegoConectado) return; if (!eliminado && !confirm('¿Salir del juego?')) return; for (const c of misCartones) { await db.ref('salas/' + SALA_ID + '/cartones/' + c.id).update({ asignadoA: null, estado: 'disponible' }); } juegoConectado = false; miNombre = null; misCartones = []; cantadosSet.clear(); mensajesChat = []; chatDesbloqueado = false; erroresBingo = 0; eliminado = false; localStorage.clear(); document.getElementById('gameScreen').style.display = 'none'; document.getElementById('loginScreen').style.display = 'block'; document.getElementById('nombreInput').value = ''; document.getElementById('cartonesContainer').innerHTML = ''; document.getElementById('ultimasBolasScroll').innerHTML = ''; document.getElementById('chatFlotante').style.display = 'none'; document.getElementById('vistaSelector').style.display = 'none'; document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active')); }
+        async function salirDelJuego() { if (!juegoConectado) return; for (const c of misCartones) { await db.ref('salas/' + SALA_ID + '/cartones/' + c.id).update({ asignadoA: null, estado: 'disponible' }); } juegoConectado = false; miNombre = null; misCartones = []; cantadosSet.clear(); localStorage.clear(); document.getElementById('gameScreen').style.display = 'none'; document.getElementById('loadingScreen').style.display = 'block'; document.getElementById('loadingScreen').innerHTML = '<div class="icon">👋</div><h2>¡Hasta luego!</h2><p style="color:#94a3b8;">Has salido del juego.</p>'; document.getElementById('chatFlotante').style.display = 'none'; document.getElementById('vistaSelector').style.display = 'none'; }
 
         function lanzarConfeti() { const colores = ['#FF6B6B','#4ECDC4','#FFD700','#FF8C00','#FF1493','#10b981']; for (let i = 0; i < 80; i++) { setTimeout(() => { const confetti = document.createElement('div'); confetti.className = 'confetti-piece'; confetti.style.left = Math.random()*100+'%'; confetti.style.backgroundColor = colores[Math.floor(Math.random()*colores.length)]; confetti.style.width = Math.random()*12+6+'px'; confetti.style.height = Math.random()*12+6+'px'; confetti.style.animationDuration = Math.random()*2+2+'s'; document.body.appendChild(confetti); setTimeout(() => confetti.remove(), 3500); }, i*12); } }
         function mostrarToast(mensaje, tipo) { const toast = document.getElementById('toast'); toast.textContent = mensaje; toast.className = 'toast ' + (tipo || ''); setTimeout(() => toast.classList.add('show'), 10); setTimeout(() => toast.classList.remove('show'), 2500); }
 
         document.addEventListener('DOMContentLoaded', () => {
-            const ng = localStorage.getItem('bingo_jugador_nombre'), sg = localStorage.getItem('bingo_jugador_sala');
-            const ids = JSON.parse(localStorage.getItem('bingo_jugador_cartones') || '[]');
-            if (ng && sg === SALA_ID && ids.length > 0) {
-                document.getElementById('nombreInput').value = ng;
-                Promise.all(ids.map(id => db.ref('salas/' + SALA_ID + '/cartones/' + id).once('value'))).then(snapshots => {
-                    misCartones = []; snapshots.forEach((snap, i) => { const d = snap.val(); if (d && d.asignadoA === ng) misCartones.push({ id: ids[i], carton: d.carton, numero: d.numero }); });
-                    if (misCartones.length > 0) { miNombre = ng; juegoConectado = true; document.getElementById('loginScreen').style.display = 'none'; document.getElementById('gameScreen').style.display = 'block'; document.getElementById('chatFlotante').style.display = 'block'; if (misCartones.length === 2) document.getElementById('vistaSelector').style.display = 'flex'; inicializarJuego(); db.ref('partidas/' + SALA_ID).once('value', (snap) => { const data = snap.val(); if (data && data.cantados) { data.cantados.forEach(num => { cantadosSet.add(num); marcarNumeroEnCartones(num, false); }); document.getElementById('cantadosCount').textContent = data.cantados.length; if (data.cantados.length > 0) actualizarUltimaBolaGrande(data.cantados[data.cantados.length-1]); actualizarUltimasBolasScroll(data.cantados); } if (data && data.patron) { patronActual = data.patron; aplicarPatronACartones(); } }); mostrarToast('✅ Reconectado', 'success'); }
-                });
-            }
-            document.getElementById('nombreInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') unirseAlJuego(); });
+            if (SALA_ID && JUGADOR_NOMBRE) { cargarCartones(); }
         });
 
         document.querySelectorAll('.modal-overlay').forEach(modal => { modal.addEventListener('click', function(e) { if (e.target === this && !['modalEliminado','modalPartidaTerminada'].includes(this.id)) this.classList.remove('active'); }); });
