@@ -512,18 +512,8 @@ function cantarBola(bola) {
     verificarTodosLosCartones();
 }
 
-var drawBtn = document.getElementById('drawBtn') || document.getElementById('drawBtnMobile');
-if (drawBtn) { 
-    drawBtn.addEventListener('click', function() { 
-        if (window.modoAutomatico || window.etapaActual !== 3 || window.enPausa || !window.partidaIniciada) return; 
-        if (window.cantados.length >= 75) { mostrarToast('🎉 Fin del juego', 'success'); return; } 
-        var b, i = 0; 
-        do { b = Math.floor(Math.random()*75)+1; i++; } 
-        while (window.cantados.indexOf(b) !== -1 && i < 1000); 
-        cantarBola(b); 
-        verificarPausa(); 
-    }); 
-}
+// NO agregar event listener adicional - el HTML ya tiene onclick
+// El botón drawBtnMobile ya se maneja en ruleta-movil.js
 
 // ============ VERIFICACIONES ============
 function verificarTodosLosCartones() { 
@@ -886,16 +876,8 @@ window.reiniciarPartidaGlobal = function() {
     }
 };
 
-// Asignar eventos a los botones de reiniciar
-var btnReiniciarConfig = document.getElementById('btnReiniciarPartida');
-if (btnReiniciarConfig) {
-    btnReiniciarConfig.addEventListener('click', window.reiniciarPartidaGlobal);
-}
-
-var btnReiniciarRuleta = document.getElementById('btnReiniciarRuleta');
-if (btnReiniciarRuleta) {
-    btnReiniciarRuleta.addEventListener('click', window.reiniciarPartidaGlobal);
-}
+// NO agregar event listeners adicionales a btnReiniciarPartida ni btnReiniciarRuleta
+// El HTML ya tiene onclick
 
 // ============ TECLAS ============
 document.addEventListener('keydown', function(e) {
