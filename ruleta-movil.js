@@ -134,7 +134,7 @@ function comenzarPartida() {
     mostrarToast('▶️ Partida iniciada', 'success');
 }
 
-// ============ REINICIAR PARTIDA (DESDE RULETA - ÚNICO CONFIRM) ============
+// ============ REINICIAR PARTIDA (ÚNICO CONFIRM) ============
 function reiniciarPartida() {
     if (!confirm('⚠️ ¿Reiniciar la partida?\n\nSe limpiarán todos los números cantados.')) return;
     
@@ -304,6 +304,29 @@ function iniciarAutoMobile() {
     if (window.iniciarBingoAutomatico) window.iniciarBingoAutomatico();
 }
 
+// ============ SORTEO MANUAL (CORREGIDO) ============
+function sortearManualMobile() {
+    if (!window.partidaIniciada) { 
+        alert('⚠️ Inicia la partida primero'); 
+        return; 
+    }
+    if (window.modoAutomatico || window.enPausa) return;
+    if (window.cantados.length >= 75) { 
+        mostrarToast('🎉 Fin del juego', 'success'); 
+        return; 
+    }
+    var b, i = 0;
+    do { 
+        b = Math.floor(Math.random() * 75) + 1; 
+        i++; 
+    } while (window.cantados.indexOf(b) !== -1 && i < 1000);
+    
+    if (typeof cantarBola === 'function') {
+        cantarBola(b);
+        if (typeof verificarPausa === 'function') verificarPausa();
+    }
+}
+
 // ============ MODAL VERIFICADOR (CON VALIDACIÓN) ============
 function abrirModalVerificador() {
     if (window.etapaActual < 3) {
@@ -387,13 +410,6 @@ function escucharChat() {
 function copiarSalaId() {
     var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
     navigator.clipboard.writeText(salaId).then(function() { alert('✅ ID de sala: ' + salaId); });
-}
-
-// ============ SORTEO MANUAL ============
-function sortearManualMobile() {
-    if (!window.partidaIniciada) { alert('⚠️ Inicia la partida primero'); return; }
-    var btnPC = document.getElementById('drawBtn');
-    if (btnPC) btnPC.click();
 }
 
 // ============ ACTUALIZAR UI ============
