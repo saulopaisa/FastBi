@@ -561,7 +561,7 @@ body {
     background: var(--sidebar-bg); 
     border-top: 2px solid var(--border-color);
     display: flex !important; 
-    z-index: 999; 
+    z-index: 9999; 
     padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
@@ -664,7 +664,7 @@ body {
 .toast-notification.toast-error { background: #ef4444; }
 .toast-notification.toast-success { background: #10b981; }
 
-/* ============ DESKTOP (BARRA NAV SIEMPRE VISIBLE) ============ */
+/* ============ DESKTOP (BARRA NAV SIEMPRE VISIBLE + REDIMENSIONABLE) ============ */
 @media (min-width: 768px) {
     body { 
         flex-direction: column;
@@ -676,10 +676,11 @@ body {
         display: flex; 
         gap: 15px; 
         padding: 15px;
-        padding-bottom: calc(var(--nav-height) + 20px);
+        padding-bottom: 70px;
         flex: 1;
         overflow-y: auto;
         align-items: flex-start;
+        height: calc(100vh - var(--nav-height));
     }
     
     .section-config, .section-ruleta { 
@@ -690,12 +691,27 @@ body {
         display: flex !important;
         flex-direction: column;
         width: 380px;
+        min-width: 300px;
+        max-width: 500px;
         flex-shrink: 0;
+        resize: horizontal;
+        overflow: auto;
+        height: fit-content;
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+        padding-right: 5px;
+        border-right: 2px solid var(--border-color);
     }
     
     .section-ruleta.activo { 
         display: block !important;
         flex: 1;
+        min-width: 400px;
+        resize: horizontal;
+        overflow: auto;
+        height: fit-content;
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
     }
     
     .section-config.activo ~ .section-ruleta.activo {
@@ -705,7 +721,14 @@ body {
     
     .bottom-nav {
         display: flex !important;
-        z-index: 999;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 9999 !important;
+        background: var(--sidebar-bg) !important;
+        border-top: 2px solid var(--border-color) !important;
+        height: var(--nav-height) !important;
     }
     
     .chat-flotante { bottom: calc(var(--nav-height) + 20px); right: 20px; }
