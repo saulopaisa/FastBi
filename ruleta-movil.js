@@ -21,7 +21,6 @@ function navegarA(seccion) {
     if (seccion === 'config') {
         document.getElementById('sectionConfig').classList.add('activo');
     } else if (seccion === 'ruleta') {
-        // Solo permite ir a ruleta si la partida está configurada
         if (window.etapaActual >= 3) {
             document.getElementById('sectionRuleta').classList.add('activo');
         } else {
@@ -89,10 +88,13 @@ function comenzarPartida() {
         return;
     }
     
-    // Actualizar variable global
+    if (window.partidaIniciada) {
+        mostrarToast('⚠️ La partida ya está iniciada', 'error');
+        return;
+    }
+    
     window.partidaIniciada = true;
     
-    // Deshabilitar botón INICIAR PARTIDA
     var btnComenzar = document.getElementById('btnComenzarPartida');
     if (btnComenzar) {
         btnComenzar.disabled = true;
@@ -101,7 +103,6 @@ function comenzarPartida() {
         btnComenzar.style.boxShadow = 'none';
     }
     
-    // Habilitar controles de ruleta
     var btnAuto = document.getElementById('btnAutoMobile');
     var btnManual = document.getElementById('drawBtnMobile');
     var btnProg = document.getElementById('btnProgramarMobile');
@@ -115,11 +116,9 @@ function comenzarPartida() {
     if (btnProg) btnProg.disabled = false;
     if (btnReiniciar) btnReiniciar.style.display = 'block';
     
-    // Mostrar botón reiniciar en config también
     var btnReiniciarConfig = document.getElementById('btnReiniciarPartida');
     if (btnReiniciarConfig) btnReiniciarConfig.style.display = 'block';
     
-    // Actualizar Firebase
     db.ref('partidas/' + SALA_ID).update({
         estado: 'jugando',
         partidaIniciada: true,
@@ -127,11 +126,9 @@ function comenzarPartida() {
         timestamp: Date.now()
     });
     
-    // Actualizar UI
     if (typeof actualizarEtapas === 'function') actualizarEtapas();
     verificarPartidaVigente();
     
-    // Navegar a la ruleta
     navegarA('ruleta');
     
     mostrarToast('▶️ Partida iniciada', 'success');
@@ -140,11 +137,9 @@ function comenzarPartida() {
 // ============ REINICIAR PARTIDA (DESDE RULETA) ============
 function reiniciarPartida() {
     if (confirm('⚠️ ¿Reiniciar la partida?\n\nSe limpiarán todos los números cantados.')) {
-        // Llamar a la función global de ruleta.js
         if (window.reiniciarPartidaGlobal) {
             window.reiniciarPartidaGlobal();
         } else {
-            // Fallback si no existe la función global
             if (window.intervaloAutomatico) clearInterval(window.intervaloAutomatico);
             if (window.intervaloTemporizador) clearInterval(window.intervaloTemporizador);
             window.cantados = [];
@@ -227,7 +222,6 @@ function programarJuegoMobile() {
         return;
     }
     
-    // DETENER bingo automático si está activo
     if (window.modoAutomatico && window.detenerBingoAutomatico) {
         window.detenerBingoAutomatico();
         mostrarToast('🤖 Auto detenido para programar', 'warning');
@@ -291,7 +285,6 @@ function programarJuegoMobile() {
     var btnProg = document.getElementById('btnProgramarMobile');
     if (btnProg) { btnProg.textContent = '⏳ ESPERANDO...'; btnProg.disabled = true; }
     
-    // Deshabilitar controles durante la cuenta regresiva
     var btnAuto = document.getElementById('btnAutoMobile');
     var btnManual = document.getElementById('drawBtnMobile');
     if (btnAuto) btnAuto.disabled = true;
@@ -313,7 +306,6 @@ function programarJuegoMobile() {
             if (cronVisualRuleta) cronVisualRuleta.style.display = 'none';
             if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; }
             
-            // Re-habilitar controles
             if (btnAuto) {
                 btnAuto.disabled = false;
                 btnAuto.onclick = window.iniciarBingoAutomatico;
@@ -351,7 +343,6 @@ function iniciarAutoMobile() {
         return;
     }
     if (window.modoAutomatico) {
-        // Si ya está en auto, detener
         if (window.detenerBingoAutomatico) {
             window.detenerBingoAutomatico();
         }
