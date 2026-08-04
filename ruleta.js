@@ -70,21 +70,18 @@ function inicializarTableroMovil() {
 
 // ============ LIMPIAR TABLERO COMPLETO ============
 function limpiarTableroCompleto() {
-    // Limpiar grid de escritorio
     var gridDesktop = document.getElementById('historyGrid');
     if (gridDesktop) {
         var celdasD = gridDesktop.querySelectorAll('.celda-seguimiento');
         celdasD.forEach(function(c) { c.classList.remove('cantada', 'ultima'); });
     }
     
-    // Limpiar grid móvil
     var gridMobile = document.getElementById('historyGridMobile');
     if (gridMobile) {
         var celdasM = gridMobile.querySelectorAll('.celda-movil');
         celdasM.forEach(function(c) { c.classList.remove('cantada', 'ultima'); });
     }
     
-    // Re-inicializar ambos tableros
     inicializarTablero75();
 }
 
@@ -512,9 +509,6 @@ function cantarBola(bola) {
     verificarTodosLosCartones();
 }
 
-// NO agregar event listener adicional - el HTML ya tiene onclick
-// El botón drawBtnMobile ya se maneja en ruleta-movil.js
-
 // ============ VERIFICACIONES ============
 function verificarTodosLosCartones() { 
     if (window.bingoDetectado) return; 
@@ -876,9 +870,6 @@ window.reiniciarPartidaGlobal = function() {
     }
 };
 
-// NO agregar event listeners adicionales a btnReiniciarPartida ni btnReiniciarRuleta
-// El HTML ya tiene onclick
-
 // ============ TECLAS ============
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') { cerrarModal('modalCartones'); cerrarModal('modalPatron'); }
@@ -886,7 +877,7 @@ document.addEventListener('keydown', function(e) {
         var tag = (e.target.tagName || '').toLowerCase(); 
         if (tag !== 'input' && tag !== 'textarea' && tag !== 'select' && !e.target.isContentEditable) { 
             e.preventDefault(); 
-            var btn = document.getElementById('drawBtn') || document.getElementById('drawBtnMobile'); 
+            var btn = document.getElementById('drawBtnMobile'); 
             if (btn) btn.click(); 
         } 
     }
