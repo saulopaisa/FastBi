@@ -107,7 +107,10 @@ function comenzarPartida() {
     var btnProg = document.getElementById('btnProgramarMobile');
     var btnReiniciar = document.getElementById('btnReiniciarRuleta');
     
-    if (btnAuto) btnAuto.disabled = false;
+    if (btnAuto) {
+        btnAuto.disabled = false;
+        btnAuto.onclick = window.iniciarBingoAutomatico;
+    }
     if (btnManual) { btnManual.disabled = false; btnManual.style.opacity = '1'; btnManual.style.pointerEvents = 'all'; }
     if (btnProg) btnProg.disabled = false;
     if (btnReiniciar) btnReiniciar.style.display = 'block';
@@ -148,9 +151,9 @@ function reiniciarPartida() {
             window.partidaIniciada = false;
             window.bingoDetectado = false;
             window.modoAutomatico = false;
-            inicializarTablero75();
-            actualizarUltimaBolaGrande();
-            actualizarUltimasBolasChicas();
+            if (typeof limpiarTableroCompleto === 'function') limpiarTableroCompleto();
+            if (typeof actualizarUltimaBolaGrande === 'function') actualizarUltimaBolaGrande();
+            if (typeof actualizarUltimasBolasChicas === 'function') actualizarUltimasBolasChicas();
             db.ref('partidas/' + SALA_ID).update({ 
                 estado: 'nueva_partida', 
                 cantados: [], 
@@ -172,7 +175,15 @@ function reiniciarPartida() {
         intervaloCronometroRuleta = null;
         
         var btnProg = document.getElementById('btnProgramarMobile');
-        if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; }
+        if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = true; }
+        
+        var btnAuto = document.getElementById('btnAutoMobile');
+        if (btnAuto) {
+            btnAuto.textContent = '🤖 AUTO';
+            btnAuto.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+            btnAuto.onclick = window.iniciarBingoAutomatico;
+            btnAuto.disabled = true;
+        }
         
         var btnReiniciarRuleta = document.getElementById('btnReiniciarRuleta');
         if (btnReiniciarRuleta) btnReiniciarRuleta.style.display = 'none';
@@ -214,6 +225,12 @@ function programarJuegoMobile() {
     if (!window.partidaIniciada) {
         alert('⚠️ Primero inicia la partida con INICIAR PARTIDA');
         return;
+    }
+    
+    // DETENER bingo automático si está activo
+    if (window.modoAutomatico && window.detenerBingoAutomatico) {
+        window.detenerBingoAutomatico();
+        mostrarToast('🤖 Auto detenido para programar', 'warning');
     }
     
     var inputEl = document.getElementById('minutosInicioMobile');
@@ -274,6 +291,12 @@ function programarJuegoMobile() {
     var btnProg = document.getElementById('btnProgramarMobile');
     if (btnProg) { btnProg.textContent = '⏳ ESPERANDO...'; btnProg.disabled = true; }
     
+    // Deshabilitar controles durante la cuenta regresiva
+    var btnAuto = document.getElementById('btnAutoMobile');
+    var btnManual = document.getElementById('drawBtnMobile');
+    if (btnAuto) btnAuto.disabled = true;
+    if (btnManual) { btnManual.disabled = true; btnManual.style.opacity = '0.5'; btnManual.style.pointerEvents = 'none'; }
+    
     intervaloCronometroVisual = setInterval(function() {
         tiempo--;
         actualizarCronometroConfig(tiempo, tiempoTotal);
@@ -289,6 +312,13 @@ function programarJuegoMobile() {
             if (cronVisual) cronVisual.style.display = 'none';
             if (cronVisualRuleta) cronVisualRuleta.style.display = 'none';
             if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; }
+            
+            // Re-habilitar controles
+            if (btnAuto) {
+                btnAuto.disabled = false;
+                btnAuto.onclick = window.iniciarBingoAutomatico;
+            }
+            if (btnManual) { btnManual.disabled = false; btnManual.style.opacity = '1'; btnManual.style.pointerEvents = 'all'; }
             
             db.ref('partidas/' + SALA_ID).update({
                 estado: 'jugando',
@@ -314,10 +344,17 @@ function programarJuegoMobile() {
     mostrarToast('⏰ Cronómetro: ' + tiempoStr, 'success');
 }
 
-// ============ INICIAR AUTO MÓVIL ============
+// ============ INICIAR AUTO MÓVIL (TOGGLE) ============
 function iniciarAutoMobile() {
     if (!window.partidaIniciada) {
         alert('⚠️ Inicia la partida primero');
+        return;
+    }
+    if (window.modoAutomatico) {
+        // Si ya está en auto, detener
+        if (window.detenerBingoAutomatico) {
+            window.detenerBingoAutomatico();
+        }
         return;
     }
     if (window.iniciarBingoAutomatico) window.iniciarBingoAutomatico();
