@@ -473,9 +473,7 @@ function buscarJugadores() {
     var jugadoresMap = {};
     cartonesGenerados.forEach(function(c) {
         if (c.asignadoA) {
-            if (!jugadoresMap[c.asignadoA]) {
-                jugadoresMap[c.asignadoA] = [];
-            }
+            if (!jugadoresMap[c.asignadoA]) { jugadoresMap[c.asignadoA] = []; }
             jugadoresMap[c.asignadoA].push(c);
         }
     });
@@ -483,9 +481,7 @@ function buscarJugadores() {
     var jugadores = Object.keys(jugadoresMap).sort();
     
     if (termino) {
-        jugadores = jugadores.filter(function(n) {
-            return n.toLowerCase().includes(termino);
-        });
+        jugadores = jugadores.filter(function(n) { return n.toLowerCase().includes(termino); });
     }
     
     if (jugadores.length === 0) {
@@ -537,12 +533,11 @@ function buscarJugadores() {
 // ============ ACTUALIZAR LISTA DE JUGADORES (INTERNA) ============
 function actualizarListaJugadores() {
     // Solo se usa internamente, no muestra panel adicional
-    // La vista de jugadores usa buscarJugadores()
 }
 
-// ============ COPIAR LINK DEL JUGADOR ============
+// ============ COPIAR LINK DEL JUGADOR (CON NOMBRE EN URL) ============
 function copiarLinkJugador(nombre) {
-    var link = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'jugador.html?sala=' + encodeURIComponent(SALA_ID);
+    var link = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'jugador.html?sala=' + encodeURIComponent(SALA_ID) + '&jugador=' + encodeURIComponent(nombre);
     
     navigator.clipboard.writeText(link).then(function() {
         mostrarToast('✅ Link de ' + nombre + ' copiado', 'success');
@@ -561,16 +556,10 @@ function eliminarJugador(nombre) {
     }
     
     if (confirm('⚠️ ¿Eliminar a "' + nombre + '" y liberar sus ' + cartonesJugador.length + ' cartones?')) {
-        cartonesJugador.forEach(function(c) {
-            c.asignadoA = null;
-            c.estado = 'disponible';
-        });
+        cartonesJugador.forEach(function(c) { c.asignadoA = null; c.estado = 'disponible'; });
         
-        if (filtroActual !== 'todos') {
-            filtrarCartones(filtroActual);
-        } else {
-            mostrarCartones();
-        }
+        if (filtroActual !== 'todos') { filtrarCartones(filtroActual); }
+        else { mostrarCartones(); }
         actualizarContadores();
         buscarJugadores();
         guardarEnFirebase();
@@ -582,21 +571,13 @@ function eliminarJugador(nombre) {
 function quitarCartonJugador(index) {
     var carton = cartonesGenerados[index];
     var nombre = carton.asignadoA;
-    
     if (!nombre) return;
     
     if (confirm('¿Quitar cartón #' + carton.numero + ' de ' + nombre + '?')) {
-        carton.asignadoA = null;
-        carton.estado = 'disponible';
-        
-        if (filtroActual !== 'todos') {
-            filtrarCartones(filtroActual);
-        } else {
-            mostrarCartones();
-        }
-        actualizarContadores();
-        buscarJugadores();
-        guardarEnFirebase();
+        carton.asignadoA = null; carton.estado = 'disponible';
+        if (filtroActual !== 'todos') { filtrarCartones(filtroActual); }
+        else { mostrarCartones(); }
+        actualizarContadores(); buscarJugadores(); guardarEnFirebase();
         mostrarToast('✅ Cartón #' + carton.numero + ' liberado de ' + nombre, 'success');
     }
 }
@@ -604,40 +585,21 @@ function quitarCartonJugador(index) {
 // ============ RENOMBRAR JUGADOR ============
 function renombrarJugador(nombreViejo) {
     var cartonesJugador = cartonesGenerados.filter(function(c) { return c.asignadoA === nombreViejo; });
-    
-    if (cartonesJugador.length === 0) {
-        mostrarToast('⚠️ ' + nombreViejo + ' no tiene cartones', 'error');
-        return;
-    }
+    if (cartonesJugador.length === 0) { mostrarToast('⚠️ ' + nombreViejo + ' no tiene cartones', 'error'); return; }
     
     var nombreNuevo = prompt('Renombrar "' + nombreViejo + '" a:', nombreViejo);
-    
     if (!nombreNuevo || nombreNuevo.trim() === '' || nombreNuevo.trim() === nombreViejo) return;
-    
     nombreNuevo = nombreNuevo.trim();
     
     var existe = cartonesGenerados.some(function(c) { return c.asignadoA === nombreNuevo; });
-    if (existe) {
-        mostrarToast('⚠️ Ya existe un jugador llamado "' + nombreNuevo + '"', 'error');
-        return;
-    }
+    if (existe) { mostrarToast('⚠️ Ya existe un jugador llamado "' + nombreNuevo + '"', 'error'); return; }
     
     var cartonesDestino = cartonesGenerados.filter(function(c) { return c.asignadoA === nombreNuevo; });
-    if (cartonesDestino.length + cartonesJugador.length > 2) {
-        mostrarToast('⚠️ ' + nombreNuevo + ' tendría más de 2 cartones', 'error');
-        return;
-    }
+    if (cartonesDestino.length + cartonesJugador.length > 2) { mostrarToast('⚠️ ' + nombreNuevo + ' tendría más de 2 cartones', 'error'); return; }
     
     cartonesJugador.forEach(function(c) { c.asignadoA = nombreNuevo; });
-    
-    if (filtroActual !== 'todos') {
-        filtrarCartones(filtroActual);
-    } else {
-        mostrarCartones();
-    }
-    actualizarContadores();
-    buscarJugadores();
-    guardarEnFirebase();
+    if (filtroActual !== 'todos') { filtrarCartones(filtroActual); } else { mostrarCartones(); }
+    actualizarContadores(); buscarJugadores(); guardarEnFirebase();
     mostrarToast('✅ ' + nombreViejo + ' renombrado a ' + nombreNuevo, 'success');
 }
 
@@ -663,120 +625,62 @@ function actualizarContadores() {
 // ============ GUARDAR EN FIREBASE ============
 function guardarEnFirebase() {
     if (cartonesGenerados.length === 0) {
-        db.ref('salas/' + SALA_ID + '/cartones').remove().catch(function(err) {
-            console.error('Error al limpiar:', err);
-        });
+        db.ref('salas/' + SALA_ID + '/cartones').remove().catch(function(err) { console.error('Error al limpiar:', err); });
         return;
     }
-    
     var updates = {};
     cartonesGenerados.forEach(function(c) {
-        updates[c.id] = {
-            numero: c.numero,
-            carton: c.carton,
-            asignadoA: c.asignadoA || null,
-            estado: c.asignadoA ? 'asignado' : 'disponible'
-        };
+        updates[c.id] = { numero: c.numero, carton: c.carton, asignadoA: c.asignadoA || null, estado: c.asignadoA ? 'asignado' : 'disponible' };
     });
-    
-    db.ref('salas/' + SALA_ID + '/cartones').set(updates).then(function() {
-        console.log('✅ Cartones guardados en Firebase');
-    }).catch(function(err) {
-        console.error('Error al guardar:', err);
-    });
+    db.ref('salas/' + SALA_ID + '/cartones').set(updates).then(function() { console.log('✅ Cartones guardados'); }).catch(function(err) { console.error('Error:', err); });
 }
 
 // ============ CARGAR DESDE FIREBASE ============
 function cargarDesdeFirebase() {
     db.ref('salas/' + SALA_ID + '/cartones').once('value').then(function(snap) {
-        var data = snap.val();
-        if (!data) {
-            console.log('📋 No hay cartones en Firebase');
-            return;
-        }
-        
+        var data = snap.val(); if (!data) { console.log('📋 No hay cartones'); return; }
         cartonesGenerados = [];
         Object.entries(data).forEach(function(entry) {
             var id = entry[0], c = entry[1];
             if (c && c.carton) {
-                cartonesGenerados.push({
-                    id: id,
-                    numero: c.numero || 0,
-                    carton: c.carton,
-                    asignadoA: c.asignadoA || null,
-                    estado: c.estado || (c.asignadoA ? 'asignado' : 'disponible')
-                });
+                cartonesGenerados.push({ id: id, numero: c.numero || 0, carton: c.carton, asignadoA: c.asignadoA || null, estado: c.estado || (c.asignadoA ? 'asignado' : 'disponible') });
             }
         });
-        
         cartonesGenerados.sort(function(a, b) { return a.numero - b.numero; });
         cartonesGenerados.forEach(function(c, i) { c.numero = i + 1; });
-        
-        mostrarCartones();
-        actualizarContadores();
-        console.log('✅ ' + cartonesGenerados.length + ' cartones cargados desde Firebase');
-    }).catch(function(err) {
-        console.error('Error al cargar:', err);
-    });
+        mostrarCartones(); actualizarContadores();
+        console.log('✅ ' + cartonesGenerados.length + ' cartones cargados');
+    }).catch(function(err) { console.error('Error:', err); });
 }
 
 // ============ EXPORTAR JSON ============
 function exportarCartonesJSON() {
-    if (cartonesGenerados.length === 0) {
-        mostrarToast('⚠️ No hay cartones para exportar', 'error');
-        return;
-    }
-    
-    var datosExportar = cartonesGenerados.map(function(c) {
-        return { numero: c.numero, carton: c.carton, asignadoA: c.asignadoA, estado: c.estado };
-    });
-    
+    if (cartonesGenerados.length === 0) { mostrarToast('⚠️ No hay cartones', 'error'); return; }
+    var datosExportar = cartonesGenerados.map(function(c) { return { numero: c.numero, carton: c.carton, asignadoA: c.asignadoA, estado: c.estado }; });
     var data = JSON.stringify(datosExportar, null, 2);
-    var blob = new Blob([data], {type: 'application/json'});
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = 'cartones_' + SALA_ID + '_' + new Date().toISOString().slice(0,10) + '.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    var blob = new Blob([data], {type: 'application/json'}); var url = URL.createObjectURL(blob);
+    var a = document.createElement('a'); a.href = url; a.download = 'cartones_' + SALA_ID + '_' + new Date().toISOString().slice(0,10) + '.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
     mostrarToast('✅ ' + cartonesGenerados.length + ' cartones exportados', 'success');
 }
 
 // ============ IMPORTAR JSON ============
 function importarCartonesJSON() {
-    var input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
+    var input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
     input.onchange = function(e) {
-        var file = e.target.files[0];
-        if (!file) return;
+        var file = e.target.files[0]; if (!file) return;
         var reader = new FileReader();
         reader.onload = function(event) {
             try {
                 var data = JSON.parse(event.target.result);
                 if (Array.isArray(data) && data.length > 0 && data[0].carton) {
-                    if (confirm('¿Importar ' + data.length + ' cartones?\n\nEsto reemplazará los cartones actuales.')) {
-                        cartonesGenerados = data.map(function(c, i) {
-                            return {
-                                id: 'carton_imp_' + Date.now() + '_' + i,
-                                numero: i + 1,
-                                carton: c.carton,
-                                asignadoA: c.asignadoA || null,
-                                estado: c.asignadoA ? 'asignado' : 'disponible'
-                            };
-                        });
-                        cartonesSeleccionados = [];
-                        mostrarCartones();
-                        actualizarContadores();
-                        guardarEnFirebase();
+                    if (confirm('¿Importar ' + data.length + ' cartones?\n\nEsto reemplazará los actuales.')) {
+                        cartonesGenerados = data.map(function(c, i) { return { id: 'carton_imp_' + Date.now() + '_' + i, numero: i + 1, carton: c.carton, asignadoA: c.asignadoA || null, estado: c.asignadoA ? 'asignado' : 'disponible' }; });
+                        cartonesSeleccionados = []; mostrarCartones(); actualizarContadores(); guardarEnFirebase();
                         mostrarToast('✅ ' + data.length + ' cartones importados', 'success');
                     }
-                } else {
-                    mostrarToast('❌ Archivo JSON no válido', 'error');
-                }
-            } catch (err) { mostrarToast('❌ Error al leer el archivo', 'error'); }
+                } else { mostrarToast('❌ Archivo no válido', 'error'); }
+            } catch (err) { mostrarToast('❌ Error al leer', 'error'); }
         };
         reader.readAsText(file);
     };
@@ -786,67 +690,43 @@ function importarCartonesJSON() {
 // ============ COPIAR LINKS ============
 function copiarLinkVerTodo() {
     var link = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'ver_todo.html?sala=' + encodeURIComponent(SALA_ID);
-    navigator.clipboard.writeText(link).then(function() {
-        mostrarToast('✅ Link de ver_todo copiado', 'success');
-    }).catch(function() {
-        prompt('📋 Copia este link para ver_todo:', link);
-    });
+    navigator.clipboard.writeText(link).then(function() { mostrarToast('✅ Link ver_todo copiado', 'success'); }).catch(function() { prompt('📋 Link:', link); });
 }
 
 function copiarLinkRuleta() {
     var link = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'ruleta.html?sala=' + encodeURIComponent(SALA_ID);
-    navigator.clipboard.writeText(link).then(function() {
-        mostrarToast('✅ Link de ruleta copiado', 'success');
-    }).catch(function() {
-        prompt('📋 Copia este link para ruleta:', link);
-    });
+    navigator.clipboard.writeText(link).then(function() { mostrarToast('✅ Link ruleta copiado', 'success'); }).catch(function() { prompt('📋 Link:', link); });
 }
 
 // ============ IMPRIMIR ============
 function imprimirCartones() {
-    if (cartonesGenerados.length === 0) { 
-        mostrarToast('⚠️ No hay cartones para imprimir', 'error'); 
-        return; 
-    }
-    mostrarToast('🖨️ Abriendo vista de impresión...', 'success');
+    if (cartonesGenerados.length === 0) { mostrarToast('⚠️ No hay cartones', 'error'); return; }
     setTimeout(function() { window.print(); }, 500);
 }
 
 // ============ NAVEGACIÓN ============
 function navegarA(vista) {
-    var secciones = document.querySelectorAll('.section-panel');
-    secciones.forEach(function(s) { s.classList.remove('activo'); });
-    
-    var navs = document.querySelectorAll('.nav-item');
-    navs.forEach(function(n) { n.classList.remove('activo'); });
+    var secciones = document.querySelectorAll('.section-panel'); secciones.forEach(function(s) { s.classList.remove('activo'); });
+    var navs = document.querySelectorAll('.nav-item'); navs.forEach(function(n) { n.classList.remove('activo'); });
     
     if (vista === 'cartones') {
-        var el = document.getElementById('sectionCartones');
-        if (el) el.classList.add('activo');
-        var nav = document.getElementById('navCartones');
-        if (nav) nav.classList.add('activo');
+        var el = document.getElementById('sectionCartones'); if (el) el.classList.add('activo');
+        var nav = document.getElementById('navCartones'); if (nav) nav.classList.add('activo');
     } else if (vista === 'jugadores') {
-        var el = document.getElementById('sectionJugadores');
-        if (el) el.classList.add('activo');
-        var nav = document.getElementById('navJugadores');
-        if (nav) nav.classList.add('activo');
+        var el = document.getElementById('sectionJugadores'); if (el) el.classList.add('activo');
+        var nav = document.getElementById('navJugadores'); if (nav) nav.classList.add('activo');
         buscarJugadores();
     } else if (vista === 'config') {
-        var el = document.getElementById('sectionConfig');
-        if (el) el.classList.add('activo');
-        var nav = document.getElementById('navConfig');
-        if (nav) nav.classList.add('activo');
+        var el = document.getElementById('sectionConfig'); if (el) el.classList.add('activo');
+        var nav = document.getElementById('navConfig'); if (nav) nav.classList.add('activo');
         actualizarContadores();
     }
 }
 
 // ============ TOAST ============
 function mostrarToast(mensaje, tipo) {
-    var toast = document.getElementById('toast');
-    if (!toast) return;
-    toast.textContent = mensaje;
-    toast.className = 'toast ' + (tipo || '');
-    toast.offsetHeight;
-    setTimeout(function() { toast.classList.add('show'); }, 10);
+    var toast = document.getElementById('toast'); if (!toast) return;
+    toast.textContent = mensaje; toast.className = 'toast ' + (tipo || '');
+    toast.offsetHeight; setTimeout(function() { toast.classList.add('show'); }, 10);
     setTimeout(function() { toast.classList.remove('show'); }, 2500);
 }
