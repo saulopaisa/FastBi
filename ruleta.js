@@ -68,6 +68,26 @@ function inicializarTableroMovil() {
     for (var i = 1; i <= 75; i++) { var d = document.createElement('div'); d.className = 'celda-movil'; d.textContent = i; if (window.cantados.indexOf(i) !== -1) d.classList.add('cantada'); grid.appendChild(d); }
 }
 
+// ============ LIMPIAR TABLERO COMPLETO ============
+function limpiarTableroCompleto() {
+    // Limpiar grid de escritorio
+    var gridDesktop = document.getElementById('historyGrid');
+    if (gridDesktop) {
+        var celdasD = gridDesktop.querySelectorAll('.celda-seguimiento');
+        celdasD.forEach(function(c) { c.classList.remove('cantada', 'ultima'); });
+    }
+    
+    // Limpiar grid móvil
+    var gridMobile = document.getElementById('historyGridMobile');
+    if (gridMobile) {
+        var celdasM = gridMobile.querySelectorAll('.celda-movil');
+        celdasM.forEach(function(c) { c.classList.remove('cantada', 'ultima'); });
+    }
+    
+    // Re-inicializar ambos tableros
+    inicializarTablero75();
+}
+
 // ============ ÚLTIMA BOLA GRANDE + 5 PEQUEÑAS ============
 function actualizarUltimaBolaGrande() {
     var container = document.getElementById('ultimaBolaRuletaContainer');
@@ -95,6 +115,16 @@ function actualizarUltimaBolaGrande() {
                 bola.style.animation = 'bolaEntrada 0.5s ease-out';
             }
         }, 10);
+    } else {
+        container.innerHTML = `
+            <div class="ultima-bola-ruleta">
+                <div class="bola-grande">
+                    <span class="bola-letra">-</span>
+                    <span class="bola-numero">--</span>
+                </div>
+                <div class="bolas-chicas-ruleta" id="bolasChicasRuleta"></div>
+            </div>
+        `;
     }
     
     actualizarUltimasBolasChicas();
@@ -394,9 +424,16 @@ window.iniciarBingoAutomatico = function() {
     window.modoAutomatico = true; 
     window.bingoDetectado = false; 
     var btnAuto = document.getElementById('btnAutoMobile'); 
-    if (btnAuto) { btnAuto.textContent = '⏸️ DETENER'; btnAuto.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)'; } 
+    if (btnAuto) { 
+        btnAuto.textContent = '⏸️ DETENER'; 
+        btnAuto.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)'; 
+        btnAuto.onclick = window.detenerBingoAutomatico;
+    } 
     var btnManual = document.getElementById('drawBtnMobile'); 
-    if (btnManual) { btnManual.disabled = true; btnManual.style.opacity = '0.5'; } 
+    if (btnManual) { btnManual.disabled = true; btnManual.style.opacity = '0.5'; btnManual.style.pointerEvents = 'none'; } 
+    var btnProg = document.getElementById('btnProgramarMobile');
+    if (btnProg) { btnProg.disabled = true; btnProg.style.opacity = '0.4'; }
+    
     function cantarAuto() { 
         if (!window.modoAutomatico || window.enPausa) return; 
         if (window.cantados.length >= 75) { window.detenerBingoAutomatico(); return; } 
@@ -415,11 +452,25 @@ window.iniciarBingoAutomatico = function() {
 
 window.detenerBingoAutomatico = function() { 
     window.modoAutomatico = false; 
-    if (window.intervaloAutomatico) { clearInterval(window.intervaloAutomatico); window.intervaloAutomatico = null; } 
+    if (window.intervaloAutomatico) { 
+        clearInterval(window.intervaloAutomatico); 
+        window.intervaloAutomatico = null; 
+    } 
     var btnAuto = document.getElementById('btnAutoMobile'); 
-    if (btnAuto) { btnAuto.textContent = '🤖 AUTO'; btnAuto.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; } 
+    if (btnAuto) { 
+        btnAuto.textContent = '🤖 AUTO'; 
+        btnAuto.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; 
+        btnAuto.onclick = window.iniciarBingoAutomatico;
+    } 
     var btnManual = document.getElementById('drawBtnMobile'); 
-    if (btnManual) { btnManual.disabled = false; btnManual.style.opacity = '1'; btnManual.style.pointerEvents = 'all'; } 
+    if (btnManual) { 
+        btnManual.disabled = false; 
+        btnManual.style.opacity = '1'; 
+        btnManual.style.pointerEvents = 'all'; 
+    } 
+    var btnProg = document.getElementById('btnProgramarMobile');
+    if (btnProg) { btnProg.disabled = false; btnProg.style.opacity = '1'; }
+    
     db.ref('partidas/' + SALA_ID).update({ modo: 'manual' }); 
     mostrarToast('🤖 Auto DETENIDO', 'error'); 
 };
@@ -759,7 +810,7 @@ function iniciarNuevaPartida() {
     db.ref('partidas/' + SALA_ID).set({ estado: 'nueva_partida', cantados: [], ultimaBola: null, mensajeAdmin: '🔄 Nueva partida', timestamp: Date.now(), patron: window.patronBingo, jugadoresActivos: window.jugadoresActivos, revisando: { activo: false }, resultadoRevision: null, pausa: false, cronometro: 0, ganadoresCount: 0, partidaIniciada: false }); 
     db.ref('bingos/' + SALA_ID).remove(); 
     db.ref('partidas/' + SALA_ID + '/erroresJugadores').remove(); 
-    inicializarTablero75(); 
+    limpiarTableroCompleto();
     actualizarUltimaBolaGrande();
     actualizarUltimasBolasChicas();
     var cont = document.getElementById('minicartonVerificador'); if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; 
@@ -768,7 +819,7 @@ function iniciarNuevaPartida() {
     var cronVisual = document.getElementById('cronometroVisual'); if (cronVisual) cronVisual.style.display = 'none'; 
     var cronVisualR = document.getElementById('cronometroVisualRuleta'); if (cronVisualR) cronVisualR.style.display = 'none'; 
     var btnProg = document.getElementById('btnProgramarMobile'); if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; } 
-    var btnAuto = document.getElementById('btnAutoMobile'); if (btnAuto) { btnAuto.textContent = '🤖 AUTO'; btnAuto.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; btnAuto.disabled = true; } 
+    var btnAuto = document.getElementById('btnAutoMobile'); if (btnAuto) { btnAuto.textContent = '🤖 AUTO'; btnAuto.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; btnAuto.onclick = window.iniciarBingoAutomatico; btnAuto.disabled = true; } 
     var btnManual = document.getElementById('drawBtnMobile'); if (btnManual) { btnManual.disabled = true; btnManual.style.opacity = '0.5'; } 
     var btnReiniciar = document.getElementById('btnReiniciarRuleta'); if (btnReiniciar) btnReiniciar.style.display = 'none';
     var btnComenzar = document.getElementById('btnComenzarPartida');
@@ -795,7 +846,7 @@ window.reiniciarPartidaGlobal = function() {
         sessionStorage.setItem('ganadores_' + SALA_ID, '0'); 
         ['bingo_cantados_','bingo_patron_','bingo_jugadores_','bingo_activo_','bingo_etapa_'].forEach(function(k) { localStorage.removeItem(k + SALA_ID); }); 
         db.ref('partidas/' + SALA_ID).remove(); db.ref('bingos/' + SALA_ID).remove(); db.ref('partidas/' + SALA_ID + '/erroresJugadores').remove(); 
-        inicializarTablero75(); actualizarEtapas(); 
+        limpiarTableroCompleto();
         actualizarUltimaBolaGrande(); actualizarUltimasBolasChicas();
         var cont = document.getElementById('minicartonVerificador'); if (cont) cont.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; 
         var contM = document.getElementById('minicartonMobile'); if (contM) contM.innerHTML = '<p style="color:#64748b;">Busca un cartón</p>'; 
@@ -803,7 +854,7 @@ window.reiniciarPartidaGlobal = function() {
         var cronVisual = document.getElementById('cronometroVisual'); if (cronVisual) cronVisual.style.display = 'none'; 
         var cronVisualR = document.getElementById('cronometroVisualRuleta'); if (cronVisualR) cronVisualR.style.display = 'none'; 
         var bp = document.getElementById('btnProgramarMobile'); if (bp) { bp.textContent = '⏰ PROGRAMAR'; bp.disabled = true; } 
-        var ba = document.getElementById('btnAutoMobile'); if (ba) { ba.textContent = '🤖 AUTO'; ba.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; ba.disabled = true; } 
+        var ba = document.getElementById('btnAutoMobile'); if (ba) { ba.textContent = '🤖 AUTO'; ba.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)'; ba.onclick = window.iniciarBingoAutomatico; ba.disabled = true; } 
         var bm = document.getElementById('drawBtnMobile'); if (bm) { bm.disabled = true; bm.style.opacity = '0.5'; bm.style.pointerEvents = 'none'; } 
         var btnReiniciarRuleta = document.getElementById('btnReiniciarRuleta'); if (btnReiniciarRuleta) btnReiniciarRuleta.style.display = 'none';
         var btnReiniciarConfig = document.getElementById('btnReiniciarPartida'); if (btnReiniciarConfig) btnReiniciarConfig.style.display = 'none';
@@ -828,6 +879,7 @@ window.reiniciarPartidaGlobal = function() {
         if (textoP) textoP.textContent = 'No configurado';
         var btnEtapa2 = document.getElementById('btnEtapa2Mobile');
         if (btnEtapa2) btnEtapa2.disabled = true;
+        actualizarEtapas();
         actualizarOnlineCount(); 
         mostrarToast('🔄 Todo reiniciado', 'success'); 
         if (typeof navegarA === 'function') navegarA('config');
