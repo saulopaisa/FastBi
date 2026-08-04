@@ -78,48 +78,28 @@ body {
 
 /* ============ SALA INFO ============ */
 .sala-info-card {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 8px 12px;
-    background: #0f172a;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    font-size: 0.75rem;
+    display: flex; align-items: center; gap: 5px;
+    padding: 8px 12px; background: #0f172a; border-radius: 8px;
+    margin-bottom: 10px; font-size: 0.75rem;
 }
 
 .sala-id {
-    color: #ffca28;
-    font-weight: bold;
-    font-family: monospace;
-    flex: 1;
-    font-size: 0.7rem;
-    word-break: break-all;
+    color: #ffca28; font-weight: bold; font-family: monospace;
+    flex: 1; font-size: 0.7rem; word-break: break-all;
 }
 
 .btn-mini {
-    background: #6366f1;
-    color: white;
-    border: none;
-    padding: 4px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.7rem;
-    transition: all 0.2s;
+    background: #6366f1; color: white; border: none;
+    padding: 4px 8px; border-radius: 4px; cursor: pointer;
+    font-size: 0.7rem; transition: all 0.2s;
 }
 .btn-mini:active { transform: scale(0.9); }
 
 /* ============ PARTIDA VIGENTE ============ */
 .partida-vigente {
-    background: #f59e0b;
-    color: #16213e;
-    padding: 8px;
-    border-radius: 8px;
-    text-align: center;
-    font-weight: bold;
-    font-size: 0.75rem;
-    margin-bottom: 10px;
-    animation: pulse 2s infinite;
+    background: #f59e0b; color: #16213e; padding: 8px;
+    border-radius: 8px; text-align: center; font-weight: bold;
+    font-size: 0.75rem; margin-bottom: 10px; animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
@@ -171,9 +151,7 @@ body {
 
 .btn-comenzar {
     background: linear-gradient(135deg, #10b981, #059669) !important;
-    font-size: 1rem !important;
-    padding: 14px !important;
-    margin-top: 10px !important;
+    font-size: 1rem !important; padding: 14px !important; margin-top: 10px !important;
     animation: glowComenzar 2s infinite;
     box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
 }
@@ -184,123 +162,64 @@ body {
     50% { box-shadow: 0 4px 35px rgba(16, 185, 129, 0.8); }
 }
 
-.btn-reiniciar-partida {
-    background: #ef4444 !important;
-    margin-top: 5px !important;
-}
+.btn-reiniciar-partida { background: #ef4444 !important; margin-top: 5px !important; }
 .btn-reiniciar-partida:hover { background: #dc2626 !important; }
 
 /* ============ CRONÓMETRO VISUAL ============ */
 .cronometro-visual {
-    display: none;
-    margin-top: 15px;
-    padding: 15px;
-    background: #0f172a;
-    border-radius: 12px;
-    text-align: center;
-    border: 2px solid #f59e0b;
-    animation: pulse 2s infinite;
+    display: none; margin-top: 15px; padding: 15px;
+    background: #0f172a; border-radius: 12px; text-align: center;
+    border: 2px solid #f59e0b; animation: pulse 2s infinite;
 }
 
 .cronometro-visual-tiempo {
-    font-family: 'Courier New', monospace;
-    font-size: 2.5rem;
-    font-weight: 900;
-    color: #ff4d4d;
-    margin-bottom: 10px;
-    letter-spacing: 2px;
+    font-family: 'Courier New', monospace; font-size: 2.5rem;
+    font-weight: 900; color: #ff4d4d; margin-bottom: 10px; letter-spacing: 2px;
 }
 
 .cronometro-visual-barra {
-    width: 100%;
-    height: 8px;
-    background: #1e293b;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 8px;
+    width: 100%; height: 8px; background: #1e293b;
+    border-radius: 4px; overflow: hidden; margin-bottom: 8px;
 }
 
 .cronometro-visual-progreso {
-    height: 100%;
-    background: linear-gradient(90deg, #f59e0b, #10b981);
-    border-radius: 4px;
-    transition: width 1s linear;
-    width: 0%;
+    height: 100%; background: linear-gradient(90deg, #f59e0b, #10b981);
+    border-radius: 4px; transition: width 1s linear; width: 0%;
 }
 
-.cronometro-visual-texto {
-    color: #94a3b8;
-    font-size: 0.7rem;
-    margin-top: 5px;
-}
+.cronometro-visual-texto { color: #94a3b8; font-size: 0.7rem; margin-top: 5px; }
 
 /* ============ SECCIÓN RULETA ============ */
-
-/* Última bola GRANDE + 5 pequeñas */
 .ultima-bola-ruleta {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    margin: 10px 0;
-    padding: 12px 15px;
-    background: var(--sidebar-bg);
-    border-radius: 15px;
-    border: 1px solid #2d3436;
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; margin: 10px 0; padding: 12px 15px;
+    background: var(--sidebar-bg); border-radius: 15px; border: 1px solid #2d3436;
 }
 
 .bola-grande {
-    width: 80px;
-    height: 80px;
-    min-width: 80px;
-    border-radius: 50%;
+    width: 80px; height: 80px; min-width: 80px; border-radius: 50%;
     background: linear-gradient(135deg, #ef4444, #dc2626);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-weight: 900;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; font-weight: 900;
     box-shadow: 0 6px 25px rgba(239, 68, 68, 0.5);
 }
 
-.bola-grande .bola-letra {
-    font-size: 0.8em;
-    color: rgba(255, 255, 255, 0.9);
-    text-transform: uppercase;
-}
-
-.bola-grande .bola-numero {
-    font-size: 2em;
-    line-height: 1;
-}
+.bola-grande .bola-letra { font-size: 0.8em; color: rgba(255, 255, 255, 0.9); text-transform: uppercase; }
+.bola-grande .bola-numero { font-size: 2em; line-height: 1; }
 
 .bolas-chicas-ruleta {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    flex: 1;
-    justify-content: center;
+    display: flex; gap: 6px; flex-wrap: wrap; flex: 1; justify-content: center;
 }
 
 .bola-mini {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: var(--sidebar-bg2);
-    border: 2px solid var(--gold);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 0.8em;
-    color: var(--gold);
-    transition: all 0.3s;
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--sidebar-bg2); border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; font-size: 0.8em; color: var(--gold); transition: all 0.3s;
 }
 
 .bola-mini.ultima-mini {
-    background: #fbbf24;
-    color: #1e293b;
-    border-color: #f59e0b;
+    background: #fbbf24; color: #1e293b; border-color: #f59e0b;
     box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
 }
 
@@ -314,41 +233,25 @@ body {
 .tablero-contador { font-size: 0.7rem; color: #64748b; font-weight: bold; }
 
 .history-grid-movil {
-    display: grid;
-    grid-template-columns: repeat(15, 1fr);
-    gap: 3px;
-    padding: 5px;
+    display: grid; grid-template-columns: repeat(15, 1fr); gap: 3px; padding: 5px;
 }
 
 .celda-movil {
-    background: #e2e8f0;
-    border: 2px solid #cbd5e1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: #475569;
-    border-radius: 4px;
-    padding: 6px 2px;
-    min-width: 0;
-    min-height: 0;
-    transition: all 0.3s;
+    background: #e2e8f0; border: 2px solid #cbd5e1;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700; color: #475569;
+    border-radius: 4px; padding: 6px 2px; min-width: 0; min-height: 0; transition: all 0.3s;
 }
 
 .celda-movil.cantada {
     background: linear-gradient(135deg, #ffca28, #ffb300);
-    color: #16213e;
-    border-color: #f59e0b;
-    font-size: 0.75rem;
+    color: #16213e; border-color: #f59e0b; font-size: 0.75rem;
     box-shadow: 0 2px 6px rgba(255,202,40,0.4);
 }
 
 .celda-movil.ultima {
-    background: #ff4d4d !important;
-    color: white !important;
-    animation: pulse 0.8s ease-in-out infinite;
-    font-size: 0.8rem !important;
+    background: #ff4d4d !important; color: white !important;
+    animation: pulse 0.8s ease-in-out infinite; font-size: 0.8rem !important;
 }
 
 /* Controles de juego */
@@ -376,7 +279,7 @@ body {
 .input-minutos:focus { border-color: var(--gold); }
 .input-minutos::placeholder { color: #64748b; font-size: 0.7rem; }
 
-/* ============ CHAT FLOTANTE (MÁS GRANDE) ============ */
+/* ============ CHAT FLOTANTE ============ */
 .chat-flotante { position: fixed; bottom: calc(var(--nav-height) + 15px); right: 15px; z-index: 200; }
 
 .btn-chat {
@@ -490,7 +393,6 @@ body {
     color: #1e293b; border: 2px solid #e2e8f0; margin-bottom: 10px;
     transition: box-shadow 0.3s;
 }
-
 .minicarton-placeholder { color: #64748b; text-align: center; font-size: 0.8rem; padding: 20px; }
 
 .modal-botones-verificacion { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
@@ -551,18 +453,11 @@ body {
 }
 .btn-flotante-cerrar:hover { background: rgba(255,255,255,0.1); }
 
-/* ============ BARRA DE NAVEGACIÓN INFERIOR (SIEMPRE VISIBLE) ============ */
+/* ============ BARRA DE NAVEGACIÓN INFERIOR ============ */
 .bottom-nav {
-    position: fixed; 
-    bottom: 0; 
-    left: 0; 
-    right: 0; 
-    height: var(--nav-height);
-    background: var(--sidebar-bg); 
-    border-top: 2px solid var(--border-color);
-    display: flex !important; 
-    z-index: 9999; 
-    padding-bottom: env(safe-area-inset-bottom, 0);
+    position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-height);
+    background: var(--sidebar-bg); border-top: 2px solid var(--border-color);
+    display: flex; z-index: 9999; padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 .nav-item {
@@ -637,96 +532,52 @@ body {
 
 /* ============ TOAST NOTIFICATIONS ============ */
 .toast-notification {
-    position: fixed;
-    bottom: 100px;
-    left: 50%;
+    position: fixed; bottom: 100px; left: 50%;
     transform: translateX(-50%) translateY(100px);
-    background: #333;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 25px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    z-index: 9999;
-    opacity: 0;
-    transition: all 0.3s ease;
+    background: #333; color: white; padding: 12px 24px;
+    border-radius: 25px; font-size: 0.85rem; font-weight: 500;
+    z-index: 9999; opacity: 0; transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-    max-width: 90%;
-    text-align: center;
-    pointer-events: none;
+    max-width: 90%; text-align: center; pointer-events: none;
 }
 
-.toast-notification.show {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
-}
-
+.toast-notification.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 .toast-notification.toast-error { background: #ef4444; }
 .toast-notification.toast-success { background: #10b981; }
 
-/* ============ DESKTOP (BARRA NAV SIEMPRE VISIBLE + REDIMENSIONABLE) ============ */
+/* ============ DESKTOP ============ */
 @media (min-width: 768px) {
-    body { 
-        flex-direction: column;
-        overflow: hidden;
-    }
+    body { flex-direction: column; overflow: hidden; }
     .app-header { display: none; }
     
     .app-content {
-        display: flex; 
-        gap: 15px; 
-        padding: 15px;
-        padding-bottom: 70px;
-        flex: 1;
-        overflow-y: auto;
-        align-items: flex-start;
+        display: flex; gap: 15px; padding: 15px; padding-bottom: 70px;
+        flex: 1; overflow-y: auto; align-items: flex-start;
         height: calc(100vh - var(--nav-height));
     }
     
-    .section-config, .section-ruleta { 
-        display: none !important; 
-    }
+    .section-config, .section-ruleta { display: none !important; }
     
     .section-config.activo { 
-        display: flex !important;
-        flex-direction: column;
-        width: 380px;
-        min-width: 300px;
-        max-width: 500px;
-        flex-shrink: 0;
-        resize: horizontal;
-        overflow: auto;
-        height: fit-content;
-        max-height: calc(100vh - 120px);
-        overflow-y: auto;
-        padding-right: 5px;
-        border-right: 2px solid var(--border-color);
+        display: flex !important; flex-direction: column;
+        width: 380px; min-width: 300px; max-width: 500px;
+        flex-shrink: 0; resize: horizontal; overflow: auto;
+        max-height: calc(100vh - 120px); overflow-y: auto;
+        padding-right: 5px; border-right: 2px solid var(--border-color);
     }
     
     .section-ruleta.activo { 
-        display: block !important;
-        flex: 1;
-        min-width: 400px;
-        resize: horizontal;
-        overflow: auto;
-        height: fit-content;
-        max-height: calc(100vh - 120px);
-        overflow-y: auto;
+        display: block !important; flex: 1; min-width: 400px;
+        resize: horizontal; overflow: auto;
+        max-height: calc(100vh - 120px); overflow-y: auto;
     }
     
-    .section-config.activo ~ .section-ruleta.activo {
-        display: block !important;
-        flex: 1;
-    }
+    .section-config.activo ~ .section-ruleta.activo { display: block !important; flex: 1; }
     
     .bottom-nav {
-        display: flex !important;
-        position: fixed !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        z-index: 9999 !important;
-        background: var(--sidebar-bg) !important;
+        display: flex !important; position: fixed !important;
+        bottom: 0 !important; left: 0 !important; right: 0 !important;
+        z-index: 9999 !important; background: var(--sidebar-bg) !important;
         border-top: 2px solid var(--border-color) !important;
         height: var(--nav-height) !important;
     }
