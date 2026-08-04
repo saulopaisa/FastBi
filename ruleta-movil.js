@@ -360,8 +360,12 @@ function iniciarAutoMobile() {
     if (window.iniciarBingoAutomatico) window.iniciarBingoAutomatico();
 }
 
-// ============ MODAL VERIFICADOR ============
+// ============ MODAL VERIFICADOR (CON VALIDACIÓN) ============
 function abrirModalVerificador() {
+    if (window.etapaActual < 3) {
+        mostrarToast('⚠️ Configura la partida primero', 'error');
+        return;
+    }
     document.getElementById('modalVerificador').classList.add('activo');
 }
 
