@@ -87,10 +87,7 @@ function generarCartones() {
         intentos = 0;
     }
     
-    cartonesGenerados.forEach(function(c, i) {
-        c.numero = i + 1;
-    });
-    
+    cartonesGenerados.forEach(function(c, i) { c.numero = i + 1; });
     cartonesSeleccionados = [];
     filtrarCartones('todos');
     actualizarContadores();
@@ -537,66 +534,10 @@ function buscarJugadores() {
     });
 }
 
-// ============ LISTA DE JUGADORES COMPLETA ============
+// ============ ACTUALIZAR LISTA DE JUGADORES (INTERNA) ============
 function actualizarListaJugadores() {
-    var listaDiv = document.getElementById('listaJugadores');
-    if (!listaDiv) return;
-    
-    var jugadoresMap = {};
-    cartonesGenerados.forEach(function(c) {
-        if (c.asignadoA) {
-            if (!jugadoresMap[c.asignadoA]) {
-                jugadoresMap[c.asignadoA] = [];
-            }
-            jugadoresMap[c.asignadoA].push(c);
-        }
-    });
-    
-    var jugadores = Object.keys(jugadoresMap).sort();
-    
-    if (jugadores.length === 0) {
-        listaDiv.innerHTML = '<p style="color:#94a3b8;text-align:center;font-size:0.8em;padding:20px;">No hay jugadores registrados</p>';
-        return;
-    }
-    
-    listaDiv.innerHTML = '';
-    
-    jugadores.forEach(function(nombre) {
-        var cartones = jugadoresMap[nombre];
-        var div = document.createElement('div');
-        div.className = 'jugador-item';
-        div.style.flexDirection = 'column';
-        div.style.alignItems = 'stretch';
-        
-        var cartonesStr = cartones.map(function(c) { return '#' + c.numero; }).join(', ');
-        
-        div.innerHTML = 
-            '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">' +
-            '<div class="jugador-info" style="flex:1;min-width:0;">' +
-            '<span style="font-size:1.5em;">👤</span>' +
-            '<div style="flex:1;min-width:0;">' +
-            '<strong style="color:white;">' + nombre + '</strong>' +
-            '<div style="color:#94a3b8;font-size:0.7em;">' + cartones.length + ' cartón(es): ' + cartonesStr + '</div>' +
-            '</div>' +
-            '</div>' +
-            '<div style="display:flex;gap:4px;flex-shrink:0;">' +
-            '<button class="btn btn-link" style="font-size:0.6em;padding:5px 8px;" onclick="copiarLinkJugador(\'' + nombre.replace(/'/g, "\\'") + '\')" title="Copiar link del jugador">🔗</button>' +
-            '<button class="btn btn-asignar" style="font-size:0.6em;padding:5px 8px;flex:0;" onclick="renombrarJugador(\'' + nombre.replace(/'/g, "\\'") + '\')" title="Renombrar">✏️</button>' +
-            '<button class="btn btn-eliminar" style="font-size:0.6em;padding:5px 8px;flex:0;" onclick="eliminarJugador(\'' + nombre.replace(/'/g, "\\'") + '\')" title="Eliminar jugador">🗑️</button>' +
-            '</div>' +
-            '</div>' +
-            '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #334155;display:flex;flex-wrap:wrap;gap:4px;">' +
-            cartones.map(function(c) {
-                var idx = cartonesGenerados.indexOf(c);
-                return '<span style="background:#0f172a;padding:3px 8px;border-radius:12px;font-size:0.65em;display:flex;align-items:center;gap:4px;">' +
-                    '<span style="color:#ffca28;">#' + c.numero + '</span>' +
-                    '<button onclick="quitarCartonJugador(' + idx + ')" style="background:transparent;border:none;color:#ef4444;cursor:pointer;font-size:0.9em;padding:0 2px;" title="Quitar cartón">×</button>' +
-                    '</span>';
-            }).join('') +
-            '</div>';
-        
-        listaDiv.appendChild(div);
-    });
+    // Solo se usa internamente, no muestra panel adicional
+    // La vista de jugadores usa buscarJugadores()
 }
 
 // ============ COPIAR LINK DEL JUGADOR ============
@@ -631,7 +572,6 @@ function eliminarJugador(nombre) {
             mostrarCartones();
         }
         actualizarContadores();
-        actualizarListaJugadores();
         buscarJugadores();
         guardarEnFirebase();
         mostrarToast('🗑️ ' + nombre + ' eliminado. ' + cartonesJugador.length + ' cartones liberados', 'success');
@@ -655,7 +595,6 @@ function quitarCartonJugador(index) {
             mostrarCartones();
         }
         actualizarContadores();
-        actualizarListaJugadores();
         buscarJugadores();
         guardarEnFirebase();
         mostrarToast('✅ Cartón #' + carton.numero + ' liberado de ' + nombre, 'success');
@@ -689,9 +628,7 @@ function renombrarJugador(nombreViejo) {
         return;
     }
     
-    cartonesJugador.forEach(function(c) {
-        c.asignadoA = nombreNuevo;
-    });
+    cartonesJugador.forEach(function(c) { c.asignadoA = nombreNuevo; });
     
     if (filtroActual !== 'todos') {
         filtrarCartones(filtroActual);
@@ -699,7 +636,6 @@ function renombrarJugador(nombreViejo) {
         mostrarCartones();
     }
     actualizarContadores();
-    actualizarListaJugadores();
     buscarJugadores();
     guardarEnFirebase();
     mostrarToast('✅ ' + nombreViejo + ' renombrado a ' + nombreNuevo, 'success');
@@ -778,7 +714,6 @@ function cargarDesdeFirebase() {
         
         mostrarCartones();
         actualizarContadores();
-        actualizarListaJugadores();
         console.log('✅ ' + cartonesGenerados.length + ' cartones cargados desde Firebase');
     }).catch(function(err) {
         console.error('Error al cargar:', err);
@@ -793,12 +728,7 @@ function exportarCartonesJSON() {
     }
     
     var datosExportar = cartonesGenerados.map(function(c) {
-        return {
-            numero: c.numero,
-            carton: c.carton,
-            asignadoA: c.asignadoA,
-            estado: c.estado
-        };
+        return { numero: c.numero, carton: c.carton, asignadoA: c.asignadoA, estado: c.estado };
     });
     
     var data = JSON.stringify(datosExportar, null, 2);
@@ -822,7 +752,6 @@ function importarCartonesJSON() {
     input.onchange = function(e) {
         var file = e.target.files[0];
         if (!file) return;
-        
         var reader = new FileReader();
         reader.onload = function(event) {
             try {
@@ -841,17 +770,13 @@ function importarCartonesJSON() {
                         cartonesSeleccionados = [];
                         mostrarCartones();
                         actualizarContadores();
-                        actualizarListaJugadores();
                         guardarEnFirebase();
                         mostrarToast('✅ ' + data.length + ' cartones importados', 'success');
                     }
                 } else {
                     mostrarToast('❌ Archivo JSON no válido', 'error');
                 }
-            } catch (err) {
-                console.error('Error:', err);
-                mostrarToast('❌ Error al leer el archivo', 'error');
-            }
+            } catch (err) { mostrarToast('❌ Error al leer el archivo', 'error'); }
         };
         reader.readAsText(file);
     };
@@ -884,9 +809,7 @@ function imprimirCartones() {
         return; 
     }
     mostrarToast('🖨️ Abriendo vista de impresión...', 'success');
-    setTimeout(function() {
-        window.print();
-    }, 500);
+    setTimeout(function() { window.print(); }, 500);
 }
 
 // ============ NAVEGACIÓN ============
@@ -907,7 +830,6 @@ function navegarA(vista) {
         if (el) el.classList.add('activo');
         var nav = document.getElementById('navJugadores');
         if (nav) nav.classList.add('activo');
-        actualizarListaJugadores();
         buscarJugadores();
     } else if (vista === 'config') {
         var el = document.getElementById('sectionConfig');
@@ -922,7 +844,6 @@ function navegarA(vista) {
 function mostrarToast(mensaje, tipo) {
     var toast = document.getElementById('toast');
     if (!toast) return;
-    
     toast.textContent = mensaje;
     toast.className = 'toast ' + (tipo || '');
     toast.offsetHeight;
