@@ -673,9 +673,9 @@ function iniciarNuevaPartida() {
     setTimeout(function() { db.ref('partidas/' + SALA_ID).update({ estado: 'jugando', cantados: [], timestamp: Date.now() }); }, 2000); 
 }
 
-// ============ REINICIAR PARTIDA (FUNCIÓN GLOBAL) ============
+// ============ REINICIAR PARTIDA (FUNCIÓN GLOBAL - SIN CONFIRM) ============
 window.reiniciarPartidaGlobal = function() {
-    if (!confirm('⚠️ ¿Reiniciar todo?\n\nSe borrarán números, patrón y jugadores.')) return;
+    // El confirm ya se hizo en reiniciarPartida() de ruleta-movil.js
     if (window.intervaloAutomatico) clearInterval(window.intervaloAutomatico); 
     if (window.intervaloTemporizador) clearInterval(window.intervaloTemporizador); 
     if (window.pausaTimeout) clearTimeout(window.pausaTimeout); 
