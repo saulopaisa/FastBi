@@ -134,64 +134,60 @@ function comenzarPartida() {
     mostrarToast('▶️ Partida iniciada', 'success');
 }
 
-// ============ REINICIAR PARTIDA (DESDE RULETA) ============
+// ============ REINICIAR PARTIDA (DESDE RULETA - ÚNICO CONFIRM) ============
 function reiniciarPartida() {
-    if (confirm('⚠️ ¿Reiniciar la partida?\n\nSe limpiarán todos los números cantados.')) {
-        if (window.reiniciarPartidaGlobal) {
-            window.reiniciarPartidaGlobal();
-        } else {
-            if (window.intervaloAutomatico) clearInterval(window.intervaloAutomatico);
-            if (window.intervaloTemporizador) clearInterval(window.intervaloTemporizador);
-            window.cantados = [];
-            window.partidaIniciada = false;
-            window.bingoDetectado = false;
-            window.modoAutomatico = false;
-            if (typeof limpiarTableroCompleto === 'function') limpiarTableroCompleto();
-            if (typeof actualizarUltimaBolaGrande === 'function') actualizarUltimaBolaGrande();
-            if (typeof actualizarUltimasBolasChicas === 'function') actualizarUltimasBolasChicas();
-            db.ref('partidas/' + SALA_ID).update({ 
-                estado: 'nueva_partida', 
-                cantados: [], 
-                partidaIniciada: false,
-                cronometro: 0,
-                mensajeAdmin: '🔄 Partida reiniciada',
-                timestamp: Date.now() 
-            });
-        }
-        
-        var cronVisual = document.getElementById('cronometroVisual');
-        var cronVisualRuleta = document.getElementById('cronometroVisualRuleta');
-        if (cronVisual) cronVisual.style.display = 'none';
-        if (cronVisualRuleta) cronVisualRuleta.style.display = 'none';
-        
-        if (intervaloCronometroVisual) clearInterval(intervaloCronometroVisual);
-        if (intervaloCronometroRuleta) clearInterval(intervaloCronometroRuleta);
-        intervaloCronometroVisual = null;
-        intervaloCronometroRuleta = null;
-        
-        var btnProg = document.getElementById('btnProgramarMobile');
-        if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = true; }
-        
-        var btnAuto = document.getElementById('btnAutoMobile');
-        if (btnAuto) {
-            btnAuto.textContent = '🤖 AUTO';
-            btnAuto.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
-            btnAuto.onclick = window.iniciarBingoAutomatico;
-            btnAuto.disabled = true;
-        }
-        
-        var btnReiniciarRuleta = document.getElementById('btnReiniciarRuleta');
-        if (btnReiniciarRuleta) btnReiniciarRuleta.style.display = 'none';
-        
-        var btnReiniciarConfig = document.getElementById('btnReiniciarPartida');
-        if (btnReiniciarConfig) btnReiniciarConfig.style.display = 'none';
-        
-        verificarPartidaVigente();
-        actualizarUIMovil();
-        navegarA('config');
-        
-        mostrarToast('🔄 Partida reiniciada', 'success');
+    if (!confirm('⚠️ ¿Reiniciar la partida?\n\nSe limpiarán todos los números cantados.')) return;
+    
+    if (window.reiniciarPartidaGlobal) {
+        window.reiniciarPartidaGlobal();
+    } else {
+        if (window.intervaloAutomatico) clearInterval(window.intervaloAutomatico);
+        if (window.intervaloTemporizador) clearInterval(window.intervaloTemporizador);
+        window.cantados = [];
+        window.partidaIniciada = false;
+        window.bingoDetectado = false;
+        window.modoAutomatico = false;
+        if (typeof limpiarTableroCompleto === 'function') limpiarTableroCompleto();
+        if (typeof actualizarUltimaBolaGrande === 'function') actualizarUltimaBolaGrande();
+        if (typeof actualizarUltimasBolasChicas === 'function') actualizarUltimasBolasChicas();
+        db.ref('partidas/' + SALA_ID).update({ 
+            estado: 'nueva_partida', cantados: [], partidaIniciada: false,
+            cronometro: 0, mensajeAdmin: '🔄 Partida reiniciada', timestamp: Date.now() 
+        });
     }
+    
+    var cronVisual = document.getElementById('cronometroVisual');
+    var cronVisualRuleta = document.getElementById('cronometroVisualRuleta');
+    if (cronVisual) cronVisual.style.display = 'none';
+    if (cronVisualRuleta) cronVisualRuleta.style.display = 'none';
+    
+    if (intervaloCronometroVisual) clearInterval(intervaloCronometroVisual);
+    if (intervaloCronometroRuleta) clearInterval(intervaloCronometroRuleta);
+    intervaloCronometroVisual = null;
+    intervaloCronometroRuleta = null;
+    
+    var btnProg = document.getElementById('btnProgramarMobile');
+    if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = true; }
+    
+    var btnAuto = document.getElementById('btnAutoMobile');
+    if (btnAuto) {
+        btnAuto.textContent = '🤖 AUTO';
+        btnAuto.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+        btnAuto.onclick = window.iniciarBingoAutomatico;
+        btnAuto.disabled = true;
+    }
+    
+    var btnReiniciarRuleta = document.getElementById('btnReiniciarRuleta');
+    if (btnReiniciarRuleta) btnReiniciarRuleta.style.display = 'none';
+    
+    var btnReiniciarConfig = document.getElementById('btnReiniciarPartida');
+    if (btnReiniciarConfig) btnReiniciarConfig.style.display = 'none';
+    
+    verificarPartidaVigente();
+    actualizarUIMovil();
+    navegarA('config');
+    
+    mostrarToast('🔄 Partida reiniciada', 'success');
 }
 
 // ============ CRONÓMETRO CON SEGUNDOS ============
@@ -250,37 +246,25 @@ function programarJuegoMobile() {
         }
     }
     
-    if (tiempoTotal <= 0) {
-        alert('El tiempo debe ser mayor a 0');
-        return;
-    }
+    if (tiempoTotal <= 0) { alert('El tiempo debe ser mayor a 0'); return; }
     
-    var mins = Math.floor(tiempoTotal / 60);
-    var segs = tiempoTotal % 60;
+    var mins = Math.floor(tiempoTotal / 60), segs = tiempoTotal % 60;
     var tiempoStr = mins > 0 ? mins + ' min ' + segs + ' seg' : segs + ' seg';
-    
     var modo = confirm('⏰ Cronómetro: ' + tiempoStr + '\n\n¿Modo AUTOMÁTICO al llegar a 0?\n✅ Aceptar = Auto\n❌ Cancelar = Manual');
     window.modoJuegoSeleccionado = modo ? 'automatico' : 'manual';
     
     var cronVisual = document.getElementById('cronometroVisual');
     var cronVisualRuleta = document.getElementById('cronometroVisualRuleta');
-    
     if (cronVisual) cronVisual.style.display = 'block';
     if (cronVisualRuleta) cronVisualRuleta.style.display = 'block';
     
     var tiempo = tiempoTotal;
     actualizarCronometroConfig(tiempo, tiempoTotal);
     actualizarCronometroRuleta(tiempo, tiempoTotal);
-    
     if (intervaloCronometroVisual) clearInterval(intervaloCronometroVisual);
     if (intervaloCronometroRuleta) clearInterval(intervaloCronometroRuleta);
     
-    db.ref('partidas/' + SALA_ID).update({
-        cronometro: tiempo,
-        estado: 'iniciando',
-        mensajeAdmin: '⏰ La partida comienza en ' + tiempoStr,
-        timestamp: Date.now()
-    });
+    db.ref('partidas/' + SALA_ID).update({ cronometro: tiempo, estado: 'iniciando', mensajeAdmin: '⏰ La partida comienza en ' + tiempoStr, timestamp: Date.now() });
     
     var btnProg = document.getElementById('btnProgramarMobile');
     if (btnProg) { btnProg.textContent = '⏳ ESPERANDO...'; btnProg.disabled = true; }
@@ -295,40 +279,17 @@ function programarJuegoMobile() {
         actualizarCronometroConfig(tiempo, tiempoTotal);
         actualizarCronometroRuleta(tiempo, tiempoTotal);
         db.ref('partidas/' + SALA_ID).update({ cronometro: tiempo });
-        
         if (tiempo <= 0) {
-            clearInterval(intervaloCronometroVisual);
-            clearInterval(intervaloCronometroRuleta);
-            intervaloCronometroVisual = null;
-            intervaloCronometroRuleta = null;
-            
+            clearInterval(intervaloCronometroVisual); clearInterval(intervaloCronometroRuleta);
+            intervaloCronometroVisual = null; intervaloCronometroRuleta = null;
             if (cronVisual) cronVisual.style.display = 'none';
             if (cronVisualRuleta) cronVisualRuleta.style.display = 'none';
             if (btnProg) { btnProg.textContent = '⏰ PROGRAMAR'; btnProg.disabled = false; }
-            
-            if (btnAuto) {
-                btnAuto.disabled = false;
-                btnAuto.onclick = window.iniciarBingoAutomatico;
-            }
+            if (btnAuto) { btnAuto.disabled = false; btnAuto.onclick = window.iniciarBingoAutomatico; }
             if (btnManual) { btnManual.disabled = false; btnManual.style.opacity = '1'; btnManual.style.pointerEvents = 'all'; }
-            
-            db.ref('partidas/' + SALA_ID).update({
-                estado: 'jugando',
-                cronometro: 0,
-                mensajeAdmin: '▶️ ¡Juego iniciado!',
-                timestamp: Date.now()
-            });
-            
-            if (window.modoJuegoSeleccionado === 'automatico' && window.iniciarBingoAutomatico) {
-                window.iniciarBingoAutomatico();
-            }
-            
-            if ('speechSynthesis' in window) {
-                var msg = new SpeechSynthesisUtterance('¡Es hora de empezar el bingo!');
-                msg.lang = 'es-ES';
-                window.speechSynthesis.speak(msg);
-            }
-            
+            db.ref('partidas/' + SALA_ID).update({ estado: 'jugando', cronometro: 0, mensajeAdmin: '▶️ ¡Juego iniciado!', timestamp: Date.now() });
+            if (window.modoJuegoSeleccionado === 'automatico' && window.iniciarBingoAutomatico) { window.iniciarBingoAutomatico(); }
+            if ('speechSynthesis' in window) { var msg = new SpeechSynthesisUtterance('¡Es hora de empezar el bingo!'); msg.lang = 'es-ES'; window.speechSynthesis.speak(msg); }
             mostrarToast('▶️ ¡Juego iniciado!', 'success');
         }
     }, 1000);
@@ -338,16 +299,8 @@ function programarJuegoMobile() {
 
 // ============ INICIAR AUTO MÓVIL (TOGGLE) ============
 function iniciarAutoMobile() {
-    if (!window.partidaIniciada) {
-        alert('⚠️ Inicia la partida primero');
-        return;
-    }
-    if (window.modoAutomatico) {
-        if (window.detenerBingoAutomatico) {
-            window.detenerBingoAutomatico();
-        }
-        return;
-    }
+    if (!window.partidaIniciada) { alert('⚠️ Inicia la partida primero'); return; }
+    if (window.modoAutomatico) { if (window.detenerBingoAutomatico) { window.detenerBingoAutomatico(); } return; }
     if (window.iniciarBingoAutomatico) window.iniciarBingoAutomatico();
 }
 
@@ -360,18 +313,14 @@ function abrirModalVerificador() {
     document.getElementById('modalVerificador').classList.add('activo');
 }
 
-function cerrarModalVerificador() {
-    document.getElementById('modalVerificador').classList.remove('activo');
-}
+function cerrarModalVerificador() { document.getElementById('modalVerificador').classList.remove('activo'); }
 
 function buscarCartonMobile() {
     var id = document.getElementById('idABuscarMobile').value.trim();
     if (!id) { alert('Ingresa un ID'); return; }
-    
     var inputPC = document.getElementById('idABuscar');
     if (inputPC) inputPC.value = id;
     if (window.revisarCartonManual) window.revisarCartonManual();
-    
     setTimeout(function() {
         var original = document.getElementById('minicartonVerificador');
         var mobile = document.getElementById('minicartonMobile');
@@ -394,15 +343,9 @@ function enviarChat() {
     var input = document.getElementById('chatInput');
     var mensaje = input.value.trim();
     if (!mensaje) return;
-    
     var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
-    db.ref('partidas/' + salaId + '/chat').push({
-        mensaje: '📢 ' + mensaje,
-        timestamp: Date.now(),
-        admin: true
-    });
-    input.value = '';
-    input.style.height = 'auto';
+    db.ref('partidas/' + salaId + '/chat').push({ mensaje: '📢 ' + mensaje, timestamp: Date.now(), admin: true });
+    input.value = ''; input.style.height = 'auto';
 }
 
 function limpiarChat() {
@@ -420,29 +363,22 @@ function escucharChat() {
         var contenedor = document.getElementById('chatMensajes');
         if (!contenedor) return;
         if (!snap.exists()) { contenedor.innerHTML = '<p class="chat-vacio">No hay mensajes</p>'; return; }
-        
         contenedor.innerHTML = '';
         var mensajes = [];
         snap.forEach(function(child) { mensajes.push(child.val()); });
         mensajes.sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
-        
         mensajes.forEach(function(msg) {
             var div = document.createElement('div');
-            if (msg.sistema) {
-                div.className = 'msg-item msg-sistema';
-            } else {
-                div.className = 'msg-item ' + (msg.admin ? 'msg-admin' : 'msg-jugador');
-            }
+            if (msg.sistema) { div.className = 'msg-item msg-sistema'; }
+            else { div.className = 'msg-item ' + (msg.admin ? 'msg-admin' : 'msg-jugador'); }
             div.innerHTML = msg.mensaje + '<div class="msg-timestamp">' + new Date(msg.timestamp).toLocaleTimeString() + '</div>';
             contenedor.appendChild(div);
         });
         contenedor.scrollTop = contenedor.scrollHeight;
-        
         var panel = document.getElementById('chatPanel');
         if (!panel.classList.contains('activo') && mensajes.length > 0) {
             var badge = document.getElementById('chatBadge');
-            badge.style.display = 'flex';
-            badge.textContent = mensajes.length > 99 ? '99+' : mensajes.length;
+            badge.style.display = 'flex'; badge.textContent = mensajes.length > 99 ? '99+' : mensajes.length;
         }
     });
 }
@@ -450,17 +386,12 @@ function escucharChat() {
 // ============ COPIAR SALA ============
 function copiarSalaId() {
     var salaId = localStorage.getItem('salaActiva') || 'bingo-default';
-    navigator.clipboard.writeText(salaId).then(function() {
-        alert('✅ ID de sala: ' + salaId);
-    });
+    navigator.clipboard.writeText(salaId).then(function() { alert('✅ ID de sala: ' + salaId); });
 }
 
 // ============ SORTEO MANUAL ============
 function sortearManualMobile() {
-    if (!window.partidaIniciada) {
-        alert('⚠️ Inicia la partida primero');
-        return;
-    }
+    if (!window.partidaIniciada) { alert('⚠️ Inicia la partida primero'); return; }
     var btnPC = document.getElementById('drawBtn');
     if (btnPC) btnPC.click();
 }
@@ -468,7 +399,6 @@ function sortearManualMobile() {
 // ============ ACTUALIZAR UI ============
 function actualizarUIMovil() {
     if (typeof window.etapaActual === 'undefined') return;
-    
     var juegoListo = window.etapaActual >= 3;
     var enPausa = window.enPausa || false;
     var partidaIniciada = window.partidaIniciada || false;
@@ -498,28 +428,18 @@ function actualizarUIMovil() {
     
     var navRuleta = document.getElementById('navRuleta');
     if (navRuleta) {
-        if (juegoListo) {
-            navRuleta.style.opacity = '1';
-            navRuleta.style.pointerEvents = 'all';
-        } else {
-            navRuleta.style.opacity = '0.5';
-            navRuleta.style.pointerEvents = 'none';
-        }
+        navRuleta.style.opacity = juegoListo ? '1' : '0.5';
+        navRuleta.style.pointerEvents = juegoListo ? 'all' : 'none';
     }
-    
     verificarPartidaVigente();
 }
 
-function setDisabled(id, state) {
-    var el = document.getElementById(id);
-    if (el) el.disabled = state;
-}
+function setDisabled(id, state) { var el = document.getElementById(id); if (el) el.disabled = state; }
 
 function obtenerNombrePatronMovil() {
     if (!window.patronBingo) return 'No configurado';
     var a = window.patronBingo.filter(function(x) { return x; }).length;
-    if (a === 25) return 'Lleno';
-    if (a === 0) return 'No configurado';
+    if (a === 25) return 'Lleno'; if (a === 0) return 'No configurado';
     if ([0,4,6,8,12,16,18,20,24].every(function(p) { return window.patronBingo[p]; }) && a === 9) return 'La X';
     return a + ' celdas';
 }
@@ -531,8 +451,7 @@ function inicializarTableroMovil() {
     grid.innerHTML = '';
     for (var i = 1; i <= 75; i++) {
         var div = document.createElement('div');
-        div.className = 'celda-movil';
-        div.textContent = i;
+        div.className = 'celda-movil'; div.textContent = i;
         if (window.cantados && window.cantados.indexOf(i) !== -1) div.classList.add('cantada');
         grid.appendChild(div);
     }
@@ -542,7 +461,6 @@ function inicializarTableroMovil() {
 function autoAjustarTextarea() {
     var textarea = document.getElementById('chatInput');
     if (!textarea) return;
-    
     textarea.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = Math.min(this.scrollHeight, 100) + 'px';
@@ -551,37 +469,20 @@ function autoAjustarTextarea() {
 
 // ============ INICIAR ============
 document.addEventListener('DOMContentLoaded', function() {
-    escucharChat();
-    inicializarTableroMovil();
-    verificarPartidaVigente();
-    autoAjustarTextarea();
-    
-    var cronVisual = document.getElementById('cronometroVisual');
-    var cronVisualRuleta = document.getElementById('cronometroVisualRuleta');
-    if (cronVisual) cronVisual.style.display = 'none';
-    if (cronVisualRuleta) cronVisualRuleta.style.display = 'none';
-    
+    escucharChat(); inicializarTableroMovil(); verificarPartidaVigente(); autoAjustarTextarea();
+    var cronVisual = document.getElementById('cronometroVisual'); if (cronVisual) cronVisual.style.display = 'none';
+    var cronVisualR = document.getElementById('cronometroVisualRuleta'); if (cronVisualR) cronVisualR.style.display = 'none';
     setInterval(function() {
-        actualizarUIMovil();
-        inicializarTableroMovil();
-        
+        actualizarUIMovil(); inicializarTableroMovil();
         var total = window.cantados ? window.cantados.length : 0;
-        var el = document.getElementById('totalCantadosMobile');
-        if (el) el.textContent = total + '/75';
-        
-        var oc = document.getElementById('onlineCountMobile');
-        if (oc && window.jugadoresActivos) oc.textContent = '👥 ' + window.jugadoresActivos.length;
-        
+        var el = document.getElementById('totalCantadosMobile'); if (el) el.textContent = total + '/75';
+        var oc = document.getElementById('onlineCountMobile'); if (oc && window.jugadoresActivos) oc.textContent = '👥 ' + window.jugadoresActivos.length;
         var alertaPC = document.getElementById('alertaBingo');
         var alertaMobile = document.getElementById('alertaBingoMobile');
-        if (alertaPC && alertaMobile) {
-            if (alertaPC.style.display === 'block') {
-                alertaMobile.style.display = 'block';
-                var ajPC = document.getElementById('alertaJugador');
-                var acPC = document.getElementById('alertaCarton');
-                if (ajPC) document.getElementById('alertaJugadorMobile').textContent = ajPC.textContent;
-                if (acPC) document.getElementById('alertaCartonMobile').textContent = acPC.textContent;
-            }
+        if (alertaPC && alertaMobile && alertaPC.style.display === 'block') {
+            alertaMobile.style.display = 'block';
+            var ajPC = document.getElementById('alertaJugador'); if (ajPC) document.getElementById('alertaJugadorMobile').textContent = ajPC.textContent;
+            var acPC = document.getElementById('alertaCarton'); if (acPC) document.getElementById('alertaCartonMobile').textContent = acPC.textContent;
         }
     }, 1000);
 });
