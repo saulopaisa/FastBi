@@ -551,9 +551,9 @@ body {
     .app-header { display: none; }
     
     .app-content {
-        display: flex; gap: 15px; padding: 15px; padding-bottom: 70px;
+        display: flex; gap: 15px; padding: 15px; 
+        padding-bottom: calc(var(--nav-height) + 15px);
         flex: 1; overflow-y: auto; align-items: flex-start;
-        height: calc(100vh - var(--nav-height));
     }
     
     .section-config, .section-ruleta { display: none !important; }
