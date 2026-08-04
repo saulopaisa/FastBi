@@ -133,7 +133,7 @@ body {
     100% { transform: scale(1) rotate(0); }
 }
 
-/* ============ SECCIÓN CONFIGURACIÓN ============ */
+/* ============ SECCIÓN CONFIGURACIÓN Y RULETA ============ */
 .section-config { display: none; }
 .section-config.activo { display: block; }
 .section-ruleta { display: none; }
@@ -661,10 +661,8 @@ body {
 @media (min-width: 768px) {
     body { 
         flex-direction: column;
-        padding-bottom: var(--nav-height);
     }
     .app-header { display: none; }
-    /* .bottom-nav { display: none; } */ /* COMENTADO: SIEMPRE VISIBLE */
     
     .app-content {
         display: flex; 
@@ -673,9 +671,33 @@ body {
         padding-bottom: calc(var(--nav-height) + 15px);
         flex: 1;
         overflow-y: auto;
+        align-items: flex-start;
     }
-    .section-config, .section-ruleta { display: block !important; flex: 1; }
-    .section-config { max-width: 380px; flex-shrink: 0; }
+    
+    /* Ocultar secciones por defecto en desktop */
+    .section-config, .section-ruleta { 
+        display: none !important; 
+    }
+    
+    /* Mostrar solo la activa */
+    .section-config.activo { 
+        display: flex !important;
+        flex-direction: column;
+        width: 380px;
+        flex-shrink: 0;
+    }
+    
+    .section-ruleta.activo { 
+        display: block !important;
+        flex: 1;
+    }
+    
+    /* Cuando config está activa, la ruleta también puede estar (desktop) */
+    .section-config.activo ~ .section-ruleta.activo {
+        display: block !important;
+        flex: 1;
+    }
+    
     .chat-flotante { bottom: calc(var(--nav-height) + 20px); right: 20px; }
     .chat-panel { bottom: calc(var(--nav-height) + 70px); right: 20px; width: 380px; }
 }
