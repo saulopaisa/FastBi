@@ -660,16 +660,19 @@ body {
 /* ============ DESKTOP (BARRA NAV SIEMPRE VISIBLE) ============ */
 @media (min-width: 768px) {
     body { 
-        flex-direction: row; 
+        flex-direction: column;
         padding-bottom: var(--nav-height);
     }
     .app-header { display: none; }
     /* .bottom-nav { display: none; } */ /* COMENTADO: SIEMPRE VISIBLE */
     
     .app-content {
-        display: flex; gap: 15px; padding: 15px;
+        display: flex; 
+        gap: 15px; 
+        padding: 15px;
         padding-bottom: calc(var(--nav-height) + 15px);
         flex: 1;
+        overflow-y: auto;
     }
     .section-config, .section-ruleta { display: block !important; flex: 1; }
     .section-config { max-width: 380px; flex-shrink: 0; }
