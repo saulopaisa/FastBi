@@ -72,6 +72,11 @@
                     🚀 INICIAR PARTIDA
                 </button>
                 
+                <!-- Botón REINICIAR en configuración -->
+                <button id="btnReiniciarPartida" onclick="reiniciarPartida()" class="btn-accion btn-reiniciar-partida" style="display:none;">
+                    🔄 REINICIAR PARTIDA
+                </button>
+                
                 <div id="cronometroVisual" class="cronometro-visual" style="display:none;">
                     <div class="cronometro-visual-tiempo" id="cronometroVisualTiempo">00:00</div>
                     <div class="cronometro-visual-barra">
@@ -82,7 +87,7 @@
             </div>
         </div>
 
-        <!-- ========== SECCIÓN RULETA (PANTALLA 2 - OCULTA HASTA CONFIGURAR) ========== -->
+        <!-- ========== SECCIÓN RULETA (PANTALLA 2) ========== -->
         <div class="section-ruleta" id="sectionRuleta">
             
             <!-- Alerta de Bingo flotante -->
@@ -228,7 +233,7 @@
         </div>
     </div>
 
-    <!-- BARRA DE NAVEGACIÓN INFERIOR -->
+    <!-- BARRA DE NAVEGACIÓN INFERIOR (SIEMPRE VISIBLE) -->
     <div class="bottom-nav">
         <div class="nav-item activo" onclick="navegarA('config')" id="navConfig">
             <span class="nav-icon">⚙️</span>
@@ -249,7 +254,7 @@
         </div>
     </div>
 
-    <!-- Firebase -->
+    <!-- SCRIPTS -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     
