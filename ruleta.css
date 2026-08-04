@@ -553,9 +553,16 @@ body {
 
 /* ============ BARRA DE NAVEGACIÓN INFERIOR (SIEMPRE VISIBLE) ============ */
 .bottom-nav {
-    position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-height);
-    background: var(--sidebar-bg); border-top: 2px solid var(--border-color);
-    display: flex; z-index: 150; padding-bottom: env(safe-area-inset-bottom, 0);
+    position: fixed; 
+    bottom: 0; 
+    left: 0; 
+    right: 0; 
+    height: var(--nav-height);
+    background: var(--sidebar-bg); 
+    border-top: 2px solid var(--border-color);
+    display: flex !important; 
+    z-index: 999; 
+    padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 .nav-item {
@@ -661,6 +668,7 @@ body {
 @media (min-width: 768px) {
     body { 
         flex-direction: column;
+        overflow: hidden;
     }
     .app-header { display: none; }
     
@@ -668,18 +676,16 @@ body {
         display: flex; 
         gap: 15px; 
         padding: 15px;
-        padding-bottom: calc(var(--nav-height) + 15px);
+        padding-bottom: calc(var(--nav-height) + 20px);
         flex: 1;
         overflow-y: auto;
         align-items: flex-start;
     }
     
-    /* Ocultar secciones por defecto en desktop */
     .section-config, .section-ruleta { 
         display: none !important; 
     }
     
-    /* Mostrar solo la activa */
     .section-config.activo { 
         display: flex !important;
         flex-direction: column;
@@ -692,10 +698,14 @@ body {
         flex: 1;
     }
     
-    /* Cuando config está activa, la ruleta también puede estar (desktop) */
     .section-config.activo ~ .section-ruleta.activo {
         display: block !important;
         flex: 1;
+    }
+    
+    .bottom-nav {
+        display: flex !important;
+        z-index: 999;
     }
     
     .chat-flotante { bottom: calc(var(--nav-height) + 20px); right: 20px; }
