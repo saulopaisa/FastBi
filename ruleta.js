@@ -1,5 +1,4 @@
-// ruleta.js - Panel de Control Supabase
-
+// ruleta.js - Panel de Control supabaseClient
 var SALA_ID = localStorage.getItem('salaActiva') || 'bingo-default';
 
 window.cantados = [];
@@ -41,8 +40,7 @@ function reproducirAudioGanador(n) { if ('speechSynthesis' in window) { window.s
 // ============ SUPABASE ============
 async function guardarPartidaEnSupabase() {
     try {
-        const { data, error } = await supabase
-            .from('partidas')
+        const { data, error } = await supabaseClient            .from('partidas')
             .upsert({
                 sala_id: SALA_ID,
                 estado: window.partidaIniciada ? 'jugando' : 'configuracion',
@@ -62,8 +60,7 @@ async function guardarPartidaEnSupabase() {
 
 async function cargarPartidaDesdeSupabase() {
     try {
-        const { data, error } = await supabase
-            .from('partidas')
+        const { data, error } = await supabaseClient            .from('partidas')
             .select('*')
             .eq('sala_id', SALA_ID)
             .single();
