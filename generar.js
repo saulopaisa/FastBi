@@ -1,5 +1,10 @@
-// generar.js - Lógica principal del generador de cartones
+// generar.js - Supabase version
 
+const SUPABASE_URL = 'https://yoakkyizazpyboxqkuhg.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWtreWl6YXpweWJveHFrdWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MDMyNjUsImV4cCI6MjEwMjM3OTI2NX0.a99WU6PvuwwhBpf-PCodZ-gfiFM-dxEvq245_SB7i3U';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+var SALA_ID = localStorage.getItem('salaActiva') || 'bingo-default';
 var cartonesGenerados = [];
 var cartonesSeleccionados = [];
 var MAX_GANADORES_POR_NUMERO = 3;
@@ -11,7 +16,6 @@ function generarCarton() {
     var letras = ['B','I','N','G','O'];
     var carton = {B:[],I:[],N:[],G:[],O:[]};
     var usados = new Set();
-
     for (var col = 0; col < 5; col++) {
         var min = rangos[col][0], max = rangos[col][1];
         var nums = [];
@@ -27,54 +31,33 @@ function generarCarton() {
     return carton;
 }
 
-// ============ VERIFICAR DUPLICADOS ============
 function cartonExiste(carton) {
     return cartonesGenerados.some(function(c) {
         var letras = ['B','I','N','G','O'];
         return letras.every(function(l) {
-            return c.carton[l].every(function(num, i) {
-                return num === carton[l][i];
-            });
+            return c.carton[l].every(function(num, i) { return num === carton[l][i]; });
         });
     });
 }
 
 function contarCartonesSimilares(carton) {
     var ref = carton.B.join(',');
-    return cartonesGenerados.filter(function(c) {
-        return c.carton.B.join(',') === ref;
-    }).length;
+    return cartonesGenerados.filter(function(c) { return c.carton.B.join(',') === ref; }).length;
 }
 
-// ============ GENERAR MÚLTIPLES (AGREGAR SIN BORRAR) ============
+// ============ GENERAR MÚLTIPLES ============
 function generarCartones() {
     var cantidad = parseInt(document.getElementById('cantidadGenerar').value) || 10;
-    if (cantidad < 1 || cantidad > 500) { 
-        mostrarToast('⚠️ Cantidad entre 1 y 500', 'error'); 
-        return; 
-    }
+    if (cantidad < 1 || cantidad > 500) { mostrarToast('⚠️ Cantidad entre 1 y 500', 'error'); return; }
     
     var numeroInicial = cartonesGenerados.length;
-    var intentos = 0;
-    var maxIntentos = cantidad * 10;
-    var generados = 0;
+    var intentos = 0, maxIntentos = cantidad * 10, generados = 0;
     
     for (var i = 0; i < cantidad && intentos < maxIntentos; i++) {
         var nuevoCarton = generarCarton();
-        
-        if (cartonExiste(nuevoCarton)) {
-            i--;
-            intentos++;
-            continue;
-        }
-        
+        if (cartonExiste(nuevoCarton)) { i--; intentos++; continue; }
         var similares = contarCartonesSimilares(nuevoCarton);
-        if (similares >= MAX_GANADORES_POR_NUMERO) {
-            i--;
-            intentos++;
-            continue;
-        }
-        
+        if (similares >= MAX_GANADORES_POR_NUMERO) { i--; intentos++; continue; }
         cartonesGenerados.push({
             id: 'carton_' + Date.now() + '_' + (numeroInicial + generados),
             numero: numeroInicial + generados + 1,
@@ -82,651 +65,353 @@ function generarCartones() {
             asignadoA: null,
             estado: 'disponible'
         });
-        
-        generados++;
-        intentos = 0;
+        generados++; intentos = 0;
     }
     
     cartonesGenerados.forEach(function(c, i) { c.numero = i + 1; });
     cartonesSeleccionados = [];
     filtrarCartones('todos');
     actualizarContadores();
-    guardarEnFirebase();
+    guardarEnSupabase();
     
-    if (generados < cantidad) {
-        mostrarToast('⚠️ Solo se agregaron ' + generados + ' de ' + cantidad + ' (límite de variedad)', 'error');
-    } else {
-        mostrarToast('✅ ' + generados + ' cartones agregados (total: ' + cartonesGenerados.length + ')', 'success');
-    }
+    if (generados < cantidad) { mostrarToast('⚠️ Solo ' + generados + ' de ' + cantidad, 'error'); }
+    else { mostrarToast('✅ ' + generados + ' cartones agregados', 'success'); }
 }
 
 // ============ MOSTRAR CARTONES ============
 function mostrarCartones(filtrarTermino) {
     if (!filtrarTermino) {
-        document.querySelectorAll('.info-item').forEach(function(item) {
-            item.classList.remove('active-filter');
-        });
+        document.querySelectorAll('.info-item').forEach(function(i) { i.classList.remove('active-filter'); });
         var infoTodos = document.getElementById('infoTodos');
         if (infoTodos) infoTodos.classList.add('active-filter');
         filtroActual = 'todos';
     }
-    
     var grid = document.getElementById('cartonesGrid');
     var cartonesAMostrar = cartonesGenerados;
-    
     if (filtrarTermino) {
-        var termino = filtrarTermino.toLowerCase();
+        var t = filtrarTermino.toLowerCase();
         cartonesAMostrar = cartonesGenerados.filter(function(c) {
-            var numStr = String(c.numero);
-            var nombre = (c.asignadoA || '').toLowerCase();
-            return numStr.includes(termino) || nombre.includes(termino);
+            return String(c.numero).includes(t) || (c.asignadoA || '').toLowerCase().includes(t);
         });
     }
-    
     if (cartonesAMostrar.length === 0) {
-        grid.innerHTML = '<p class="placeholder">' + (filtrarTermino ? 'Sin resultados para "' + filtrarTermino + '"' : 'No hay cartones. Genera o importa.') + '</p>';
+        grid.innerHTML = '<p class="placeholder">' + (filtrarTermino ? 'Sin resultados' : 'No hay cartones') + '</p>';
         return;
     }
-
     grid.innerHTML = '';
     var letras = ['B','I','N','G','O'];
-
     cartonesAMostrar.forEach(function(c) {
         var index = cartonesGenerados.indexOf(c);
-        var card = document.createElement('div');
-        card.className = 'carton-card';
-        card.id = 'cartonCard-' + index;
-        
-        var html = '<div class="carton-header-info">';
-        html += '<span class="carton-num">#' + c.numero + '</span>';
-        html += c.asignadoA ? 
-            '<span class="carton-asignado">👤 ' + c.asignadoA + '</span>' : 
-            '<span class="carton-disponible">📋 Disponible</span>';
-        html += '</div>';
-        
-        html += '<div class="carton-bingo-header">';
+        var card = document.createElement('div'); card.className = 'carton-card'; card.id = 'cartonCard-' + index;
+        var html = '<div class="carton-header-info"><span class="carton-num">#' + c.numero + '</span>';
+        html += c.asignadoA ? '<span class="carton-asignado">👤 ' + c.asignadoA + '</span>' : '<span class="carton-disponible">📋 Disponible</span>';
+        html += '</div><div class="carton-bingo-header">';
         letras.forEach(function(l) { html += '<div>' + l + '</div>'; });
-        html += '</div>';
-        
-        html += '<div class="carton-bingo-grid">';
+        html += '</div><div class="carton-bingo-grid">';
         for (var f = 0; f < 5; f++) {
             letras.forEach(function(l) {
-                var v = c.carton[l][f];
-                var centro = (l==='N' && f===2);
+                var v = c.carton[l][f], centro = (l==='N' && f===2);
                 html += '<div class="carton-bingo-cell'+(centro?' free':'')+'">'+(centro?'⭐':v)+'</div>';
             });
         }
-        html += '</div>';
-        
-        html += '<div class="carton-acciones">';
+        html += '</div><div class="carton-acciones">';
         html += '<button class="btn btn-asignar" onclick="asignarIndividual('+index+')">👤 Asignar</button>';
         html += '<button class="btn btn-eliminar" onclick="eliminarCarton('+index+')">🗑️ Eliminar</button>';
         html += '</div>';
-        
-        card.innerHTML = html;
-        grid.appendChild(card);
+        card.innerHTML = html; grid.appendChild(card);
     });
 }
 
-// ============ FILTRAR CARTONES POR ESTADO ============
+// ============ FILTRAR ============
 function filtrarCartones(filtro) {
     filtroActual = filtro;
-    
-    document.querySelectorAll('.info-item').forEach(function(item) {
-        item.classList.remove('active-filter');
-    });
-    
-    if (filtro === 'todos') {
-        var el = document.getElementById('infoTodos');
-        if (el) el.classList.add('active-filter');
-        mostrarCartones();
-    } else if (filtro === 'asignados') {
-        var el = document.getElementById('infoAsignados');
-        if (el) el.classList.add('active-filter');
-        mostrarCartonesFiltrados('asignados');
-    } else if (filtro === 'disponibles') {
-        var el = document.getElementById('infoDisponibles');
-        if (el) el.classList.add('active-filter');
-        mostrarCartonesFiltrados('disponibles');
-    }
+    document.querySelectorAll('.info-item').forEach(function(i) { i.classList.remove('active-filter'); });
+    if (filtro === 'todos') { var el = document.getElementById('infoTodos'); if (el) el.classList.add('active-filter'); mostrarCartones(); }
+    else if (filtro === 'asignados') { var el = document.getElementById('infoAsignados'); if (el) el.classList.add('active-filter'); mostrarCartonesFiltrados('asignados'); }
+    else if (filtro === 'disponibles') { var el = document.getElementById('infoDisponibles'); if (el) el.classList.add('active-filter'); mostrarCartonesFiltrados('disponibles'); }
 }
 
 function mostrarCartonesFiltrados(estado) {
     var grid = document.getElementById('cartonesGrid');
-    
-    var cartonesFiltrados;
-    if (estado === 'asignados') {
-        cartonesFiltrados = cartonesGenerados.filter(function(c) { return c.asignadoA; });
-    } else if (estado === 'disponibles') {
-        cartonesFiltrados = cartonesGenerados.filter(function(c) { return !c.asignadoA; });
-    }
-    
-    if (cartonesFiltrados.length === 0) {
-        grid.innerHTML = '<p class="placeholder">No hay cartones ' + estado + '</p>';
-        return;
-    }
-    
+    var filtrados = estado === 'asignados' ? cartonesGenerados.filter(c => c.asignadoA) : cartonesGenerados.filter(c => !c.asignadoA);
+    if (filtrados.length === 0) { grid.innerHTML = '<p class="placeholder">No hay cartones ' + estado + '</p>'; return; }
     grid.innerHTML = '';
     var letras = ['B','I','N','G','O'];
-    
-    cartonesFiltrados.forEach(function(c) {
+    filtrados.forEach(function(c) {
         var index = cartonesGenerados.indexOf(c);
-        var card = document.createElement('div');
-        card.className = 'carton-card';
-        card.id = 'cartonCard-' + index;
-        
-        var html = '<div class="carton-header-info">';
-        html += '<span class="carton-num">#' + c.numero + '</span>';
-        html += c.asignadoA ? 
-            '<span class="carton-asignado">👤 ' + c.asignadoA + '</span>' : 
-            '<span class="carton-disponible">📋 Disponible</span>';
-        html += '</div>';
-        
-        html += '<div class="carton-bingo-header">';
+        var card = document.createElement('div'); card.className = 'carton-card';
+        var html = '<div class="carton-header-info"><span class="carton-num">#' + c.numero + '</span>';
+        html += c.asignadoA ? '<span class="carton-asignado">👤 ' + c.asignadoA + '</span>' : '<span class="carton-disponible">📋 Disponible</span>';
+        html += '</div><div class="carton-bingo-header">';
         letras.forEach(function(l) { html += '<div>' + l + '</div>'; });
+        html += '</div><div class="carton-bingo-grid">';
+        for (var f = 0; f < 5; f++) { letras.forEach(function(l) { var v = c.carton[l][f], centro = (l==='N' && f===2); html += '<div class="carton-bingo-cell'+(centro?' free':'')+'">'+(centro?'⭐':v)+'</div>'; }); }
+        html += '</div><div class="carton-acciones">';
+        html += '<button class="btn btn-asignar" onclick="asignarIndividual('+index+')">👤</button>';
+        html += '<button class="btn btn-eliminar" onclick="eliminarCarton('+index+')">🗑️</button>';
         html += '</div>';
-        
-        html += '<div class="carton-bingo-grid">';
-        for (var f = 0; f < 5; f++) {
-            letras.forEach(function(l) {
-                var v = c.carton[l][f];
-                var centro = (l==='N' && f===2);
-                html += '<div class="carton-bingo-cell'+(centro?' free':'')+'">'+(centro?'⭐':v)+'</div>';
-            });
-        }
-        html += '</div>';
-        
-        html += '<div class="carton-acciones">';
-        html += '<button class="btn btn-asignar" onclick="asignarIndividual('+index+')">👤 Asignar</button>';
-        html += '<button class="btn btn-eliminar" onclick="eliminarCarton('+index+')">🗑️ Eliminar</button>';
-        html += '</div>';
-        
-        card.innerHTML = html;
-        grid.appendChild(card);
+        card.innerHTML = html; grid.appendChild(card);
     });
 }
 
-// ============ ASIGNAR INDIVIDUAL ============
+// ============ ASIGNAR ============
 function asignarIndividual(index) {
     var carton = cartonesGenerados[index];
-    var nombre = prompt('Nombre del jugador para cartón #' + carton.numero + ':');
+    var nombre = prompt('Nombre para cartón #' + carton.numero + ':');
     if (!nombre) return;
-    
     var yaAsignados = cartonesGenerados.filter(function(c) { return c.asignadoA === nombre; }).length;
-    if (yaAsignados >= 2 && carton.asignadoA !== nombre) {
-        mostrarToast('⚠️ ' + nombre + ' ya tiene 2 cartones (máximo)', 'error');
-        return;
-    }
-    
-    carton.asignadoA = nombre;
-    carton.estado = 'asignado';
-    
-    if (filtroActual !== 'todos') {
-        filtrarCartones(filtroActual);
-    } else {
-        mostrarCartones();
-    }
-    actualizarContadores();
-    actualizarListaJugadores();
-    guardarEnFirebase();
+    if (yaAsignados >= 2 && carton.asignadoA !== nombre) { mostrarToast('⚠️ Máximo 2', 'error'); return; }
+    carton.asignadoA = nombre; carton.estado = 'asignado';
+    if (filtroActual !== 'todos') { filtrarCartones(filtroActual); } else { mostrarCartones(); }
+    actualizarContadores(); guardarEnSupabase();
     mostrarToast('✅ Cartón #' + carton.numero + ' → ' + nombre, 'success');
 }
 
-// ============ ELIMINAR CARTÓN ============
 function eliminarCarton(index) {
-    if (confirm('¿Eliminar cartón #' + cartonesGenerados[index].numero + '?')) {
-        cartonesGenerados.splice(index, 1);
-        cartonesGenerados.forEach(function(c, i) { c.numero = i + 1; });
-        
-        if (filtroActual !== 'todos') {
-            filtrarCartones(filtroActual);
-        } else {
-            mostrarCartones();
-        }
-        actualizarContadores();
-        actualizarListaJugadores();
-        guardarEnFirebase();
-        mostrarToast('🗑️ Cartón eliminado', 'error');
-    }
+    if (!confirm('¿Eliminar cartón #' + cartonesGenerados[index].numero + '?')) return;
+    cartonesGenerados.splice(index, 1);
+    cartonesGenerados.forEach(function(c, i) { c.numero = i + 1; });
+    if (filtroActual !== 'todos') { filtrarCartones(filtroActual); } else { mostrarCartones(); }
+    actualizarContadores(); guardarEnSupabase();
 }
 
 function borrarTodosCartones() {
-    if (cartonesGenerados.length === 0) {
-        mostrarToast('⚠️ No hay cartones para borrar', 'error');
-        return;
-    }
-    if (confirm('⚠️ ¿Borrar TODOS los ' + cartonesGenerados.length + ' cartones?\n\nEsta acción no se puede deshacer.')) {
-        cartonesGenerados = [];
-        cartonesSeleccionados = [];
-        mostrarCartones();
-        actualizarContadores();
-        actualizarListaJugadores();
-        guardarEnFirebase();
-        document.getElementById('resultadosBusqueda').innerHTML = '<p style="color:#94a3b8;text-align:center;font-size:0.8em;padding:10px;">Escribe para buscar cartones</p>';
-        document.getElementById('seleccionadosInfo').style.display = 'none';
-        mostrarToast('🗑️ Todos los cartones eliminados', 'error');
-    }
+    if (cartonesGenerados.length === 0) { mostrarToast('⚠️ No hay cartones', 'error'); return; }
+    if (!confirm('¿Borrar TODOS los ' + cartonesGenerados.length + ' cartones?')) return;
+    cartonesGenerados = []; cartonesSeleccionados = [];
+    mostrarCartones(); actualizarContadores(); guardarEnSupabase();
 }
 
-// ============ BUSCADOR CON CHECKBOXES ============
+// ============ BUSCADOR ============
 function buscarCarton() {
     var termino = document.getElementById('buscarCarton').value.trim();
     var resultadosDiv = document.getElementById('resultadosBusqueda');
     var seleccionadosInfo = document.getElementById('seleccionadosInfo');
-    
-    if (!termino || termino.length < 1) {
-        resultadosDiv.innerHTML = '<p style="color:#94a3b8;text-align:center;font-size:0.8em;padding:10px;">Escribe para buscar cartones</p>';
-        if (filtroActual !== 'todos') {
-            filtrarCartones(filtroActual);
-        } else {
-            mostrarCartones();
-        }
-        if (cartonesSeleccionados.length === 0) {
-            seleccionadosInfo.style.display = 'none';
-        }
+    if (!termino) {
+        resultadosDiv.innerHTML = '<p style="color:#94a3b8;text-align:center;">Escribe para buscar</p>';
+        if (filtroActual !== 'todos') { filtrarCartones(filtroActual); } else { mostrarCartones(); }
+        if (cartonesSeleccionados.length === 0) seleccionadosInfo.style.display = 'none';
         return;
     }
-    
-    var terminoLower = termino.toLowerCase();
+    var t = termino.toLowerCase();
     var resultados = cartonesGenerados.filter(function(c) {
-        var numStr = String(c.numero);
-        var nombre = (c.asignadoA || '').toLowerCase();
-        return numStr.includes(terminoLower) || nombre.includes(terminoLower);
+        return String(c.numero).includes(t) || (c.asignadoA || '').toLowerCase().includes(t);
     });
-    
     mostrarCartones(termino);
-    
-    if (resultados.length === 0) {
-        resultadosDiv.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:10px;font-size:0.8em;">❌ Sin resultados para "' + termino + '"</p>';
-        return;
-    }
-    
+    if (resultados.length === 0) { resultadosDiv.innerHTML = '<p style="color:#94a3b8;">Sin resultados</p>'; return; }
     resultados = resultados.slice(0, 30);
-    
     resultadosDiv.innerHTML = '';
     resultados.forEach(function(c) {
         var idx = cartonesGenerados.indexOf(c);
-        var estaSeleccionado = cartonesSeleccionados.indexOf(idx) !== -1;
-        var div = document.createElement('div');
-        div.className = 'resultado-busqueda';
-        div.style.cursor = 'pointer';
-        
-        var checkboxHtml = '<input type="checkbox" ' + (estaSeleccionado ? 'checked' : '') + ' ';
-        if (cartonesSeleccionados.length >= 2 && !estaSeleccionado) {
-            checkboxHtml += 'disabled ';
-        }
-        checkboxHtml += 'style="width:18px;height:18px;cursor:pointer;accent-color:#10b981;" onclick="event.stopPropagation();toggleSeleccionCarton(' + idx + ', this)">';
-        
-        div.innerHTML = 
-            '<div class="info" style="display:flex;align-items:center;gap:8px;flex:1;">' +
-            checkboxHtml +
-            '<strong style="color:#ffca28;">#' + c.numero + '</strong>' +
-            '<span style="color:#94a3b8;font-size:0.8em;">' + (c.asignadoA ? '👤 ' + c.asignadoA : '📋 Disponible') + '</span>' +
-            '</div>';
-        
-        div.onclick = function(e) {
-            if (e.target.tagName === 'INPUT') return;
-            var cartonCard = document.getElementById('cartonCard-' + idx);
-            if (cartonCard) {
-                cartonCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                cartonCard.style.boxShadow = '0 0 25px #ffca28';
-                cartonCard.style.border = '2px solid #ffca28';
-                setTimeout(function() {
-                    cartonCard.style.boxShadow = '';
-                    cartonCard.style.border = '';
-                }, 2000);
-            }
-        };
-        
+        var estaSel = cartonesSeleccionados.indexOf(idx) !== -1;
+        var div = document.createElement('div'); div.className = 'resultado-busqueda';
+        var checkbox = '<input type="checkbox" ' + (estaSel ? 'checked' : '') + ' ' + (cartonesSeleccionados.length >= 2 && !estaSel ? 'disabled' : '') + ' onclick="event.stopPropagation();toggleSeleccionCarton(' + idx + ', this)">';
+        div.innerHTML = '<div class="info">' + checkbox + '<strong style="color:#ffca28;">#' + c.numero + '</strong><span style="color:#94a3b8;">' + (c.asignadoA || 'Disponible') + '</span></div>';
         resultadosDiv.appendChild(div);
     });
-    
     actualizarInfoSeleccionados();
 }
 
 function toggleSeleccionCarton(index, checkbox) {
     var pos = cartonesSeleccionados.indexOf(index);
-    
-    if (pos !== -1) {
-        cartonesSeleccionados.splice(pos, 1);
-        checkbox.checked = false;
-    } else {
-        if (cartonesSeleccionados.length >= 2) {
-            mostrarToast('⚠️ Máximo 2 cartones para asignar', 'error');
-            checkbox.checked = false;
-            return;
-        }
-        cartonesSeleccionados.push(index);
-        checkbox.checked = true;
-    }
-    
-    actualizarInfoSeleccionados();
-    buscarCarton();
+    if (pos !== -1) { cartonesSeleccionados.splice(pos, 1); checkbox.checked = false; }
+    else { if (cartonesSeleccionados.length >= 2) { mostrarToast('⚠️ Máximo 2', 'error'); checkbox.checked = false; return; } cartonesSeleccionados.push(index); checkbox.checked = true; }
+    actualizarInfoSeleccionados(); buscarCarton();
 }
 
 function actualizarInfoSeleccionados() {
-    var seleccionadosInfo = document.getElementById('seleccionadosInfo');
+    var info = document.getElementById('seleccionadosInfo');
     var countEl = document.getElementById('countSeleccionados');
-    
     if (cartonesSeleccionados.length > 0) {
-        seleccionadosInfo.style.display = 'block';
-        var numeros = cartonesSeleccionados.map(function(idx) {
-            return '#' + cartonesGenerados[idx].numero;
-        }).join(', ');
-        countEl.textContent = cartonesSeleccionados.length + ' (' + numeros + ')';
-    } else {
-        seleccionadosInfo.style.display = 'none';
-    }
+        info.style.display = 'block';
+        countEl.textContent = cartonesSeleccionados.length;
+    } else { info.style.display = 'none'; }
 }
 
 function asignarSeleccionados() {
     var nombre = document.getElementById('nombreAsignarSeleccionados').value.trim();
-    
-    if (!nombre) {
-        mostrarToast('⚠️ Ingresa un nombre de jugador', 'error');
-        return;
-    }
-    
-    if (cartonesSeleccionados.length === 0) {
-        mostrarToast('⚠️ Selecciona al menos un cartón', 'error');
-        return;
-    }
-    
-    var yaAsignados = cartonesGenerados.filter(function(c) { return c.asignadoA === nombre; }).length;
-    var totalDespues = yaAsignados + cartonesSeleccionados.length;
-    
-    if (totalDespues > 2) {
-        mostrarToast('⚠️ ' + nombre + ' ya tiene ' + yaAsignados + ' cartones. Máximo 2.', 'error');
-        return;
-    }
-    
+    if (!nombre) { mostrarToast('⚠️ Ingresa nombre', 'error'); return; }
+    if (cartonesSeleccionados.length === 0) { mostrarToast('⚠️ Selecciona cartones', 'error'); return; }
+    var yaAsignados = cartonesGenerados.filter(c => c.asignadoA === nombre).length;
+    if (yaAsignados + cartonesSeleccionados.length > 2) { mostrarToast('⚠️ Máximo 2', 'error'); return; }
     cartonesSeleccionados.forEach(function(idx) {
         cartonesGenerados[idx].asignadoA = nombre;
         cartonesGenerados[idx].estado = 'asignado';
     });
-    
     var count = cartonesSeleccionados.length;
     cartonesSeleccionados = [];
-    
-    if (filtroActual !== 'todos') {
-        filtrarCartones(filtroActual);
-    } else {
-        mostrarCartones();
-    }
-    actualizarContadores();
-    actualizarListaJugadores();
-    guardarEnFirebase();
-    buscarCarton();
+    if (filtroActual !== 'todos') { filtrarCartones(filtroActual); } else { mostrarCartones(); }
+    actualizarContadores(); guardarEnSupabase();
     document.getElementById('nombreAsignarSeleccionados').value = '';
     document.getElementById('seleccionadosInfo').style.display = 'none';
-    
-    mostrarToast('✅ ' + count + ' cartones asignados a ' + nombre, 'success');
+    mostrarToast('✅ ' + count + ' cartones asignados', 'success');
 }
 
-// ============ BUSCADOR DE JUGADORES ============
+// ============ JUGADORES ============
 function buscarJugadores() {
     var termino = document.getElementById('buscarJugador').value.trim().toLowerCase();
     var resultadosDiv = document.getElementById('resultadosJugadores');
-    
     if (!resultadosDiv) return;
-    
     var jugadoresMap = {};
     cartonesGenerados.forEach(function(c) {
-        if (c.asignadoA) {
-            if (!jugadoresMap[c.asignadoA]) { jugadoresMap[c.asignadoA] = []; }
-            jugadoresMap[c.asignadoA].push(c);
-        }
+        if (c.asignadoA) { if (!jugadoresMap[c.asignadoA]) jugadoresMap[c.asignadoA] = []; jugadoresMap[c.asignadoA].push(c); }
     });
-    
     var jugadores = Object.keys(jugadoresMap).sort();
-    
-    if (termino) {
-        jugadores = jugadores.filter(function(n) { return n.toLowerCase().includes(termino); });
-    }
-    
-    if (jugadores.length === 0) {
-        resultadosDiv.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:15px;font-size:0.8em;">' + 
-            (termino ? '❌ Sin resultados para "' + termino + '"' : 'No hay jugadores registrados') + '</p>';
-        return;
-    }
-    
+    if (termino) jugadores = jugadores.filter(n => n.toLowerCase().includes(termino));
+    if (jugadores.length === 0) { resultadosDiv.innerHTML = '<p style="color:#94a3b8;text-align:center;">' + (termino ? 'Sin resultados' : 'No hay jugadores') + '</p>'; return; }
     resultadosDiv.innerHTML = '';
-    
     jugadores.forEach(function(nombre) {
         var cartones = jugadoresMap[nombre];
-        var div = document.createElement('div');
-        div.className = 'jugador-item';
-        div.style.flexDirection = 'column';
-        div.style.alignItems = 'stretch';
-        
-        var cartonesStr = cartones.map(function(c) { return '#' + c.numero; }).join(', ');
-        
-        div.innerHTML = 
-            '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">' +
-            '<div class="jugador-info" style="flex:1;min-width:0;">' +
-            '<span style="font-size:1.5em;">👤</span>' +
-            '<div style="flex:1;min-width:0;">' +
-            '<strong style="color:white;">' + nombre + '</strong>' +
-            '<div style="color:#94a3b8;font-size:0.7em;">' + cartones.length + ' cartón(es): ' + cartonesStr + '</div>' +
-            '</div>' +
-            '</div>' +
-            '<div style="display:flex;gap:4px;flex-shrink:0;">' +
-            '<button class="btn btn-link" style="font-size:0.6em;padding:5px 8px;" onclick="copiarLinkJugador(\'' + nombre.replace(/'/g, "\\'") + '\')" title="Copiar link">🔗</button>' +
-            '<button class="btn btn-asignar" style="font-size:0.6em;padding:5px 8px;flex:0;" onclick="renombrarJugador(\'' + nombre.replace(/'/g, "\\'") + '\')" title="Renombrar">✏️</button>' +
-            '<button class="btn btn-eliminar" style="font-size:0.6em;padding:5px 8px;flex:0;" onclick="eliminarJugador(\'' + nombre.replace(/'/g, "\\'") + '\')" title="Eliminar jugador">🗑️</button>' +
-            '</div>' +
-            '</div>' +
-            '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #334155;display:flex;flex-wrap:wrap;gap:4px;">' +
-            cartones.map(function(c) {
-                var idx = cartonesGenerados.indexOf(c);
-                return '<span style="background:#0f172a;padding:3px 8px;border-radius:12px;font-size:0.65em;display:flex;align-items:center;gap:4px;">' +
-                    '<span style="color:#ffca28;">#' + c.numero + '</span>' +
-                    '<button onclick="quitarCartonJugador(' + idx + ')" style="background:transparent;border:none;color:#ef4444;cursor:pointer;font-size:0.9em;padding:0 2px;" title="Quitar cartón">×</button>' +
-                    '</span>';
-            }).join('') +
+        var div = document.createElement('div'); div.className = 'jugador-item';
+        div.innerHTML = '<div class="jugador-info"><span>👤</span><div><strong style="color:white;">' + nombre + '</strong><div style="color:#94a3b8;font-size:0.7em;">' + cartones.length + ' cartones</div></div></div>' +
+            '<div style="display:flex;gap:4px;">' +
+            '<button class="btn btn-link" style="font-size:0.6em;padding:4px 6px;" onclick="copiarLinkJugador(\'' + nombre.replace(/'/g, "\\'") + '\')">🔗</button>' +
+            '<button class="btn btn-asignar" style="font-size:0.6em;padding:4px 6px;" onclick="renombrarJugador(\'' + nombre.replace(/'/g, "\\'") + '\')">✏️</button>' +
+            '<button class="btn btn-eliminar" style="font-size:0.6em;padding:4px 6px;" onclick="eliminarJugador(\'' + nombre.replace(/'/g, "\\'") + '\')">🗑️</button>' +
             '</div>';
-        
         resultadosDiv.appendChild(div);
     });
 }
 
-// ============ ACTUALIZAR LISTA DE JUGADORES (INTERNA) ============
-function actualizarListaJugadores() {
-    // Solo se usa internamente, no muestra panel adicional
-}
-
-// ============ COPIAR LINK DEL JUGADOR (CON NOMBRE EN URL) ============
 function copiarLinkJugador(nombre) {
-    var link = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'jugador.html?sala=' + encodeURIComponent(SALA_ID) + '&jugador=' + encodeURIComponent(nombre);
-    
-    navigator.clipboard.writeText(link).then(function() {
-        mostrarToast('✅ Link de ' + nombre + ' copiado', 'success');
-    }).catch(function() {
-        prompt('📋 Link para ' + nombre + ':', link);
-    });
+    var base = window.location.origin + window.location.pathname.replace(/[^\/]*$/, '');
+    var link = base + 'jugador.html?sala=' + encodeURIComponent(SALA_ID) + '&jugador=' + encodeURIComponent(nombre);
+    navigator.clipboard.writeText(link).then(function() { mostrarToast('✅ Link copiado', 'success'); });
 }
 
-// ============ ELIMINAR JUGADOR ============
 function eliminarJugador(nombre) {
-    var cartonesJugador = cartonesGenerados.filter(function(c) { return c.asignadoA === nombre; });
-    
-    if (cartonesJugador.length === 0) {
-        mostrarToast('⚠️ ' + nombre + ' no tiene cartones', 'error');
-        return;
-    }
-    
-    if (confirm('⚠️ ¿Eliminar a "' + nombre + '" y liberar sus ' + cartonesJugador.length + ' cartones?')) {
-        cartonesJugador.forEach(function(c) { c.asignadoA = null; c.estado = 'disponible'; });
-        
-        if (filtroActual !== 'todos') { filtrarCartones(filtroActual); }
-        else { mostrarCartones(); }
-        actualizarContadores();
-        buscarJugadores();
-        guardarEnFirebase();
-        mostrarToast('🗑️ ' + nombre + ' eliminado. ' + cartonesJugador.length + ' cartones liberados', 'success');
-    }
+    var cartonesJugador = cartonesGenerados.filter(c => c.asignadoA === nombre);
+    if (cartonesJugador.length === 0) return;
+    if (!confirm('¿Eliminar a ' + nombre + ' y liberar ' + cartonesJugador.length + ' cartones?')) return;
+    cartonesJugador.forEach(function(c) { c.asignadoA = null; c.estado = 'disponible'; });
+    if (filtroActual !== 'todos') { filtrarCartones(filtroActual); } else { mostrarCartones(); }
+    actualizarContadores(); guardarEnSupabase();
 }
 
-// ============ QUITAR UN CARTÓN ESPECÍFICO ============
 function quitarCartonJugador(index) {
     var carton = cartonesGenerados[index];
-    var nombre = carton.asignadoA;
-    if (!nombre) return;
-    
-    if (confirm('¿Quitar cartón #' + carton.numero + ' de ' + nombre + '?')) {
-        carton.asignadoA = null; carton.estado = 'disponible';
-        if (filtroActual !== 'todos') { filtrarCartones(filtroActual); }
-        else { mostrarCartones(); }
-        actualizarContadores(); buscarJugadores(); guardarEnFirebase();
-        mostrarToast('✅ Cartón #' + carton.numero + ' liberado de ' + nombre, 'success');
-    }
+    if (!carton.asignadoA) return;
+    if (!confirm('¿Quitar cartón #' + carton.numero + '?')) return;
+    carton.asignadoA = null; carton.estado = 'disponible';
+    if (filtroActual !== 'todos') { filtrarCartones(filtroActual); } else { mostrarCartones(); }
+    actualizarContadores(); guardarEnSupabase();
 }
 
-// ============ RENOMBRAR JUGADOR ============
 function renombrarJugador(nombreViejo) {
-    var cartonesJugador = cartonesGenerados.filter(function(c) { return c.asignadoA === nombreViejo; });
-    if (cartonesJugador.length === 0) { mostrarToast('⚠️ ' + nombreViejo + ' no tiene cartones', 'error'); return; }
-    
+    var cartonesJugador = cartonesGenerados.filter(c => c.asignadoA === nombreViejo);
+    if (cartonesJugador.length === 0) return;
     var nombreNuevo = prompt('Renombrar "' + nombreViejo + '" a:', nombreViejo);
-    if (!nombreNuevo || nombreNuevo.trim() === '' || nombreNuevo.trim() === nombreViejo) return;
-    nombreNuevo = nombreNuevo.trim();
-    
-    var existe = cartonesGenerados.some(function(c) { return c.asignadoA === nombreNuevo; });
-    if (existe) { mostrarToast('⚠️ Ya existe un jugador llamado "' + nombreNuevo + '"', 'error'); return; }
-    
-    var cartonesDestino = cartonesGenerados.filter(function(c) { return c.asignadoA === nombreNuevo; });
-    if (cartonesDestino.length + cartonesJugador.length > 2) { mostrarToast('⚠️ ' + nombreNuevo + ' tendría más de 2 cartones', 'error'); return; }
-    
+    if (!nombreNuevo || nombreNuevo === nombreViejo) return;
     cartonesJugador.forEach(function(c) { c.asignadoA = nombreNuevo; });
     if (filtroActual !== 'todos') { filtrarCartones(filtroActual); } else { mostrarCartones(); }
-    actualizarContadores(); buscarJugadores(); guardarEnFirebase();
-    mostrarToast('✅ ' + nombreViejo + ' renombrado a ' + nombreNuevo, 'success');
+    actualizarContadores(); guardarEnSupabase();
 }
 
 // ============ CONTADORES ============
 function actualizarContadores() {
-    var totalEl = document.getElementById('totalCartones');
-    var asignadosEl = document.getElementById('totalAsignados');
-    var disponiblesEl = document.getElementById('totalDisponibles');
-    var configTotal = document.getElementById('configTotal');
-    var configAsignados = document.getElementById('configAsignados');
-    
     var total = cartonesGenerados.length;
-    var asignados = cartonesGenerados.filter(function(c) { return c.asignadoA; }).length;
-    var disponibles = total - asignados;
-    
-    if (totalEl) totalEl.textContent = total;
-    if (asignadosEl) asignadosEl.textContent = asignados;
-    if (disponiblesEl) disponiblesEl.textContent = disponibles;
-    if (configTotal) configTotal.textContent = total;
-    if (configAsignados) configAsignados.textContent = asignados;
+    var asignados = cartonesGenerados.filter(c => c.asignadoA).length;
+    document.getElementById('totalCartones').textContent = total;
+    document.getElementById('totalAsignados').textContent = asignados;
+    document.getElementById('totalDisponibles').textContent = total - asignados;
+    document.getElementById('configTotal').textContent = total;
+    document.getElementById('configAsignados').textContent = asignados;
 }
 
-// ============ GUARDAR EN FIREBASE ============
-function guardarEnFirebase() {
-    if (cartonesGenerados.length === 0) {
-        db.ref('salas/' + SALA_ID + '/cartones').remove().catch(function(err) { console.error('Error al limpiar:', err); });
-        return;
+// ============ SUPABASE ============
+async function guardarEnSupabase() {
+    try {
+        // Primero borrar cartones existentes de esta sala
+        await supabase.from('cartones').delete().eq('sala_id', SALA_ID);
+        // Insertar los nuevos
+        if (cartonesGenerados.length > 0) {
+            const datos = cartonesGenerados.map(function(c) {
+                return {
+                    sala_id: SALA_ID,
+                    numero: c.numero,
+                    carton: c.carton,
+                    asignado_a: c.asignadoA || null,
+                    estado: c.asignadoA ? 'asignado' : 'disponible'
+                };
+            });
+            await supabase.from('cartones').insert(datos);
+        }
+        console.log('✅ Cartones guardados en Supabase');
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('❌ Error al guardar', 'error');
     }
-    var updates = {};
-    cartonesGenerados.forEach(function(c) {
-        updates[c.id] = { numero: c.numero, carton: c.carton, asignadoA: c.asignadoA || null, estado: c.asignadoA ? 'asignado' : 'disponible' };
-    });
-    db.ref('salas/' + SALA_ID + '/cartones').set(updates).then(function() { console.log('✅ Cartones guardados'); }).catch(function(err) { console.error('Error:', err); });
 }
 
-// ============ CARGAR DESDE FIREBASE ============
-function cargarDesdeFirebase() {
-    db.ref('salas/' + SALA_ID + '/cartones').once('value').then(function(snap) {
-        var data = snap.val(); if (!data) { console.log('📋 No hay cartones'); return; }
-        cartonesGenerados = [];
-        Object.entries(data).forEach(function(entry) {
-            var id = entry[0], c = entry[1];
-            if (c && c.carton) {
-                cartonesGenerados.push({ id: id, numero: c.numero || 0, carton: c.carton, asignadoA: c.asignadoA || null, estado: c.estado || (c.asignadoA ? 'asignado' : 'disponible') });
-            }
-        });
-        cartonesGenerados.sort(function(a, b) { return a.numero - b.numero; });
-        cartonesGenerados.forEach(function(c, i) { c.numero = i + 1; });
-        mostrarCartones(); actualizarContadores();
-        console.log('✅ ' + cartonesGenerados.length + ' cartones cargados');
-    }).catch(function(err) { console.error('Error:', err); });
+async function cargarDesdeSupabase() {
+    try {
+        const { data, error } = await supabase.from('cartones').select('*').eq('sala_id', SALA_ID).order('numero');
+        if (error) throw error;
+        if (data && data.length > 0) {
+            cartonesGenerados = data.map(function(c) {
+                return { id: String(c.id), numero: c.numero, carton: c.carton, asignadoA: c.asignado_a, estado: c.estado };
+            });
+            mostrarCartones(); actualizarContadores();
+        }
+    } catch (error) { console.error('Error:', error); }
 }
 
-// ============ EXPORTAR JSON ============
+// ============ EXPORTAR/IMPORTAR ============
 function exportarCartonesJSON() {
     if (cartonesGenerados.length === 0) { mostrarToast('⚠️ No hay cartones', 'error'); return; }
-    var datosExportar = cartonesGenerados.map(function(c) { return { numero: c.numero, carton: c.carton, asignadoA: c.asignadoA, estado: c.estado }; });
-    var data = JSON.stringify(datosExportar, null, 2);
-    var blob = new Blob([data], {type: 'application/json'}); var url = URL.createObjectURL(blob);
-    var a = document.createElement('a'); a.href = url; a.download = 'cartones_' + SALA_ID + '_' + new Date().toISOString().slice(0,10) + '.json';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-    mostrarToast('✅ ' + cartonesGenerados.length + ' cartones exportados', 'success');
+    var data = JSON.stringify(cartonesGenerados, null, 2);
+    var blob = new Blob([data], {type: 'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'cartones_' + SALA_ID + '.json';
+    a.click(); URL.revokeObjectURL(url);
 }
 
-// ============ IMPORTAR JSON ============
 function importarCartonesJSON() {
-    var input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
+    var input = document.createElement('input');
+    input.type = 'file'; input.accept = '.json';
     input.onchange = function(e) {
         var file = e.target.files[0]; if (!file) return;
         var reader = new FileReader();
         reader.onload = function(event) {
             try {
                 var data = JSON.parse(event.target.result);
-                if (Array.isArray(data) && data.length > 0 && data[0].carton) {
-                    if (confirm('¿Importar ' + data.length + ' cartones?\n\nEsto reemplazará los actuales.')) {
-                        cartonesGenerados = data.map(function(c, i) { return { id: 'carton_imp_' + Date.now() + '_' + i, numero: i + 1, carton: c.carton, asignadoA: c.asignadoA || null, estado: c.asignadoA ? 'asignado' : 'disponible' }; });
-                        cartonesSeleccionados = []; mostrarCartones(); actualizarContadores(); guardarEnFirebase();
-                        mostrarToast('✅ ' + data.length + ' cartones importados', 'success');
-                    }
-                } else { mostrarToast('❌ Archivo no válido', 'error'); }
-            } catch (err) { mostrarToast('❌ Error al leer', 'error'); }
+                if (Array.isArray(data) && data[0].carton) {
+                    cartonesGenerados = data;
+                    mostrarCartones(); actualizarContadores(); guardarEnSupabase();
+                    mostrarToast('✅ Importados', 'success');
+                }
+            } catch (err) { mostrarToast('❌ Error', 'error'); }
         };
         reader.readAsText(file);
     };
     input.click();
 }
 
-// ============ COPIAR LINKS ============
-function copiarLinkVerTodo() {
-    var link = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'ver_todo.html?sala=' + encodeURIComponent(SALA_ID);
-    navigator.clipboard.writeText(link).then(function() { mostrarToast('✅ Link ver_todo copiado', 'success'); }).catch(function() { prompt('📋 Link:', link); });
-}
-
-function copiarLinkRuleta() {
-    var link = location.origin + location.pathname.replace(/[^\/]*$/, '') + 'ruleta.html?sala=' + encodeURIComponent(SALA_ID);
-    navigator.clipboard.writeText(link).then(function() { mostrarToast('✅ Link ruleta copiado', 'success'); }).catch(function() { prompt('📋 Link:', link); });
-}
-
-// ============ IMPRIMIR ============
-function imprimirCartones() {
-    if (cartonesGenerados.length === 0) { mostrarToast('⚠️ No hay cartones', 'error'); return; }
-    setTimeout(function() { window.print(); }, 500);
-}
-
 // ============ NAVEGACIÓN ============
 function navegarA(vista) {
-    var secciones = document.querySelectorAll('.section-panel'); secciones.forEach(function(s) { s.classList.remove('activo'); });
-    var navs = document.querySelectorAll('.nav-item'); navs.forEach(function(n) { n.classList.remove('activo'); });
-    
-    if (vista === 'cartones') {
-        var el = document.getElementById('sectionCartones'); if (el) el.classList.add('activo');
-        var nav = document.getElementById('navCartones'); if (nav) nav.classList.add('activo');
-    } else if (vista === 'jugadores') {
-        var el = document.getElementById('sectionJugadores'); if (el) el.classList.add('activo');
-        var nav = document.getElementById('navJugadores'); if (nav) nav.classList.add('activo');
-        buscarJugadores();
-    } else if (vista === 'config') {
-        var el = document.getElementById('sectionConfig'); if (el) el.classList.add('activo');
-        var nav = document.getElementById('navConfig'); if (nav) nav.classList.add('activo');
-        actualizarContadores();
-    }
+    document.querySelectorAll('.section-panel').forEach(s => s.classList.remove('activo'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('activo'));
+    if (vista === 'cartones') { document.getElementById('sectionCartones').classList.add('activo'); document.getElementById('navCartones').classList.add('activo'); }
+    else if (vista === 'jugadores') { document.getElementById('sectionJugadores').classList.add('activo'); document.getElementById('navJugadores').classList.add('activo'); buscarJugadores(); }
+    else if (vista === 'config') { document.getElementById('sectionConfig').classList.add('activo'); document.getElementById('navConfig').classList.add('activo'); actualizarContadores(); }
 }
 
 // ============ TOAST ============
 function mostrarToast(mensaje, tipo) {
-    var toast = document.getElementById('toast'); if (!toast) return;
-    toast.textContent = mensaje; toast.className = 'toast ' + (tipo || '');
-    toast.offsetHeight; setTimeout(function() { toast.classList.add('show'); }, 10);
+    var toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = mensaje;
+    toast.className = 'toast ' + (tipo || '');
+    toast.offsetHeight;
+    setTimeout(function() { toast.classList.add('show'); }, 10);
     setTimeout(function() { toast.classList.remove('show'); }, 2500);
 }
+
+// ============ INICIALIZAR ============
+document.addEventListener('DOMContentLoaded', function() {
+    cargarDesdeSupabase();
+    document.getElementById('cantidadGenerar').addEventListener('keypress', function(e) { if (e.key === 'Enter') generarCartones(); });
+    document.getElementById('nombreAsignarSeleccionados').addEventListener('keypress', function(e) { if (e.key === 'Enter') asignarSeleccionados(); });
+    document.getElementById('buscarJugador').addEventListener('keypress', function(e) { buscarJugadores(); });
+});
