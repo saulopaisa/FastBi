@@ -1,4 +1,5 @@
-// ruleta.js - Panel de Control supabaseClient
+// ruleta.js - Panel de Control Supabase
+
 var SALA_ID = localStorage.getItem('salaActiva') || 'bingo-default';
 
 window.cantados = [];
@@ -40,7 +41,8 @@ function reproducirAudioGanador(n) { if ('speechSynthesis' in window) { window.s
 // ============ SUPABASE ============
 async function guardarPartidaEnSupabase() {
     try {
-        const { data, error } = await supabaseClient            .from('partidas')
+        const { error } = await supabaseClient
+            .from('partidas')
             .upsert({
                 sala_id: SALA_ID,
                 estado: window.partidaIniciada ? 'jugando' : 'configuracion',
@@ -60,7 +62,8 @@ async function guardarPartidaEnSupabase() {
 
 async function cargarPartidaDesdeSupabase() {
     try {
-        const { data, error } = await supabaseClient            .from('partidas')
+        const { data, error } = await supabaseClient
+            .from('partidas')
             .select('*')
             .eq('sala_id', SALA_ID)
             .single();
@@ -71,11 +74,10 @@ async function cargarPartidaDesdeSupabase() {
             if (data.jugadores_activos && Array.isArray(data.jugadores_activos)) window.jugadoresActivos = data.jugadores_activos;
             if (data.partida_iniciada) window.partidaIniciada = true;
             if (data.ganadores_count) window.ganadoresPartida = data.ganadores_count;
-            if (data.estado) {
-                if (data.estado === 'jugando') { window.etapaActual = 3; window.juegoActivo = true; }
-            }
+            if (data.estado === 'jugando') { window.etapaActual = 3; window.juegoActivo = true; }
             if (window.etapaActual >= 2) actualizarEtapas();
             if (window.etapaActual >= 3) actualizarEtapas();
+            inicializarTablero75();
         }
     } catch (e) { console.error('Error:', e); }
 }
@@ -189,7 +191,7 @@ window.abrirModalCartones = function() {
     if (!modal || !lista) return;
     abrirModal('modalCartones');
     lista.innerHTML = "<p style='color:var(--gold);'>Cargando...</p>";
-    supabase.from('cartones').select('*').eq('sala_id', SALA_ID).then(function(result) {
+    supabaseClient.from('cartones').select('*').eq('sala_id', SALA_ID).then(function(result) {
         lista.innerHTML = '';
         var data = result.data;
         if (!data || data.length === 0) { lista.innerHTML = "<p style='color:white;'>No hay cartones</p>"; return; }
@@ -228,7 +230,7 @@ window.seleccionarTodosJugadores = function() {
     if (todos) { window.jugadoresActivos = []; items.forEach(function(i) { i.classList.remove('seleccionado'); }); }
     else {
         var nombres = new Set();
-        supabase.from('cartones').select('asignado_a').eq('sala_id', SALA_ID).not('asignado_a', 'is', null).then(function(result) {
+        supabaseClient.from('cartones').select('asignado_a').eq('sala_id', SALA_ID).not('asignado_a', 'is', null).then(function(result) {
             result.data.forEach(function(c) { if (c.asignado_a) nombres.add(c.asignado_a); });
             window.jugadoresActivos = Array.from(nombres);
             items.forEach(function(i) { i.classList.add('seleccionado'); });
@@ -350,7 +352,7 @@ window.bingoValido = function() {
         window.cerrarAlerta();
         reproducirAudioGanador(nombre);
         mostrarToast('🎉 ¡BINGO VÁLIDO!', 'success');
-        supabase.from('chat').insert({ sala_id: SALA_ID, mensaje: '🎉 ¡BINGO VÁLIDO! ' + nombre + ' es ganador', admin: true, sistema: true, timestamp: Date.now() }).then(function() {});
+        supabaseClient.from('chat').insert({ sala_id: SALA_ID, mensaje: '🎉 ¡BINGO VÁLIDO! ' + nombre + ' es ganador', admin: true, sistema: true, timestamp: Date.now() }).then(function() {});
         if (window.ganadoresPartida >= 2) {
             if (window.modoAutomatico) window.detenerBingoAutomatico();
             setTimeout(function() { if (confirm('🎉 ¿NUEVA PARTIDA?')) reiniciarPartidaGlobal(); }, 1000);
@@ -383,8 +385,8 @@ window.reiniciarPartidaGlobal = function() {
     if (window.intervaloTemporizador) clearInterval(window.intervaloTemporizador);
     if (window.pausaTimeout) clearTimeout(window.pausaTimeout);
     
-    supabase.from('partidas').delete().eq('sala_id', SALA_ID).then(function() {});
-    supabase.from('bingos').delete().eq('sala_id', SALA_ID).then(function() {});
+    supabaseClient.from('partidas').delete().eq('sala_id', SALA_ID).then(function() {});
+    supabaseClient.from('bingos').delete().eq('sala_id', SALA_ID).then(function() {});
     
     limpiarTableroCompleto();
     actualizarUltimaBolaGrande();
@@ -414,7 +416,7 @@ window.revisarCartonManual = function() {
     var contM = document.getElementById('minicartonMobile');
     if (contM) contM.innerHTML = '<p style="color:#94a3b8;">Buscando...</p>';
     
-    supabase.from('cartones').select('*').eq('sala_id', SALA_ID).or('id.eq.' + id + ',numero.eq.' + parseInt(id)).then(function(result) {
+    supabaseClient.from('cartones').select('*').eq('sala_id', SALA_ID).or('id.eq.' + id + ',numero.eq.' + parseInt(id)).then(function(result) {
         if (result.data && result.data.length > 0) {
             var cartonEncontrado = result.data[0];
             window.cartonActual = cartonEncontrado;
@@ -422,7 +424,6 @@ window.revisarCartonManual = function() {
             actualizarMinicartonEnAmbasVistas(cartonEncontrado);
             mostrarToast('✅ Cartón encontrado', 'success');
             
-            // Mostrar alerta de bingo
             var aj = document.getElementById('alertaJugadorMobile');
             var ac = document.getElementById('alertaCartonMobile');
             var ab = document.getElementById('alertaBingoMobile');
@@ -470,8 +471,8 @@ document.addEventListener('DOMContentLoaded', function() {
     actualizarEtapas();
     cargarPartidaDesdeSupabase();
     
-    // Escuchar cambios en bingos (jugadores cantan)
-    supabase.channel('bingos-' + SALA_ID)
+    // Escuchar bingos de jugadores
+    supabaseClient.channel('bingos-' + SALA_ID)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bingos', filter: 'sala_id=eq.' + SALA_ID }, function(payload) {
             var bingo = payload.new;
             if (bingo && bingo.jugador) {
@@ -489,7 +490,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .subscribe();
     
     // Escuchar solicitudes de chat
-    supabase.channel('solicitudes-' + SALA_ID)
+    supabaseClient.channel('solicitudes-' + SALA_ID)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'solicitudes_chat', filter: 'sala_id=eq.' + SALA_ID }, function(payload) {
             var solicitud = payload.new;
             if (solicitud) {
@@ -497,17 +498,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 var mensaje = solicitud.mensaje;
                 var notificacion = document.createElement('div');
                 notificacion.style.cssText = 'position:fixed;top:20px;right:20px;background:#1e293b;color:white;padding:15px 20px;border-radius:12px;z-index:500;box-shadow:0 4px 20px rgba(0,0,0,0.5);border:2px solid #f59e0b;max-width:350px;';
-                notificacion.innerHTML = '<div style="font-size:1.1em;margin-bottom:6px;">🙋 <strong>' + jugador + '</strong> pide la palabra</div><div style="font-size:0.8em;color:#94a3b8;margin-bottom:10px;">' + mensaje + '</div><div style="display:flex;gap:8px;"><button id="btnAprobar_' + Date.now() + '" style="flex:1;padding:8px;background:#10b981;color:white;border:none;border-radius:8px;cursor:pointer;">✅ MOSTRAR</button><button id="btnRechazar_' + Date.now() + '" style="flex:1;padding:8px;background:#ef4444;color:white;border:none;border-radius:8px;cursor:pointer;">❌ RECHAZAR</button></div>';
+                var idBtn = Date.now();
+                notificacion.innerHTML = '<div style="font-size:1.1em;margin-bottom:6px;">🙋 <strong>' + jugador + '</strong> pide la palabra</div><div style="font-size:0.8em;color:#94a3b8;margin-bottom:10px;">' + mensaje + '</div><div style="display:flex;gap:8px;"><button id="btnAprobar_' + idBtn + '" style="flex:1;padding:8px;background:#10b981;color:white;border:none;border-radius:8px;cursor:pointer;">✅ MOSTRAR</button><button id="btnRechazar_' + idBtn + '" style="flex:1;padding:8px;background:#ef4444;color:white;border:none;border-radius:8px;cursor:pointer;">❌ RECHAZAR</button></div>';
                 document.body.appendChild(notificacion);
-                var btnAprobar = notificacion.querySelector('[id^="btnAprobar"]');
-                var btnRechazar = notificacion.querySelector('[id^="btnRechazar"]');
-                btnAprobar.onclick = function() {
-                    supabase.from('chat').insert({ sala_id: SALA_ID, mensaje: '🙋 ' + jugador + ': ' + mensaje, admin: false, jugador: jugador, timestamp: Date.now() }).then(function() {
+                
+                document.getElementById('btnAprobar_' + idBtn).onclick = function() {
+                    supabaseClient.from('chat').insert({ sala_id: SALA_ID, mensaje: '🙋 ' + jugador + ': ' + mensaje, admin: false, jugador: jugador, timestamp: Date.now() }).then(function() {
                         notificacion.remove();
                         mostrarToast('✅ Mostrado en chat', 'success');
                     });
                 };
-                btnRechazar.onclick = function() { notificacion.remove(); };
+                document.getElementById('btnRechazar_' + idBtn).onclick = function() {
+                    notificacion.remove();
+                    mostrarToast('❌ Rechazado', 'error');
+                };
                 setTimeout(function() { if (notificacion.parentNode) notificacion.remove(); }, 60000);
             }
         })
