@@ -107,7 +107,7 @@ function comenzarPartida() {
     if (btnReiniciarConfig) btnReiniciarConfig.style.display = 'block';
     
     // Guardar en Supabase
-    supabase.from('partidas').upsert({
+    supabaseClient.from('partidas').upsert({
         sala_id: SALA_ID,
         estado: 'jugando',
         cantados: window.cantados || [],
@@ -134,7 +134,7 @@ function reiniciarPartida() {
         if (typeof limpiarTableroCompleto === 'function') limpiarTableroCompleto();
         if (typeof actualizarUltimaBolaGrande === 'function') actualizarUltimaBolaGrande();
         if (typeof actualizarUltimasBolasChicas === 'function') actualizarUltimasBolasChicas();
-        supabase.from('partidas').delete().eq('sala_id', SALA_ID).then(function() {});
+        supabaseClient.from('partidas').delete().eq('sala_id', SALA_ID).then(function() {});
     }
     
     var btnProg = document.getElementById('btnProgramarMobile');
@@ -209,7 +209,7 @@ function programarJuegoMobile() {
     actualizarCronometroConfig(tiempo, tiempoTotal);
     actualizarCronometroRuleta(tiempo, tiempoTotal);
     
-    supabase.from('partidas').update({ cronometro: tiempo }).eq('sala_id', SALA_ID).then(function() {});
+    supabaseClient.from('partidas').update({ cronometro: tiempo }).eq('sala_id', SALA_ID).then(function() {});
     
     var btnProg = document.getElementById('btnProgramarMobile');
     if (btnProg) { btnProg.textContent = '⏳ ESPERANDO...'; btnProg.disabled = true; }
@@ -225,7 +225,7 @@ function programarJuegoMobile() {
         tiempo--;
         actualizarCronometroConfig(tiempo, tiempoTotal);
         actualizarCronometroRuleta(tiempo, tiempoTotal);
-        supabase.from('partidas').update({ cronometro: tiempo }).eq('sala_id', SALA_ID).then(function() {});
+        supabaseClient.from('partidas').update({ cronometro: tiempo }).eq('sala_id', SALA_ID).then(function() {});
         
         if (tiempo <= 0) {
             clearInterval(intervaloCronometroVisual);
@@ -291,7 +291,7 @@ function enviarChat() {
     var mensaje = input.value.trim();
     if (!mensaje) return;
     
-    supabase.from('chat').insert({
+    supabaseClient.from('chat').insert({
         sala_id: SALA_ID,
         mensaje: '📢 ' + mensaje,
         admin: true,
@@ -305,7 +305,7 @@ function enviarChat() {
 
 function limpiarChat() {
     if (confirm('¿Borrar toda la conversación del chat?')) {
-        supabase.from('chat').delete().eq('sala_id', SALA_ID).then(function() {
+        supabaseClient.from('chat').delete().eq('sala_id', SALA_ID).then(function() {
             document.getElementById('chatMensajes').innerHTML = '<p class="chat-vacio">Chat limpio</p>';
             mostrarToast('🗑️ Chat borrado', 'success');
         });
@@ -314,7 +314,7 @@ function limpiarChat() {
 
 function escucharChat() {
     // Cargar mensajes existentes
-    supabase.from('chat').select('*').eq('sala_id', SALA_ID).order('id', { ascending: false }).limit(50).then(function(result) {
+    supabaseClient.from('chat').select('*').eq('sala_id', SALA_ID).order('id', { ascending: false }).limit(50).then(function(result) {
         var contenedor = document.getElementById('chatMensajes');
         if (!contenedor) return;
         if (!result.data || result.data.length === 0) {
@@ -338,7 +338,7 @@ function escucharChat() {
     });
     
     // Escuchar nuevos mensajes
-    supabase.channel('chat-ruleta-' + SALA_ID)
+    supabaseClient.channel('chat-ruleta-' + SALA_ID)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat', filter: 'sala_id=eq.' + SALA_ID }, function(payload) {
             var msg = payload.new;
             var contenedor = document.getElementById('chatMensajes');
