@@ -23,7 +23,7 @@
     <!-- CONTENIDO PRINCIPAL -->
     <div class="app-content" id="appContent">
         
-        <!-- ========== SECCIÓN CONFIGURACIÓN (PANTALLA 1) ========== -->
+        <!-- ========== SECCIÓN CONFIGURACIÓN ========== -->
         <div class="section-config activo" id="sectionConfig">
             <div class="config-card">
                 <h3>⚙️ CONFIGURAR PARTIDA</h3>
@@ -72,7 +72,6 @@
                     🚀 INICIAR PARTIDA
                 </button>
                 
-                <!-- Botón REINICIAR en configuración -->
                 <button id="btnReiniciarPartida" onclick="reiniciarPartida()" class="btn-accion btn-reiniciar-partida" style="display:none;">
                     🔄 REINICIAR PARTIDA
                 </button>
@@ -87,10 +86,9 @@
             </div>
         </div>
 
-        <!-- ========== SECCIÓN RULETA (PANTALLA 2) ========== -->
+        <!-- ========== SECCIÓN RULETA ========== -->
         <div class="section-ruleta" id="sectionRuleta">
             
-            <!-- Alerta de Bingo flotante -->
             <div id="alertaBingoMobile" class="alerta-bingo-flotante" style="display:none;">
                 <div class="alerta-flotante-titulo">🚨 ¡BINGO CANTADO!</div>
                 <div class="alerta-flotante-jugador" id="alertaJugadorMobile">-</div>
@@ -102,7 +100,6 @@
                 </div>
             </div>
 
-            <!-- Cronómetro visual en ruleta -->
             <div id="cronometroVisualRuleta" class="cronometro-visual" style="display:none;">
                 <div class="cronometro-visual-tiempo" id="cronometroVisualRuletaTiempo">00:00</div>
                 <div class="cronometro-visual-barra">
@@ -111,7 +108,7 @@
                 <p class="cronometro-visual-texto">⏳ Iniciando partida...</p>
             </div>
 
-            <!-- Última bola GRANDE + 5 pequeñas (SIEMPRE VISIBLE) -->
+            <!-- Última bola GRANDE -->
             <div id="ultimaBolaRuletaContainer">
                 <div class="ultima-bola-ruleta">
                     <div class="bola-grande">
@@ -128,7 +125,6 @@
                 </div>
             </div>
 
-            <!-- Programar cronómetro -->
             <div class="programar-row">
                 <input type="text" id="minutosInicioMobile" placeholder="Ej: 2:30 o 5" class="input-minutos">
                 <button id="btnProgramarMobile" onclick="programarJuegoMobile()" class="btn-juego btn-programar-movil" disabled>
@@ -136,7 +132,6 @@
                 </button>
             </div>
 
-            <!-- Controles de juego -->
             <div class="controles-juego">
                 <button id="btnAutoMobile" onclick="iniciarAutoMobile()" class="btn-juego btn-auto" disabled>
                     🤖 AUTO
@@ -146,12 +141,10 @@
                 </button>
             </div>
 
-            <!-- Botón REINICIAR en ruleta -->
             <button id="btnReiniciarRuleta" onclick="reiniciarPartida()" class="btn-accion btn-reiniciar-partida" style="display:none;">
                 🔄 REINICIAR PARTIDA
             </button>
 
-            <!-- Tablero 1-75 -->
             <div class="tablero-container">
                 <div class="tablero-header">
                     <h3>📊 TABLERO (1-75)</h3>
@@ -162,7 +155,7 @@
         </div>
     </div>
 
-    <!-- CHAT FLOTANTE (MÁS GRANDE) -->
+    <!-- CHAT FLOTANTE -->
     <div class="chat-flotante">
         <button class="btn-chat" onclick="toggleChat()">💬</button>
         <div class="chat-panel" id="chatPanel">
@@ -233,7 +226,7 @@
         </div>
     </div>
 
-    <!-- BARRA DE NAVEGACIÓN INFERIOR (SIEMPRE VISIBLE) -->
+    <!-- BARRA DE NAVEGACIÓN INFERIOR -->
     <div class="bottom-nav">
         <div class="nav-item activo" onclick="navegarA('config')" id="navConfig">
             <span class="nav-icon">⚙️</span>
@@ -255,8 +248,7 @@
     </div>
 
     <!-- SCRIPTS -->
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <script>
         (function() {
@@ -270,27 +262,20 @@
     </script>
     
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
-            authDomain: "bingofast.firebaseapp.com",
-            databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
-            projectId: "bingofast",
-            storageBucket: "bingofast.firebasestorage.app",
-            messagingSenderId: "473863283329",
-            appId: "1:473863283329:web:2c4bf96de167d105fa6380"
-        };
-        firebase.initializeApp(firebaseConfig);
-        var db = firebase.database();
+        // ============ CONFIGURACIÓN SUPABASE ============
+        const SUPABASE_URL = 'https://yoakkyizazpyboxqkuhg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWtreWl6YXpweWJveHFrdWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MDMyNjUsImV4cCI6MjEwMjM3OTI2NX0.a99WU6PvuwwhBpf-PCodZ-gfiFM-dxEvq245_SB7i3U';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        if (!localStorage.getItem('salaActiva') || !String(localStorage.getItem('salaActiva')).startsWith('bingo')) {
+        var SALA_ID = localStorage.getItem('salaActiva') || 'bingo-default';
+        if (!SALA_ID || !String(SALA_ID).startsWith('bingo')) {
             var ahora = new Date();
             var fecha = ahora.getMonth() + 1 + '/' + ahora.getDate() + '/' + ahora.getFullYear().toString().slice(-2);
-            localStorage.setItem('salaActiva', 'bingo' + fecha);
+            SALA_ID = 'bingo' + fecha;
+            localStorage.setItem('salaActiva', SALA_ID);
         }
-        
-        document.getElementById('salaIdDisplay').textContent = localStorage.getItem('salaActiva');
-        console.log('🔥 Firebase listo');
-        console.log('📁 Sala:', localStorage.getItem('salaActiva'));
+        document.getElementById('salaIdDisplay').textContent = SALA_ID;
+        console.log('🔥 Supabase listo - Sala:', SALA_ID);
     </script>
     
     <script src="ruleta.js"></script>
