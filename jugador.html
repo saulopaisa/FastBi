@@ -6,8 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>Bingo - Jugador</title>
     
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
         :root {
@@ -32,19 +31,20 @@
         .ultima-bola-grande .letra { font-size: 0.65em; color: rgba(255,255,255,0.8); }
         .ultima-bola-grande .numero { font-size: 1.4em; line-height: 1; }
         .ultimas-bolas-scroll { display: flex; gap: 5px; overflow-x: auto; flex: 1; padding: 4px 0; -webkit-overflow-scrolling: touch; }
-        .bola-chica { width: 34px; height: 34px; min-width: 34px; border-radius: 50%; background: var(--card-bg); border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75em; animation: popIn 0.3s ease-out; cursor: pointer; }
+        .ultimas-bolas-scroll::-webkit-scrollbar { height: 2px; }
+        .ultimas-bolas-scroll::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+        .bola-chica { width: 34px; height: 34px; min-width: 34px; border-radius: 50%; background: var(--card-bg); border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75em; cursor: pointer; }
         .bola-chica.ultima { background: #fbbf24; color: #1e293b; border-color: #f59e0b; }
-        @keyframes popIn { 0%{transform:scale(0);} 70%{transform:scale(1.2);} 100%{transform:scale(1);} }
         .info-bar { display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
         .info-card { background: var(--card-bg); padding: 8px 12px; border-radius: 8px; text-align: center; flex: 1; min-width: 55px; border: 1px solid #2d3436; }
         .info-value { font-size: 1.3em; font-weight: bold; color: var(--gold); }
         .info-label { font-size: 0.6em; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1px; }
         .errores-indicator { text-align: center; font-size: 0.75em; margin: 5px 0; padding: 5px; border-radius: 8px; }
         .errores-indicator.clean { color: var(--success); }
-        .errores-indicator.warning { color: var(--warning); background: rgba(245,158,11,0.1); animation: pulse 2s infinite; }
+        .errores-indicator.warning { color: var(--warning); background: rgba(245,158,11,0.1); }
         .errores-indicator.eliminado { color: var(--danger); background: rgba(239,68,68,0.1); }
         .vista-selector { display: flex; gap: 6px; margin: 8px 0; }
-        .vista-selector button { flex: 1; padding: 8px; border: 2px solid #334155; border-radius: 8px; background: var(--card-bg); color: var(--text-gray); cursor: pointer; font-weight: bold; font-size: 0.8em; transition: all 0.2s; }
+        .vista-selector button { flex: 1; padding: 8px; border: 2px solid #334155; border-radius: 8px; background: var(--card-bg); color: var(--text-gray); cursor: pointer; font-weight: bold; font-size: 0.8em; }
         .vista-selector button.activo { border-color: var(--gold); color: var(--gold); background: #1e293b; }
         .btn { padding: 12px 20px; border: none; border-radius: 12px; font-weight: bold; font-size: 0.9em; cursor: pointer; transition: all 0.2s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .btn:active { transform: scale(0.97); } .btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -53,7 +53,6 @@
         @keyframes glowBingo { 0%,100%{box-shadow:0 4px 20px rgba(16,185,129,0.4);} 50%{box-shadow:0 4px 35px rgba(16,185,129,0.8);} }
         .btn-danger { background: linear-gradient(135deg, var(--danger), #b91c1c); color: white; }
         .btn-outline { background: transparent; border: 2px solid var(--warning); color: var(--warning); }
-        .btn-outline.desbloqueado { border-color: var(--success); color: var(--success); }
         .btn-ver-numeros { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; font-size: 0.8em; padding: 10px; }
         .game-screen { display: none; }
         .cartones-container { display: flex; flex-direction: column; gap: 12px; margin: 10px 0; }
@@ -70,7 +69,7 @@
         .carton-cell.marked::after { content: '✓'; position: absolute; top: 1px; right: 2px; font-size: 0.45em; }
         .carton-cell.free { background: #fef3c7 !important; border-color: var(--gold) !important; font-size: 0.6em; cursor: default; }
         .carton-cell.patron-cell { border: 2px dashed var(--warning); background: #fef9e7; }
-        .carton-cell.ultima-cantada { animation: popCell 0.4s ease-out; background: #fbbf24 !important; color: #1e293b !important; border-color: #f59e0b !important; }
+        .carton-cell.ultima-cantada { animation: popCell 0.4s ease-out; background: #fbbf24 !important; color: #1e293b !important; }
         @keyframes popCell { 0%{transform:scale(0.6);} 60%{transform:scale(1.2);} 100%{transform:scale(1);} }
         .acciones-jugador { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .chat-status { text-align: center; font-size: 0.7em; margin-top: 5px; padding: 5px; border-radius: 8px; }
@@ -78,11 +77,11 @@
         .chat-status.desbloqueado { color: var(--success); background: rgba(16,185,129,0.1); }
         .admin-mensaje { background: linear-gradient(135deg, #1e3a5f, #0f172a); border-left: 4px solid var(--gold); padding: 10px 14px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85em; display: none; }
         .chat-flotante { position: fixed; bottom: 20px; right: 15px; z-index: 200; }
-        .btn-chat { width: 50px; height: 50px; border-radius: 50%; background: #6366f1; color: white; border: none; font-size: 1.3em; cursor: pointer; box-shadow: 0 4px 15px rgba(99,102,241,0.5); display: flex; align-items: center; justify-content: center; transition: all 0.2s; position: relative; }
+        .btn-chat { width: 50px; height: 50px; border-radius: 50%; background: #6366f1; color: white; border: none; font-size: 1.3em; cursor: pointer; box-shadow: 0 4px 15px rgba(99,102,241,0.5); display: flex; align-items: center; justify-content: center; position: relative; }
         .chat-badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 0.55em; display: none; align-items: center; justify-content: center; }
-        .chat-panel { display: none; position: fixed; bottom: 80px; right: 15px; width: 300px; max-height: 400px; background: var(--card-bg); border-radius: 15px; border: 2px solid #6366f1; z-index: 199; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+        .chat-panel { display: none; position: fixed; bottom: 80px; right: 15px; width: 300px; max-height: 400px; background: var(--card-bg); border-radius: 15px; border: 2px solid #6366f1; z-index: 199; overflow: hidden; }
         .chat-panel.activo { display: flex; flex-direction: column; }
-        .chat-header { background: #6366f1; padding: 10px; font-weight: bold; font-size: 0.8em; text-align: center; display: flex; justify-content: space-between; align-items: center; }
+        .chat-header { background: #6366f1; padding: 10px; font-weight: bold; font-size: 0.8em; text-align: center; }
         .chat-mensajes { flex: 1; overflow-y: auto; padding: 10px; max-height: 250px; min-height: 100px; background: #0f172a; }
         .msg-item { margin-bottom: 6px; padding: 6px 10px; border-radius: 10px; font-size: 0.7em; max-width: 90%; word-wrap: break-word; }
         .msg-admin { background: #6366f1; color: white; margin-left: auto; text-align: right; }
@@ -92,7 +91,7 @@
         .chat-input-area { display: flex; padding: 8px; gap: 5px; background: #0f172a; }
         .chat-input-area input { flex: 1; padding: 8px; border-radius: 20px; border: 1px solid #334155; background: #1e293b; color: white; font-size: 0.75em; outline: none; }
         .chat-input-area input:disabled { opacity: 0.4; }
-        .chat-input-area button { background: #6366f1; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 0.9em; }
+        .chat-input-area button { background: #6366f1; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; }
         .chat-input-area button:disabled { opacity: 0.4; }
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 300; align-items: center; justify-content: center; padding: 20px; }
         .modal-overlay.active { display: flex; }
@@ -105,11 +104,11 @@
         .miniruleta-numero { background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 6px 4px; text-align: center; font-weight: bold; font-size: 0.75em; color: #64748b; }
         .miniruleta-numero.cantado { background: var(--success); color: white; border-color: #059669; }
         .confetti-piece { position: fixed; width: 10px; height: 10px; top: -20px; animation: confettiFall 3s linear forwards; z-index: 400; pointer-events: none; }
-        @keyframes confettiFall { 0%{transform:translateY(0) rotate(0deg); opacity:1;} 100%{transform:translateY(100vh) rotate(720deg); opacity:0;} }
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #333; color: white; padding: 12px 24px; border-radius: 25px; font-size: 0.85em; z-index: 500; opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap; }
+        @keyframes confettiFall { 0%{transform:translateY(0) rotate(0deg);} 100%{transform:translateY(100vh) rotate(720deg);} }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #333; color: white; padding: 12px 24px; border-radius: 25px; font-size: 0.85em; z-index: 500; opacity: 0; transition: all 0.3s; white-space: nowrap; }
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         .toast.success { background: var(--success); } .toast.error { background: var(--danger); } .toast.warning { background: var(--warning); color: #1e293b; }
-        .loading-screen { text-align: center; padding: 40px 20px; background: var(--card-bg); border-radius: 16px; border: 1px solid #2d3436; max-width: 400px; margin: 40px auto; }
+        .loading-screen { text-align: center; padding: 40px 20px; background: var(--card-bg); border-radius: 16px; max-width: 400px; margin: 40px auto; }
         .loading-screen .icon { font-size: 4em; animation: float 3s ease-in-out infinite; }
         @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
         .loading-screen h2 { color: var(--gold); margin-top: 15px; }
@@ -118,39 +117,65 @@
 </head>
 <body>
     <div class="container">
-        <div class="header-fijo"><div class="header-top"><h1>🎱 BINGO</h1><div class="sala-info">🏠 <strong id="salaNombre">-</strong> | 👤 <strong id="jugadorNombre">-</strong><span class="connection-dot online" id="connectionDot"></span></div></div><div class="numeros-bar"><div class="ultima-bola-grande" id="ultimaBolaGrande" onclick="abrirMiniRuleta()"><span class="letra">-</span><span class="numero">--</span></div><div class="ultimas-bolas-scroll" id="ultimasBolasScroll"></div></div></div>
+        <div class="header-fijo">
+            <div class="header-top">
+                <h1>🎱 BINGO</h1>
+                <div class="sala-info">🏠 <strong id="salaNombre">-</strong> | 👤 <strong id="jugadorNombre">-</strong><span class="connection-dot online" id="connectionDot"></span></div>
+            </div>
+            <div class="numeros-bar">
+                <div class="ultima-bola-grande" id="ultimaBolaGrande" onclick="abrirMiniRuleta()"><span class="letra">-</span><span class="numero">--</span></div>
+                <div class="ultimas-bolas-scroll" id="ultimasBolasScroll"></div>
+            </div>
+        </div>
         <div id="loadingScreen" class="loading-screen"><div class="icon">🎫</div><h2>Cargando cartones...</h2></div>
         <div id="gameScreen" class="game-screen">
-            <div class="info-bar"><div class="info-card"><div class="info-value" id="jugadoresCount">0</div><div class="info-label">Jugadores</div></div><div class="info-card"><div class="info-value" id="cantadosCount">0</div><div class="info-label">Cantados</div></div><div class="info-card"><div class="info-value" id="cronometroDisplay">--</div><div class="info-label">Tiempo</div></div></div>
+            <div class="info-bar">
+                <div class="info-card"><div class="info-value" id="jugadoresCount">0</div><div class="info-label">Jugadores</div></div>
+                <div class="info-card"><div class="info-value" id="cantadosCount">0</div><div class="info-label">Cantados</div></div>
+                <div class="info-card"><div class="info-value" id="cronometroDisplay">--</div><div class="info-label">Tiempo</div></div>
+            </div>
             <div id="adminMensaje" class="admin-mensaje"></div>
             <div class="errores-indicator clean" id="erroresIndicator">✅ 0/2 errores</div>
-            <div class="vista-selector" id="vistaSelector" style="display:none;"><button onclick="cambiarVista('vertical')" id="btnVistaVertical" class="activo">📱 VERTICAL</button><button onclick="cambiarVista('horizontal')" id="btnVistaHorizontal">📱↔ HORIZONTAL</button></div>
+            <div class="vista-selector" id="vistaSelector" style="display:none;">
+                <button onclick="cambiarVista('vertical')" id="btnVistaVertical" class="activo">📱 VERTICAL</button>
+                <button onclick="cambiarVista('horizontal')" id="btnVistaHorizontal">📱↔ HORIZONTAL</button>
+            </div>
             <div class="cartones-container vertical" id="cartonesContainer"></div>
-            <div class="acciones-jugador"><button class="btn btn-bingo" onclick="cantarBingo()">🎉 ¡BINGO!</button><button class="btn btn-ver-numeros" onclick="abrirMiniRuleta()">🔢 VER NÚMEROS</button></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;"><button class="btn btn-outline" id="btnAvisarAdmin" onclick="solicitarDesbloquearChat()">🔒 PEDIR HABLAR</button><button class="btn btn-danger" onclick="salirDelJuego()">🚪 Salir</button></div>
+            <div class="acciones-jugador">
+                <button class="btn btn-bingo" onclick="cantarBingo()">🎉 ¡BINGO!</button>
+                <button class="btn btn-ver-numeros" onclick="abrirMiniRuleta()">🔢 VER NÚMEROS</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+                <button class="btn btn-outline" onclick="solicitarDesbloquearChat()">🔒 PEDIR HABLAR</button>
+                <button class="btn btn-danger" onclick="salirDelJuego()">🚪 Salir</button>
+            </div>
             <div class="chat-status bloqueado" id="chatStatus">🔒 Chat bloqueado</div>
         </div>
     </div>
-    <div class="modal-overlay" id="modalMiniRuleta"><div class="modal-content"><h2>🔢 NÚMEROS CANTADOS</h2><div class="miniruleta-container" id="miniruletaContainer"></div><div class="miniruleta-total" id="miniruletaTotal"></div><button class="btn btn-primary" onclick="cerrarModal('modalMiniRuleta')" style="margin-top:15px;">CERRAR</button></div></div>
-    <div class="chat-flotante" id="chatFlotante" style="display:none;"><button class="btn-chat" onclick="toggleChat()">💬<span class="chat-badge" id="chatBadge">0</span></button><div class="chat-panel" id="chatPanel"><div class="chat-header"><span>💬 CHAT</span></div><div class="chat-mensajes" id="chatMensajes"><p class="chat-vacio">No hay mensajes</p></div><div class="chat-input-area"><input type="text" id="chatInput" placeholder="Chat bloqueado..." disabled onkeypress="if(event.key==='Enter')enviarChat()"><button onclick="enviarChat()" id="btnEnviarChat" disabled>➤</button></div></div></div>
+
+    <div class="modal-overlay" id="modalMiniRuleta"><div class="modal-content"><h2>🔢 NÚMEROS CANTADOS</h2><div class="miniruleta-container" id="miniruletaContainer"></div><div class="miniruleta-total" id="miniruletaTotal"></div><button class="btn btn-primary" onclick="cerrarModal('modalMiniRuleta')">CERRAR</button></div></div>
+    <div class="chat-flotante" id="chatFlotante" style="display:none;">
+        <button class="btn-chat" onclick="toggleChat()">💬<span class="chat-badge" id="chatBadge">0</span></button>
+        <div class="chat-panel" id="chatPanel">
+            <div class="chat-header">💬 CHAT</div>
+            <div class="chat-mensajes" id="chatMensajes"><p class="chat-vacio">No hay mensajes</p></div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" placeholder="Chat bloqueado..." disabled onkeypress="if(event.key==='Enter')enviarChat()">
+                <button onclick="enviarChat()" id="btnEnviarChat" disabled>➤</button>
+            </div>
+        </div>
+    </div>
     <div class="modal-overlay" id="modalConfirmar"><div class="modal-content"><h2>🎉 ¿Confirmar BINGO?</h2><p>Máximo 2 intentos.</p><div class="modal-buttons"><button class="btn btn-success" onclick="confirmarBingo()">✅ Sí</button><button class="btn btn-danger" onclick="cerrarModal('modalConfirmar')">❌ No</button></div></div></div>
     <div class="modal-overlay" id="modalGanador"><div class="modal-content"><h2>🏆 ¡GANASTE!</h2><p id="ganadorMensaje"></p><button class="btn btn-primary" onclick="cerrarModal('modalGanador')">🎉 Cerrar</button></div></div>
-    <div class="modal-overlay" id="modalEliminado"><div class="modal-content"><h2>❌ ELIMINADO</h2><p>2 bingos errados.</p><button class="btn btn-danger" onclick="salirDelJuego()">🚪 Salir</button></div></div>
+    <div class="modal-overlay" id="modalEliminado"><div class="modal-content"><h2>❌ ELIMINADO</h2><button class="btn btn-danger" onclick="salirDelJuego()">🚪 Salir</button></div></div>
     <div class="modal-overlay" id="modalPartidaTerminada"><div class="modal-content"><h2>🏁 Partida Terminada</h2><p id="partidaTerminadaMensaje"></p><button class="btn btn-primary" onclick="limpiarParaNuevaPartida()">🔄 Nueva Partida</button></div></div>
     <div class="toast" id="toast"></div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
-            authDomain: "bingofast.firebaseapp.com",
-            databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
-            projectId: "bingofast",
-            storageBucket: "bingofast.firebasestorage.app",
-            messagingSenderId: "473863283329",
-            appId: "1:473863283329:web:2c4bf96de167d105fa6380"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        // ============ CONFIGURACIÓN SUPABASE ============
+        const SUPABASE_URL = 'https://yoakkyizazpyboxqkuhg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWtreWl6YXpweWJveHFrdWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MDMyNjUsImV4cCI6MjEwMjM3OTI2NX0.a99WU6PvuwwhBpf-PCodZ-gfiFM-dxEvq245_SB7i3U';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         function obtenerParametro(nombre) { const p = new URLSearchParams(window.location.search); return p.get(nombre) || null; }
         const SALA_ID = obtenerParametro('sala');
@@ -160,119 +185,273 @@
         else { document.getElementById('salaNombre').textContent = SALA_ID; if (JUGADOR_NOMBRE) document.getElementById('jugadorNombre').textContent = JUGADOR_NOMBRE; }
 
         let miNombre = JUGADOR_NOMBRE, misCartones = [], cantadosSet = new Set(), patronActual = [];
-        let juegoConectado = false, ultimoEstadoPartida = null, vistaActual = 'vertical';
-        let mensajesChat = [], chatDesbloqueado = false, erroresBingo = 0, eliminado = false;
-        let unsubscribePartida = null, unsubscribeChat = null;
+        let juegoConectado = false, vistaActual = 'vertical', chatDesbloqueado = false, erroresBingo = 0, eliminado = false;
+        let canalPartida = null, canalChat = null;
 
-        function actualizarEstadoConexion(online) { document.getElementById('connectionDot').className = 'connection-dot ' + (online ? 'online' : 'offline'); }
-        db.ref('.info/connected').on('value', (snap) => actualizarEstadoConexion(snap.val() === true));
-
-        function cambiarVista(tipo) { vistaActual = tipo; document.getElementById('cartonesContainer').classList.remove('vertical', 'horizontal'); document.getElementById('cartonesContainer').classList.add(tipo); document.getElementById('btnVistaVertical').classList.toggle('activo', tipo === 'vertical'); document.getElementById('btnVistaHorizontal').classList.toggle('activo', tipo === 'horizontal'); localStorage.setItem('bingo_vista', tipo); }
+        function cambiarVista(tipo) {
+            vistaActual = tipo;
+            const c = document.getElementById('cartonesContainer');
+            c.classList.remove('vertical', 'horizontal'); c.classList.add(tipo);
+            document.getElementById('btnVistaVertical').classList.toggle('activo', tipo === 'vertical');
+            document.getElementById('btnVistaHorizontal').classList.toggle('activo', tipo === 'horizontal');
+            localStorage.setItem('bingo_vista', tipo);
+        }
 
         async function cargarCartones() {
             if (!SALA_ID || !miNombre) return;
             try {
-                const snap = await db.ref('salas/' + SALA_ID + '/cartones').once('value');
-                const cartones = snap.val() || {}; misCartones = [];
-                Object.entries(cartones).forEach(([id, c]) => { if (c.asignadoA && c.asignadoA.toLowerCase() === miNombre.toLowerCase()) misCartones.push({ id, carton: c.carton, numero: c.numero }); });
-                if (misCartones.length === 0) { document.getElementById('loadingScreen').innerHTML = '<div class="icon">⚠️</div><h2>Sin cartones</h2>'; return; }
-                miNombre = cartones[misCartones[0].id].asignadoA; document.getElementById('jugadorNombre').textContent = miNombre;
-                localStorage.setItem('bingo_jugador_nombre', miNombre); localStorage.setItem('bingo_jugador_sala', SALA_ID);
-                juegoConectado = true; erroresBingo = 0; eliminado = false;
-                document.getElementById('loadingScreen').style.display = 'none'; document.getElementById('gameScreen').style.display = 'block'; document.getElementById('chatFlotante').style.display = 'block';
+                const { data: cartones, error } = await supabase
+                    .from('cartones')
+                    .select('*')
+                    .eq('sala_id', SALA_ID)
+                    .ilike('asignado_a', miNombre);
+                
+                if (error) throw error;
+                if (!cartones || cartones.length === 0) {
+                    document.getElementById('loadingScreen').innerHTML = '<div class="icon">⚠️</div><h2>Sin cartones</h2><p style="color:#94a3b8;">No tienes cartones asignados.</p>';
+                    return;
+                }
+                misCartones = cartones.map(c => ({ id: c.id, carton: c.carton, numero: c.numero }));
+                miNombre = cartones[0].asignado_a;
+                document.getElementById('jugadorNombre').textContent = miNombre;
+                juegoConectado = true;
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('gameScreen').style.display = 'block';
+                document.getElementById('chatFlotante').style.display = 'block';
                 if (misCartones.length === 2) document.getElementById('vistaSelector').style.display = 'flex';
                 inicializarJuego();
-            } catch (error) { document.getElementById('loadingScreen').innerHTML = '<div class="icon">❌</div><h2>Error</h2>'; }
+            } catch (error) {
+                document.getElementById('loadingScreen').innerHTML = '<div class="icon">❌</div><h2>Error</h2>';
+            }
         }
 
-        function inicializarJuego() { 
-            mostrarCartones(); 
-            escucharPartida(); 
-            escucharChat(); 
-            actualizarEstadoChat(); 
-            actualizarIndicadorErrores();
-            const v = localStorage.getItem('bingo_vista'); if (v) cambiarVista(v); 
+        function inicializarJuego() {
+            mostrarCartones(); escucharPartida(); escucharChat();
+            const v = localStorage.getItem('bingo_vista'); if (v) cambiarVista(v);
         }
 
         function mostrarCartones() {
-            const container = document.getElementById('cartonesContainer'); container.innerHTML = ''; container.classList.add(vistaActual);
+            const container = document.getElementById('cartonesContainer'); container.innerHTML = '';
+            container.classList.add(vistaActual);
             misCartones.forEach((cd, index) => {
                 const wrapper = document.createElement('div'); wrapper.className = 'carton-wrapper';
                 let html = '<div class="carton-numero">CARTÓN #' + (cd.numero || (index + 1)) + '</div><div class="carton-header">';
-                ['B','I','N','G','O'].forEach(l => html += '<div class="carton-header-cell">' + l + '</div>'); html += '</div><div class="carton-grid">';
-                for (let f = 0; f < 5; f++) { ['B','I','N','G','O'].forEach(letra => { const v = cd.carton[letra][f], centro = (letra === 'N' && f === 2), indice = f * 5 + ['B','I','N','G','O'].indexOf(letra); html += '<div class="carton-cell' + (centro ? ' free marked' : '') + '" data-valor="' + v + '" data-indice="' + indice + '" onclick="toggleCelda(this)">' + (centro ? '⭐' : v) + '</div>'; }); }
-                html += '</div>'; wrapper.innerHTML = html; container.appendChild(wrapper);
+                ['B','I','N','G','O'].forEach(l => html += '<div class="carton-header-cell">' + l + '</div>');
+                html += '</div><div class="carton-grid">';
+                for (let f = 0; f < 5; f++) {
+                    ['B','I','N','G','O'].forEach(letra => {
+                        const v = cd.carton[letra][f], centro = (letra === 'N' && f === 2), indice = f * 5 + ['B','I','N','G','O'].indexOf(letra);
+                        html += '<div class="carton-cell' + (centro ? ' free marked' : '') + '" data-valor="' + v + '" data-indice="' + indice + '" onclick="toggleCelda(this)">' + (centro ? '⭐' : v) + '</div>';
+                    });
+                }
+                html += '</div>';
+                wrapper.innerHTML = html; container.appendChild(wrapper);
             });
             if (patronActual.length > 0) aplicarPatronACartones();
             cantadosSet.forEach(num => marcarNumeroEnCartones(num, false));
         }
 
         function toggleCelda(cell) { cell.classList.toggle('marked'); }
-        function aplicarPatronACartones() { document.querySelectorAll('.carton-cell').forEach(cell => { const i = parseInt(cell.dataset.indice); if (patronActual[i] && !cell.classList.contains('free')) cell.classList.add('patron-cell'); else cell.classList.remove('patron-cell'); }); }
-        function marcarNumeroEnCartones(numero, animar = true) { document.querySelectorAll('.carton-cell').forEach(cell => { if (parseInt(cell.dataset.valor) === numero) { cell.classList.add('marked'); if (animar) { cell.classList.add('ultima-cantada'); setTimeout(() => cell.classList.remove('ultima-cantada'), 600); } } }); }
 
-        function actualizarIndicadorErrores() { const i = document.getElementById('erroresIndicator'), b = document.getElementById('btnCantarBingo'); if (eliminado) { i.textContent = '❌ ELIMINADO'; i.className = 'errores-indicator eliminado'; b.disabled = true; } else if (erroresBingo === 0) { i.textContent = '✅ 0/2 errores'; i.className = 'errores-indicator clean'; b.disabled = false; } else { i.textContent = '⚠️ 1/2 errores'; i.className = 'errores-indicator warning'; b.disabled = false; } }
+        function aplicarPatronACartones() {
+            document.querySelectorAll('.carton-cell').forEach(cell => {
+                const i = parseInt(cell.dataset.indice);
+                if (patronActual[i] && !cell.classList.contains('free')) cell.classList.add('patron-cell');
+                else cell.classList.remove('patron-cell');
+            });
+        }
 
-        function escucharPartida() {
-            if (unsubscribePartida) unsubscribePartida();
-            unsubscribePartida = db.ref('partidas/' + SALA_ID).on('value', (snap) => {
-                const data = snap.val(); if (!data) return;
-                if (data.estado === 'nueva_partida' || data.estado === 'terminado') { if (ultimoEstadoPartida && ultimoEstadoPartida !== 'nueva_partida' && ultimoEstadoPartida !== 'terminado') mostrarPartidaTerminada(data); }
-                if (!data.cantados || data.cantados.length === 0) { if (cantadosSet.size > 0) mostrarPartidaTerminada(data); }
-                ultimoEstadoPartida = data.estado;
-                if (data.cantados) { data.cantados.forEach(num => { if (!cantadosSet.has(num)) { cantadosSet.add(num); marcarNumeroEnCartones(num, true); } }); document.getElementById('cantadosCount').textContent = data.cantados.length; if (data.cantados.length > 0) actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]); actualizarUltimasBolasScroll(data.cantados); }
-                if (data.patron) { patronActual = data.patron; aplicarPatronACartones(); }
-                if (data.jugadoresActivos) document.getElementById('jugadoresCount').textContent = data.jugadoresActivos.length;
-                if (data.cronometro > 0) { const m = Math.floor(data.cronometro/60), s = data.cronometro%60; document.getElementById('cronometroDisplay').textContent = String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); }
-                else if (data.estado === 'jugando') document.getElementById('cronometroDisplay').textContent = '▶️';
-                if (data.resultadoRevision && data.resultadoRevision.jugador === miNombre) {
-                    if (data.resultadoRevision.resultado === 'valido') { lanzarConfeti(); document.getElementById('ganadorMensaje').textContent = '¡Felicidades ' + miNombre + '!'; document.getElementById('modalGanador').classList.add('active'); erroresBingo = 0; eliminado = false; actualizarIndicadorErrores(); }
-                    else if (data.resultadoRevision.resultado === 'errado') { erroresBingo++; actualizarIndicadorErrores(); if (erroresBingo >= 2) { eliminado = true; actualizarIndicadorErrores(); document.getElementById('modalEliminado').classList.add('active'); } else { mostrarToast('❌ BINGO ERRADO', 'error'); } }
+        function marcarNumeroEnCartones(numero, animar = true) {
+            document.querySelectorAll('.carton-cell').forEach(cell => {
+                if (parseInt(cell.dataset.valor) === numero) {
+                    cell.classList.add('marked');
+                    if (animar) { cell.classList.add('ultima-cantada'); setTimeout(() => cell.classList.remove('ultima-cantada'), 600); }
                 }
             });
         }
 
-        function actualizarUltimaBolaGrande(numero) { const b = document.getElementById('ultimaBolaGrande'); b.querySelector('.letra').textContent = obtenerLetra(numero); b.querySelector('.numero').textContent = numero; b.style.animation = 'none'; b.offsetHeight; }
-        function actualizarUltimasBolasScroll(cantados) { const c = document.getElementById('ultimasBolasScroll'); c.innerHTML = ''; cantados.slice(-6).reverse().forEach((num, i) => { const bola = document.createElement('div'); bola.className = 'bola-chica' + (i===0?' ultima':''); bola.textContent = num; bola.onclick = () => abrirMiniRuleta(); c.appendChild(bola); }); }
-        function mostrarPartidaTerminada(data) { document.getElementById('partidaTerminadaMensaje').textContent = data.mensajeAdmin || 'Partida terminada.'; document.getElementById('modalPartidaTerminada').classList.add('active'); chatDesbloqueado = false; actualizarEstadoChat(); }
-        function limpiarParaNuevaPartida() { cantadosSet.clear(); patronActual = []; erroresBingo = 0; eliminado = false; document.getElementById('cantadosCount').textContent = '0'; document.getElementById('cronometroDisplay').textContent = '--'; document.getElementById('ultimaBolaGrande').querySelector('.letra').textContent = '-'; document.getElementById('ultimaBolaGrande').querySelector('.numero').textContent = '--'; document.getElementById('ultimasBolasScroll').innerHTML = ''; document.querySelectorAll('.carton-cell').forEach(c => c.classList.remove('marked', 'ultima-cantada', 'patron-cell')); document.querySelectorAll('.carton-cell.free').forEach(c => c.classList.add('marked')); actualizarIndicadorErrores(); document.getElementById('modalPartidaTerminada').classList.remove('active'); }
+        function escucharPartida() {
+            // Cargar estado inicial
+            supabase.from('partidas').select('*').eq('sala_id', SALA_ID).single().then(({ data }) => {
+                if (data) {
+                    if (data.cantados && Array.isArray(data.cantados)) {
+                        data.cantados.forEach(num => { cantadosSet.add(num); marcarNumeroEnCartones(num, false); });
+                        document.getElementById('cantadosCount').textContent = data.cantados.length;
+                        if (data.cantados.length > 0) actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
+                        actualizarUltimasBolasScroll(data.cantados);
+                    }
+                    if (data.patron && Array.isArray(data.patron)) { patronActual = data.patron; aplicarPatronACartones(); }
+                    if (data.jugadores_activos && Array.isArray(data.jugadores_activos)) document.getElementById('jugadoresCount').textContent = data.jugadores_activos.length;
+                }
+            });
 
-        function abrirMiniRuleta() { const container = document.getElementById('miniruletaContainer'), total = document.getElementById('miniruletaTotal'); const letras = ['B','I','N','G','O'], rangos = {'B':[1,15],'I':[16,30],'N':[31,45],'G':[46,60],'O':[61,75]}; let html = '', tc = 0; letras.forEach(l => { const [min, max] = rangos[l]; html += '<div class="miniruleta-seccion"><div class="miniruleta-letra" style="background:' + ({'B':'#ef4444','I':'#f59e0b','N':'#10b981','G':'#3b82f6','O':'#8b5cf6'}[l]||'#6366f1')+';">'+l+' ('+min+'-'+max+')</div><div class="miniruleta-numeros">'; let cl = 0; for (let i = min; i <= max; i++) { const ca = cantadosSet.has(i); if (ca) cl++; html += '<div class="miniruleta-numero'+(ca?' cantado':'')+'">'+i+'</div>'; } html += '</div><div style="font-size:0.7em;color:#94a3b8;text-align:right;">'+cl+'/'+(max-min+1)+'</div></div>'; tc += cl; }); container.innerHTML = html; total.textContent = 'Total: ' + tc + '/75'; document.getElementById('modalMiniRuleta').classList.add('active'); }
+            // Escuchar cambios en tiempo real
+            canalPartida = supabase
+                .channel('partida-' + SALA_ID)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'partidas', filter: 'sala_id=eq.' + SALA_ID }, (payload) => {
+                    const data = payload.new || payload.old;
+                    if (data && data.cantados && Array.isArray(data.cantados)) {
+                        data.cantados.forEach(num => { if (!cantadosSet.has(num)) { cantadosSet.add(num); marcarNumeroEnCartones(num, true); } });
+                        document.getElementById('cantadosCount').textContent = data.cantados.length;
+                        if (data.cantados.length > 0) actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
+                        actualizarUltimasBolasScroll(data.cantados);
+                    }
+                    if (data && data.patron && Array.isArray(data.patron)) { patronActual = data.patron; aplicarPatronACartones(); }
+                    if (data && data.jugadores_activos) document.getElementById('jugadoresCount').textContent = data.jugadores_activos.length;
+                    if (data && data.resultado_revision && data.resultado_revision.jugador === miNombre) {
+                        if (data.resultado_revision.resultado === 'valido') {
+                            lanzarConfeti();
+                            document.getElementById('ganadorMensaje').textContent = '¡Felicidades ' + miNombre + '!';
+                            document.getElementById('modalGanador').classList.add('active');
+                            erroresBingo = 0; eliminado = false;
+                        } else if (data.resultado_revision.resultado === 'errado') {
+                            erroresBingo++;
+                            if (erroresBingo >= 2) { eliminado = true; document.getElementById('modalEliminado').classList.add('active'); }
+                            else { mostrarToast('❌ BINGO ERRADO. 1 oportunidad restante.', 'error'); }
+                        }
+                    }
+                })
+                .subscribe();
+        }
 
-        function escucharChat() {
-            if (unsubscribeChat) unsubscribeChat();
-            unsubscribeChat = db.ref('partidas/' + SALA_ID + '/chat').limitToLast(30).on('value', (snap) => {
-                const contenedor = document.getElementById('chatMensajes'); if (!contenedor) return;
-                if (!snap.exists()) { contenedor.innerHTML = '<p class="chat-vacio">No hay mensajes</p>'; mensajesChat = []; return; }
-                contenedor.innerHTML = ''; const mensajes = []; snap.forEach(child => { const msg = child.val(); if (msg && msg.mensaje) mensajes.push(msg); });
-                mensajes.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-                mensajes.forEach(msg => { const div = document.createElement('div'); div.className = 'msg-item ' + (msg.sistema ? 'msg-sistema' : (msg.admin ? 'msg-admin' : 'msg-jugador')); div.textContent = msg.mensaje; const ts = document.createElement('div'); ts.className = 'msg-timestamp'; ts.textContent = new Date(msg.timestamp).toLocaleTimeString(); div.appendChild(ts); contenedor.appendChild(div); });
-                contenedor.scrollTop = contenedor.scrollHeight;
-                const panel = document.getElementById('chatPanel'), nuevos = mensajes.length - mensajesChat.length;
-                if (!panel.classList.contains('activo') && nuevos > 0) { const badge = document.getElementById('chatBadge'); badge.style.display = 'flex'; badge.textContent = Math.min(nuevos, 99); }
-                mensajesChat = mensajes;
-                const ua = mensajes.filter(m => m.admin && !m.sistema).pop();
-                if (ua && nuevos > 0) { const md = document.getElementById('adminMensaje'); md.textContent = '📢 ' + ua.mensaje; md.style.display = 'block'; clearTimeout(md._timeout); md._timeout = setTimeout(() => md.style.display = 'none', 8000); }
+        function actualizarUltimaBolaGrande(numero) {
+            const b = document.getElementById('ultimaBolaGrande');
+            b.querySelector('.letra').textContent = obtenerLetra(numero);
+            b.querySelector('.numero').textContent = numero;
+            b.style.animation = 'none'; b.offsetHeight;
+        }
+
+        function actualizarUltimasBolasScroll(cantados) {
+            const c = document.getElementById('ultimasBolasScroll'); c.innerHTML = '';
+            cantados.slice(-6).reverse().forEach((num, i) => {
+                const bola = document.createElement('div'); bola.className = 'bola-chica' + (i===0?' ultima':'');
+                bola.textContent = num; bola.onclick = () => abrirMiniRuleta(); c.appendChild(bola);
             });
         }
 
-        function actualizarEstadoChat() { const input = document.getElementById('chatInput'), btn = document.getElementById('btnEnviarChat'), status = document.getElementById('chatStatus'), avisar = document.getElementById('btnAvisarAdmin'); if (chatDesbloqueado) { input.disabled = false; btn.disabled = false; input.placeholder = 'Escribe...'; status.textContent = '🔓 Chat desbloqueado'; status.className = 'chat-status desbloqueado'; avisar.textContent = '🔓 CHAT ABIERTO'; avisar.className = 'btn btn-outline desbloqueado'; } else { input.disabled = true; btn.disabled = true; input.placeholder = 'Chat bloqueado...'; status.textContent = '🔒 Chat bloqueado'; status.className = 'chat-status bloqueado'; avisar.textContent = '🔒 PEDIR HABLAR'; avisar.className = 'btn btn-outline'; } }
-        function solicitarDesbloquearChat() { if (chatDesbloqueado) { mostrarToast('✅ Chat ya desbloqueado', 'success'); return; } const m = prompt('📝 ¿Qué quieres comunicar?'); if (!m) return; db.ref('partidas/' + SALA_ID).update({ solicitudChat: { jugador: miNombre, mensaje: m, timestamp: Date.now() } }); mostrarToast('📩 Solicitud enviada', 'warning'); }
-        function toggleChat() { const p = document.getElementById('chatPanel'); p.classList.toggle('activo'); if (p.classList.contains('activo')) { document.getElementById('chatBadge').style.display = 'none'; if (chatDesbloqueado) document.getElementById('chatInput').focus(); } }
-        function enviarChat() { if (!chatDesbloqueado) { mostrarToast('🔒 Chat bloqueado', 'warning'); return; } const m = document.getElementById('chatInput').value.trim(); if (!m) return; db.ref('partidas/' + SALA_ID + '/chat').push({ mensaje: miNombre + ': ' + m, timestamp: Date.now(), admin: false, jugador: miNombre }); document.getElementById('chatInput').value = ''; }
+        function escucharChat() {
+            supabase.from('chat').select('*').eq('sala_id', SALA_ID).order('id', { ascending: false }).limit(30).then(({ data }) => {
+                const contenedor = document.getElementById('chatMensajes');
+                if (data && data.length > 0) {
+                    contenedor.innerHTML = '';
+                    data.reverse().forEach(msg => {
+                        const div = document.createElement('div');
+                        div.className = 'msg-item ' + (msg.sistema ? 'msg-sistema' : (msg.admin ? 'msg-admin' : 'msg-jugador'));
+                        div.textContent = msg.mensaje;
+                        contenedor.appendChild(div);
+                    });
+                    contenedor.scrollTop = contenedor.scrollHeight;
+                }
+            });
+
+            canalChat = supabase
+                .channel('chat-' + SALA_ID)
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat', filter: 'sala_id=eq.' + SALA_ID }, (payload) => {
+                    const msg = payload.new;
+                    const contenedor = document.getElementById('chatMensajes');
+                    const div = document.createElement('div');
+                    div.className = 'msg-item ' + (msg.sistema ? 'msg-sistema' : (msg.admin ? 'msg-admin' : 'msg-jugador'));
+                    div.textContent = msg.mensaje;
+                    contenedor.appendChild(div);
+                    contenedor.scrollTop = contenedor.scrollHeight;
+                    if (msg.admin && !msg.sistema) {
+                        const md = document.getElementById('adminMensaje');
+                        md.textContent = '📢 ' + msg.mensaje; md.style.display = 'block';
+                        setTimeout(() => md.style.display = 'none', 8000);
+                    }
+                })
+                .subscribe();
+        }
+
+        function solicitarDesbloquearChat() {
+            const m = prompt('📝 ¿Qué quieres comunicar al administrador?');
+            if (!m) return;
+            supabase.from('solicitudes_chat').insert({ sala_id: SALA_ID, jugador: miNombre, mensaje: m, timestamp: Date.now() }).then(() => {
+                mostrarToast('📩 Solicitud enviada', 'warning');
+            });
+        }
+
+        function toggleChat() { const p = document.getElementById('chatPanel'); p.classList.toggle('activo'); if (p.classList.contains('activo') && chatDesbloqueado) document.getElementById('chatInput').focus(); }
+
+        function enviarChat() {
+            if (!chatDesbloqueado) { mostrarToast('🔒 Chat bloqueado', 'warning'); return; }
+            const m = document.getElementById('chatInput').value.trim(); if (!m) return;
+            supabase.from('chat').insert({ sala_id: SALA_ID, mensaje: miNombre + ': ' + m, admin: false, jugador: miNombre, timestamp: Date.now() }).then(() => {
+                document.getElementById('chatInput').value = '';
+            });
+        }
+
         function cantarBingo() { if (eliminado) { mostrarToast('❌ Eliminado', 'error'); return; } document.getElementById('modalConfirmar').classList.add('active'); }
-        async function confirmarBingo() { cerrarModal('modalConfirmar'); try { for (const cd of misCartones) { await db.ref('bingos/' + SALA_ID).push({ cartonId: cd.id, jugador: miNombre, timestamp: Date.now() }); } mostrarToast('🎉 BINGO cantado', 'success'); } catch (e) { mostrarToast('Error', 'error'); } }
+
+        async function confirmarBingo() {
+            cerrarModal('modalConfirmar');
+            try {
+                for (const cd of misCartones) {
+                    await supabase.from('bingos').insert({ sala_id: SALA_ID, carton_id: String(cd.id), jugador: miNombre, timestamp: Date.now() });
+                }
+                mostrarToast('🎉 BINGO cantado', 'success');
+            } catch (e) { mostrarToast('Error', 'error'); }
+        }
+
+        function abrirMiniRuleta() {
+            const container = document.getElementById('miniruletaContainer'), total = document.getElementById('miniruletaTotal');
+            const letras = ['B','I','N','G','O'], rangos = {'B':[1,15],'I':[16,30],'N':[31,45],'G':[46,60],'O':[61,75]};
+            const colores = {'B':'#ef4444','I':'#f59e0b','N':'#10b981','G':'#3b82f6','O':'#8b5cf6'};
+            let html = '', tc = 0;
+            letras.forEach(l => {
+                const [min, max] = rangos[l];
+                html += '<div class="miniruleta-seccion"><div class="miniruleta-letra" style="background:' + colores[l] + ';">' + l + ' (' + min + '-' + max + ')</div><div class="miniruleta-numeros">';
+                let cl = 0;
+                for (let i = min; i <= max; i++) { const ca = cantadosSet.has(i); if (ca) cl++; html += '<div class="miniruleta-numero' + (ca ? ' cantado' : '') + '">' + i + '</div>'; }
+                html += '</div><div style="font-size:0.7em;color:#94a3b8;text-align:right;">' + cl + '/' + (max - min + 1) + '</div></div>';
+                tc += cl;
+            });
+            container.innerHTML = html; total.textContent = 'Total: ' + tc + '/75';
+            document.getElementById('modalMiniRuleta').classList.add('active');
+        }
+
         function obtenerLetra(n) { if (n <= 15) return 'B'; if (n <= 30) return 'I'; if (n <= 45) return 'N'; if (n <= 60) return 'G'; return 'O'; }
         function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
-        function salirDelJuego() { if (!juegoConectado) return; if (unsubscribePartida) unsubscribePartida(); if (unsubscribeChat) unsubscribeChat(); juegoConectado = false; misCartones = []; cantadosSet.clear(); localStorage.clear(); document.getElementById('gameScreen').style.display = 'none'; document.getElementById('loadingScreen').style.display = 'block'; document.getElementById('loadingScreen').innerHTML = '<div class="icon">👋</div><h2>¡Hasta luego!</h2>'; document.getElementById('chatFlotante').style.display = 'none'; }
-        function lanzarConfeti() { const colores = ['#FF6B6B','#4ECDC4','#FFD700','#FF8C00','#FF1493','#10b981']; for (let i = 0; i < 60; i++) { setTimeout(() => { const c = document.createElement('div'); c.className = 'confetti-piece'; c.style.left = Math.random()*100+'%'; c.style.backgroundColor = colores[Math.floor(Math.random()*colores.length)]; c.style.width = Math.random()*10+5+'px'; c.style.height = Math.random()*10+5+'px'; c.style.animationDuration = Math.random()*2+2+'s'; document.body.appendChild(c); setTimeout(() => c.remove(), 3000); }, i*15); } }
-        function mostrarToast(m, t) { const toast = document.getElementById('toast'); toast.textContent = m; toast.className = 'toast ' + (t||''); setTimeout(() => toast.classList.add('show'), 10); setTimeout(() => toast.classList.remove('show'), 2500); }
+
+        function salirDelJuego() {
+            if (canalPartida) supabase.removeChannel(canalPartida);
+            if (canalChat) supabase.removeChannel(canalChat);
+            juegoConectado = false; misCartones = []; cantadosSet.clear();
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('loadingScreen').style.display = 'block';
+            document.getElementById('loadingScreen').innerHTML = '<div class="icon">👋</div><h2>¡Hasta luego!</h2>';
+            document.getElementById('chatFlotante').style.display = 'none';
+        }
+
+        function lanzarConfeti() {
+            const colores = ['#FF6B6B','#4ECDC4','#FFD700','#FF8C00','#FF1493','#10b981'];
+            for (let i = 0; i < 60; i++) {
+                setTimeout(() => {
+                    const c = document.createElement('div'); c.className = 'confetti-piece';
+                    c.style.left = Math.random()*100+'%';
+                    c.style.backgroundColor = colores[Math.floor(Math.random()*colores.length)];
+                    c.style.width = Math.random()*10+5+'px'; c.style.height = Math.random()*10+5+'px';
+                    c.style.animationDuration = Math.random()*2+2+'s';
+                    document.body.appendChild(c); setTimeout(() => c.remove(), 3000);
+                }, i*15);
+            }
+        }
+
+        function mostrarToast(m, t) {
+            const toast = document.getElementById('toast'); toast.textContent = m;
+            toast.className = 'toast ' + (t||'');
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
-            if (SALA_ID && JUGADOR_NOMBRE) { miNombre = JUGADOR_NOMBRE; document.getElementById('jugadorNombre').textContent = JUGADOR_NOMBRE; cargarCartones(); }
-            else if (SALA_ID) { const ng = localStorage.getItem('bingo_jugador_nombre'), sg = localStorage.getItem('bingo_jugador_sala'); if (ng && sg === SALA_ID) { miNombre = ng; document.getElementById('jugadorNombre').textContent = ng; cargarCartones(); } else { document.getElementById('loadingScreen').innerHTML = '<div class="icon">⚠️</div><h2>Link inválido</h2>'; } }
+            if (SALA_ID && JUGADOR_NOMBRE) { miNombre = JUGADOR_NOMBRE; cargarCartones(); }
+            else if (SALA_ID) {
+                const ng = localStorage.getItem('bingo_jugador_nombre');
+                if (ng) { miNombre = ng; cargarCartones(); }
+                else { document.getElementById('loadingScreen').innerHTML = '<div class="icon">⚠️</div><h2>Link inválido</h2>'; }
+            }
         });
-        document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', function(e) { if (e.target === this && !['modalEliminado','modalPartidaTerminada'].includes(this.id)) this.classList.remove('active'); }));
     </script>
 </body>
 </html>
