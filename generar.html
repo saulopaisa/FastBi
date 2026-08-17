@@ -81,8 +81,6 @@
 
         <!-- ========== VISTA 2: JUGADORES ========== -->
         <div class="section-panel" id="sectionJugadores">
-            
-            <!-- Buscador de jugadores -->
             <div class="panel-card">
                 <h3>👥 JUGADORES</h3>
                 <input type="text" id="buscarJugador" placeholder="🔍 Buscar jugador..." oninput="buscarJugadores()" style="width:100%;padding:10px;border:2px solid #334155;border-radius:8px;background:#1e293b;color:white;font-size:0.9rem;outline:none;margin-bottom:8px;">
@@ -107,7 +105,7 @@
                     <p>📁 Sala activa: <strong style="color:#ffca28;" id="configSala">-</strong></p>
                     <p>📋 Total cartones: <strong style="color:#ffca28;" id="configTotal">0</strong></p>
                     <p>👤 Cartones asignados: <strong style="color:#ffca28;" id="configAsignados">0</strong></p>
-                    <p>💾 Guardado automático en Firebase</p>
+                    <p>💾 Guardado automático en Supabase</p>
                     <p>🔢 Máx ganadores por número: <strong style="color:#ffca28;">3</strong></p>
                 </div>
             </div>
@@ -133,27 +131,19 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
-            authDomain: "bingofast.firebaseapp.com",
-            databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
-            projectId: "bingofast",
-            storageBucket: "bingofast.firebasestorage.app",
-            messagingSenderId: "473863283329",
-            appId: "1:473863283329:web:2c4bf96de167d105fa6380"
-        };
-        firebase.initializeApp(firebaseConfig);
-        var db = firebase.database();
+        // ============ CONFIGURACIÓN SUPABASE ============
+        const SUPABASE_URL = 'https://yoakkyizazpyboxqkuhg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWtreWl6YXpweWJveHFrdWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MDMyNjUsImV4cCI6MjEwMjM3OTI2NX0.a99WU6PvuwwhBpf-PCodZ-gfiFM-dxEvq245_SB7i3U';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         var SALA_ID = localStorage.getItem('salaActiva') || 'bingo-default';
         document.getElementById('salaDisplay').textContent = '📁 ' + SALA_ID;
         document.getElementById('configSala').textContent = SALA_ID;
-        console.log('🔥 Firebase listo - Sala:', SALA_ID);
+        console.log('🔥 Supabase listo - Sala:', SALA_ID);
     </script>
     
     <script src="generar.js"></script>
