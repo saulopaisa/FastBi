@@ -9,7 +9,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #0b0f1a; color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
         .login-card { background: #16213e; padding: 40px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; border: 1px solid #2d3436; }
-        .login-card h1 { color: #ff4d4d; margin-bottom: 10px; }
+        .login-card h1 { color: #ff4d4d; margin-bottom: 10px; font-size: 1.8em; }
         .login-card p { color: #94a3b8; margin-bottom: 25px; font-size: 0.9em; }
         .input-group { margin-bottom: 15px; text-align: left; }
         .input-group label { display: block; font-size: 0.8em; color: #94a3b8; margin-bottom: 5px; }
@@ -18,6 +18,7 @@
         .btn-login { width: 100%; padding: 14px; background: linear-gradient(135deg, #ff6b6b, #ee5a24); color: white; border: none; border-radius: 12px; font-size: 1em; font-weight: bold; cursor: pointer; transition: all 0.2s; }
         .btn-login:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(255,107,107,0.4); }
         .error-msg { background: #ef4444; color: white; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.85em; display: none; }
+        .info-sesion { color: #64748b; font-size: 0.7em; margin-top: 15px; }
         .logo { font-size: 4em; margin-bottom: 15px; }
     </style>
 </head>
@@ -40,12 +41,24 @@
         <button class="btn-login" onclick="login()">🔐 INICIAR SESIÓN</button>
         
         <div class="error-msg" id="errorMsg"></div>
+        <p class="info-sesion">⏰ La sesión expira después de 24 horas</p>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://yoakkyizazpyboxqkuhg.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWtreWl6YXpweWJveHFrdWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MDMyNjUsImV4cCI6MjEwMjM3OTI2NX0.a99WU6PvuwwhBpf-PCodZ-gfiFM-dxEvq245_SB7i3U';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Verificar si ya hay sesión activa
+        async function verificarSesionExistente() {
+            const expiracion = localStorage.getItem('bingo_auth_expiracion');
+            if (expiracion && Date.now() < parseInt(expiracion)) {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session) {
+                    window.location.href = 'ruleta.html';
+                }
+            }
+        }
 
         async function login() {
             const email = document.getElementById('emailInput').value.trim();
@@ -71,18 +84,21 @@
                 return;
             }
             
-            // Guardar sesión
+            // Guardar sesión con expiración de 24 horas
+            const expiracion = Date.now() + (24 * 60 * 60 * 1000);
             localStorage.setItem('bingo_auth_token', data.session.access_token);
             localStorage.setItem('bingo_auth_email', email);
+            localStorage.setItem('bingo_auth_expiracion', expiracion.toString());
             
-            // Redirigir a la ruleta
             window.location.href = 'ruleta.html';
         }
         
-        // Enter para login
         document.getElementById('passwordInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') login();
         });
+        
+        // Verificar sesión existente al cargar
+        verificarSesionExistente();
     </script>
 </body>
 </html>
