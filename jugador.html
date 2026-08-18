@@ -188,23 +188,24 @@
 
         let miNombre = JUGADOR_NOMBRE, misCartones = [], cantadosSet = new Set(), patronActual = [];
         let juegoConectado = false, vistaActual = 'vertical', chatDesbloqueado = false, erroresBingo = 0, eliminado = false;
+        
+        var audioContext = null;
 
         // ============ FUNCIONES DE AUDIO ============
         function reproducirSonidoMensaje() {
             try {
-                var ctx = new (window.AudioContext || window.webkitAudioContext)();
-                var oscillator = ctx.createOscillator();
-                var gainNode = ctx.createGain();
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                var oscillator = audioContext.createOscillator();
+                var gainNode = audioContext.createGain();
                 oscillator.connect(gainNode);
-                gainNode.connect(ctx.destination);
+                gainNode.connect(audioContext.destination);
                 oscillator.frequency.value = 880;
                 oscillator.type = 'sine';
-                gainNode.gain.value = 0.4;
+                gainNode.gain.value = 0.3;
                 oscillator.start();
-                setTimeout(function() { 
-                    oscillator.stop(); 
-                    ctx.close(); 
-                }, 300);
+                setTimeout(function() { oscillator.stop(); }, 200);
             } catch(e) {}
         }
 
@@ -215,10 +216,16 @@
                 var msg = new SpeechSynthesisUtterance(letra + ' ' + numero);
                 msg.lang = 'es-ES';
                 msg.rate = 0.9;
-                msg.pitch = 1;
                 window.speechSynthesis.speak(msg);
             }
         }
+
+        // Inicializar audio en el primer click
+        document.addEventListener('click', function() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }, { once: true });
 
         function cambiarVista(tipo) {
             vistaActual = tipo;
@@ -283,6 +290,17 @@
         }
 
         function toggleCelda(cell) { cell.classList.toggle('marked'); }
+
+        function aplicarPatronACartones() {
+            document.querySelectorAll('.carton-cell').forEach(function(cell) {
+                var i = parseInt(cell.dataset.indice);
+                if (patronActual[i] && !cell.classList.contains('free')) {
+                    cell.classList.add('patron-cell');
+                } else {
+                    cell.classList.remove('patron-cell');
+                }
+            });
+        }
 
         function marcarNumeroEnCartones(numero, animar) {
             document.querySelectorAll('.carton-cell').forEach(function(cell) {
@@ -373,9 +391,6 @@
                         var md = document.getElementById('adminMensaje');
                         md.textContent = '📢 ' + msg.mensaje;
                         md.style.display = 'block';
-                        md.style.animation = 'none';
-                        md.offsetHeight;
-                        md.style.animation = 'slideIn 0.3s';
                         setTimeout(function() { md.style.display = 'none'; }, 8000);
                     }
                     
