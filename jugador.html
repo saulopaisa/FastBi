@@ -190,11 +190,7 @@
 
         function inicializarAudio() {
             if (!audioContext) {
-                try {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    audioContext.resume();
-                    audioInicializado = true;
-                } catch(e) {}
+                try { audioContext = new (window.AudioContext || window.webkitAudioContext)(); audioContext.resume(); audioInicializado = true; } catch(e) {}
             }
         }
 
@@ -203,13 +199,9 @@
             try {
                 var oscillator = audioContext.createOscillator();
                 var gainNode = audioContext.createGain();
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                oscillator.frequency.value = 880;
-                oscillator.type = 'sine';
-                gainNode.gain.value = 0.3;
-                oscillator.start();
-                setTimeout(function() { oscillator.stop(); }, 200);
+                oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
+                oscillator.frequency.value = 880; oscillator.type = 'sine'; gainNode.gain.value = 0.3;
+                oscillator.start(); setTimeout(function() { oscillator.stop(); }, 200);
             } catch(e) {}
         }
 
@@ -218,8 +210,7 @@
                 window.speechSynthesis.cancel();
                 var letra = obtenerLetra(numero);
                 var msg = new SpeechSynthesisUtterance(letra + ' ' + numero);
-                msg.lang = 'es-ES';
-                msg.rate = 0.9;
+                msg.lang = 'es-ES'; msg.rate = 0.9;
                 window.speechSynthesis.speak(msg);
             }
         }
@@ -293,43 +284,28 @@
         function aplicarPatronACartones() {
             document.querySelectorAll('.carton-cell').forEach(function(cell) {
                 var i = parseInt(cell.dataset.indice);
-                if (patronActual[i] && !cell.classList.contains('free')) {
-                    cell.classList.add('patron-cell');
-                } else {
-                    cell.classList.remove('patron-cell');
-                }
+                if (patronActual[i] && !cell.classList.contains('free')) cell.classList.add('patron-cell');
+                else cell.classList.remove('patron-cell');
             });
         }
 
         function limpiarCartonCompleto() {
             document.querySelectorAll('.carton-cell.marked').forEach(function(cell) {
-                cell.classList.remove('marked');
-                cell.classList.remove('patron-cell');
+                cell.classList.remove('marked'); cell.classList.remove('patron-cell');
             });
             document.querySelectorAll('.carton-cell.free').forEach(function(cell) {
                 cell.classList.add('marked');
             });
-            erroresBingo = 0;
-            eliminado = false;
+            erroresBingo = 0; eliminado = false;
             actualizarIndicadorErrores();
         }
 
         function actualizarIndicadorErrores() {
             const indicador = document.getElementById('erroresIndicator');
             const btnBingo = document.getElementById('btnCantarBingo');
-            if (eliminado) {
-                indicador.textContent = '❌ ELIMINADO';
-                indicador.className = 'errores-indicator eliminado';
-                btnBingo.disabled = true;
-            } else if (erroresBingo === 0) {
-                indicador.textContent = '✅ 0/2 errores';
-                indicador.className = 'errores-indicator clean';
-                btnBingo.disabled = false;
-            } else if (erroresBingo === 1) {
-                indicador.textContent = '⚠️ 1/2 errores';
-                indicador.className = 'errores-indicator warning';
-                btnBingo.disabled = false;
-            }
+            if (eliminado) { indicador.textContent = '❌ ELIMINADO'; indicador.className = 'errores-indicator eliminado'; btnBingo.disabled = true; }
+            else if (erroresBingo === 0) { indicador.textContent = '✅ 0/2 errores'; indicador.className = 'errores-indicator clean'; btnBingo.disabled = false; }
+            else { indicador.textContent = '⚠️ 1/2 errores'; indicador.className = 'errores-indicator warning'; btnBingo.disabled = false; }
         }
 
         function escucharPartida() {
@@ -340,9 +316,7 @@
                     if (data.cantados && Array.isArray(data.cantados)) {
                         data.cantados.forEach(function(num) { cantadosSet.add(num); });
                         document.getElementById('cantadosCount').textContent = data.cantados.length;
-                        if (data.cantados.length > 0) {
-                            actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
-                        }
+                        if (data.cantados.length > 0) actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
                         actualizarUltimasBolasScroll(data.cantados);
                     }
                     if (data.patron && Array.isArray(data.patron)) { patronActual = data.patron; aplicarPatronACartones(); }
@@ -353,9 +327,7 @@
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'partidas', filter: 'sala_id=eq.' + SALA_ID }, function(payload) {
                     var data = payload.new;
                     if (!data) return;
-                    
                     if (data.cantados && Array.isArray(data.cantados)) {
-                        // DETECTAR REINICIO
                         if (data.cantados.length === 0 && cantadosSet.size > 0) {
                             cantadosSet.clear();
                             limpiarCartonCompleto();
@@ -365,34 +337,29 @@
                             mostrarToast('🔄 Partida reiniciada', 'warning');
                             return;
                         }
-                        
                         data.cantados.forEach(function(num) {
-                            if (!cantadosSet.has(num)) {
-                                cantadosSet.add(num);
-                                reproducirAudioNumero(num);
-                            }
+                            if (!cantadosSet.has(num)) { cantadosSet.add(num); reproducirAudioNumero(num); }
                         });
                         document.getElementById('cantadosCount').textContent = data.cantados.length;
-                        if (data.cantados.length > 0) {
-                            actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
-                        }
+                        if (data.cantados.length > 0) actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
                         actualizarUltimasBolasScroll(data.cantados);
                     }
                 })
-                .subscribe(function(status) {
-                    console.log('📡 Partida status:', status);
-                });
+                .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'partidas', filter: 'sala_id=eq.' + SALA_ID }, function() {
+                    cantadosSet.clear();
+                    limpiarCartonCompleto();
+                    document.getElementById('cantadosCount').textContent = '0';
+                    actualizarUltimaBolaGrande(0);
+                    actualizarUltimasBolasScroll([]);
+                    mostrarToast('🔄 Partida reiniciada', 'warning');
+                })
+                .subscribe(function(status) { console.log('📡 Partida status:', status); });
         }
 
         function actualizarUltimaBolaGrande(numero) {
             const b = document.getElementById('ultimaBolaGrande');
-            if (!numero || numero === 0) {
-                b.querySelector('.letra').textContent = '-';
-                b.querySelector('.numero').textContent = '--';
-            } else {
-                b.querySelector('.letra').textContent = obtenerLetra(numero);
-                b.querySelector('.numero').textContent = numero;
-            }
+            if (!numero || numero === 0) { b.querySelector('.letra').textContent = '-'; b.querySelector('.numero').textContent = '--'; }
+            else { b.querySelector('.letra').textContent = obtenerLetra(numero); b.querySelector('.numero').textContent = numero; }
         }
 
         function actualizarUltimasBolasScroll(cantados) {
@@ -412,23 +379,19 @@
                 result.data.forEach(function(msg) { agregarMensajeAlChat(contenedor, msg); });
                 contenedor.scrollTop = contenedor.scrollHeight;
             });
-
             supabaseClient.channel('chat-jugador-' + SALA_ID + '-' + Date.now())
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat', filter: 'sala_id=eq.' + SALA_ID }, function(payload) {
                     var msg = payload.new;
                     var contenedor = document.getElementById('chatMensajes');
                     if (!contenedor) return;
                     var existentes = contenedor.querySelectorAll('.msg-item');
-                    for (var i = 0; i < existentes.length; i++) {
-                        if (existentes[i].dataset.id === String(msg.id)) return;
-                    }
+                    for (var i = 0; i < existentes.length; i++) { if (existentes[i].dataset.id === String(msg.id)) return; }
                     agregarMensajeAlChat(contenedor, msg);
                     contenedor.scrollTop = contenedor.scrollHeight;
                     if (msg.admin && !msg.sistema) {
                         reproducirSonidoMensaje();
                         var md = document.getElementById('adminMensaje');
-                        md.textContent = '📢 ' + msg.mensaje;
-                        md.style.display = 'block';
+                        md.textContent = '📢 ' + msg.mensaje; md.style.display = 'block';
                         setTimeout(function() { md.style.display = 'none'; }, 8000);
                     }
                     var panel = document.getElementById('chatPanel');
@@ -438,22 +401,17 @@
                         badge.textContent = parseInt(badge.textContent || '0') + 1;
                     }
                 })
-                .subscribe(function(status) {
-                    console.log('📡 Chat status:', status);
-                });
+                .subscribe(function(status) { console.log('📡 Chat status:', status); });
         }
 
         function agregarMensajeAlChat(contenedor, msg) {
-            var div = document.createElement('div');
-            div.dataset.id = String(msg.id);
+            var div = document.createElement('div'); div.dataset.id = String(msg.id);
             if (msg.sistema) { div.className = 'msg-item msg-sistema'; }
             else if (msg.admin) { div.className = 'msg-item msg-admin'; }
             else { div.className = 'msg-item msg-jugador'; }
             div.textContent = msg.mensaje;
-            var ts = document.createElement('div');
-            ts.className = 'msg-timestamp';
-            ts.textContent = new Date(msg.timestamp).toLocaleTimeString();
-            div.appendChild(ts);
+            var ts = document.createElement('div'); ts.className = 'msg-timestamp';
+            ts.textContent = new Date(msg.timestamp).toLocaleTimeString(); div.appendChild(ts);
             contenedor.appendChild(div);
         }
 
@@ -465,9 +423,8 @@
             });
         }
 
-        function toggleChat() { 
-            const p = document.getElementById('chatPanel'); 
-            p.classList.toggle('activo'); 
+        function toggleChat() {
+            const p = document.getElementById('chatPanel'); p.classList.toggle('activo');
             if (p.classList.contains('activo')) {
                 document.getElementById('chatBadge').style.display = 'none';
                 document.getElementById('chatBadge').textContent = '0';
@@ -526,8 +483,7 @@
             for (let i = 0; i < 60; i++) {
                 setTimeout(function() {
                     const c = document.createElement('div'); c.className = 'confetti-piece';
-                    c.style.left = Math.random()*100+'%';
-                    c.style.backgroundColor = colores[Math.floor(Math.random()*colores.length)];
+                    c.style.left = Math.random()*100+'%'; c.style.backgroundColor = colores[Math.floor(Math.random()*colores.length)];
                     c.style.width = Math.random()*10+5+'px'; c.style.height = Math.random()*10+5+'px';
                     c.style.animationDuration = Math.random()*2+2+'s';
                     document.body.appendChild(c); setTimeout(function() { c.remove(); }, 3000);
