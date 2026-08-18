@@ -169,7 +169,6 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // ============ CONFIGURACIÓN SUPABASE ============
         const SUPABASE_URL = 'https://yoakkyizazpyboxqkuhg.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWtreWl6YXpweWJveHFrdWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MDMyNjUsImV4cCI6MjEwMjM3OTI2NX0.a99WU6PvuwwhBpf-PCodZ-gfiFM-dxEvq245_SB7i3U';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -186,11 +185,9 @@
 
         let miNombre = JUGADOR_NOMBRE, misCartones = [], cantadosSet = new Set(), patronActual = [];
         let juegoConectado = false, vistaActual = 'vertical', chatDesbloqueado = false, erroresBingo = 0, eliminado = false;
-        
         var audioContext = null;
         var audioInicializado = false;
 
-        // ============ FUNCIONES DE AUDIO ============
         function inicializarAudio() {
             if (!audioContext) {
                 try {
@@ -291,10 +288,7 @@
             if (patronActual.length > 0) aplicarPatronACartones();
         }
 
-        // ============ MARCADO MANUAL - NO AUTO-MARCA ============
-        function toggleCelda(cell) { 
-            cell.classList.toggle('marked'); 
-        }
+        function toggleCelda(cell) { cell.classList.toggle('marked'); }
 
         function aplicarPatronACartones() {
             document.querySelectorAll('.carton-cell').forEach(function(cell) {
@@ -307,32 +301,71 @@
             });
         }
 
-        // Esta función ya NO marca automáticamente - solo actualiza el Set
-        function registrarNumeroCantado(numero) {
-            cantadosSet.add(numero);
+        function limpiarCartonCompleto() {
+            document.querySelectorAll('.carton-cell.marked').forEach(function(cell) {
+                cell.classList.remove('marked');
+                cell.classList.remove('patron-cell');
+            });
+            document.querySelectorAll('.carton-cell.free').forEach(function(cell) {
+                cell.classList.add('marked');
+            });
+            erroresBingo = 0;
+            eliminado = false;
+            actualizarIndicadorErrores();
+        }
+
+        function actualizarIndicadorErrores() {
+            const indicador = document.getElementById('erroresIndicator');
+            const btnBingo = document.getElementById('btnCantarBingo');
+            if (eliminado) {
+                indicador.textContent = '❌ ELIMINADO';
+                indicador.className = 'errores-indicator eliminado';
+                btnBingo.disabled = true;
+            } else if (erroresBingo === 0) {
+                indicador.textContent = '✅ 0/2 errores';
+                indicador.className = 'errores-indicator clean';
+                btnBingo.disabled = false;
+            } else if (erroresBingo === 1) {
+                indicador.textContent = '⚠️ 1/2 errores';
+                indicador.className = 'errores-indicator warning';
+                btnBingo.disabled = false;
+            }
         }
 
         function escucharPartida() {
-            // Cargar estado inicial (sin marcar celdas)
             supabaseClient.from('partidas').select('*').eq('sala_id', SALA_ID).then(function(result) {
                 var data = result.data && result.data.length > 0 ? result.data[0] : null;
                 if (data) {
+                    cantadosSet.clear();
                     if (data.cantados && Array.isArray(data.cantados)) {
                         data.cantados.forEach(function(num) { cantadosSet.add(num); });
                         document.getElementById('cantadosCount').textContent = data.cantados.length;
-                        if (data.cantados.length > 0) actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
+                        if (data.cantados.length > 0) {
+                            actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
+                        }
                         actualizarUltimasBolasScroll(data.cantados);
                     }
                     if (data.patron && Array.isArray(data.patron)) { patronActual = data.patron; aplicarPatronACartones(); }
-                    if (data.jugadores_activos) document.getElementById('jugadoresCount').textContent = data.jugadores_activos.length;
                 }
             });
 
-            // Escuchar cambios en tiempo real (SOLO actualiza la bola y el Set, NO marca celdas)
             supabaseClient.channel('partida-realtime-' + SALA_ID + '-' + Date.now())
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'partidas', filter: 'sala_id=eq.' + SALA_ID }, function(payload) {
                     var data = payload.new;
-                    if (data && data.cantados && Array.isArray(data.cantados)) {
+                    if (!data) return;
+                    
+                    if (data.cantados && Array.isArray(data.cantados)) {
+                        // DETECTAR REINICIO
+                        if (data.cantados.length === 0 && cantadosSet.size > 0) {
+                            cantadosSet.clear();
+                            limpiarCartonCompleto();
+                            document.getElementById('cantadosCount').textContent = '0';
+                            actualizarUltimaBolaGrande(0);
+                            actualizarUltimasBolasScroll([]);
+                            mostrarToast('🔄 Partida reiniciada', 'warning');
+                            return;
+                        }
+                        
                         data.cantados.forEach(function(num) {
                             if (!cantadosSet.has(num)) {
                                 cantadosSet.add(num);
@@ -340,7 +373,9 @@
                             }
                         });
                         document.getElementById('cantadosCount').textContent = data.cantados.length;
-                        if (data.cantados.length > 0) actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
+                        if (data.cantados.length > 0) {
+                            actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
+                        }
                         actualizarUltimasBolasScroll(data.cantados);
                     }
                 })
@@ -351,8 +386,13 @@
 
         function actualizarUltimaBolaGrande(numero) {
             const b = document.getElementById('ultimaBolaGrande');
-            b.querySelector('.letra').textContent = obtenerLetra(numero);
-            b.querySelector('.numero').textContent = numero;
+            if (!numero || numero === 0) {
+                b.querySelector('.letra').textContent = '-';
+                b.querySelector('.numero').textContent = '--';
+            } else {
+                b.querySelector('.letra').textContent = obtenerLetra(numero);
+                b.querySelector('.numero').textContent = numero;
+            }
         }
 
         function actualizarUltimasBolasScroll(cantados) {
@@ -378,15 +418,12 @@
                     var msg = payload.new;
                     var contenedor = document.getElementById('chatMensajes');
                     if (!contenedor) return;
-                    
                     var existentes = contenedor.querySelectorAll('.msg-item');
                     for (var i = 0; i < existentes.length; i++) {
                         if (existentes[i].dataset.id === String(msg.id)) return;
                     }
-                    
                     agregarMensajeAlChat(contenedor, msg);
                     contenedor.scrollTop = contenedor.scrollHeight;
-                    
                     if (msg.admin && !msg.sistema) {
                         reproducirSonidoMensaje();
                         var md = document.getElementById('adminMensaje');
@@ -394,7 +431,6 @@
                         md.style.display = 'block';
                         setTimeout(function() { md.style.display = 'none'; }, 8000);
                     }
-                    
                     var panel = document.getElementById('chatPanel');
                     if (!panel.classList.contains('activo')) {
                         var badge = document.getElementById('chatBadge');
