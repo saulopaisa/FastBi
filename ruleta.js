@@ -1,6 +1,6 @@
 // ruleta.js - Panel de Control Supabase
 
-var SALA_ID = localStorage.getItem('salaActiva') || 'bingo-default';
+var SALA_ID = localStorage.getItem('salaActiva') || 'bingodefault';
 
 window.cantados = [];
 window.patronBingo = Array(25).fill(false);
