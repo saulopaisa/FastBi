@@ -1,10 +1,7 @@
-// generar.js - Supabase version
+// generar.js - Lógica del generador (Supabase)
 
-const SUPABASE_URL = 'https://yoakkyizazpyboxqkuhg.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWtreWl6YXpweWJveHFrdWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MDMyNjUsImV4cCI6MjEwMjM3OTI2NX0.a99WU6PvuwwhBpf-PCodZ-gfiFM-dxEvq245_SB7i3U';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// NO declarar SUPABASE_URL ni supabaseClient aquí - ya están en generar.html
 
-var SALA_ID = localStorage.getItem('salaActiva') || 'bingo-default';
 var cartonesGenerados = [];
 var cartonesSeleccionados = [];
 var MAX_GANADORES_POR_NUMERO = 3;
@@ -31,20 +28,6 @@ function generarCarton() {
     return carton;
 }
 
-function cartonExiste(carton) {
-    return cartonesGenerados.some(function(c) {
-        var letras = ['B','I','N','G','O'];
-        return letras.every(function(l) {
-            return c.carton[l].every(function(num, i) { return num === carton[l][i]; });
-        });
-    });
-}
-
-function contarCartonesSimilares(carton) {
-    var ref = carton.B.join(',');
-    return cartonesGenerados.filter(function(c) { return c.carton.B.join(',') === ref; }).length;
-}
-
 // ============ GENERAR MÚLTIPLES ============
 function generarCartones() {
     var cantidad = parseInt(document.getElementById('cantidadGenerar').value) || 10;
@@ -55,9 +38,6 @@ function generarCartones() {
     
     for (var i = 0; i < cantidad && intentos < maxIntentos; i++) {
         var nuevoCarton = generarCarton();
-        if (cartonExiste(nuevoCarton)) { i--; intentos++; continue; }
-        var similares = contarCartonesSimilares(nuevoCarton);
-        if (similares >= MAX_GANADORES_POR_NUMERO) { i--; intentos++; continue; }
         cartonesGenerados.push({
             id: 'carton_' + Date.now() + '_' + (numeroInicial + generados),
             numero: numeroInicial + generados + 1,
@@ -65,7 +45,7 @@ function generarCartones() {
             asignadoA: null,
             estado: 'disponible'
         });
-        generados++; intentos = 0;
+        generados++;
     }
     
     cartonesGenerados.forEach(function(c, i) { c.numero = i + 1; });
@@ -73,9 +53,7 @@ function generarCartones() {
     filtrarCartones('todos');
     actualizarContadores();
     guardarEnSupabase();
-    
-    if (generados < cantidad) { mostrarToast('⚠️ Solo ' + generados + ' de ' + cantidad, 'error'); }
-    else { mostrarToast('✅ ' + generados + ' cartones agregados', 'success'); }
+    mostrarToast('✅ ' + generados + ' cartones generados', 'success');
 }
 
 // ============ MOSTRAR CARTONES ============
@@ -222,10 +200,8 @@ function toggleSeleccionCarton(index, checkbox) {
 function actualizarInfoSeleccionados() {
     var info = document.getElementById('seleccionadosInfo');
     var countEl = document.getElementById('countSeleccionados');
-    if (cartonesSeleccionados.length > 0) {
-        info.style.display = 'block';
-        countEl.textContent = cartonesSeleccionados.length;
-    } else { info.style.display = 'none'; }
+    if (cartonesSeleccionados.length > 0) { info.style.display = 'block'; countEl.textContent = cartonesSeleccionados.length; }
+    else { info.style.display = 'none'; }
 }
 
 function asignarSeleccionados() {
@@ -282,17 +258,8 @@ function copiarLinkJugador(nombre) {
 function eliminarJugador(nombre) {
     var cartonesJugador = cartonesGenerados.filter(c => c.asignadoA === nombre);
     if (cartonesJugador.length === 0) return;
-    if (!confirm('¿Eliminar a ' + nombre + ' y liberar ' + cartonesJugador.length + ' cartones?')) return;
+    if (!confirm('¿Eliminar a ' + nombre + '?')) return;
     cartonesJugador.forEach(function(c) { c.asignadoA = null; c.estado = 'disponible'; });
-    if (filtroActual !== 'todos') { filtrarCartones(filtroActual); } else { mostrarCartones(); }
-    actualizarContadores(); guardarEnSupabase();
-}
-
-function quitarCartonJugador(index) {
-    var carton = cartonesGenerados[index];
-    if (!carton.asignadoA) return;
-    if (!confirm('¿Quitar cartón #' + carton.numero + '?')) return;
-    carton.asignadoA = null; carton.estado = 'disponible';
     if (filtroActual !== 'todos') { filtrarCartones(filtroActual); } else { mostrarCartones(); }
     actualizarContadores(); guardarEnSupabase();
 }
@@ -300,7 +267,7 @@ function quitarCartonJugador(index) {
 function renombrarJugador(nombreViejo) {
     var cartonesJugador = cartonesGenerados.filter(c => c.asignadoA === nombreViejo);
     if (cartonesJugador.length === 0) return;
-    var nombreNuevo = prompt('Renombrar "' + nombreViejo + '" a:', nombreViejo);
+    var nombreNuevo = prompt('Renombrar:', nombreViejo);
     if (!nombreNuevo || nombreNuevo === nombreViejo) return;
     cartonesJugador.forEach(function(c) { c.asignadoA = nombreNuevo; });
     if (filtroActual !== 'todos') { filtrarCartones(filtroActual); } else { mostrarCartones(); }
@@ -321,39 +288,27 @@ function actualizarContadores() {
 // ============ SUPABASE ============
 async function guardarEnSupabase() {
     try {
-        // Primero borrar cartones existentes de esta sala
-        await supabase.from('cartones').delete().eq('sala_id', SALA_ID);
-        // Insertar los nuevos
+        await supabaseClient.from('cartones').delete().eq('sala_id', SALA_ID);
         if (cartonesGenerados.length > 0) {
-            const datos = cartonesGenerados.map(function(c) {
-                return {
-                    sala_id: SALA_ID,
-                    numero: c.numero,
-                    carton: c.carton,
-                    asignado_a: c.asignadoA || null,
-                    estado: c.asignadoA ? 'asignado' : 'disponible'
-                };
+            var datos = cartonesGenerados.map(function(c) {
+                return { sala_id: SALA_ID, numero: c.numero, carton: c.carton, asignado_a: c.asignadoA || null, estado: c.asignadoA ? 'asignado' : 'disponible' };
             });
-            await supabase.from('cartones').insert(datos);
+            await supabaseClient.from('cartones').insert(datos);
         }
-        console.log('✅ Cartones guardados en Supabase');
-    } catch (error) {
-        console.error('Error:', error);
-        mostrarToast('❌ Error al guardar', 'error');
-    }
+        console.log('✅ Cartones guardados');
+    } catch (e) { console.error('Error:', e); }
 }
 
 async function cargarDesdeSupabase() {
     try {
-        const { data, error } = await supabase.from('cartones').select('*').eq('sala_id', SALA_ID).order('numero');
-        if (error) throw error;
-        if (data && data.length > 0) {
-            cartonesGenerados = data.map(function(c) {
+        var result = await supabaseClient.from('cartones').select('*').eq('sala_id', SALA_ID).order('numero');
+        if (result.data && result.data.length > 0) {
+            cartonesGenerados = result.data.map(function(c) {
                 return { id: String(c.id), numero: c.numero, carton: c.carton, asignadoA: c.asignado_a, estado: c.estado };
             });
             mostrarCartones(); actualizarContadores();
         }
-    } catch (error) { console.error('Error:', error); }
+    } catch (e) { console.error('Error:', e); }
 }
 
 // ============ EXPORTAR/IMPORTAR ============
@@ -388,6 +343,22 @@ function importarCartonesJSON() {
     input.click();
 }
 
+// ============ LINKS ============
+function copiarLinkVerTodo() {
+    var link = window.location.origin + window.location.pathname.replace(/[^\/]*$/, '') + 'ver_todo.html?sala=' + encodeURIComponent(SALA_ID);
+    navigator.clipboard.writeText(link).then(function() { mostrarToast('✅ Link copiado', 'success'); });
+}
+
+function copiarLinkRuleta() {
+    var link = window.location.origin + window.location.pathname.replace(/[^\/]*$/, '') + 'ruleta.html?sala=' + encodeURIComponent(SALA_ID);
+    navigator.clipboard.writeText(link).then(function() { mostrarToast('✅ Link copiado', 'success'); });
+}
+
+function imprimirCartones() {
+    if (cartonesGenerados.length === 0) { mostrarToast('⚠️ No hay cartones', 'error'); return; }
+    setTimeout(function() { window.print(); }, 500);
+}
+
 // ============ NAVEGACIÓN ============
 function navegarA(vista) {
     document.querySelectorAll('.section-panel').forEach(s => s.classList.remove('activo'));
@@ -407,11 +378,3 @@ function mostrarToast(mensaje, tipo) {
     setTimeout(function() { toast.classList.add('show'); }, 10);
     setTimeout(function() { toast.classList.remove('show'); }, 2500);
 }
-
-// ============ INICIALIZAR ============
-document.addEventListener('DOMContentLoaded', function() {
-    cargarDesdeSupabase();
-    document.getElementById('cantidadGenerar').addEventListener('keypress', function(e) { if (e.key === 'Enter') generarCartones(); });
-    document.getElementById('nombreAsignarSeleccionados').addEventListener('keypress', function(e) { if (e.key === 'Enter') asignarSeleccionados(); });
-    document.getElementById('buscarJugador').addEventListener('keypress', function(e) { buscarJugadores(); });
-});
