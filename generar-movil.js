@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🎫 Generador listo - Sala:', SALA_ID);
     
     // Cargar cartones desde Firebase
-    cargarDesdeFirebase();
+    cargarDesdeSupabase();
     
     // Enter en cantidad genera
     var cantidadInput = document.getElementById('cantidadGenerar');
