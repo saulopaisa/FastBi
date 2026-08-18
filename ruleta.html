@@ -17,6 +17,7 @@
             <button class="btn-header-icon" onclick="toggleChat()">💬</button>
             <button class="btn-header-icon" onclick="location.href='ver_todo.html'">👁️</button>
             <button class="btn-header-icon" onclick="location.href='generar.html'">📝</button>
+            <button class="btn-header-icon" onclick="logout()" title="Cerrar sesión">🚪</button>
         </div>
     </div>
 
@@ -251,6 +252,30 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <script>
+        // ============ CONFIGURACIÓN SUPABASE ============
+        const SUPABASE_URL = 'https://yoakkyizazpyboxqkuhg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWtreWl6YXpweWJveHFrdWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MDMyNjUsImV4cCI6MjEwMjM3OTI2NX0.a99WU6PvuwwhBpf-PCodZ-gfiFM-dxEvq245_SB7i3U';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // ============ VERIFICAR AUTENTICACIÓN ============
+        async function verificarAutenticacion() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
+        
+        // ============ LOGOUT ============
+        async function logout() {
+            if (confirm('¿Cerrar sesión?')) {
+                await supabaseClient.auth.signOut();
+                window.location.href = 'login.html';
+            }
+        }
+        
+        // ============ SALA ============
         (function() {
             var params = new URLSearchParams(window.location.search);
             var salaParam = params.get('sala');
@@ -259,15 +284,8 @@
                 window.history.replaceState({}, document.title, location.pathname);
             }
         })();
-    </script>
-    
-    <script>
-        // ============ CONFIGURACIÓN SUPABASE ============
-        const SUPABASE_URL = 'https://yoakkyizazpyboxqkuhg.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWtreWl6YXpweWJveHFrdWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MDMyNjUsImV4cCI6MjEwMjM3OTI2NX0.a99WU6PvuwwhBpf-PCodZ-gfiFM-dxEvq245_SB7i3U';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        // Sala por defecto SIN guiones
+        // Sala por defecto
         var SALA_ID = localStorage.getItem('salaActiva') || 'bingodefault';
         if (!SALA_ID || !String(SALA_ID).startsWith('bingo')) {
             var ahora = new Date();
@@ -277,6 +295,9 @@
         }
         document.getElementById('salaIdDisplay').textContent = SALA_ID;
         console.log('🔥 Supabase listo - Sala:', SALA_ID);
+        
+        // Verificar autenticación al cargar
+        verificarAutenticacion();
     </script>
     
     <script src="ruleta.js"></script>
