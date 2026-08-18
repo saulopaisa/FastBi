@@ -73,10 +73,11 @@
         .chat-status { text-align: center; font-size: 0.7em; margin-top: 5px; padding: 5px; border-radius: 8px; }
         .chat-status.bloqueado { color: var(--text-gray); }
         .chat-status.desbloqueado { color: var(--success); background: rgba(16,185,129,0.1); }
-        .admin-mensaje { background: linear-gradient(135deg, #1e3a5f, #0f172a); border-left: 4px solid var(--gold); padding: 10px 14px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85em; display: none; }
+        .admin-mensaje { background: linear-gradient(135deg, #1e3a5f, #0f172a); border-left: 4px solid var(--gold); padding: 10px 14px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85em; display: none; animation: slideIn 0.3s; }
+        @keyframes slideIn { from{transform:translateX(-20px);opacity:0;} to{transform:translateX(0);opacity:1;} }
         .chat-flotante { position: fixed; bottom: 20px; right: 15px; z-index: 200; }
         .btn-chat { width: 50px; height: 50px; border-radius: 50%; background: #6366f1; color: white; border: none; font-size: 1.3em; cursor: pointer; box-shadow: 0 4px 15px rgba(99,102,241,0.5); display: flex; align-items: center; justify-content: center; position: relative; }
-        .chat-badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 0.55em; display: none; align-items: center; justify-content: center; }
+        .chat-badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border-radius: 50%; width: 22px; height: 22px; font-size: 0.6em; display: none; align-items: center; justify-content: center; font-weight: bold; animation: pulse 1s infinite; }
         .chat-panel { display: none; position: fixed; bottom: 80px; right: 15px; width: 300px; max-height: 400px; background: var(--card-bg); border-radius: 15px; border: 2px solid #6366f1; z-index: 199; overflow: hidden; }
         .chat-panel.activo { display: flex; flex-direction: column; }
         .chat-header { background: #6366f1; padding: 10px; font-weight: bold; font-size: 0.8em; text-align: center; }
@@ -180,16 +181,44 @@
         let JUGADOR_NOMBRE = obtenerParametro('jugador');
 
         if (!SALA_ID || !JUGADOR_NOMBRE) {
-            document.getElementById('loadingScreen').innerHTML = '<div class="icon">⚠️</div><h2>Link inválido</h2><p style="color:#94a3b8;">Solicita un enlace válido.</p>';
+            document.getElementById('loadingScreen').innerHTML = '<div class="icon">⚠️</div><h2>Link inválido</h2>';
         } else {
             document.getElementById('jugadorNombre').textContent = JUGADOR_NOMBRE;
         }
 
         let miNombre = JUGADOR_NOMBRE, misCartones = [], cantadosSet = new Set(), patronActual = [];
         let juegoConectado = false, vistaActual = 'vertical', chatDesbloqueado = false, erroresBingo = 0, eliminado = false;
-        let canalPartida = null, canalChat = null;
 
-        function actualizarEstadoConexion(online) { document.getElementById('connectionDot').className = 'connection-dot ' + (online ? 'online' : 'offline'); }
+        // ============ FUNCIONES DE AUDIO ============
+        function reproducirSonidoMensaje() {
+            try {
+                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                var oscillator = ctx.createOscillator();
+                var gainNode = ctx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                oscillator.frequency.value = 880;
+                oscillator.type = 'sine';
+                gainNode.gain.value = 0.4;
+                oscillator.start();
+                setTimeout(function() { 
+                    oscillator.stop(); 
+                    ctx.close(); 
+                }, 300);
+            } catch(e) {}
+        }
+
+        function reproducirAudioNumero(numero) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                var letra = obtenerLetra(numero);
+                var msg = new SpeechSynthesisUtterance(letra + ' ' + numero);
+                msg.lang = 'es-ES';
+                msg.rate = 0.9;
+                msg.pitch = 1;
+                window.speechSynthesis.speak(msg);
+            }
+        }
 
         function cambiarVista(tipo) {
             vistaActual = tipo;
@@ -255,21 +284,17 @@
 
         function toggleCelda(cell) { cell.classList.toggle('marked'); }
 
-        function aplicarPatronACartones() {
-            document.querySelectorAll('.carton-cell').forEach(function(cell) {
-                const i = parseInt(cell.dataset.indice);
-                if (patronActual[i] && !cell.classList.contains('free')) cell.classList.add('patron-cell');
-                else cell.classList.remove('patron-cell');
-            });
-        }
-
         function marcarNumeroEnCartones(numero, animar) {
             document.querySelectorAll('.carton-cell').forEach(function(cell) {
                 if (parseInt(cell.dataset.valor) === numero) {
                     cell.classList.add('marked');
-                    if (animar) { cell.classList.add('ultima-cantada'); setTimeout(function() { cell.classList.remove('ultima-cantada'); }, 600); }
+                    if (animar) {
+                        cell.classList.add('ultima-cantada');
+                        setTimeout(function() { cell.classList.remove('ultima-cantada'); }, 600);
+                    }
                 }
             });
+            if (animar) reproducirAudioNumero(numero);
         }
 
         function escucharPartida() {
@@ -287,11 +312,16 @@
                 }
             });
 
-            canalPartida = supabaseClient.channel('partida-' + SALA_ID)
+            supabaseClient.channel('partida-' + SALA_ID + '-' + Date.now())
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'partidas', filter: 'sala_id=eq.' + SALA_ID }, function(payload) {
                     var data = payload.new || payload.old;
                     if (data && data.cantados && Array.isArray(data.cantados)) {
-                        data.cantados.forEach(function(num) { if (!cantadosSet.has(num)) { cantadosSet.add(num); marcarNumeroEnCartones(num, true); } });
+                        data.cantados.forEach(function(num) {
+                            if (!cantadosSet.has(num)) {
+                                cantadosSet.add(num);
+                                marcarNumeroEnCartones(num, true);
+                            }
+                        });
                         document.getElementById('cantadosCount').textContent = data.cantados.length;
                         if (data.cantados.length > 0) actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
                         actualizarUltimasBolasScroll(data.cantados);
@@ -315,36 +345,64 @@
         }
 
         function escucharChat() {
-            supabaseClient.from('chat').select('*').eq('sala_id', SALA_ID).order('id', { ascending: false }).limit(30).then(function(result) {
-                const contenedor = document.getElementById('chatMensajes');
-                if (result.data && result.data.length > 0) {
-                    contenedor.innerHTML = '';
-                    result.data.reverse().forEach(function(msg) {
-                        const div = document.createElement('div');
-                        div.className = 'msg-item ' + (msg.sistema ? 'msg-sistema' : (msg.admin ? 'msg-admin' : 'msg-jugador'));
-                        div.textContent = msg.mensaje;
-                        contenedor.appendChild(div);
-                    });
-                    contenedor.scrollTop = contenedor.scrollHeight;
-                }
+            supabaseClient.from('chat').select('*').eq('sala_id', SALA_ID).order('id', { ascending: true }).limit(30).then(function(result) {
+                var contenedor = document.getElementById('chatMensajes');
+                if (!contenedor) return;
+                if (!result.data || result.data.length === 0) return;
+                contenedor.innerHTML = '';
+                result.data.forEach(function(msg) { agregarMensajeAlChat(contenedor, msg); });
+                contenedor.scrollTop = contenedor.scrollHeight;
             });
 
-            canalChat = supabaseClient.channel('chat-' + SALA_ID)
+            supabaseClient.channel('chat-jugador-' + SALA_ID + '-' + Date.now())
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat', filter: 'sala_id=eq.' + SALA_ID }, function(payload) {
                     var msg = payload.new;
-                    const contenedor = document.getElementById('chatMensajes');
-                    const div = document.createElement('div');
-                    div.className = 'msg-item ' + (msg.sistema ? 'msg-sistema' : (msg.admin ? 'msg-admin' : 'msg-jugador'));
-                    div.textContent = msg.mensaje;
-                    contenedor.appendChild(div);
+                    var contenedor = document.getElementById('chatMensajes');
+                    if (!contenedor) return;
+                    
+                    var existentes = contenedor.querySelectorAll('.msg-item');
+                    for (var i = 0; i < existentes.length; i++) {
+                        if (existentes[i].dataset.id === String(msg.id)) return;
+                    }
+                    
+                    agregarMensajeAlChat(contenedor, msg);
                     contenedor.scrollTop = contenedor.scrollHeight;
+                    
                     if (msg.admin && !msg.sistema) {
-                        const md = document.getElementById('adminMensaje');
-                        md.textContent = '📢 ' + msg.mensaje; md.style.display = 'block';
+                        reproducirSonidoMensaje();
+                        var md = document.getElementById('adminMensaje');
+                        md.textContent = '📢 ' + msg.mensaje;
+                        md.style.display = 'block';
+                        md.style.animation = 'none';
+                        md.offsetHeight;
+                        md.style.animation = 'slideIn 0.3s';
                         setTimeout(function() { md.style.display = 'none'; }, 8000);
                     }
+                    
+                    var panel = document.getElementById('chatPanel');
+                    if (!panel.classList.contains('activo')) {
+                        var badge = document.getElementById('chatBadge');
+                        badge.style.display = 'flex';
+                        badge.textContent = parseInt(badge.textContent || '0') + 1;
+                    }
                 })
-                .subscribe();
+                .subscribe(function(status) {
+                    console.log('📡 Chat status:', status);
+                });
+        }
+
+        function agregarMensajeAlChat(contenedor, msg) {
+            var div = document.createElement('div');
+            div.dataset.id = String(msg.id);
+            if (msg.sistema) { div.className = 'msg-item msg-sistema'; }
+            else if (msg.admin) { div.className = 'msg-item msg-admin'; }
+            else { div.className = 'msg-item msg-jugador'; }
+            div.textContent = msg.mensaje;
+            var ts = document.createElement('div');
+            ts.className = 'msg-timestamp';
+            ts.textContent = new Date(msg.timestamp).toLocaleTimeString();
+            div.appendChild(ts);
+            contenedor.appendChild(div);
         }
 
         function solicitarDesbloquearChat() {
@@ -355,7 +413,15 @@
             });
         }
 
-        function toggleChat() { const p = document.getElementById('chatPanel'); p.classList.toggle('activo'); if (p.classList.contains('activo') && chatDesbloqueado) document.getElementById('chatInput').focus(); }
+        function toggleChat() { 
+            const p = document.getElementById('chatPanel'); 
+            p.classList.toggle('activo'); 
+            if (p.classList.contains('activo')) {
+                document.getElementById('chatBadge').style.display = 'none';
+                document.getElementById('chatBadge').textContent = '0';
+                if (chatDesbloqueado) document.getElementById('chatInput').focus();
+            }
+        }
 
         function enviarChat() {
             const m = document.getElementById('chatInput').value.trim(); if (!m) return;
@@ -396,8 +462,6 @@
         function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
 
         function salirDelJuego() {
-            if (canalPartida) supabaseClient.removeChannel(canalPartida);
-            if (canalChat) supabaseClient.removeChannel(canalChat);
             juegoConectado = false; misCartones = []; cantadosSet.clear();
             document.getElementById('gameScreen').style.display = 'none';
             document.getElementById('loadingScreen').style.display = 'block';
