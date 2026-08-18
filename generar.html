@@ -26,7 +26,6 @@
         <!-- ========== VISTA 1: CARTONES ========== -->
         <div class="section-panel activo" id="sectionCartones">
             
-            <!-- Columna izquierda (escritorio) -->
             <div class="cartones-left-col">
                 
                 <!-- Generar Cartones -->
@@ -72,7 +71,6 @@
                 </div>
             </div>
             
-            <!-- Columna derecha: Grid de cartones -->
             <div class="cartones-right-col">
                 <div class="cartones-grid" id="cartonesGrid">
                     <p class="placeholder">Genera o importa cartones para verlos aquí</p>
@@ -140,26 +138,50 @@
         const SUPABASE_URL = 'https://yoakkyizazpyboxqkuhg.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWtreWl6YXpweWJveHFrdWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MDMyNjUsImV4cCI6MjEwMjM3OTI2NX0.a99WU6PvuwwhBpf-PCodZ-gfiFM-dxEvq245_SB7i3U';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
+
+        const EXPIRACION_MS = 24 * 60 * 60 * 1000; // 24 horas
+
         // ============ VERIFICAR AUTENTICACIÓN ============
         async function verificarAutenticacion() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) {
+            const expiracion = localStorage.getItem('bingo_auth_expiracion');
+            
+            // Verificar expiración
+            if (expiracion && Date.now() > parseInt(expiracion)) {
+                await supabaseClient.auth.signOut();
+                localStorage.removeItem('bingo_auth_token');
+                localStorage.removeItem('bingo_auth_email');
+                localStorage.removeItem('bingo_auth_expiracion');
                 window.location.href = 'login.html';
                 return false;
             }
+            
+            // Verificar sesión en Supabase
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                localStorage.removeItem('bingo_auth_token');
+                localStorage.removeItem('bingo_auth_email');
+                localStorage.removeItem('bingo_auth_expiracion');
+                window.location.href = 'login.html';
+                return false;
+            }
+            
+            // Renovar expiración
+            localStorage.setItem('bingo_auth_expiracion', (Date.now() + EXPIRACION_MS).toString());
             return true;
         }
-        
+
         // ============ LOGOUT ============
         async function logout() {
             if (confirm('¿Cerrar sesión?')) {
                 await supabaseClient.auth.signOut();
+                localStorage.removeItem('bingo_auth_token');
+                localStorage.removeItem('bingo_auth_email');
+                localStorage.removeItem('bingo_auth_expiracion');
                 window.location.href = 'login.html';
             }
         }
-        
-        // Sala por defecto
+
+        // ============ SALA ============
         var SALA_ID = localStorage.getItem('salaActiva') || 'bingodefault';
         if (!SALA_ID || !String(SALA_ID).startsWith('bingo')) {
             var ahora = new Date();
@@ -170,7 +192,7 @@
         document.getElementById('salaDisplay').textContent = '📁 ' + SALA_ID;
         document.getElementById('configSala').textContent = SALA_ID;
         console.log('🔥 Supabase listo - Sala:', SALA_ID);
-        
+
         // Verificar autenticación al cargar
         verificarAutenticacion();
     </script>
