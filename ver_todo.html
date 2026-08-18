@@ -2,8 +2,9 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bingo Pro - Ver Todos los Cartones</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Bingo Pro - Cartones</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-dark: #0b0f1a;
@@ -15,7 +16,6 @@
             --gold: #ffb703;
             --success: #10b981;
             --blue: #3b82f6;
-            --purple: #8b5cf6;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -25,78 +25,44 @@
             background: var(--bg-dark);
             color: var(--text-white);
             min-height: 100vh;
-            padding: 20px;
+            padding: 15px;
         }
 
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
+            text-align: center;
+            padding: 20px;
             background: linear-gradient(180deg, var(--sidebar-bg), #0f172a);
             border-radius: 15px;
             margin-bottom: 20px;
             border: 2px solid #2d3436;
-            flex-wrap: wrap;
-            gap: 10px;
         }
 
-        .header h1 { color: var(--red); font-size: 1.5rem; font-weight: 900; letter-spacing: 2px; }
-
-        .header-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .sync-badge {
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 0.7rem;
-            font-weight: bold;
-        }
-
-        .sync-badge.conectado {
-            background: #10b981;
-            color: white;
-            animation: pulse 2s infinite;
-        }
-
-        .sync-badge.desconectado {
-            background: #ef4444;
-            color: white;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-
-        .btn-header {
-            padding: 10px 20px; border: none; border-radius: 8px;
-            font-weight: bold; cursor: pointer; font-size: 0.85rem;
-            transition: all 0.3s; color: white;
-            background: linear-gradient(135deg, var(--purple), #7c3aed);
-        }
-        .btn-header:hover { transform: translateY(-2px); }
+        .header h1 { color: var(--red); font-size: 1.5rem; font-weight: 900; letter-spacing: 2px; margin-bottom: 5px; }
+        .header p { color: var(--text-gray); font-size: 0.8rem; }
 
         .stats-container {
-            display: grid; grid-template-columns: repeat(4, 1fr);
-            gap: 15px; margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
         .stat-card {
-            background: var(--sidebar-bg); padding: 20px; border-radius: 12px;
-            text-align: center; border: 1px solid #2d3436; cursor: pointer; transition: all 0.3s;
+            background: var(--sidebar-bg);
+            padding: 18px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #2d3436;
+            cursor: pointer;
+            transition: all 0.3s;
         }
-        .stat-card:hover { transform: translateY(-2px); border-color: var(--gold); }
+        .stat-card:hover { border-color: var(--gold); }
         .stat-card.activo { border-color: var(--gold); box-shadow: 0 0 15px rgba(255,183,3,0.3); }
-        .stat-card .stat-numero { font-size: 2rem; font-weight: 900; }
-        .stat-card .stat-label { font-size: 0.8rem; color: var(--text-gray); margin-top: 5px; }
+        .stat-card .stat-numero { font-size: 1.8rem; font-weight: 900; }
+        .stat-card .stat-label { font-size: 0.75rem; color: var(--text-gray); margin-top: 5px; }
         .stat-card:nth-child(1) .stat-numero { color: #3b82f6; }
         .stat-card:nth-child(2) .stat-numero { color: #10b981; }
         .stat-card:nth-child(3) .stat-numero { color: var(--gold); }
-        .stat-card:nth-child(4) .stat-numero { color: #ef4444; }
 
         .filtros { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
         .filtros input, .filtros select {
@@ -104,94 +70,65 @@
             border: 2px solid #2d3748; background: #1e293b;
             color: white; font-size: 0.85rem;
         }
-        .filtros input { flex: 1; min-width: 200px; }
+        .filtros input { flex: 1; min-width: 150px; }
         .filtros input::placeholder { color: #64748b; }
         .filtros select { cursor: pointer; }
         .filtros input:focus, .filtros select:focus { outline: none; border-color: var(--blue); }
 
         .cartones-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
             gap: 15px;
         }
 
         .carton-card {
-            background: white; color: var(--text-dark);
-            border-radius: 12px; padding: 15px;
+            background: white;
+            color: var(--text-dark);
+            border-radius: 12px;
+            padding: 15px;
             border-left: 5px solid var(--blue);
-            transition: all 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
         .carton-card:hover { transform: translateY(-3px); }
         .carton-card.asignado { border-left-color: var(--gold); }
         .carton-card.usado { border-left-color: #ef4444; opacity: 0.7; }
-        .carton-card.actualizado {
-            animation: highlightCard 1s ease-out;
-            border-left-color: #10b981 !important;
-        }
-        @keyframes highlightCard {
-            0% { box-shadow: 0 0 20px rgba(16,185,129,0.6); }
-            100% { box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        }
 
         .carton-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .carton-numero { font-size: 1.1rem; font-weight: 900; color: var(--red); }
         .carton-estado {
             font-size: 0.65rem; padding: 3px 10px; border-radius: 15px;
-            font-weight: bold; text-transform: uppercase; cursor: pointer;
+            font-weight: bold; text-transform: uppercase;
         }
-        .carton-estado:hover { transform: scale(1.1); }
         .estado-disponible { background: #dcfce7; color: #166534; }
         .estado-asignado { background: #fef3c7; color: #92400e; }
         .estado-usado { background: #fee2e2; color: #991b1b; }
 
-        .carton-jugador { font-size: 0.8rem; color: var(--success); margin-bottom: 8px; font-weight: bold; }
-        .carton-tabla { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-        .carton-tabla th { background: #ff4d4d; color: white; padding: 6px; font-size: 0.7rem; border: 1px solid #e2e8f0; }
-        .carton-tabla td { padding: 6px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold; font-size: 0.8rem; }
-        .carton-tabla td.free { background: #fef3c7; font-size: 0.9rem; }
+        .carton-tabla { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
+        .carton-tabla th { background: #ff4d4d; color: white; padding: 5px; font-size: 0.65rem; border: 1px solid #e2e8f0; }
+        .carton-tabla td { padding: 5px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold; font-size: 0.75rem; }
+        .carton-tabla td.free { background: #fef3c7; font-size: 0.8rem; }
 
-        .sin-cartones { text-align: center; padding: 60px 20px; color: var(--text-gray); font-size: 1.2rem; grid-column: 1 / -1; }
-        .sin-cartones .icono { font-size: 4rem; margin-bottom: 15px; }
+        .sin-cartones { text-align: center; padding: 50px 20px; color: var(--text-gray); font-size: 1.1rem; grid-column: 1 / -1; }
+        .sin-cartones .icono { font-size: 3.5rem; margin-bottom: 15px; }
 
-        .toast-sync {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #10b981;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: bold;
-            z-index: 9999;
-            animation: slideIn 0.3s ease-out;
-        }
-        @keyframes slideIn {
-            from { transform: translateX(100px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        @media (max-width: 768px) {
-            .header { text-align: center; }
-            .stats-container { grid-template-columns: repeat(2, 1fr); }
-            .cartones-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+        @media (max-width: 600px) {
+            .stats-container { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+            .cartones-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+            .header h1 { font-size: 1.2rem; }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🎯 BINGO PRO - Todos los Cartones</h1>
-        <div class="header-info">
-            <span class="sync-badge desconectado" id="syncBadge">🔄 Sincronizando...</span>
-            <button class="btn-header" onclick="copiarLinkSala()">
-                🔗 COPIAR LINK DE SALA
-            </button>
-        </div>
+        <h1>🎱 BINGO</h1>
+        <p>Selecciona tus cartones favoritos</p>
     </div>
 
-    <div class="stats-container" id="statsContainer">
-        <div class="stat-card" onclick="filtrarPorEstado('todos')" id="statTotalCard">
+    <div class="stats-container">
+        <div class="stat-card activo" onclick="filtrarPorEstado('todos')" id="statTotalCard">
             <div class="stat-numero" id="statTotal">0</div>
-            <div class="stat-label">Total Cartones</div>
+            <div class="stat-label">Total</div>
         </div>
         <div class="stat-card" onclick="filtrarPorEstado('disponible')" id="statDisponibleCard">
             <div class="stat-numero" id="statDisponibles">0</div>
@@ -201,16 +138,12 @@
             <div class="stat-numero" id="statAsignados">0</div>
             <div class="stat-label">🟡 Asignados</div>
         </div>
-        <div class="stat-card" onclick="filtrarPorEstado('usado')" id="statUsadoCard">
-            <div class="stat-numero" id="statUsados">0</div>
-            <div class="stat-label">🔴 Usados</div>
-        </div>
     </div>
 
     <div class="filtros">
-        <input type="text" id="buscarCarton" placeholder="🔍 Buscar por nombre, jugador o número..." oninput="filtrarCartones()">
+        <input type="text" id="buscarCarton" placeholder="🔍 Buscar por número..." oninput="filtrarCartones()">
         <select id="filtroEstado" onchange="filtrarCartones()">
-            <option value="todos">Todos los estados</option>
+            <option value="todos">Todos</option>
             <option value="disponible">🟢 Disponibles</option>
             <option value="asignado">🟡 Asignados</option>
             <option value="usado">🔴 Usados</option>
@@ -221,234 +154,136 @@
         <div class="sin-cartones"><div class="icono">🎫</div><p>Cargando cartones...</p></div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAOHYo0w41dV6TRarAaGt58Zxn4o47dNUE",
-            authDomain: "bingofast.firebaseapp.com",
-            databaseURL: "https://bingofast-default-rtdb.firebaseio.com",
-            projectId: "bingofast",
-            storageBucket: "bingofast.firebasestorage.app",
-            messagingSenderId: "473863283329",
-            appId: "1:473863283329:web:2c4bf96de167d105fa6380"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        // ============ CONFIGURACIÓN SUPABASE ============
+        const SUPABASE_URL = 'https://yoakkyizazpyboxqkuhg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWtreWl6YXpweWJveHFrdWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MDMyNjUsImV4cCI6MjEwMjM3OTI2NX0.a99WU6PvuwwhBpf-PCodZ-gfiFM-dxEvq245_SB7i3U';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Cargar sala desde link compartido
-        const urlParams = new URLSearchParams(window.location.search);
-        const datosCodificados = urlParams.get('d');
-        if (datosCodificados) {
-            try {
-                const decoded = JSON.parse(decodeURIComponent(atob(datosCodificados)));
-                if (decoded.s) {
-                    localStorage.setItem('salaActiva', decoded.s);
-                    window.location.href = location.pathname;
-                }
-            } catch(e) {}
+        // ============ OBTENER SALA (oculta del usuario) ============
+        function obtenerSalaDeURL() {
+            const params = new URLSearchParams(window.location.search);
+            const sala = params.get('s') || params.get('sala') || localStorage.getItem('salaActiva') || 'bingodefault';
+            return sala;
         }
 
-        const SALA_ID = localStorage.getItem('salaActiva') || 'sala-default';
+        const SALA_ID = obtenerSalaDeURL();
         let todosLosCartones = [];
-        let idsActualizados = new Set();
 
-        console.log('📁 Sala:', SALA_ID);
-
-        // ============ SINCRONIZACIÓN EN TIEMPO REAL ============
-        function iniciarSincronizacion() {
-            // Verificar conexión
-            db.ref('.info/connected').on('value', function(snap) {
-                const badge = document.getElementById('syncBadge');
-                if (snap.val() === true) {
-                    badge.textContent = '🟢 CONECTADO - En vivo';
-                    badge.className = 'sync-badge conectado';
-                } else {
-                    badge.textContent = '🔴 DESCONECTADO';
-                    badge.className = 'sync-badge desconectado';
-                }
-            });
-
-            // Escuchar cambios en tiempo real
-            db.ref('salas/' + SALA_ID + '/cartones').on('value', function(snap) {
-                const cartonesFB = [];
-                
-                if (snap.exists()) {
-                    snap.forEach(function(child) {
-                        cartonesFB.push({ key: child.key, ...child.val() });
-                    });
-                }
-                
-                // Detectar cambios
-                const cambiosDetectados = detectarCambios(cartonesFB);
-                
-                // Actualizar lista
-                todosLosCartones = cartonesFB;
-                todosLosCartones.sort((a, b) => (a.numero || 0) - (b.numero || 0));
-                
-                // Guardar en localStorage
-                localStorage.setItem('cartones_' + SALA_ID, JSON.stringify(todosLosCartones));
-                
-                // Actualizar UI
-                actualizarStats();
-                mostrarCartones(todosLosCartones);
-                
-                // Mostrar notificación de cambios
-                if (cambiosDetectados) {
-                    mostrarToastSync('🔄 Cartones actualizados en tiempo real');
-                    
-                    // Resaltar cartones modificados por 2 segundos
-                    setTimeout(function() {
-                        idsActualizados.clear();
-                    }, 2000);
-                }
-                
-                console.log('📡 Sincronizado: ' + todosLosCartones.length + ' cartones');
-            });
-        }
-
-        function detectarCambios(nuevosCartones) {
-            if (todosLosCartones.length === 0) return false;
-            
-            let hayCambios = false;
-            
-            // Detectar cartones nuevos o modificados
-            nuevosCartones.forEach(function(c) {
-                const existente = todosLosCartones.find(function(e) { return e.key === c.key; });
-                if (!existente || 
-                    existente.estado !== c.estado || 
-                    existente.asignadoA !== c.asignadoA ||
-                    existente.nombre !== c.nombre) {
-                    idsActualizados.add(c.key);
-                    hayCambios = true;
-                }
-            });
-            
-            // Detectar cartones eliminados
-            todosLosCartones.forEach(function(c) {
-                const sigueExistiendo = nuevosCartones.find(function(n) { return n.key === c.key; });
-                if (!sigueExistiendo) {
-                    hayCambios = true;
-                }
-            });
-            
-            return hayCambios;
-        }
-
-        function mostrarToastSync(mensaje) {
-            const toast = document.createElement('div');
-            toast.className = 'toast-sync';
-            toast.textContent = mensaje;
-            document.body.appendChild(toast);
-            setTimeout(function() {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.5s';
-                setTimeout(function() { if (toast.parentNode) toast.remove(); }, 500);
-            }, 2500);
-        }
+        console.log('📁 Cargando cartones...');
 
         // ============ CARGAR CARTONES ============
-        function cargarCartonesInicial() {
-            // Intentar desde localStorage primero
-            const cartonesLocales = localStorage.getItem('cartones_' + SALA_ID);
-            if (cartonesLocales) {
-                try {
-                    todosLosCartones = JSON.parse(cartonesLocales);
-                    todosLosCartones.sort((a, b) => (a.numero || 0) - (b.numero || 0));
-                    actualizarStats();
-                    mostrarCartones(todosLosCartones);
-                    console.log('✅ Cargados desde localStorage (' + todosLosCartones.length + ')');
-                } catch(e) {
-                    localStorage.removeItem('cartones_' + SALA_ID);
-                }
+        async function cargarCartones() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('cartones')
+                    .select('*')
+                    .eq('sala_id', SALA_ID)
+                    .order('numero');
+
+                if (error) throw error;
+
+                todosLosCartones = data || [];
+                actualizarStats();
+                filtrarCartones();
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('cartonesGrid').innerHTML = 
+                    '<div class="sin-cartones"><div class="icono">❌</div><p>Error al cargar cartones</p></div>';
             }
-            
-            // Iniciar sincronización en tiempo real
-            iniciarSincronizacion();
         }
 
+        // ============ ESCUCHAR CAMBIOS ============
+        function escucharCambios() {
+            supabaseClient.channel('ver-todo-' + SALA_ID)
+                .on('postgres_changes', { 
+                    event: '*', 
+                    schema: 'public', 
+                    table: 'cartones', 
+                    filter: 'sala_id=eq.' + SALA_ID 
+                }, function() {
+                    cargarCartones();
+                })
+                .subscribe();
+        }
+
+        // ============ STATS ============
         function actualizarStats() {
             document.getElementById('statTotal').textContent = todosLosCartones.length;
-            document.getElementById('statDisponibles').textContent = todosLosCartones.filter(c => c.estado === 'disponible').length;
-            document.getElementById('statAsignados').textContent = todosLosCartones.filter(c => c.estado === 'asignado').length;
-            document.getElementById('statUsados').textContent = todosLosCartones.filter(c => c.estado === 'usado').length;
+            document.getElementById('statDisponibles').textContent = todosLosCartones.filter(function(c) { return c.estado === 'disponible'; }).length;
+            document.getElementById('statAsignados').textContent = todosLosCartones.filter(function(c) { return c.estado === 'asignado'; }).length;
         }
 
+        // ============ FILTRAR ============
         function filtrarPorEstado(estado) {
             document.getElementById('filtroEstado').value = estado;
-            document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('activo'));
+            document.querySelectorAll('.stat-card').forEach(function(c) { c.classList.remove('activo'); });
             if (estado === 'todos') document.getElementById('statTotalCard').classList.add('activo');
             else if (estado === 'disponible') document.getElementById('statDisponibleCard').classList.add('activo');
             else if (estado === 'asignado') document.getElementById('statAsignadoCard').classList.add('activo');
-            else if (estado === 'usado') document.getElementById('statUsadoCard').classList.add('activo');
             filtrarCartones();
         }
 
+        function filtrarCartones() {
+            const busqueda = document.getElementById('buscarCarton').value.toLowerCase();
+            const estado = document.getElementById('filtroEstado').value;
+
+            const filtrados = todosLosCartones.filter(function(c) {
+                const matchBusqueda = !busqueda || String(c.numero || '').includes(busqueda);
+                const matchEstado = estado === 'todos' || c.estado === estado;
+                return matchBusqueda && matchEstado;
+            });
+
+            mostrarCartones(filtrados);
+        }
+
+        // ============ MOSTRAR CARTONES (sin sala, sin nombres) ============
         function mostrarCartones(cartones) {
             const grid = document.getElementById('cartonesGrid');
+
             if (cartones.length === 0) {
                 grid.innerHTML = '<div class="sin-cartones"><div class="icono">🔍</div><p>No se encontraron cartones</p></div>';
                 return;
             }
+
             grid.innerHTML = '';
+
             cartones.forEach(function(c) {
                 const card = document.createElement('div');
                 card.className = 'carton-card ' + 
                     (c.estado === 'asignado' ? 'asignado' : '') + 
-                    (c.estado === 'usado' ? 'usado' : '') +
-                    (idsActualizados.has(c.key) ? ' actualizado' : '');
-                
+                    (c.estado === 'usado' ? 'usado' : '');
+
                 let tablaHTML = '<table class="carton-tabla"><tr><th>B</th><th>I</th><th>N</th><th>G</th><th>O</th></tr>';
                 if (c.carton) {
                     for (let f = 0; f < 5; f++) {
                         tablaHTML += '<tr>';
                         ['B','I','N','G','O'].forEach(function(l) {
-                            const valor = c.carton[l][f], centro = (l === 'N' && f === 2);
+                            const valor = c.carton[l][f];
+                            const centro = (l === 'N' && f === 2);
                             tablaHTML += '<td class="' + (centro ? 'free' : '') + '">' + (centro ? '⭐' : valor) + '</td>';
                         });
                         tablaHTML += '</tr>';
                     }
                 }
                 tablaHTML += '</table>';
-                
+
                 card.innerHTML = 
                     '<div class="carton-header">' +
                     '<span class="carton-numero"># ' + (c.numero || '?') + '</span>' +
-                    '<span class="carton-estado estado-' + (c.estado || 'disponible') + '" onclick="filtrarPorEstado(\'' + (c.estado || 'disponible') + '\')">' + (c.estado || 'disponible') + '</span>' +
+                    '<span class="carton-estado estado-' + (c.estado || 'disponible') + '">' + (c.estado || 'disponible') + '</span>' +
                     '</div>' +
-                    (c.asignadoA ? '<div class="carton-jugador">👤 ' + c.asignadoA + '</div>' : '') +
-                    (c.nombre && c.nombre !== 'Cartón ' + c.numero ? '<div style="font-size:0.8rem;color:#64748b;margin-bottom:5px;">' + c.nombre + '</div>' : '') +
                     tablaHTML;
-                
+
                 grid.appendChild(card);
             });
         }
 
-        function filtrarCartones() {
-            const busqueda = document.getElementById('buscarCarton').value.toLowerCase();
-            const estado = document.getElementById('filtroEstado').value;
-            document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('activo'));
-            if (estado === 'todos') document.getElementById('statTotalCard').classList.add('activo');
-            else if (estado === 'disponible') document.getElementById('statDisponibleCard').classList.add('activo');
-            else if (estado === 'asignado') document.getElementById('statAsignadoCard').classList.add('activo');
-            else if (estado === 'usado') document.getElementById('statUsadoCard').classList.add('activo');
-            const filtrados = todosLosCartones.filter(function(c) {
-                const matchBusqueda = !busqueda || (c.nombre||'').toLowerCase().includes(busqueda) || (c.asignadoA||'').toLowerCase().includes(busqueda) || String(c.numero||'').includes(busqueda);
-                return matchBusqueda && (estado === 'todos' || c.estado === estado);
-            });
-            mostrarCartones(filtrados);
-        }
-
-        function copiarLinkSala() {
-            const base = location.origin + location.pathname.replace('ver_todo.html', '');
-            const datos = { s: SALA_ID };
-            const link = base + 'ver_todo.html?d=' + btoa(encodeURIComponent(JSON.stringify(datos)));
-            navigator.clipboard.writeText(link).then(function() {
-                alert('✅ Link de sala copiado!\n\nComparte para que vean los mismos cartones en tiempo real.');
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', cargarCartonesInicial);
+        // ============ INICIAR ============
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarCartones();
+            escucharCambios();
+        });
     </script>
 </body>
 </html>
