@@ -3,14 +3,16 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎫 Generador listo - Sala:', SALA_ID);
     
-    // Cargar cartones desde Firebase
+    // Cargar cartones desde Supabase
     cargarDesdeSupabase();
     
-    // Enter en cantidad genera
+    // Enter en cantidad genera cartones
     var cantidadInput = document.getElementById('cantidadGenerar');
     if (cantidadInput) {
         cantidadInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') generarCartones();
+            if (e.key === 'Enter') {
+                generarCartones();
+            }
         });
     }
     
@@ -18,15 +20,19 @@ document.addEventListener('DOMContentLoaded', function() {
     var nombreAsignar = document.getElementById('nombreAsignarSeleccionados');
     if (nombreAsignar) {
         nombreAsignar.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') asignarSeleccionados();
+            if (e.key === 'Enter') {
+                asignarSeleccionados();
+            }
         });
     }
     
-    // Enter en nombre jugador link
-    var nombreLink = document.getElementById('nombreJugadorLink');
-    if (nombreLink) {
-        nombreLink.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') generarLinkJugador();
+    // Enter en buscador de jugadores
+    var buscarJugadorInput = document.getElementById('buscarJugador');
+    if (buscarJugadorInput) {
+        buscarJugadorInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                buscarJugadores();
+            }
         });
     }
 });
