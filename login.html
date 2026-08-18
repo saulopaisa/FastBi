@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Pro - Login</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0b0f1a; color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: #16213e; padding: 40px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; border: 1px solid #2d3436; }
+        .login-card h1 { color: #ff4d4d; margin-bottom: 10px; }
+        .login-card p { color: #94a3b8; margin-bottom: 25px; font-size: 0.9em; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 0.8em; color: #94a3b8; margin-bottom: 5px; }
+        .input-group input { width: 100%; padding: 12px; border: 2px solid #334155; border-radius: 10px; background: #1e293b; color: white; font-size: 1em; outline: none; }
+        .input-group input:focus { border-color: #ffb703; }
+        .btn-login { width: 100%; padding: 14px; background: linear-gradient(135deg, #ff6b6b, #ee5a24); color: white; border: none; border-radius: 12px; font-size: 1em; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(255,107,107,0.4); }
+        .error-msg { background: #ef4444; color: white; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.85em; display: none; }
+        .logo { font-size: 4em; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="logo">🎱</div>
+        <h1>BINGO PRO</h1>
+        <p>Panel de Administración</p>
+        
+        <div class="input-group">
+            <label>Email</label>
+            <input type="email" id="emailInput" placeholder="admin@bingo.com" autocomplete="email">
+        </div>
+        
+        <div class="input-group">
+            <label>Contraseña</label>
+            <input type="password" id="passwordInput" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        
+        <button class="btn-login" onclick="login()">🔐 INICIAR SESIÓN</button>
+        
+        <div class="error-msg" id="errorMsg"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://yoakkyizazpyboxqkuhg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWtreWl6YXpweWJveHFrdWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MDMyNjUsImV4cCI6MjEwMjM3OTI2NX0.a99WU6PvuwwhBpf-PCodZ-gfiFM-dxEvq245_SB7i3U';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function login() {
+            const email = document.getElementById('emailInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            const errorMsg = document.getElementById('errorMsg');
+            
+            errorMsg.style.display = 'none';
+            
+            if (!email || !password) {
+                errorMsg.textContent = '⚠️ Ingresa email y contraseña';
+                errorMsg.style.display = 'block';
+                return;
+            }
+            
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+            
+            if (error) {
+                errorMsg.textContent = '❌ ' + error.message;
+                errorMsg.style.display = 'block';
+                return;
+            }
+            
+            // Guardar sesión
+            localStorage.setItem('bingo_auth_token', data.session.access_token);
+            localStorage.setItem('bingo_auth_email', email);
+            
+            // Redirigir a la ruleta
+            window.location.href = 'ruleta.html';
+        }
+        
+        // Enter para login
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+    </script>
+</body>
+</html>
