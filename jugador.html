@@ -31,8 +31,6 @@
         .ultima-bola-grande .letra { font-size: 0.65em; color: rgba(255,255,255,0.8); }
         .ultima-bola-grande .numero { font-size: 1.4em; line-height: 1; }
         .ultimas-bolas-scroll { display: flex; gap: 5px; overflow-x: auto; flex: 1; padding: 4px 0; -webkit-overflow-scrolling: touch; }
-        .ultimas-bolas-scroll::-webkit-scrollbar { height: 2px; }
-        .ultimas-bolas-scroll::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
         .bola-chica { width: 34px; height: 34px; min-width: 34px; border-radius: 50%; background: var(--card-bg); border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75em; cursor: pointer; }
         .bola-chica.ultima { background: #fbbf24; color: #1e293b; border-color: #f59e0b; }
         .info-bar { display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
@@ -120,7 +118,7 @@
         <div class="header-fijo">
             <div class="header-top">
                 <h1>🎱 BINGO</h1>
-                <div class="sala-info">🏠 <strong id="salaNombre">-</strong> | 👤 <strong id="jugadorNombre">-</strong><span class="connection-dot online" id="connectionDot"></span></div>
+                <div class="sala-info">👤 <strong id="jugadorNombre">-</strong><span class="connection-dot online" id="connectionDot"></span></div>
             </div>
             <div class="numeros-bar">
                 <div class="ultima-bola-grande" id="ultimaBolaGrande" onclick="abrirMiniRuleta()"><span class="letra">-</span><span class="numero">--</span></div>
@@ -175,18 +173,23 @@
         // ============ CONFIGURACIÓN SUPABASE ============
         const SUPABASE_URL = 'https://yoakkyizazpyboxqkuhg.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWtreWl6YXpweWJveHFrdWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MDMyNjUsImV4cCI6MjEwMjM3OTI2NX0.a99WU6PvuwwhBpf-PCodZ-gfiFM-dxEvq245_SB7i3U';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         function obtenerParametro(nombre) { const p = new URLSearchParams(window.location.search); return p.get(nombre) || null; }
         const SALA_ID = obtenerParametro('sala');
         let JUGADOR_NOMBRE = obtenerParametro('jugador');
 
-        if (!SALA_ID) { document.getElementById('loadingScreen').innerHTML = '<div class="icon">⚠️</div><h2>Sala no encontrada</h2>'; }
-        else { document.getElementById('salaNombre').textContent = SALA_ID; if (JUGADOR_NOMBRE) document.getElementById('jugadorNombre').textContent = JUGADOR_NOMBRE; }
+        if (!SALA_ID || !JUGADOR_NOMBRE) {
+            document.getElementById('loadingScreen').innerHTML = '<div class="icon">⚠️</div><h2>Link inválido</h2><p style="color:#94a3b8;">Solicita un enlace válido.</p>';
+        } else {
+            document.getElementById('jugadorNombre').textContent = JUGADOR_NOMBRE;
+        }
 
         let miNombre = JUGADOR_NOMBRE, misCartones = [], cantadosSet = new Set(), patronActual = [];
         let juegoConectado = false, vistaActual = 'vertical', chatDesbloqueado = false, erroresBingo = 0, eliminado = false;
         let canalPartida = null, canalChat = null;
+
+        function actualizarEstadoConexion(online) { document.getElementById('connectionDot').className = 'connection-dot ' + (online ? 'online' : 'offline'); }
 
         function cambiarVista(tipo) {
             vistaActual = tipo;
@@ -200,18 +203,17 @@
         async function cargarCartones() {
             if (!SALA_ID || !miNombre) return;
             try {
-                const { data: cartones, error } = await supabase
+                const { data: cartones, error } = await supabaseClient
                     .from('cartones')
                     .select('*')
                     .eq('sala_id', SALA_ID)
                     .ilike('asignado_a', miNombre);
-                
                 if (error) throw error;
                 if (!cartones || cartones.length === 0) {
-                    document.getElementById('loadingScreen').innerHTML = '<div class="icon">⚠️</div><h2>Sin cartones</h2><p style="color:#94a3b8;">No tienes cartones asignados.</p>';
+                    document.getElementById('loadingScreen').innerHTML = '<div class="icon">⚠️</div><h2>Sin cartones</h2>';
                     return;
                 }
-                misCartones = cartones.map(c => ({ id: c.id, carton: c.carton, numero: c.numero }));
+                misCartones = cartones.map(function(c) { return { id: c.id, carton: c.carton, numero: c.numero }; });
                 miNombre = cartones[0].asignado_a;
                 document.getElementById('jugadorNombre').textContent = miNombre;
                 juegoConectado = true;
@@ -233,13 +235,13 @@
         function mostrarCartones() {
             const container = document.getElementById('cartonesContainer'); container.innerHTML = '';
             container.classList.add(vistaActual);
-            misCartones.forEach((cd, index) => {
+            misCartones.forEach(function(cd, index) {
                 const wrapper = document.createElement('div'); wrapper.className = 'carton-wrapper';
                 let html = '<div class="carton-numero">CARTÓN #' + (cd.numero || (index + 1)) + '</div><div class="carton-header">';
-                ['B','I','N','G','O'].forEach(l => html += '<div class="carton-header-cell">' + l + '</div>');
+                ['B','I','N','G','O'].forEach(function(l) { html += '<div class="carton-header-cell">' + l + '</div>'; });
                 html += '</div><div class="carton-grid">';
                 for (let f = 0; f < 5; f++) {
-                    ['B','I','N','G','O'].forEach(letra => {
+                    ['B','I','N','G','O'].forEach(function(letra) {
                         const v = cd.carton[letra][f], centro = (letra === 'N' && f === 2), indice = f * 5 + ['B','I','N','G','O'].indexOf(letra);
                         html += '<div class="carton-cell' + (centro ? ' free marked' : '') + '" data-valor="' + v + '" data-indice="' + indice + '" onclick="toggleCelda(this)">' + (centro ? '⭐' : v) + '</div>';
                     });
@@ -248,67 +250,51 @@
                 wrapper.innerHTML = html; container.appendChild(wrapper);
             });
             if (patronActual.length > 0) aplicarPatronACartones();
-            cantadosSet.forEach(num => marcarNumeroEnCartones(num, false));
+            cantadosSet.forEach(function(num) { marcarNumeroEnCartones(num, false); });
         }
 
         function toggleCelda(cell) { cell.classList.toggle('marked'); }
 
         function aplicarPatronACartones() {
-            document.querySelectorAll('.carton-cell').forEach(cell => {
+            document.querySelectorAll('.carton-cell').forEach(function(cell) {
                 const i = parseInt(cell.dataset.indice);
                 if (patronActual[i] && !cell.classList.contains('free')) cell.classList.add('patron-cell');
                 else cell.classList.remove('patron-cell');
             });
         }
 
-        function marcarNumeroEnCartones(numero, animar = true) {
-            document.querySelectorAll('.carton-cell').forEach(cell => {
+        function marcarNumeroEnCartones(numero, animar) {
+            document.querySelectorAll('.carton-cell').forEach(function(cell) {
                 if (parseInt(cell.dataset.valor) === numero) {
                     cell.classList.add('marked');
-                    if (animar) { cell.classList.add('ultima-cantada'); setTimeout(() => cell.classList.remove('ultima-cantada'), 600); }
+                    if (animar) { cell.classList.add('ultima-cantada'); setTimeout(function() { cell.classList.remove('ultima-cantada'); }, 600); }
                 }
             });
         }
 
         function escucharPartida() {
-            // Cargar estado inicial
-            supabase.from('partidas').select('*').eq('sala_id', SALA_ID).single().then(({ data }) => {
+            supabaseClient.from('partidas').select('*').eq('sala_id', SALA_ID).then(function(result) {
+                var data = result.data && result.data.length > 0 ? result.data[0] : null;
                 if (data) {
                     if (data.cantados && Array.isArray(data.cantados)) {
-                        data.cantados.forEach(num => { cantadosSet.add(num); marcarNumeroEnCartones(num, false); });
+                        data.cantados.forEach(function(num) { cantadosSet.add(num); marcarNumeroEnCartones(num, false); });
                         document.getElementById('cantadosCount').textContent = data.cantados.length;
                         if (data.cantados.length > 0) actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
                         actualizarUltimasBolasScroll(data.cantados);
                     }
                     if (data.patron && Array.isArray(data.patron)) { patronActual = data.patron; aplicarPatronACartones(); }
-                    if (data.jugadores_activos && Array.isArray(data.jugadores_activos)) document.getElementById('jugadoresCount').textContent = data.jugadores_activos.length;
+                    if (data.jugadores_activos) document.getElementById('jugadoresCount').textContent = data.jugadores_activos.length;
                 }
             });
 
-            // Escuchar cambios en tiempo real
-            canalPartida = supabase
-                .channel('partida-' + SALA_ID)
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'partidas', filter: 'sala_id=eq.' + SALA_ID }, (payload) => {
-                    const data = payload.new || payload.old;
+            canalPartida = supabaseClient.channel('partida-' + SALA_ID)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'partidas', filter: 'sala_id=eq.' + SALA_ID }, function(payload) {
+                    var data = payload.new || payload.old;
                     if (data && data.cantados && Array.isArray(data.cantados)) {
-                        data.cantados.forEach(num => { if (!cantadosSet.has(num)) { cantadosSet.add(num); marcarNumeroEnCartones(num, true); } });
+                        data.cantados.forEach(function(num) { if (!cantadosSet.has(num)) { cantadosSet.add(num); marcarNumeroEnCartones(num, true); } });
                         document.getElementById('cantadosCount').textContent = data.cantados.length;
                         if (data.cantados.length > 0) actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
                         actualizarUltimasBolasScroll(data.cantados);
-                    }
-                    if (data && data.patron && Array.isArray(data.patron)) { patronActual = data.patron; aplicarPatronACartones(); }
-                    if (data && data.jugadores_activos) document.getElementById('jugadoresCount').textContent = data.jugadores_activos.length;
-                    if (data && data.resultado_revision && data.resultado_revision.jugador === miNombre) {
-                        if (data.resultado_revision.resultado === 'valido') {
-                            lanzarConfeti();
-                            document.getElementById('ganadorMensaje').textContent = '¡Felicidades ' + miNombre + '!';
-                            document.getElementById('modalGanador').classList.add('active');
-                            erroresBingo = 0; eliminado = false;
-                        } else if (data.resultado_revision.resultado === 'errado') {
-                            erroresBingo++;
-                            if (erroresBingo >= 2) { eliminado = true; document.getElementById('modalEliminado').classList.add('active'); }
-                            else { mostrarToast('❌ BINGO ERRADO. 1 oportunidad restante.', 'error'); }
-                        }
                     }
                 })
                 .subscribe();
@@ -318,23 +304,22 @@
             const b = document.getElementById('ultimaBolaGrande');
             b.querySelector('.letra').textContent = obtenerLetra(numero);
             b.querySelector('.numero').textContent = numero;
-            b.style.animation = 'none'; b.offsetHeight;
         }
 
         function actualizarUltimasBolasScroll(cantados) {
             const c = document.getElementById('ultimasBolasScroll'); c.innerHTML = '';
-            cantados.slice(-6).reverse().forEach((num, i) => {
+            cantados.slice(-6).reverse().forEach(function(num, i) {
                 const bola = document.createElement('div'); bola.className = 'bola-chica' + (i===0?' ultima':'');
-                bola.textContent = num; bola.onclick = () => abrirMiniRuleta(); c.appendChild(bola);
+                bola.textContent = num; bola.onclick = function() { abrirMiniRuleta(); }; c.appendChild(bola);
             });
         }
 
         function escucharChat() {
-            supabase.from('chat').select('*').eq('sala_id', SALA_ID).order('id', { ascending: false }).limit(30).then(({ data }) => {
+            supabaseClient.from('chat').select('*').eq('sala_id', SALA_ID).order('id', { ascending: false }).limit(30).then(function(result) {
                 const contenedor = document.getElementById('chatMensajes');
-                if (data && data.length > 0) {
+                if (result.data && result.data.length > 0) {
                     contenedor.innerHTML = '';
-                    data.reverse().forEach(msg => {
+                    result.data.reverse().forEach(function(msg) {
                         const div = document.createElement('div');
                         div.className = 'msg-item ' + (msg.sistema ? 'msg-sistema' : (msg.admin ? 'msg-admin' : 'msg-jugador'));
                         div.textContent = msg.mensaje;
@@ -344,10 +329,9 @@
                 }
             });
 
-            canalChat = supabase
-                .channel('chat-' + SALA_ID)
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat', filter: 'sala_id=eq.' + SALA_ID }, (payload) => {
-                    const msg = payload.new;
+            canalChat = supabaseClient.channel('chat-' + SALA_ID)
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat', filter: 'sala_id=eq.' + SALA_ID }, function(payload) {
+                    var msg = payload.new;
                     const contenedor = document.getElementById('chatMensajes');
                     const div = document.createElement('div');
                     div.className = 'msg-item ' + (msg.sistema ? 'msg-sistema' : (msg.admin ? 'msg-admin' : 'msg-jugador'));
@@ -357,16 +341,16 @@
                     if (msg.admin && !msg.sistema) {
                         const md = document.getElementById('adminMensaje');
                         md.textContent = '📢 ' + msg.mensaje; md.style.display = 'block';
-                        setTimeout(() => md.style.display = 'none', 8000);
+                        setTimeout(function() { md.style.display = 'none'; }, 8000);
                     }
                 })
                 .subscribe();
         }
 
         function solicitarDesbloquearChat() {
-            const m = prompt('📝 ¿Qué quieres comunicar al administrador?');
+            const m = prompt('📝 ¿Qué quieres comunicar?');
             if (!m) return;
-            supabase.from('solicitudes_chat').insert({ sala_id: SALA_ID, jugador: miNombre, mensaje: m, timestamp: Date.now() }).then(() => {
+            supabaseClient.from('solicitudes_chat').insert({ sala_id: SALA_ID, jugador: miNombre, mensaje: m, timestamp: Date.now() }).then(function() {
                 mostrarToast('📩 Solicitud enviada', 'warning');
             });
         }
@@ -374,9 +358,8 @@
         function toggleChat() { const p = document.getElementById('chatPanel'); p.classList.toggle('activo'); if (p.classList.contains('activo') && chatDesbloqueado) document.getElementById('chatInput').focus(); }
 
         function enviarChat() {
-            if (!chatDesbloqueado) { mostrarToast('🔒 Chat bloqueado', 'warning'); return; }
             const m = document.getElementById('chatInput').value.trim(); if (!m) return;
-            supabase.from('chat').insert({ sala_id: SALA_ID, mensaje: miNombre + ': ' + m, admin: false, jugador: miNombre, timestamp: Date.now() }).then(() => {
+            supabaseClient.from('chat').insert({ sala_id: SALA_ID, mensaje: miNombre + ': ' + m, admin: false, jugador: miNombre, timestamp: Date.now() }).then(function() {
                 document.getElementById('chatInput').value = '';
             });
         }
@@ -387,7 +370,7 @@
             cerrarModal('modalConfirmar');
             try {
                 for (const cd of misCartones) {
-                    await supabase.from('bingos').insert({ sala_id: SALA_ID, carton_id: String(cd.id), jugador: miNombre, timestamp: Date.now() });
+                    await supabaseClient.from('bingos').insert({ sala_id: SALA_ID, carton_id: String(cd.id), jugador: miNombre, timestamp: Date.now() });
                 }
                 mostrarToast('🎉 BINGO cantado', 'success');
             } catch (e) { mostrarToast('Error', 'error'); }
@@ -398,13 +381,12 @@
             const letras = ['B','I','N','G','O'], rangos = {'B':[1,15],'I':[16,30],'N':[31,45],'G':[46,60],'O':[61,75]};
             const colores = {'B':'#ef4444','I':'#f59e0b','N':'#10b981','G':'#3b82f6','O':'#8b5cf6'};
             let html = '', tc = 0;
-            letras.forEach(l => {
-                const [min, max] = rangos[l];
+            letras.forEach(function(l) {
+                const min = rangos[l][0], max = rangos[l][1];
                 html += '<div class="miniruleta-seccion"><div class="miniruleta-letra" style="background:' + colores[l] + ';">' + l + ' (' + min + '-' + max + ')</div><div class="miniruleta-numeros">';
                 let cl = 0;
                 for (let i = min; i <= max; i++) { const ca = cantadosSet.has(i); if (ca) cl++; html += '<div class="miniruleta-numero' + (ca ? ' cantado' : '') + '">' + i + '</div>'; }
-                html += '</div><div style="font-size:0.7em;color:#94a3b8;text-align:right;">' + cl + '/' + (max - min + 1) + '</div></div>';
-                tc += cl;
+                html += '</div></div>'; tc += cl;
             });
             container.innerHTML = html; total.textContent = 'Total: ' + tc + '/75';
             document.getElementById('modalMiniRuleta').classList.add('active');
@@ -414,8 +396,8 @@
         function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
 
         function salirDelJuego() {
-            if (canalPartida) supabase.removeChannel(canalPartida);
-            if (canalChat) supabase.removeChannel(canalChat);
+            if (canalPartida) supabaseClient.removeChannel(canalPartida);
+            if (canalChat) supabaseClient.removeChannel(canalChat);
             juegoConectado = false; misCartones = []; cantadosSet.clear();
             document.getElementById('gameScreen').style.display = 'none';
             document.getElementById('loadingScreen').style.display = 'block';
@@ -426,13 +408,13 @@
         function lanzarConfeti() {
             const colores = ['#FF6B6B','#4ECDC4','#FFD700','#FF8C00','#FF1493','#10b981'];
             for (let i = 0; i < 60; i++) {
-                setTimeout(() => {
+                setTimeout(function() {
                     const c = document.createElement('div'); c.className = 'confetti-piece';
                     c.style.left = Math.random()*100+'%';
                     c.style.backgroundColor = colores[Math.floor(Math.random()*colores.length)];
                     c.style.width = Math.random()*10+5+'px'; c.style.height = Math.random()*10+5+'px';
                     c.style.animationDuration = Math.random()*2+2+'s';
-                    document.body.appendChild(c); setTimeout(() => c.remove(), 3000);
+                    document.body.appendChild(c); setTimeout(function() { c.remove(); }, 3000);
                 }, i*15);
             }
         }
@@ -440,17 +422,12 @@
         function mostrarToast(m, t) {
             const toast = document.getElementById('toast'); toast.textContent = m;
             toast.className = 'toast ' + (t||'');
-            setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => toast.classList.remove('show'), 2500);
+            setTimeout(function() { toast.classList.add('show'); }, 10);
+            setTimeout(function() { toast.classList.remove('show'); }, 2500);
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', function() {
             if (SALA_ID && JUGADOR_NOMBRE) { miNombre = JUGADOR_NOMBRE; cargarCartones(); }
-            else if (SALA_ID) {
-                const ng = localStorage.getItem('bingo_jugador_nombre');
-                if (ng) { miNombre = ng; cargarCartones(); }
-                else { document.getElementById('loadingScreen').innerHTML = '<div class="icon">⚠️</div><h2>Link inválido</h2>'; }
-            }
         });
     </script>
 </body>
