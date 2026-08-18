@@ -67,8 +67,6 @@
         .carton-cell.marked::after { content: '✓'; position: absolute; top: 1px; right: 2px; font-size: 0.45em; }
         .carton-cell.free { background: #fef3c7 !important; border-color: var(--gold) !important; font-size: 0.6em; cursor: default; }
         .carton-cell.patron-cell { border: 2px dashed var(--warning); background: #fef9e7; }
-        .carton-cell.ultima-cantada { animation: popCell 0.4s ease-out; background: #fbbf24 !important; color: #1e293b !important; }
-        @keyframes popCell { 0%{transform:scale(0.6);} 60%{transform:scale(1.2);} 100%{transform:scale(1);} }
         .acciones-jugador { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .chat-status { text-align: center; font-size: 0.7em; margin-top: 5px; padding: 5px; border-radius: 8px; }
         .chat-status.bloqueado { color: var(--text-gray); }
@@ -190,13 +188,22 @@
         let juegoConectado = false, vistaActual = 'vertical', chatDesbloqueado = false, erroresBingo = 0, eliminado = false;
         
         var audioContext = null;
+        var audioInicializado = false;
 
         // ============ FUNCIONES DE AUDIO ============
-        function reproducirSonidoMensaje() {
-            try {
-                if (!audioContext) {
+        function inicializarAudio() {
+            if (!audioContext) {
+                try {
                     audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                }
+                    audioContext.resume();
+                    audioInicializado = true;
+                } catch(e) {}
+            }
+        }
+
+        function reproducirSonidoMensaje() {
+            if (!audioInicializado) return;
+            try {
                 var oscillator = audioContext.createOscillator();
                 var gainNode = audioContext.createGain();
                 oscillator.connect(gainNode);
@@ -220,12 +227,8 @@
             }
         }
 
-        // Inicializar audio en el primer click
-        document.addEventListener('click', function() {
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
-        }, { once: true });
+        document.addEventListener('click', inicializarAudio, { once: true });
+        document.addEventListener('touchstart', inicializarAudio, { once: true });
 
         function cambiarVista(tipo) {
             vistaActual = tipo;
@@ -286,10 +289,12 @@
                 wrapper.innerHTML = html; container.appendChild(wrapper);
             });
             if (patronActual.length > 0) aplicarPatronACartones();
-            cantadosSet.forEach(function(num) { marcarNumeroEnCartones(num, false); });
         }
 
-        function toggleCelda(cell) { cell.classList.toggle('marked'); }
+        // ============ MARCADO MANUAL - NO AUTO-MARCA ============
+        function toggleCelda(cell) { 
+            cell.classList.toggle('marked'); 
+        }
 
         function aplicarPatronACartones() {
             document.querySelectorAll('.carton-cell').forEach(function(cell) {
@@ -302,25 +307,18 @@
             });
         }
 
-        function marcarNumeroEnCartones(numero, animar) {
-            document.querySelectorAll('.carton-cell').forEach(function(cell) {
-                if (parseInt(cell.dataset.valor) === numero) {
-                    cell.classList.add('marked');
-                    if (animar) {
-                        cell.classList.add('ultima-cantada');
-                        setTimeout(function() { cell.classList.remove('ultima-cantada'); }, 600);
-                    }
-                }
-            });
-            if (animar) reproducirAudioNumero(numero);
+        // Esta función ya NO marca automáticamente - solo actualiza el Set
+        function registrarNumeroCantado(numero) {
+            cantadosSet.add(numero);
         }
 
         function escucharPartida() {
+            // Cargar estado inicial (sin marcar celdas)
             supabaseClient.from('partidas').select('*').eq('sala_id', SALA_ID).then(function(result) {
                 var data = result.data && result.data.length > 0 ? result.data[0] : null;
                 if (data) {
                     if (data.cantados && Array.isArray(data.cantados)) {
-                        data.cantados.forEach(function(num) { cantadosSet.add(num); marcarNumeroEnCartones(num, false); });
+                        data.cantados.forEach(function(num) { cantadosSet.add(num); });
                         document.getElementById('cantadosCount').textContent = data.cantados.length;
                         if (data.cantados.length > 0) actualizarUltimaBolaGrande(data.cantados[data.cantados.length - 1]);
                         actualizarUltimasBolasScroll(data.cantados);
@@ -330,14 +328,15 @@
                 }
             });
 
-            supabaseClient.channel('partida-' + SALA_ID + '-' + Date.now())
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'partidas', filter: 'sala_id=eq.' + SALA_ID }, function(payload) {
-                    var data = payload.new || payload.old;
+            // Escuchar cambios en tiempo real (SOLO actualiza la bola y el Set, NO marca celdas)
+            supabaseClient.channel('partida-realtime-' + SALA_ID + '-' + Date.now())
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'partidas', filter: 'sala_id=eq.' + SALA_ID }, function(payload) {
+                    var data = payload.new;
                     if (data && data.cantados && Array.isArray(data.cantados)) {
                         data.cantados.forEach(function(num) {
                             if (!cantadosSet.has(num)) {
                                 cantadosSet.add(num);
-                                marcarNumeroEnCartones(num, true);
+                                reproducirAudioNumero(num);
                             }
                         });
                         document.getElementById('cantadosCount').textContent = data.cantados.length;
@@ -345,7 +344,9 @@
                         actualizarUltimasBolasScroll(data.cantados);
                     }
                 })
-                .subscribe();
+                .subscribe(function(status) {
+                    console.log('📡 Partida status:', status);
+                });
         }
 
         function actualizarUltimaBolaGrande(numero) {
