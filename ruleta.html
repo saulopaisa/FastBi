@@ -256,21 +256,42 @@
         const SUPABASE_URL = 'https://yoakkyizazpyboxqkuhg.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYWtreWl6YXpweWJveHFrdWhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MDMyNjUsImV4cCI6MjEwMjM3OTI2NX0.a99WU6PvuwwhBpf-PCodZ-gfiFM-dxEvq245_SB7i3U';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
+
+        const EXPIRACION_MS = 24 * 60 * 60 * 1000; // 24 horas
+
         // ============ VERIFICAR AUTENTICACIÓN ============
         async function verificarAutenticacion() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) {
+            const expiracion = localStorage.getItem('bingo_auth_expiracion');
+            
+            if (expiracion && Date.now() > parseInt(expiracion)) {
+                await supabaseClient.auth.signOut();
+                localStorage.removeItem('bingo_auth_token');
+                localStorage.removeItem('bingo_auth_email');
+                localStorage.removeItem('bingo_auth_expiracion');
                 window.location.href = 'login.html';
                 return false;
             }
+            
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                localStorage.removeItem('bingo_auth_token');
+                localStorage.removeItem('bingo_auth_email');
+                localStorage.removeItem('bingo_auth_expiracion');
+                window.location.href = 'login.html';
+                return false;
+            }
+            
+            localStorage.setItem('bingo_auth_expiracion', (Date.now() + EXPIRACION_MS).toString());
             return true;
         }
-        
+
         // ============ LOGOUT ============
         async function logout() {
             if (confirm('¿Cerrar sesión?')) {
                 await supabaseClient.auth.signOut();
+                localStorage.removeItem('bingo_auth_token');
+                localStorage.removeItem('bingo_auth_email');
+                localStorage.removeItem('bingo_auth_expiracion');
                 window.location.href = 'login.html';
             }
         }
@@ -285,7 +306,6 @@
             }
         })();
         
-        // Sala por defecto
         var SALA_ID = localStorage.getItem('salaActiva') || 'bingodefault';
         if (!SALA_ID || !String(SALA_ID).startsWith('bingo')) {
             var ahora = new Date();
