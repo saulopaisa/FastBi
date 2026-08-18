@@ -1,6 +1,5 @@
 // generar.js - Lógica del generador (Supabase)
-
-// NO declarar SUPABASE_URL ni supabaseClient aquí - ya están en generar.html
+// NOTA: SUPABASE_URL, SUPABASE_ANON_KEY y supabaseClient YA están en generar.html
 
 var cartonesGenerados = [];
 var cartonesSeleccionados = [];
@@ -34,9 +33,9 @@ function generarCartones() {
     if (cantidad < 1 || cantidad > 500) { mostrarToast('⚠️ Cantidad entre 1 y 500', 'error'); return; }
     
     var numeroInicial = cartonesGenerados.length;
-    var intentos = 0, maxIntentos = cantidad * 10, generados = 0;
+    var generados = 0;
     
-    for (var i = 0; i < cantidad && intentos < maxIntentos; i++) {
+    for (var i = 0; i < cantidad; i++) {
         var nuevoCarton = generarCarton();
         cartonesGenerados.push({
             id: 'carton_' + Date.now() + '_' + (numeroInicial + generados),
@@ -111,7 +110,7 @@ function filtrarCartones(filtro) {
 
 function mostrarCartonesFiltrados(estado) {
     var grid = document.getElementById('cartonesGrid');
-    var filtrados = estado === 'asignados' ? cartonesGenerados.filter(c => c.asignadoA) : cartonesGenerados.filter(c => !c.asignadoA);
+    var filtrados = estado === 'asignados' ? cartonesGenerados.filter(function(c) { return c.asignadoA; }) : cartonesGenerados.filter(function(c) { return !c.asignadoA; });
     if (filtrados.length === 0) { grid.innerHTML = '<p class="placeholder">No hay cartones ' + estado + '</p>'; return; }
     grid.innerHTML = '';
     var letras = ['B','I','N','G','O'];
@@ -208,7 +207,7 @@ function asignarSeleccionados() {
     var nombre = document.getElementById('nombreAsignarSeleccionados').value.trim();
     if (!nombre) { mostrarToast('⚠️ Ingresa nombre', 'error'); return; }
     if (cartonesSeleccionados.length === 0) { mostrarToast('⚠️ Selecciona cartones', 'error'); return; }
-    var yaAsignados = cartonesGenerados.filter(c => c.asignadoA === nombre).length;
+    var yaAsignados = cartonesGenerados.filter(function(c) { return c.asignadoA === nombre; }).length;
     if (yaAsignados + cartonesSeleccionados.length > 2) { mostrarToast('⚠️ Máximo 2', 'error'); return; }
     cartonesSeleccionados.forEach(function(idx) {
         cartonesGenerados[idx].asignadoA = nombre;
@@ -233,7 +232,7 @@ function buscarJugadores() {
         if (c.asignadoA) { if (!jugadoresMap[c.asignadoA]) jugadoresMap[c.asignadoA] = []; jugadoresMap[c.asignadoA].push(c); }
     });
     var jugadores = Object.keys(jugadoresMap).sort();
-    if (termino) jugadores = jugadores.filter(n => n.toLowerCase().includes(termino));
+    if (termino) jugadores = jugadores.filter(function(n) { return n.toLowerCase().includes(termino); });
     if (jugadores.length === 0) { resultadosDiv.innerHTML = '<p style="color:#94a3b8;text-align:center;">' + (termino ? 'Sin resultados' : 'No hay jugadores') + '</p>'; return; }
     resultadosDiv.innerHTML = '';
     jugadores.forEach(function(nombre) {
@@ -256,7 +255,7 @@ function copiarLinkJugador(nombre) {
 }
 
 function eliminarJugador(nombre) {
-    var cartonesJugador = cartonesGenerados.filter(c => c.asignadoA === nombre);
+    var cartonesJugador = cartonesGenerados.filter(function(c) { return c.asignadoA === nombre; });
     if (cartonesJugador.length === 0) return;
     if (!confirm('¿Eliminar a ' + nombre + '?')) return;
     cartonesJugador.forEach(function(c) { c.asignadoA = null; c.estado = 'disponible'; });
@@ -265,7 +264,7 @@ function eliminarJugador(nombre) {
 }
 
 function renombrarJugador(nombreViejo) {
-    var cartonesJugador = cartonesGenerados.filter(c => c.asignadoA === nombreViejo);
+    var cartonesJugador = cartonesGenerados.filter(function(c) { return c.asignadoA === nombreViejo; });
     if (cartonesJugador.length === 0) return;
     var nombreNuevo = prompt('Renombrar:', nombreViejo);
     if (!nombreNuevo || nombreNuevo === nombreViejo) return;
@@ -277,7 +276,7 @@ function renombrarJugador(nombreViejo) {
 // ============ CONTADORES ============
 function actualizarContadores() {
     var total = cartonesGenerados.length;
-    var asignados = cartonesGenerados.filter(c => c.asignadoA).length;
+    var asignados = cartonesGenerados.filter(function(c) { return c.asignadoA; }).length;
     document.getElementById('totalCartones').textContent = total;
     document.getElementById('totalAsignados').textContent = asignados;
     document.getElementById('totalDisponibles').textContent = total - asignados;
@@ -361,8 +360,8 @@ function imprimirCartones() {
 
 // ============ NAVEGACIÓN ============
 function navegarA(vista) {
-    document.querySelectorAll('.section-panel').forEach(s => s.classList.remove('activo'));
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('activo'));
+    document.querySelectorAll('.section-panel').forEach(function(s) { s.classList.remove('activo'); });
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('activo'); });
     if (vista === 'cartones') { document.getElementById('sectionCartones').classList.add('activo'); document.getElementById('navCartones').classList.add('activo'); }
     else if (vista === 'jugadores') { document.getElementById('sectionJugadores').classList.add('activo'); document.getElementById('navJugadores').classList.add('activo'); buscarJugadores(); }
     else if (vista === 'config') { document.getElementById('sectionConfig').classList.add('activo'); document.getElementById('navConfig').classList.add('activo'); actualizarContadores(); }
