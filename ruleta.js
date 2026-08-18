@@ -65,21 +65,27 @@ async function cargarPartidaDesdeSupabase() {
         const { data, error } = await supabaseClient
             .from('partidas')
             .select('*')
-            .eq('sala_id', SALA_ID)
-            .single();
-        if (error && error.code !== 'PGRST116') { console.error('Error:', error); return; }
-        if (data) {
-            if (data.cantados && Array.isArray(data.cantados)) window.cantados = data.cantados;
-            if (data.patron && Array.isArray(data.patron)) window.patronBingo = data.patron;
-            if (data.jugadores_activos && Array.isArray(data.jugadores_activos)) window.jugadoresActivos = data.jugadores_activos;
-            if (data.partida_iniciada) window.partidaIniciada = true;
-            if (data.ganadores_count) window.ganadoresPartida = data.ganadores_count;
-            if (data.estado === 'jugando') { window.etapaActual = 3; window.juegoActivo = true; }
-            if (window.etapaActual >= 2) actualizarEtapas();
-            if (window.etapaActual >= 3) actualizarEtapas();
+            .eq('sala_id', SALA_ID);
+        
+        if (error) {
+            console.error('Error cargando partida:', error.message);
+            return;
+        }
+        
+        if (data && data.length > 0) {
+            var partida = data[0];
+            if (partida.cantados && Array.isArray(partida.cantados)) window.cantados = partida.cantados;
+            if (partida.patron && Array.isArray(partida.patron)) window.patronBingo = partida.patron;
+            if (partida.jugadores_activos && Array.isArray(partida.jugadores_activos)) window.jugadoresActivos = partida.jugadores_activos;
+            if (partida.partida_iniciada) window.partidaIniciada = true;
+            if (partida.ganadores_count) window.ganadoresPartida = partida.ganadores_count;
+            if (partida.estado === 'jugando') { window.etapaActual = 3; window.juegoActivo = true; }
+            actualizarEtapas();
             inicializarTablero75();
         }
-    } catch (e) { console.error('Error:', e); }
+    } catch (e) { 
+        console.error('Error:', e); 
+    }
 }
 
 // ============ TABLERO ============
@@ -231,7 +237,9 @@ window.seleccionarTodosJugadores = function() {
     else {
         var nombres = new Set();
         supabaseClient.from('cartones').select('asignado_a').eq('sala_id', SALA_ID).not('asignado_a', 'is', null).then(function(result) {
-            result.data.forEach(function(c) { if (c.asignado_a) nombres.add(c.asignado_a); });
+            if (result.data) {
+                result.data.forEach(function(c) { if (c.asignado_a) nombres.add(c.asignado_a); });
+            }
             window.jugadoresActivos = Array.from(nombres);
             items.forEach(function(i) { i.classList.add('seleccionado'); });
         });
